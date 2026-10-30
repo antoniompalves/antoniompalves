@@ -79,9 +79,9 @@ function OverviewHead({ model }: { model: OverviewModel }) {
   const { t } = useI18n()
   const [salute, name] = model.greeting.split(', ')
   return (
-    <header className="mb-6 flex flex-wrap items-center gap-x-[clamp(28px,4vw,72px)] gap-y-[18px]">
+    <header className="mb-6 flex flex-wrap items-center gap-x-[clamp(28px,4vw,72px)] gap-y-[18px] max-mobile:mb-[18px] max-mobile:gap-y-3">
       <PageTitle lines={[`${salute},`, name]} label={model.greeting} />
-      <dl className="flex flex-wrap gap-x-[clamp(24px,3.2vw,56px)] gap-y-3.5">
+      <dl className="flex flex-wrap gap-x-[clamp(24px,3.2vw,56px)] gap-y-3.5 max-mobile:grid max-mobile:w-full max-mobile:grid-cols-2 max-mobile:gap-x-3.5 max-mobile:gap-y-2.5">
         <Stat
           icon={Users}
           value={t.numbers.compact(model.stats.audience)}
@@ -319,7 +319,7 @@ function TopPost({ model, className }: SectionProps) {
           {p.image && <img src={photo(p.image, 900)} alt="" className="absolute inset-0 size-full object-cover" />}
           <span className="absolute inset-0 bg-[linear-gradient(rgb(10_10_12/0)_30%,rgb(10_10_12/0.78))]" />
           <Badge tone="butter" className="absolute left-3.5 top-3.5">
-            {t.overview.usualReach(t.numbers.times(p.metrics.reachVsUsual))}
+            {t.overview.usualReach(t.numbers.times(p.reachVsUsual))}
           </Badge>
           <span className="absolute inset-x-0 bottom-0 grid gap-2.5 p-4">
             <span className="flex items-center justify-between gap-2.5">
@@ -333,7 +333,7 @@ function TopPost({ model, className }: SectionProps) {
             <span className="flex gap-[22px] text-2xs opacity-90">
               {[
                 [t.numbers.compact(p.metrics.reach), t.overview.reach],
-                [t.numbers.pct1(p.metrics.engagementRate), t.overview.engRate],
+                [t.numbers.pct1(p.engagementRate), t.overview.engRate],
                 [t.numbers.compact(p.metrics.saves), t.overview.saves],
               ].map(([v, l]) => (
                 <span key={l}>
@@ -435,7 +435,7 @@ function NetworkPulse({ model, className }: SectionProps) {
               <Meter value={n.share} />
             </div>
             <div className="text-right">
-              <span className={cn('block text-xs font-bold', n.growth30d >= 0 ? 'text-good' : 'text-bad')}>{t.numbers.signedPct1(n.growth30d)}</span>
+              <span className={cn('block text-xs font-bold', n.growth >= 0 ? 'text-good' : 'text-bad')}>{t.numbers.signedPct1(n.growth)}</span>
               <small className="text-[12.5px] text-muted">{t.overview.engShort(t.numbers.pct1(n.engagementRate))}</small>
             </div>
           </li>

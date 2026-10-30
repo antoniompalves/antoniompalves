@@ -1,11 +1,14 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Bell,
   CalendarDays,
+  ChartNoAxesColumn,
   ChevronDown,
   Clock,
+  Ear,
+  House,
   Image,
   Inbox,
   Languages,
@@ -13,17 +16,21 @@ import {
   Layers,
   Link,
   Moon,
+  PenLine,
   Plus,
   Search,
   Settings,
   ShieldCheck,
   Sun,
+  Users,
   Waves,
+  X,
 } from 'lucide-react'
+import type { RouteId } from '../data/routes'
 import type { NavItem, TeamMember } from '../data/types'
 import { LOCALES, useI18n } from '../i18n'
 import { MenuItem, Popover } from './Popover'
-import { Avatar, cn } from './ui'
+import { Avatar, IconButton, cn } from './ui'
 
 /* ───────────────────────── background ───────────────────────── */
 
@@ -87,12 +94,12 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
         <span className="grid size-12 place-items-center rounded-[15px] bg-pill text-on-pill max-mobile:size-11 max-mobile:rounded-[13px]">
           <Waves size={28} strokeWidth={2.1} aria-hidden />
         </span>
-        <span className="max-[480px]:hidden">murmura</span>
+        <span className="max-[359px]:hidden">murmura</span>
       </a>
 
       <nav
         aria-label={t.shell.mainNav}
-        className="col-span-full row-start-2 min-w-0 max-w-full justify-self-start overflow-x-auto rounded-full [scrollbar-width:none] max-mobile:-mx-3.5 max-mobile:w-[calc(100%+28px)] max-mobile:max-w-none max-mobile:rounded-none max-mobile:px-2.5 wide:col-span-1 wide:col-start-2 wide:row-start-1 wide:justify-self-center"
+        className="col-span-full row-start-2 min-w-0 max-w-full justify-self-start overflow-x-auto rounded-full [scrollbar-width:none] max-mobile:hidden wide:col-span-1 wide:col-start-2 wide:row-start-1 wide:justify-self-center"
       >
         <div ref={trackRef} className="relative flex w-max gap-0.5 p-1">
           <span
@@ -125,6 +132,15 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
       </nav>
 
       <div className="col-start-2 row-start-1 flex items-center gap-2.5 justify-self-end wide:col-start-3">
+        {/* Phones have no dock, so search moves up here (as in the reference). */}
+        <button
+          type="button"
+          aria-label={t.shell.search}
+          title={t.shell.search}
+          className="inline-grid size-[46px] cursor-pointer place-items-center rounded-full border border-rim bg-glass-2 mobile:hidden"
+        >
+          <Search size={20} aria-hidden />
+        </button>
         <button
           type="button"
           aria-label={t.shell.brandSwitcher}
@@ -293,46 +309,204 @@ export function Dock({ route, theme, onToggleTheme, channelsNeedAttention }: Doc
   )
 }
 
-/** Below 761px the dock collapses into a bottom bar, as in the reference. */
-export function MobileNav({ route, onToggleTheme, theme }: { route: string; onToggleTheme: () => void; theme: 'light' | 'dark' }) {
+interface MobileNavProps {
+  route: string
+  theme: 'light' | 'dark'
+  onToggleTheme: () => void
+  inboxUnread: number
+  approvals: number
+}
+
+/** Pages reached from the "More" sheet on phones, in the reference's order. */
+const MORE_PAGES: { id: RouteId; icon: LucideIcon }[] = [
+  { id: 'compose', icon: PenLine },
+  { id: 'approvals', icon: ShieldCheck },
+  { id: 'analytics', icon: ChartNoAxesColumn },
+  { id: 'listening', icon: Ear },
+  { id: 'library', icon: Image },
+  { id: 'channels', icon: Link },
+  { id: 'team', icon: Users },
+  { id: 'settings', icon: Settings },
+]
+
+/** Below 761px the dock collapses into a bottom bar, as in the reference: four destinations plus "More". */
+export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals }: MobileNavProps) {
   const { t } = useI18n()
-  const items: { id: string; label: string; icon: LucideIcon; href?: string }[] = [
-    { id: 'overview', label: t.shell.mobileHome, icon: LayoutGrid, href: '#/overview' },
+  const [sheet, setSheet] = useState(false)
+  const items: { id: string; label: string; icon: LucideIcon; href: string; count?: number }[] = [
+    { id: 'overview', label: t.shell.mobileHome, icon: House, href: '#/overview' },
     { id: 'calendar', label: t.routes.calendar.label, icon: CalendarDays, href: '#/calendar' },
-    { id: 'new', label: t.shell.create, icon: Plus },
-    { id: 'inbox', label: t.shell.mobileInbox, icon: Inbox, href: '#/inbox' },
+    { id: 'inbox', label: t.shell.mobileInbox, icon: Inbox, href: '#/inbox', count: inboxUnread },
   ]
-  const item = 'flex flex-col items-center justify-center gap-1 text-[11.5px] font-semibold'
+  const onMore = MORE_PAGES.some((p) => p.id === route)
+  const item = (current: boolean) =>
+    cn(
+      'relative flex flex-col items-center justify-center gap-[3px] text-[11.5px] font-semibold',
+      current ? 'text-text before:absolute before:left-1/2 before:top-0 before:h-[3px] before:w-[26px] before:-translate-x-1/2 before:rounded-b-full before:bg-text' : 'text-muted',
+    )
+  const link = ({ id, label, icon: Icon, href, count }: (typeof items)[number]) => (
+    <a key={id} href={href} className={item(route === id)} aria-current={route === id ? 'page' : undefined}>
+      <Icon size={23} aria-hidden />
+      {label}
+      {count ? (
+        <b className="absolute left-[calc(50%+6px)] top-[5px] grid h-[18px] min-w-5 place-items-center rounded-full bg-coral px-[5px] text-[11px] font-bold text-on-coral shadow-[0_0_0_2px_var(--float)]">
+          {count}
+        </b>
+      ) : null}
+    </a>
+  )
   return (
-    <nav
-      aria-label={t.shell.mobileNav}
-      className="fixed inset-x-0 bottom-0 z-30 grid h-[calc(64px+env(safe-area-inset-bottom))] grid-cols-5 border-t border-line bg-float/92 px-1.5 pb-[env(safe-area-inset-bottom)] backdrop-blur-[16px] backdrop-saturate-150 mobile:hidden"
-    >
-      {items.map(({ id, label, icon: Icon, href }) =>
-        id === 'new' ? (
-          <button key={id} type="button" aria-label={label} className="grid place-items-center">
-            <span className="grid size-11 place-items-center rounded-full bg-butter text-[#16191d]">
-              <Icon size={22} aria-hidden />
-            </span>
-          </button>
-        ) : (
-          <a key={id} href={href} className={cn(item, route === id ? 'text-text' : 'text-muted')} aria-current={route === id ? 'page' : undefined}>
-            <Icon size={21} aria-hidden />
-            {label}
-          </a>
-        ),
+    <>
+      <nav
+        aria-label={t.shell.mobileNav}
+        className="fixed inset-x-0 bottom-0 z-30 grid h-[calc(64px+env(safe-area-inset-bottom))] grid-cols-5 border-t border-line bg-float/92 px-1.5 pb-[env(safe-area-inset-bottom)] backdrop-blur-[16px] backdrop-saturate-150 mobile:hidden"
+      >
+        {link(items[0])}
+        {link(items[1])}
+        <button type="button" aria-label={t.shell.create} className={cn(item(false), 'gap-0.5')}>
+          <span className="grid h-8 w-11 place-items-center rounded-xl bg-butter text-[#16191d]">
+            <Plus size={21} aria-hidden />
+          </span>
+          {t.shell.create}
+        </button>
+        {link(items[2])}
+        <button type="button" aria-haspopup="dialog" aria-expanded={sheet} onClick={() => setSheet(true)} className={item(onMore)}>
+          <LayoutGrid size={23} aria-hidden />
+          {t.shell.more}
+        </button>
+      </nav>
+      <MoreSheet
+        open={sheet}
+        onClose={() => setSheet(false)}
+        route={route}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        approvals={approvals}
+      />
+    </>
+  )
+}
+
+interface SheetTileProps {
+  href: string
+  icon: LucideIcon
+  label: string
+  count: number
+  current: boolean
+  onClick: () => void
+}
+
+/**
+ * One page in the More sheet. A count sits after the label, as in the
+ * reference; when the label is too long for that (e.g. "Aprovações"), the
+ * count moves onto the icon's corner instead of squeezing the word.
+ */
+function SheetTile({ href, icon: Icon, label, count, current, onClick }: SheetTileProps) {
+  const labelRef = useRef<HTMLSpanElement>(null)
+  const [corner, setCorner] = useState(false)
+
+  // Measured once the sheet is on screen (the observer fires when the label gets a size).
+  // English "Approvals" overhangs its box by a few pixels, as in the reference; only a
+  // label that would run into the count moves it.
+  useLayoutEffect(() => {
+    const el = labelRef.current
+    if (!el || !count || corner) return
+    const check = () => {
+      if (el.clientWidth && el.scrollWidth - el.clientWidth > 12) setCorner(true)
+    }
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [count, corner])
+
+  const badge = 'inline-grid shrink-0 place-items-center rounded-full bg-butter font-bold text-[#16191d]'
+  return (
+    <a
+      href={href}
+      onClick={onClick}
+      aria-current={current ? 'page' : undefined}
+      className={cn(
+        'flex h-[58px] min-w-0 items-center gap-3 rounded-[18px] border px-3 py-2.5 text-sm font-semibold',
+        current ? 'border-transparent bg-pill text-on-pill' : 'border-line bg-glass-2',
       )}
-      <button type="button" onClick={onToggleTheme} className={cn(item, 'text-muted')}>
-        {theme === 'dark' ? <Sun size={21} aria-hidden /> : <Moon size={21} aria-hidden />}
-        {t.shell.theme}
-      </button>
-    </nav>
+    >
+      <span className={cn('relative grid size-9 shrink-0 place-items-center rounded-xl', current ? 'bg-white/14 dark:bg-black/10' : 'bg-well')}>
+        <Icon size={20} aria-hidden />
+        {count > 0 && corner && (
+          <b className={cn(badge, 'absolute -right-2 -top-2 h-[19px] min-w-[19px] px-1 text-[11px] shadow-[0_0_0_2px_var(--solid)]')}>{count}</b>
+        )}
+      </span>
+      <span ref={labelRef} className={cn('min-w-0 leading-[1.2] [overflow-wrap:normal]', count > 0 && !corner && 'whitespace-nowrap')}>
+        {label}
+      </span>
+      {count > 0 && !corner && <b className={cn(badge, 'ml-auto h-[21px] min-w-[21px] px-1.5 text-[12.5px]')}>{count}</b>}
+    </a>
+  )
+}
+
+/** Bottom sheet behind "More" (".msheet" in a ".drawer"): every other page, then search, today and the theme. */
+function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals }: { open: boolean; onClose: () => void } & Omit<MobileNavProps, 'inboxUnread' | 'channelsNeedAttention'>) {
+  const { t } = useI18n()
+  const ref = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const d = ref.current
+    if (!d) return
+    if (open && !d.open) d.showModal()
+    if (!open && d.open) d.close()
+  }, [open])
+
+  const ghost = 'inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-line-2 bg-glass px-2.5 text-sm font-semibold'
+  return (
+    <dialog
+      ref={ref}
+      aria-label={t.shell.more}
+      onClose={onClose}
+      onClick={(e) => e.target === ref.current && onClose()}
+      className="inset-x-0 bottom-0 top-auto m-0 max-h-[90dvh] w-full max-w-none overflow-auto overscroll-contain rounded-t-[28px] border border-b-0 border-rim bg-solid p-0 text-text shadow-pop backdrop:bg-[rgb(16_18_20/0.26)] backdrop:backdrop-blur-[6px] open:animate-sheet dark:backdrop:bg-black/60"
+    >
+      <span aria-hidden className="absolute left-1/2 top-2 h-1 w-9 -translate-x-1/2 rounded-full bg-line-2" />
+      <div className="relative grid gap-[18px] px-[18px] pb-[calc(22px+env(safe-area-inset-bottom))] pt-[41px]">
+        <span className="absolute right-[18px] top-4">
+          <IconButton label={t.common.close} icon={X} onClick={onClose} className="size-11" />
+        </span>
+        <h2 className="pr-[52px] text-[23px] font-bold leading-[1.4] tracking-[-0.02em]">{t.shell.more}</h2>
+        <nav aria-label={t.shell.morePages} className="grid grid-cols-2 gap-2">
+          {MORE_PAGES.map(({ id, icon }) => (
+            <SheetTile
+              key={`${id}-${t.routes[id].label}`}
+              href={`#/${id}`}
+              icon={icon}
+              label={t.routes[id].label}
+              count={id === 'approvals' ? approvals : 0}
+              current={route === id}
+              onClick={onClose}
+            />
+          ))}
+        </nav>
+        <div className="grid grid-cols-3 gap-2">
+          <button type="button" className={ghost}>
+            <Search size={18} aria-hidden />
+            {t.shell.search}
+          </button>
+          <button type="button" className={ghost}>
+            <Clock size={18} aria-hidden />
+            {t.common.today}
+          </button>
+          <button type="button" onClick={onToggleTheme} className={ghost}>
+            {theme === 'dark' ? <Sun size={18} aria-hidden /> : <Moon size={18} aria-hidden />}
+            {theme === 'dark' ? t.shell.light : t.shell.dark}
+          </button>
+        </div>
+      </div>
+    </dialog>
   )
 }
 
 export function AppFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="overflow-x-clip pb-12 pl-[calc(var(--dock-x)+var(--dock-w)+var(--gutter))] pr-[var(--gutter)] pt-[22px] max-mobile:px-3.5 max-mobile:pb-[100px] max-mobile:pt-3.5">
+    <div className="overflow-x-clip pb-12 pl-[calc(var(--dock-x)+var(--dock-w)+var(--gutter))] pr-[var(--gutter)] pt-[22px] max-mobile:px-3.5 max-mobile:pb-[92px] max-mobile:pt-3.5">
       {children}
     </div>
   )

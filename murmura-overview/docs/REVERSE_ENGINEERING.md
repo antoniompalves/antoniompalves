@@ -1,4 +1,4 @@
-# Murmura · `#/overview`, `#/calendar` + `#/inbox` — reverse-engineering notes
+# Murmura · `#/overview`, `#/calendar`, `#/inbox` + `#/analytics` — reverse-engineering notes
 
 Reference: `https://demo.codeandchill.store/murmura/#/overview`, inspected with the
 Playwright MCP on **2026-10-30 ~14:15 UTC** at a **1440×900** viewport (light theme,
@@ -167,21 +167,22 @@ on the page is **derived** in `src/data/selectors.ts` (nothing is hard-coded in 
 
 | UI value | Derivation | Value |
 | --- | --- | --- |
-| Audience | Σ `networkStats.followers` | 976,260 → **976.3K** |
-| +x% in 30 days | Σ last 30 `followerGrowth` ÷ (audience − that) | 89,608 → **+10.1%** |
-| Engagement rate | `engagementRate30d` | **10.3%** |
+| Audience | Σ `channels[].followers` (19 accounts) | 976,260 → **976.3K** |
+| +x% in 30 days | new followers in the last 30 days of `analytics.series` ÷ (audience − that) | 89,608 → **+10.1%** |
+| Engagement rate | Σ engagements ÷ Σ reach of the posts published in the last 30 days | **10.3%** |
 | Posts going out this week | non-draft posts in the calendar week (Mon–Sun) — the same 19 the calendar shows for Oct 26 – Nov 1 | **19** |
 | Up next | soonest scheduled-or-awaiting post after `now`, then the next 6 | Ember & Oak · **18 h 45 min** |
 | Needs you | `todos` (approvals, failed post, channel reconnects), 4 visible | **6** |
 | 90D growth | Σ 90 points | **+238.9K · 32.4%** |
-| Top post | published this month, max reach | 346.9K reach · 23.2% · 2.8K saves · 8.9× |
+| Top post | published this month, max reach; "× usual reach" = its reach ÷ the median reach of the last 30 days' posts | 346.9K reach · 23.2% · 2.8K saves · 8.9× |
 | Week ahead | posts per day, chip tone from status (sea scheduled, butter awaiting, coral failed/changes) | 1·6·3·5·1·1·4 |
-| Network meters | followers ÷ max followers | TikTok 1 … LinkedIn 0.028 |
+| Network pulse | the analytics "By network" rows for 30 days (followers, growth, eng. rate); meter = followers ÷ max | TikTok 1 … LinkedIn 0.028 |
 | Inbox pulse | open conversations; unread; priority; sentiment split | 20 · 14 · 4 · 10/6/4 |
 | Tab badges | unread conversations / awaiting-approval posts | 14 / 5 |
 
-The 90 daily follower values were recovered from the reference chart path
-(`value = (204 − y) / 192 × 10 000`); their sum reproduces the UI totals exactly.
+The daily follower values were first recovered from the overview chart path
+(`value = (204 − y) / 192 × 10 000`); they are now the sum of the per-network
+analytics series (section 10), which reproduces them exactly.
 
 ## 7. Verification
 
@@ -198,7 +199,7 @@ Known differences:
 - Curve uses monotone-X interpolation; the original's smoothing differs slightly.
 - The demo's live simulation (new inbox messages arriving, count-up stats, mesh
   parallax, magnetic buttons) is not reproduced; the countdown and "x min ago" do tick.
-- `#/overview`, `#/calendar` and `#/inbox` are recreated; other routes render a placeholder listing their sections.
+- `#/overview`, `#/calendar`, `#/inbox` and `#/analytics` are recreated; other routes render a placeholder listing their sections.
 
 ## 8. Calendar (`#/calendar`)
 
@@ -278,8 +279,7 @@ the calendar immediately reshuffles the overview's Up next and Week ahead.
 | Peaks with Best times on | same slots per day |
 | Drag Sat 12 PM tile down 2.4 h | same "Sat · 2:30 PM" target and "Moved to Tomorrow · 2:30 PM" toast |
 
-Known differences: post metrics other than the top post are synthetic; the
-preview card's height follows the photo's aspect (the reference photos are
+Known differences: the preview card's height follows the photo's aspect (the reference photos are
 portrait, the placeholders square); the "Failed" chip groups failed and
 changes-requested posts (the reference's "needs attention" colour); the reference
 persists edits in `localStorage`, this recreation keeps them in memory.
@@ -376,5 +376,103 @@ Known differences: the reference's live simulation (new comments every minute wi
 a "New comment from … on Instagram" toast) is not reproduced and times come from
 the frozen clock; photos are placeholders; assignee notifications, the audit log
 and role-based locks ("Your role can’t reply") are not modelled because the mock
-user is the owner; the mobile app chrome follows the earlier overview recreation,
-which differs from the reference's current phone header and bottom bar.
+user is the owner; the phone header and bottom bar were aligned with the reference later,
+with the analytics work (section 10).
+
+## 10. Analytics (`#/analytics`)
+
+Reached from the **Analytics** tab, and on phones from the bottom bar's **More**
+sheet (recreated too). `#/analytics/:network` filters the whole page to one
+network. Inspected with computed styles, the page's lazily loaded `analytics-*`
+CSS and JS (read for behaviour and wording only), every chart path, table cell
+and heatmap opacity for **27 states** (7D/30D/90D × all networks + 8 networks),
+and the reference's own state (19 channels, 89 posts with their metrics).
+
+| Analytics · 1440 | Expanded card + heatmap tooltip | Phone + More sheet |
+| --- | --- | --- |
+| ![Analytics, light theme](screenshots/analytics-light.png) | ![Best time to post expanded](screenshots/analytics-expanded.png) | ![Analytics on a phone and the More sheet](screenshots/analytics-mobile.png) |
+
+| Instagram filter, dark | Schedule a report (pt-PT) |
+| --- | --- |
+| ![Instagram accounts and top posts, dark theme](screenshots/analytics-dark.png) | ![Schedule a report dialog in Portuguese](screenshots/analytics-pt.png) |
+
+### Layout
+
+```
+header   title · 4 stats (users, trending-up, eye, heart) · 7D/30D/90D · Export CSV (ink) · Schedule a report (ghost)
+chips    All networks 19 · Instagram 4 · Facebook 3 · X 2 · LinkedIn 1 · TikTok 3 · YouTube 2 · Pinterest 2 · Threads 2   "5 brands · last 30 days"
+.an-grid 12 cols, gap 16:  grow 7 | imp 5  /  best 8 | mix 4  /  net 12  /  top 7 | brands 5
+         ≤ 1340px: 6 cols (grow 3 | imp 3 / best 6 / mix 3 | brands 3 / net 6 / top 6) · ≤ 1000px: 1 col
+```
+
+| Part | Value |
+| --- | --- |
+| Chip | 38px pill, padding 0 12 0 6, gap 8, 13/600; 22px network disc on `--solid`; count 20px pill on `--well`; current = `--pill` (count and disc 14–16% white) |
+| Card | the overview card (26px radius, 20px padding, 16px on phones) + an **Expand** button: the card lifts out over a 28% scrim, `width: min(1165px, 92%)`, `top: 8vh`, `max-height: 84vh` (10px inset on phones), Escape or the scrim closes it, a dashed outline keeps its place |
+| Figures | `clamp(28px, 2.5vw, 36px)`/600, caption 13px muted on the same baseline; delta badge pine / coral |
+| Charts | viewBox `width × 240`, plot x 44 → width − 12, y 12 → 214; this period 2.5px line + 22% → 0 area, previous period 2px `--faint` dashed 5/6; ticks 0 · top/2 · top with **top = smallest 1/2/2.5/5 × 10ⁿ ≥ 1.08 × max** (checked on 108 axes); one date per ~60px of plot plus the last day; crosshair + two 4.5px dots, tooltip "Oct 15 / This period 44.8K / Previous period 39.1K" |
+| Heatmap | `36px repeat(24, 1fr)`, gap 4 (3 on phones), min-width 600 (560); cell r7 on `--well` with a `--sea` layer at opacity = value (`#3f8fd6` in dark); best 3 ringed (inset −4, r10, 2px) with a 19px rank disc; hours 12a 3a … 9p; Quiet ▭ Busy (96×10); slots: 26px rank, "Sat 8 AM / index 100", 34px plan button |
+| Content mix | rows `auto 7.5em 1fr auto 3.2em`, gap 10, 28px disc, 10px meter (ink at 82%), count, % |
+| Table | header 13/600 muted with sort buttons (chevron, shown on hover, flipped when ascending); rows 60px: 36px disc / 38px brand mark + name + "3 accounts" / handle, Status pill on the account view, growth pine/coral bold, 96×28 sparkline; phones: one 3-column card per row with labelled cells |
+| Top posts | `repeat(auto-fill, minmax(200px, 1fr))` gap 12 (2 columns on phones); card r20, image 1 / 0.86 (text-only posts on a wash of the brand colour), rank 30px (#1 butter), net stack, value 22/700, unit, brand chip + date, 👁 impressions · ♡ engagements |
+| Brand comparison | rows `auto 9em 1fr 4.4em`, 38px mark, "5 accounts · 11 posts", 14px track; phones move the bar under the name |
+| More sheet | bottom `<dialog>`, 28px top radius, `--solid`, handle, 44px close; 2-col 58px tiles (36px icon box, current = ink), Approvals count; Search · Today · Dark/Light |
+
+### How every figure is computed (`src/data/analytics.ts`)
+
+| Figure | Rule |
+| --- | --- |
+| Audience | Σ followers of the accounts in view ("across 19 accounts") |
+| New followers / badge | Σ daily gains over the range; badge = gained ÷ (audience − gained) |
+| vs the days before | (gained − gained in the previous range) ÷ previous ("no earlier period" when 0) |
+| Impressions / engagements / link clicks | Σ of the daily series; delta against the previous range |
+| Avg. engagement rate, N posts | mean of (likes + comments + shares + saves) ÷ reach over published posts with reach, `now − range ≤ at < now`, sent to the network in view |
+| Content mix | network deliveries of those posts, most first, ties in the order they first went out; % = count ÷ deliveries |
+| By network | per network: accounts, Σ followers, growth = gains ÷ (followers − gains), Σ impressions, mean eng. rate and count of its posts, follower curve |
+| Accounts (network picked) | per channel: its own gains and impressions, the brand's posts on that network ("—" without posts) |
+| Top posts | the range's posts, ranked by reach, engagement rate or link clicks; first 6 |
+| Brand comparison | per brand in view: Σ followers ("—" without accounts), mean eng. rate, Σ impressions; ties keep brand order |
+| Best time to post | 168 values per network (range-independent); top 3 by value, index = round(value × 100) |
+
+Data: the 19 channels (followers, status, handle) and the real metrics of the 50
+published posts come from the reference state; `src/data/analyticsData.ts` holds
+180 days of followers / impressions / engagements / clicks per network (decoded
+from the chart paths; all-networks = Σ networks, exactly), per-account range
+totals (solved inside the rounding interval of every printed cell, so the 57
+account rows, 15 brand totals and every growth % print the same), follower curves
+and heatmaps. The overview now derives its audience, growth, engagement rate,
+network pulse and top-post multiplier from the same data, with identical output.
+
+### Interactions
+
+- Range, network chips (and their deep links), metric, ranking and comparison toggles;
+  the heatmap has its own network switch that follows the page filter.
+- Sortable table (first click: name ascending, numbers descending); clicking a
+  network row opens that network; "← All networks" goes back.
+- Hover or arrow keys on the heatmap (a live region reads the hour aloud); hover or
+  ←/→ on the charts. Plan buttons go to Compose, like the calendar's slots.
+- Top post cards open the calendar's post drawer (publish, duplicate, delete, Undo).
+- **Export CSV** downloads `murmura-analytics-30d[-network].csv`: scope, period,
+  summary, the daily series, the table and every post (pt-PT uses `;` and decimal commas).
+- **Schedule a report**: name, Weekly (Mondays 9:00) / Monthly (1st, 9:00), recipients
+  (you preselected, "Pick at least one recipient."), toast with the first send and
+  Undo; afterwards the button shows a count and opens a menu of reports, each one
+  stoppable after a confirmation ("Stop this report?" → "Report stopped", Undo).
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| 22 landmarks (7 cards, chips, stats, actions, charts, heatmap, table, posts, bars…) at **1440**, **1280**, **1000** and **390** px | identical to the pixel; page height 2797 / 3468 / 4329 / 5505, as in the reference |
+| Same at 390 px with a touch pointer (44px targets) | within 1px |
+| Every printed figure in 27 states: stats, chips, note, both charts' texts, ticks and date labels (all three metrics), heatmap label + cells + slots, mix rows + meters, table cells + links, 6 top posts × 3 rankings, brands × 3 metrics + bars | identical, except bar lengths in brand impressions (≤ 0.0002) and "1 post / 1 delivery" (the reference prints "1 posts / 1 deliveries") |
+| Expanded card | `130,72 1165×413` at 1440 (same), x labels every 2 days |
+| Dark theme, mobile More sheet | visually matched |
+| English text of the other pages | unchanged apart from the new phone controls and the placeholder's route list |
+
+Known differences: the reference animates figures (count-up, morphing lines,
+FLIP expansion), and its scheduled reports and CSV export run on the same mock
+data; recipients are the 8 team members of this workspace (the reference also
+lists an analyst and two client logins); role locks ("Your role can't export
+reports") are not modelled because the mock user is the owner.
+

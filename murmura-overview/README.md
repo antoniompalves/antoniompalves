@@ -1,8 +1,8 @@
-# Murmura overview, calendar & inbox — React + Tailwind recreation
+# Murmura overview, calendar, inbox & analytics — React + Tailwind recreation
 
 Pixel-matched recreation of the `#/overview` dashboard, the `#/calendar`
-publishing calendar and the `#/inbox` messaging view of the Murmura social-media
-workspace demo, rebuilt from scratch with **React 19, TypeScript, Tailwind CSS v4
+publishing calendar, the `#/inbox` messaging view and the `#/analytics` reports of
+the Murmura social-media workspace demo, rebuilt from scratch with **React 19, TypeScript, Tailwind CSS v4
 and Lucide icons**. Design tokens, layout metrics, routes and the data model were
 reverse-engineered with Playwright; see [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md).
 
@@ -12,7 +12,7 @@ language, can be switched from the account menu (avatar, top right) or forced wi
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/#/overview  ·  #/calendar  ·  #/inbox  (add ?lang=pt-PT before the #)
+npm run dev        # http://localhost:5173/#/overview  ·  #/calendar  ·  #/inbox  ·  #/analytics  (add ?lang=pt-PT before the #)
 npm run build      # type-check + production build
 ```
 
@@ -36,6 +36,17 @@ The inbox has views, search with highlighting, filters, replies, internal notes,
 saved replies, photos from the brand library, assignment, priority, sentiment,
 tags, J / K / E / R / `/` shortcuts and Undo on every change the original lets you undo.
 
+| Analytics | Expanded card | Phone + More sheet |
+| --- | --- | --- |
+| ![Analytics, light theme](docs/screenshots/analytics-light.png) | ![Best time to post expanded, with the heatmap tooltip](docs/screenshots/analytics-expanded.png) | ![Analytics on a phone and the More sheet](docs/screenshots/analytics-mobile.png) |
+
+Analytics covers 7, 30 or 90 days for every network or one of them
+(`#/analytics/instagram`): audience and impressions against the previous period,
+a best-time heatmap, content mix, a sortable per-network / per-account table, top
+posts (opening the post drawer) and a brand comparison. Every card expands over the
+page; reports export as CSV or are scheduled by email (with Undo). On phones the
+bottom bar's **More** sheet leads to it and to every other page.
+
 | Português (Portugal) · Visão geral | Calendário | Mensagens |
 | --- | --- | --- |
 | ![Overview in European Portuguese](docs/screenshots/overview-pt.png) | ![Calendar in European Portuguese](docs/screenshots/calendar-pt.png) | ![Inbox in European Portuguese with the language menu](docs/screenshots/inbox-pt.png) |
@@ -55,12 +66,15 @@ src/
     Overview.tsx          #/overview: header + 8 cards on a 12-col grid
     Calendar.tsx          #/calendar: stats, filters, views, side panel, drawer wiring
     Inbox.tsx             #/inbox/:id: selection, actions + toasts, shortcuts, responsive panes
+    Analytics.tsx         #/analytics/:network: stats, chips, expandable cards, table, top posts, brands
   components/
-    AppShell.tsx          mesh background, top bar (sliding tab pill), dock, mobile nav
+    AppShell.tsx          mesh background, top bar (sliding tab pill), dock, mobile nav + More sheet
     PageHead.tsx          letter-by-letter page title, header stat
     GrowthChart.tsx       SVG area chart: monotone curve, grid, crosshair, tooltip, ←/→ keys
     Toast.tsx             bottom toast with Undo
     Popover.tsx           fixed popover anchored to its trigger (flips, clamps), menu rows
+    Modal.tsx             centred <dialog> form shell and a confirm dialog
+    useScrollEdges.ts     edge fades for sideways scrollers on phones
     usePostActions.ts     publish / duplicate / delete with Undo, shared by calendar and inbox
     ui.tsx                Card, Button, IconButton, Segmented, Badge, StatusPill, BrandMark, NetIcon…
     calendar/
@@ -70,6 +84,12 @@ src/
       SidePanel.tsx       mini calendar, unscheduled drafts, this week by network
       PostDrawer.tsx      <dialog> post preview with per-network mockups and actions
       useCalendarDrag.ts  pointer-based drag & drop with 30-min snapping
+    analytics/
+      PeriodChart.tsx     this period vs the previous one: area + dashed line, nice axis, tooltip
+      Heatmap.tsx         weekday × hour engagement grid, best slots, keyboard reading
+      Sparkline.tsx       96×28 follower trend for table rows
+      ReportControls.tsx  Schedule a report: form, report menu, stop with confirmation
+      exportCsv.ts        CSV report in the reader's language
     inbox/
       ConversationList.tsx  head, search, views, filters popover, 72px rows, empty states
       Thread.tsx            header tools + menus, pinned post, message log, composer + popovers
@@ -77,11 +97,13 @@ src/
       TagPopover.tsx        "Add a tag" field with suggestions
   data/
     types.ts              Workspace schema (brands, campaigns, team, posts, channels, inbox, audit…)
-    mock.ts               mock workspace frozen at Fri 30 Oct 2026, 14:15 UTC (80 posts, 22 conversations)
+    mock.ts               mock workspace frozen at Fri 30 Oct 2026, 14:15 UTC (80 posts, 19 channels, 22 conversations)
     selectors.ts          overview view-model (worded through the active catalogue)
     calendar.ts           calendar date math, lanes, ribbons, filters, stats
     inbox.ts              inbox views, filters, search, unread counts, time labels, tag rules
-    store.tsx             shared in-memory store (posts and conversations, with undo)
+    analytics.ts          analytics view-model: ranges, network filter, every figure on #/analytics
+    analyticsData.ts      180 days per network, per-account totals and curves, heatmaps (from the reference)
+    store.tsx             shared in-memory store (posts, conversations and scheduled reports, with undo)
     routes.ts             the SPA's hash routes (their names live in the catalogues)
     assets.ts             image URL helpers (swap for real assets here)
 ```

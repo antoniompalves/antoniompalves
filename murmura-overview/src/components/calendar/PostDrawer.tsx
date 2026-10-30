@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import type { Brand, NetworkId, Post, TeamMember } from '../../data/types'
 import { NETWORK_LABEL, clip } from '../../data/selectors'
+import { engagementRate, engagements } from '../../data/analytics'
 import { useI18n } from '../../i18n'
 import { photo } from '../../data/assets'
 import { BrandMark, Button, IconButton, NetStack, PostStatusPill, Segmented, cn, toneFill } from '../ui'
@@ -109,8 +110,8 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
               {[
                 [t.drawer.impressions, t.numbers.compact(m.impressions)],
                 [t.drawer.reach, t.numbers.compact(m.reach)],
-                [t.drawer.engagements, t.numbers.compact(m.engagements)],
-                [t.drawer.engRate, t.numbers.pct1(m.engagementRate)],
+                [t.drawer.engagements, t.numbers.compact(engagements(m))],
+                [t.drawer.engRate, t.numbers.pct1(engagementRate(m))],
               ].map(([k, v]) => (
                 <div key={k} className="rounded-2xl border border-line bg-glass-2 p-3">
                   <dt className="text-2xs text-muted">{k}</dt>
@@ -170,7 +171,7 @@ function Media({ post, className }: { post: Post; className?: string }) {
 
 function Preview({ post, brand, network, stamp }: { post: Post; brand: Brand; network: NetworkId; stamp: string }) {
   const { t } = useI18n()
-  const likes = post.metrics ? t.numbers.compact(Math.round(post.metrics.engagements * 0.82)) : '0'
+  const likes = t.numbers.compact(post.metrics?.likes ?? 0)
   const avatar = (
     <span className={cn('grid size-[34px] shrink-0 place-items-center rounded-full text-[12.5px] font-bold', toneFill[brand.tone])}>{brand.initials}</span>
   )

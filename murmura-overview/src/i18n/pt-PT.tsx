@@ -68,6 +68,12 @@ const KIND_NOUN: Record<ConversationKind, { noun: string; feminine: boolean }> =
 const agree = (kind: ConversationKind, masc: string, fem: string) => (KIND_NOUN[kind].feminine ? fem : masc)
 
 const SENTIMENT: Record<Sentiment, string> = { positive: 'Positivo', neutral: 'Neutro', negative: 'Negativo' }
+
+const METRIC = { impressions: 'Impressões', engagements: 'Interações', clicks: 'Cliques em links' }
+const WEEKDAY_LONG = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo']
+const WEEKDAY_SHORT = ['seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.', 'dom.']
+/** "08:00"; 24 wraps to "00:00". */
+const HOUR = (h: number) => `${pad(h % 24)}:00`
 /** Concordância com "conversa". */
 const SENTIMENT_F: Record<Sentiment, string> = { positive: 'positiva', neutral: 'neutra', negative: 'negativa' }
 
@@ -106,6 +112,8 @@ export const ptPT: Messages = {
       if (start.getUTCMonth() === end.getUTCMonth()) return `${start.getUTCDate()} – ${monthDay(end)} ${ey}`
       return `${monthDay(start)} – ${monthDay(end)} ${ey}`
     },
+    /** "seg., 2 nov., 09:00" */
+    dayTime: (d: Date) => `${dayLong(d)}, ${time(d)}`,
     stamp: (iso: string) => `${monthDay(new Date(iso))} · ${time(new Date(iso))}`,
     listTime: (iso: string, now: Date) => {
       const diff = dayDiff(iso, now)
@@ -134,8 +142,12 @@ export const ptPT: Messages = {
 
   numbers: {
     /** "976,3 mil" */
-    compact: (n: number) => num(L, { notation: 'compact', maximumFractionDigits: 1 }).format(n),
+    compact: (n: number) => num(L, { notation: 'compact', maximumFractionDigits: Math.abs(n) >= 1e6 ? 2 : 1 }).format(n),
+    /** "2305", "10 827" */
+    int: (n: number) => num(L).format(n),
     pct1,
+    /** "30%" */
+    pct0: (f: number) => num(L, { style: 'percent', maximumFractionDigits: 0 }).format(f),
     signedPct1: (f: number) => `${f >= 0 ? '+' : '−'}${pct1(Math.abs(f))}`,
     times: (n: number) => `${num(L, { maximumFractionDigits: 1 }).format(n)}×`,
   },
@@ -191,9 +203,13 @@ export const ptPT: Messages = {
     mobileNav: 'Navegação',
     mobileHome: 'Início',
     mobileInbox: 'Mensagens',
+    more: 'Mais',
+    morePages: 'Mais páginas',
+    dark: 'Escuro',
+    light: 'Claro',
     notRecreated: (routes: ReactNode[]) => (
       <>
-        Só {routes[0]}, {routes[1]} e {routes[2]} estão recriadas. Esta secção existe na referência com as partes abaixo.
+        Só {routes[0]}, {routes[1]}, {routes[2]} e {routes[3]} estão recriadas. Esta secção existe na referência com as partes abaixo.
       </>
     ),
   },
@@ -496,6 +512,169 @@ export const ptPT: Messages = {
       untagged: (tag: string) => `Etiqueta ${tag} removida`,
       unread: 'Marcada como por ler',
       copied: (handle: string) => `@${handle} copiado`,
+    },
+  },
+  analytics: {
+    title: 'Análises',
+    audience: (accounts: number) => `Audiência em ${plural(accounts, 'conta', 'contas')}`,
+    newFollowers: (days: number) => `Novos seguidores, últimos ${days} dias`,
+    impressions: (days: number) => `Impressões, últimos ${days} dias`,
+    engagement: (posts: number) => `Taxa média de interação, ${plural(posts, 'publicação', 'publicações')}`,
+    dateRange: 'Intervalo de datas',
+    rangeOption: (days: number) => `${days} d`,
+    exportCsv: 'Exportar CSV',
+    scheduleReport: 'Agendar relatório',
+    filterByNetwork: 'Filtrar por rede',
+    allNetworks: 'Todas as redes',
+    note: (brands: number, days: number) => `${plural(brands, 'marca', 'marcas')} · últimos ${days} dias`,
+    expand: 'Expandir',
+    collapse: 'Recolher',
+    thisPeriod: 'Este período',
+    previousPeriod: 'Período anterior',
+    growth: {
+      title: 'Crescimento da audiência',
+      sub: (days: number, vsBefore: string | null) =>
+        `seguidores ganhos, últimos ${days} dias · ${vsBefore === null ? 'sem período anterior' : `${vsBefore} face aos ${days} dias anteriores`}`,
+      legend: 'Seguidores ganhos, este período',
+      chart: 'Seguidores ganhos por dia, este período e o anterior',
+    },
+    metrics: {
+      title: 'Impressões e interação',
+      label: 'Métrica',
+      options: { impressions: 'Impressões', engagements: 'Interações', clicks: 'Cliques' },
+      sub: (metric: 'impressions' | 'engagements' | 'clicks', days: number) => `${METRIC[metric].toLowerCase()}, últimos ${days} dias`,
+      legend: (metric: 'impressions' | 'engagements' | 'clicks') => `${METRIC[metric]}, este período`,
+      chart: (metric: 'impressions' | 'engagements' | 'clicks') => `${METRIC[metric]} por dia, este período e o anterior`,
+    },
+    best: {
+      title: 'Melhor hora para publicar',
+      sub: (timeZone: string) => `Interação por dia da semana e hora, no seu fuso horário (${timeZone.replace('_', ' ')})`,
+      networks: 'Rede',
+      all: 'Todas',
+      heatmap: (network: string | null, slots: string[]) =>
+        `Mapa de calor da interação em ${network ?? 'todas as redes'}. Melhores horários: ${slots.join(', ')}. Use as setas para ler qualquer hora.`,
+      days: ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'],
+      /** Axis ticks every three hours: "0h", "15h". */
+      hourTick: (h: number) => `${h}h`,
+      /** "sábado às 08:00" */
+      slot: (day: number, hour: number) => `${WEEKDAY_LONG[day]} às ${HOUR(hour)}`,
+      /** "sáb. 08:00" */
+      slotShort: (day: number, hour: number) => `${WEEKDAY_SHORT[day]} ${HOUR(hour)}`,
+      /** "Sábado · 08:00–09:00" */
+      cell: (day: number, hour: number) => `${capitalize(WEEKDAY_LONG[day])} · ${HOUR(hour)}–${HOUR(hour + 1)}`,
+      index: (n: number) => `índice ${n}`,
+      engagementIndex: 'Índice de interação',
+      bestSlot: 'Melhor horário',
+      plan: (slot: string) => `Planear uma publicação para ${slot}`,
+      bestSlots: 'Os três melhores horários',
+      quiet: 'Calmo',
+      busy: 'Intenso',
+    },
+    mix: {
+      title: 'Distribuição por rede',
+      sub: (posts: number, deliveries: number | null, days: number) =>
+        deliveries === null
+          ? `${posts === 1 ? 'publicação' : 'publicações'}, últimos ${days} dias`
+          : `${posts === 1 ? 'publicação' : 'publicações'}, ${plural(deliveries, 'envio', 'envios')} para as redes`,
+      row: (network: string, n: number, total: number) => `${network}: ${n} de ${plural(total, 'envio', 'envios')}`,
+      emptyTitle: 'Nada publicado',
+      emptyText: 'As publicações que saírem neste período são contadas aqui, por rede.',
+    },
+    table: {
+      byNetwork: 'Por rede',
+      accountsOn: (network: string) => `Contas de ${network}`,
+      caption: (days: number, byAccount: boolean) =>
+        `Seguidores, crescimento, impressões, taxa de interação e publicações por ${byAccount ? 'conta' : 'rede'} nos últimos ${days} dias. Os cabeçalhos das colunas ordenam a tabela.`,
+      network: 'Rede',
+      account: 'Conta',
+      accounts: 'Contas',
+      status: 'Estado',
+      followers: 'Seguidores',
+      growth: 'Crescimento',
+      impressions: 'Impressões',
+      engRate: 'Tx. interação',
+      posts: 'Publicações',
+      trend: 'Evolução',
+      trendShort: 'Evolução',
+      accountCount: (n: number) => plural(n, 'conta', 'contas'),
+      channelStatus: { connected: 'Ligada', expiring: 'A expirar', disconnected: 'Desligada' },
+      emptyTitle: 'Sem contas aqui',
+      emptyText: (network: string | null) => (network ? `Nada nesta vista está ligado ao ${network}.` : 'Ligue um canal para começar a recolher números.'),
+    },
+    top: {
+      title: 'Melhores publicações',
+      rankBy: 'Ordenar por',
+      options: { reach: 'Alcance', eng: 'Tx. interação', clicks: 'Cliques' },
+      unit: { reach: 'alcance', eng: 'taxa de interação', clicks: 'cliques em links' },
+      label: (rank: number, by: 'reach' | 'eng' | 'clicks', text: string) =>
+        `N.º ${rank} por ${by === 'reach' ? 'alcance' : by === 'eng' ? 'taxa de interação' : 'cliques em links'}: ${text}`,
+      impressions: 'Impressões',
+      engagements: 'Interações',
+      emptyTitle: 'Sem publicações neste período',
+      emptyText: (network: string | null, days: number) => `Nada saiu ${network ? `no ${network} ` : ''}nos últimos ${days} dias. Experimente um intervalo maior.`,
+    },
+    brands: {
+      title: 'Por marca',
+      compareBy: 'Comparar por',
+      options: { followers: 'Seguidores', eng: 'Tx. interação', impressions: 'Impressões' },
+      meta: (accounts: number, posts: number) => `${plural(accounts, 'conta', 'contas')} · ${plural(posts, 'publicação', 'publicações')}`,
+    },
+    scope: (network: string | null) => `Todas as marcas${network ? ` · ${network}` : ''}`,
+    exported: (days: number) => `Relatório dos últimos ${days} dias exportado`,
+    report: {
+      title: 'Agendar relatório',
+      sub: (scope: string) => `O relatório «${scope}» é enviado por e-mail, em PDF e CSV, em cada período, às pessoas que escolher.`,
+      name: 'Nome do relatório',
+      defaultName: (scope: string) => `${scope} — desempenho`,
+      frequency: 'Frequência',
+      frequencies: { weekly: 'Semanal, à segunda-feira, às 09:00', monthly: 'Mensal, no dia 1, às 09:00' },
+      recipients: 'Destinatários',
+      pickOne: 'Escolha pelo menos um destinatário.',
+      cancel: 'Cancelar',
+      submit: 'Agendar',
+      scheduled: (frequency: 'weekly' | 'monthly', first: string) => `Relatório ${frequency === 'weekly' ? 'semanal' : 'mensal'} agendado · o primeiro sai ${first}`,
+      menu: 'Relatórios agendados',
+      item: (name: string, frequency: 'weekly' | 'monthly', people: number) =>
+        `${name} · ${frequency === 'weekly' ? 'semanal' : 'mensal'}, ${plural(people, 'pessoa', 'pessoas')}`,
+      hint: (names: string[], next: string) => `Destinatários: ${names.join(', ')}. Próximo: ${next}`,
+      newReport: 'Novo relatório agendado',
+      stopTitle: 'Parar este relatório?',
+      stopText: (name: string, people: number) => `«${name}» deixa de ser enviado a ${plural(people, 'pessoa', 'pessoas')}.`,
+      stop: 'Parar relatório',
+      stopped: 'Relatório parado',
+    },
+    csv: {
+      // O Excel em português usa ";" como separador de listas.
+      separator: ';',
+      file: (days: number, network: string | null) => `murmura-analises-${days}d${network ? `-${network}` : ''}.csv`,
+      title: 'Relatório de análises Murmura',
+      scope: 'Âmbito',
+      period: 'Período',
+      generated: 'Gerado em',
+      summary: 'Resumo',
+      audience: 'Audiência',
+      newFollowers: 'Novos seguidores',
+      followerGrowth: 'Crescimento de seguidores',
+      impressions: 'Impressões',
+      avgEngagement: 'Taxa média de interação',
+      postsPublished: 'Publicações',
+      date: 'Data',
+      followers: 'Seguidores',
+      engagements: 'Interações',
+      linkClicks: 'Cliques em links',
+      network: 'Rede',
+      account: 'Conta',
+      accounts: 'Contas',
+      growth: 'Crescimento',
+      engRate: 'Taxa de interação',
+      posts: 'Publicações',
+      post: 'Publicação',
+      brand: 'Marca',
+      published: 'Publicada em',
+      networks: 'Redes',
+      reach: 'Alcance',
+      pct: (f: number) => num(L, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(f),
+      stamp: (d: Date) => d.toLocaleString(L),
     },
   },
 }

@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import type { Brand, NetworkId, PostStatus, Tone } from '../data/types'
 import { NETWORK_LABEL, STATUS_TONE } from '../data/selectors'
@@ -39,7 +39,7 @@ interface CardProps extends Omit<ComponentPropsWithoutRef<'section'>, 'title'> {
   pad?: string
 }
 
-export function Card({ title, sub, tools, pad = 'p-5', className, children, ...rest }: CardProps) {
+export function Card({ title, sub, tools, pad = 'p-5 max-mobile:p-4', className, children, ...rest }: CardProps) {
   return (
     <section
       className={cn('relative min-w-0 rounded-card border border-rim bg-glass shadow-card', pad, className)}
@@ -82,7 +82,7 @@ export function Segmented<T extends string | number>({
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            'cursor-pointer whitespace-nowrap rounded-full px-[15px] py-2 text-2xs font-semibold transition-[background-color,color,box-shadow] duration-300 ease-soft',
+            'cursor-pointer whitespace-nowrap rounded-full px-[15px] py-2 text-2xs font-semibold transition-[background-color,color,box-shadow] duration-300 ease-soft pointer-coarse:min-h-11',
             value === o.value ? 'bg-glass-3 text-text shadow-[0_2px_8px_rgb(0_0_0/0.08)] dark:bg-white/14' : 'text-muted',
           )}
         >
@@ -105,7 +105,7 @@ const buttonVariant: Record<ButtonVariant, string> = {
   danger: 'border-transparent bg-coral text-on-coral',
 }
 
-interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
+interface ButtonProps extends ComponentProps<'button'> {
   variant?: ButtonVariant
   size?: 'md' | 'sm'
   icon?: LucideIcon
@@ -151,6 +151,8 @@ export function IconButton({ label, icon: Icon, href, variant = 'line', size = '
     variant === 'glass' && 'size-[46px] border-rim bg-glass-2 text-text hover:bg-glass-3',
     variant === 'on-dark' && 'border-on-ink/28 text-inherit hover:bg-on-ink/12',
     variant !== 'glass' && (size === 'sm' ? 'size-[34px]' : 'size-[42px]'),
+    // Touch screens get 44px targets, as in the reference.
+    variant !== 'glass' && 'pointer-coarse:size-11',
     className,
   )
   const icon = <Icon size={size === 'sm' ? 17 : 20} aria-hidden />
@@ -356,7 +358,7 @@ interface NetIconProps {
   network: NetworkId
   size?: keyof typeof netSize
   /** Surface the badge sits on; tunes background + ring so stacks read cleanly. */
-  surface?: 'default' | 'stack' | 'on-ink' | 'on-photo' | 'badge'
+  surface?: 'default' | 'stack' | 'on-ink' | 'on-photo' | 'badge' | 'chip' | 'on-pill'
   className?: string
 }
 
@@ -370,12 +372,14 @@ export function NetIcon({ network, size = 'xs', surface = 'default', className }
       className={cn(
         'inline-grid shrink-0 place-items-center rounded-full border',
         netSize[size],
-        netColor[network],
+        surface !== 'on-pill' && netColor[network],
         surface === 'default' && 'border-line bg-glass-2',
         surface === 'stack' && 'border-transparent bg-solid shadow-[0_0_0_2px_var(--solid)]',
         surface === 'on-ink' && 'border-transparent bg-on-ink shadow-[0_0_0_2px_var(--ink)]',
         surface === 'on-photo' && cn('border-transparent bg-white/92 shadow-[0_0_0_2px_var(--solid)]', mono && 'text-[#16191d]'),
         surface === 'badge' && 'border-transparent bg-float shadow-[0_0_0_2px_var(--float)]',
+        surface === 'chip' && 'border-line bg-solid',
+        surface === 'on-pill' && 'border-transparent bg-white/14 text-inherit dark:bg-black/10',
         className,
       )}
     >

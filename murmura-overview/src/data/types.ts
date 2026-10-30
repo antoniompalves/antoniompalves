@@ -4,6 +4,8 @@
  * into entities so every widget on #/overview can be computed from them.
  */
 
+import type { AccountRange, NetworkSeries, Range } from './analyticsData'
+
 export type ISODate = string
 
 export type NetworkId =
@@ -49,14 +51,20 @@ export interface TeamMember {
   title?: string
   /** Brands they work on; only these teammates are offered when assigning a conversation. */
   brands: string[] | 'all'
+  /** Where scheduled reports are sent. */
+  email: string
 }
 
 export type ChannelStatus = 'connected' | 'expiring' | 'disconnected'
 
+/** One connected social account: a brand on a network. */
 export interface Channel {
   id: string
   brandId: string
   network: NetworkId
+  /** Handle or page name as the network shows it, e.g. "@emberandoak" or "Ember & Oak". */
+  handle: string
+  followers: number
   status: ChannelStatus
   /** Days until the token expires, when status === 'expiring'. */
   expiresInDays?: number
@@ -70,14 +78,17 @@ export type PostStatus =
   | 'published'
   | 'failed'
 
+/** Lifetime totals of a published post across its networks. Engagements = likes + comments + shares + saves. */
 export interface PostMetrics {
   impressions: number
   reach: number
-  engagements: number
-  engagementRate: number
+  likes: number
+  comments: number
+  shares: number
   saves: number
-  /** Reach relative to the brand's median post, e.g. 8.9 → "8.9× usual reach". */
-  reachVsUsual: number
+  /** Link clicks. */
+  clicks: number
+  views: number
 }
 
 export interface Post {
@@ -94,14 +105,6 @@ export interface Post {
   metrics?: PostMetrics
   /** Why publishing failed; the UI words it per language. */
   failure?: { network: NetworkId; code: 'disconnected' }
-}
-
-export interface NetworkStat {
-  network: NetworkId
-  followers: number
-  /** Follower growth over the last 30 days, as a fraction (0.07 → +7.0%). */
-  growth30d: number
-  engagementRate: number
 }
 
 export interface DailyPoint {
@@ -171,6 +174,16 @@ export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permissi
 
 export type Permission = 'assignConversations'
 
+/** An analytics report emailed on a schedule. */
+export interface ScheduledReport {
+  id: string
+  name: string
+  frequency: 'weekly' | 'monthly'
+  recipientIds: string[]
+  /** What it covers, e.g. "All brands · Instagram". */
+  scope: string
+}
+
 /** What happened, as data: the activity feed turns it into a sentence in the current language. */
 export type AuditAction =
   | { type: 'approved'; excerpt: string; brandId: string }
@@ -194,9 +207,21 @@ export type TodoItem =
   | { kind: 'failed_post'; id: string; postId: string }
   | { kind: 'channel'; id: string; channelId: string }
 
+export interface AnalyticsHistory {
+  series: Record<NetworkId, NetworkSeries>
+  /** Keyed by channel id. */
+  accounts: Record<string, Record<Range, AccountRange>>
+  networkTrends: Record<NetworkId, Record<Range, number[]>>
+  heat: Record<NetworkId | 'all', number[]>
+}
+
 export interface Workspace {
   /** Frozen "now" so relative labels (Tomorrow, 18 h 45 min…) are reproducible. */
   now: ISODate
+  /**
+   * The workspace's time zone, as shown in labels. Every date is formatted in
+   * UTC, which Lisbon follows from the end of summer time (Oct 25) to March.
+   */
   timeZone: string
   currentUserId: string
   brands: Brand[]
@@ -204,15 +229,14 @@ export interface Workspace {
   team: TeamMember[]
   channels: Channel[]
   posts: Post[]
-  networkStats: NetworkStat[]
+  /** Follower, impression, engagement and click history per network and account (analyticsData.ts). */
+  analytics: AnalyticsHistory
+  reports: ScheduledReport[]
   /**
    * Relative engagement per weekday (Mon…Sun) and hour (6 AM…11 PM), 0–1.
    * Shades the calendar's "Best times" overlay.
    */
   bestTimes: number[][]
-  /** New followers per day across all channels, oldest first (90 days). */
-  followerGrowth: DailyPoint[]
-  engagementRate30d: number
   conversations: Conversation[]
   savedReplies: SavedReply[]
   media: MediaAsset[]

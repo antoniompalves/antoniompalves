@@ -9,6 +9,7 @@ import { matchRoute, tabRoutes } from './data/routes'
 import { selectOverview } from './data/selectors'
 import { WorkspaceProvider, useWorkspace } from './data/store'
 import type { NavItem } from './data/types'
+import { Analytics } from './pages/Analytics'
 import { Calendar } from './pages/Calendar'
 import { Inbox } from './pages/Inbox'
 import { Overview } from './pages/Overview'
@@ -108,11 +109,13 @@ function Shell() {
             <Calendar now={now} />
           ) : routeId === 'inbox' ? (
             <Inbox now={now} hash={hash} />
+          ) : routeId === 'analytics' ? (
+            <Analytics now={now} hash={hash} />
           ) : (
             <Card title={page.title} className="max-w-3xl">
               <p className="text-sm text-muted">
                 {t.shell.notRecreated(
-                  ['#/overview', '#/calendar', '#/inbox'].map((r) => (
+                  ['#/overview', '#/calendar', '#/inbox', '#/analytics'].map((r) => (
                     <code key={r} className="font-semibold text-text">
                       {r}
                     </code>
@@ -131,7 +134,13 @@ function Shell() {
         </main>
       </AppFrame>
       <Dock route={routeId} theme={theme} onToggleTheme={toggleTheme} channelsNeedAttention={model.badges.channelsNeedAttention} />
-      <MobileNav route={routeId} theme={theme} onToggleTheme={toggleTheme} />
+      <MobileNav
+        route={routeId}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        inboxUnread={model.badges.inbox}
+        approvals={model.badges.approvals}
+      />
     </>
   )
 }

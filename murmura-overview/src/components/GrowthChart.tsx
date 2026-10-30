@@ -27,7 +27,7 @@ function niceMax(max: number, ticks = 2) {
 }
 
 /** Monotone cubic interpolation in x (Fritsch–Carlson, as in d3.curveMonotoneX). */
-function monotonePath(pts: [number, number][]) {
+export function monotonePath(pts: [number, number][]) {
   const n = pts.length
   if (n < 2) return ''
   const dx = pts.slice(1).map((p, i) => p[0] - pts[i][0])

@@ -3,8 +3,8 @@ import type {
   Brand,
   Channel,
   Conversation,
+  DailyPoint,
   NetworkId,
-  NetworkStat,
   Post,
   PostStatus,
   TeamMember,
@@ -13,6 +13,7 @@ import type {
 } from './types'
 import { addDays, dayKey, startOfDay } from './calendar'
 import { byActivity, lastMessage } from './inbox'
+import { activeNetworks, daily, engagementRate, engagements, networkRows, publishedIn } from './analytics'
 import type { Messages } from '../i18n'
 
 /* ───────────────────────── labels ───────────────────────── */
@@ -75,16 +76,25 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
   const greeting = t.overview.greeting(now.getUTCHours(), firstName(user))
 
   // Header stats
-  const audience = ws.networkStats.reduce((sum, n) => sum + n.followers, 0)
+  const audience = ws.channels.reduce((sum, c) => sum + c.followers, 0)
+  // New followers per day across every network, the last 90 days.
+  const today = startOfDay(now)
+  const followerGrowth: DailyPoint[] = daily(ws, activeNetworks(ws), 'followers', 90).map((value, i) => ({
+    date: addDays(today, i - 89).toISOString(),
+    value,
+  }))
   const growth = (range: GrowthRange) => {
-    const series = ws.followerGrowth.slice(-range)
+    const series = followerGrowth.slice(-range)
     const added = series.reduce((sum, p) => sum + p.value, 0)
     return { series, added, rate: added / (audience - added) }
   }
+  // Engagements per reach across everything published in the last 30 days.
+  const recent = publishedIn(ws, now, 30, null)
+  const engagementRate30d =
+    recent.reduce((sum, p) => sum + engagements(p.metrics), 0) / Math.max(1, recent.reduce((sum, p) => sum + p.metrics.reach, 0))
 
-  const todayStart = startOfDay(now)
   // "This week" is the calendar week (Mon–Sun), the same range the calendar opens on.
-  const weekStart = addDays(todayStart, -((todayStart.getUTCDay() + 6) % 7))
+  const weekStart = addDays(today, -((today.getUTCDay() + 6) % 7))
   const weekEnd = addDays(weekStart, 7)
   const postsThisWeek = ws.posts.filter((p) => {
     const t = Date.parse(p.scheduledAt)
@@ -123,16 +133,25 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
     }
   })
 
-  // Top post this month
+  // Top post this month, with its reach against the median post of the last 30 days
   const monthKey = dayKey(now).slice(0, 7)
+  const reaches = recent.map((p) => p.metrics.reach).sort((a, b) => a - b)
+  const mid = reaches.length >> 1
+  const usualReach = reaches.length % 2 ? reaches[mid] : (reaches[mid - 1] + reaches[mid]) / 2
   const topPost = ws.posts
     .filter((p) => p.status === 'published' && p.metrics && p.scheduledAt.startsWith(monthKey))
     .sort((a, b) => b.metrics!.reach - a.metrics!.reach)
-    .map((p) => ({ ...p, brand: brand(p.brandId), metrics: p.metrics! }))[0]
+    .map((p) => ({
+      ...p,
+      brand: brand(p.brandId),
+      metrics: p.metrics!,
+      engagementRate: engagementRate(p.metrics!),
+      reachVsUsual: usualReach ? p.metrics!.reach / usualReach : 0,
+    }))[0]
 
   // The week ahead
   const week: DayView[] = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(todayStart, i)
+    const date = addDays(today, i)
     const k = dayKey(date)
     return {
       date,
@@ -144,10 +163,10 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
     }
   })
 
-  // Network pulse
-  const nets = [...ws.networkStats].sort((a, b) => b.followers - a.followers)
+  // Network pulse: the last 30 days per network, as on #/analytics
+  const nets = networkRows(ws, now, 30)
   const maxFollowers = nets[0]?.followers ?? 1
-  const networkPulse = nets.map((n: NetworkStat) => ({ ...n, share: n.followers / maxFollowers }))
+  const networkPulse = nets.map((n) => ({ ...n, share: n.followers / maxFollowers }))
 
   // Inbox pulse
   const open = ws.conversations.filter((c) => c.status === 'open')
@@ -176,7 +195,7 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
     stats: {
       audience,
       audienceGrowth30d: growth(30).rate,
-      engagementRate: ws.engagementRate30d,
+      engagementRate: engagementRate30d,
       postsThisWeek,
     },
     badges: {

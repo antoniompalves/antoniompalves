@@ -109,9 +109,9 @@ export function Calendar({ now }: { now: Date }) {
 
   return (
     <>
-      <header className="mb-6 flex flex-wrap items-center gap-x-[clamp(28px,4vw,72px)] gap-y-[18px]">
+      <header className="mb-6 flex flex-wrap items-center gap-x-[clamp(28px,4vw,72px)] gap-y-[18px] max-mobile:mb-[18px] max-mobile:gap-y-3">
         <PageTitle lines={t.calendar.titleLines} label={t.calendar.title} />
-        <dl className="flex flex-wrap gap-x-[clamp(24px,3.2vw,56px)] gap-y-3.5">
+        <dl className="flex flex-wrap gap-x-[clamp(24px,3.2vw,56px)] gap-y-3.5 max-mobile:grid max-mobile:w-full max-mobile:grid-cols-2 max-mobile:gap-x-3.5 max-mobile:gap-y-2.5">
           <Stat icon={CalendarDays} value={String(stats.scheduled)} label={t.calendar.scheduledThisWeek} />
           <Stat icon={ShieldCheck} value={String(stats.awaiting)} label={t.calendar.awaitingApproval} />
           <Stat icon={Send} value={String(stats.published)} label={t.calendar.publishedThisWeek} />

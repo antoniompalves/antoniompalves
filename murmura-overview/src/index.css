@@ -287,6 +287,17 @@
   animation: cl-land 1.3s var(--ease-soft);
 }
 
+@keyframes sheet-in {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+@utility animate-sheet {
+  animation: sheet-in 0.35s var(--ease-soft);
+}
+
 @utility animate-drawer {
   animation: drawer-in 0.35s var(--ease-soft);
 }
@@ -333,6 +344,46 @@ html.cl-dragging * {
 
 @utility animate-breathe {
   animation: breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@utility animate-fade {
+  animation: fade-in 0.25s ease-out both;
+}
+
+/* Analytics grid (".an-grid--brands" in the reference): 12 columns, 6 from
+   1340px down, then a single column from 1000px. */
+.an-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "grow grow grow grow grow grow grow imp imp imp imp imp"
+    "best best best best best best best best mix mix mix mix"
+    "net net net net net net net net net net net net"
+    "top top top top top top top brands brands brands brands brands";
+}
+@media (width <= 1340px) {
+  .an-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      "grow grow grow imp imp imp"
+      "best best best best best best"
+      "mix mix mix brands brands brands"
+      "net net net net net net"
+      "top top top top top top";
+  }
+}
+@media (width <= 1000px) {
+  .an-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "grow" "imp" "best" "mix" "brands" "net" "top";
+  }
 }
 
 @utility animate-rise {

@@ -1,33 +1,17 @@
 import { avatar } from './assets'
-import type { Conversation, DailyPoint, Message, NetworkId, Post, PostMetrics, Workspace } from './types'
+import { ACCOUNT_STATS, HEAT, NETWORK_TRENDS, SERIES } from './analyticsData'
+import type { Conversation, Message, NetworkId, Post, PostMetrics, Workspace } from './types'
 
 /**
  * Mock workspace mirroring the reference app at Fri, Oct 30 2026, 14:15 UTC.
- * Every figure the overview and calendar show is derived from these entities
- * (selectors.ts, calendar.ts): 976.3K audience = Σ networkStats.followers,
- * +89.6K = last 30 followerGrowth points, 19 posts this week, 6 todos,
- * 20 open conversations (14 unread), 78 posts on the October grid, and so on.
+ * Every figure the overview, calendar and analytics show is derived from these
+ * entities (selectors.ts, calendar.ts, analytics.ts): 976.3K audience = Σ followers
+ * of the 19 channels, +89.6K = new followers in the last 30 days of the
+ * analytics series, 19 posts this week, 6 todos, 20 open conversations
+ * (14 unread), 78 posts on the October grid, and so on.
  */
 
 const NOW = '2026-10-30T14:15:00Z'
-
-/* New followers per day, Aug 2 → Oct 30. Values read back from the reference
-   chart's SVG path (y → value on its 0–10K scale). */
-const DAILY_NEW_FOLLOWERS = [
-  1607, 1969, 2203, 2094, 2946, 1862, 1988, 1987, 1865, 1512, 2699, 2064, 2187, 2794, 1767,
-  1511, 4464, 2424, 3443, 2587, 4092, 1755, 2505, 2048, 1981, 1794, 1806, 4598, 2189, 2329,
-  3122, 1689, 2491, 2465, 1841, 4411, 3653, 2527, 2522, 2476, 2419, 2112, 2657, 2395, 2318,
-  2215, 2227, 2366, 2269, 2107, 3938, 2123, 2342, 2206, 2635, 2753, 4168, 2793, 2693, 2334,
-  2250, 5883, 2097, 3865, 3182, 2196, 2716, 3944, 2746, 3484, 1810, 3073, 2574, 2884, 2091,
-  2402, 2314, 2748, 1913, 3055, 3229, 2501, 3058, 6359, 2982, 3686, 1976, 3373, 2688, 2529,
-]
-
-const followerGrowth: DailyPoint[] = DAILY_NEW_FOLLOWERS.map((value, i, all) => {
-  const d = new Date(NOW)
-  d.setUTCHours(0, 0, 0, 0)
-  d.setUTCDate(d.getUTCDate() - (all.length - 1 - i))
-  return { date: d.toISOString(), value }
-})
 
 type Status = Post['status']
 type PostRow = [id: string, brand: string, author: string, status: Status, when: string, networks: string, image: string | null, text: string]
@@ -121,28 +105,64 @@ const POSTS: PostRow[] = [
   ['p88', 'wb', 'elise', 'draft', '11-11 10:00', 'ig', null, 'Ingredient spotlight series — calendula first'],
 ]
 
-/** Deterministic pseudo-random in [0, 1) so synthetic metrics stay stable between reloads. */
-function seeded(key: string) {
-  let h = 2166136261
-  for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 16777619)
-  return ((h >>> 0) % 10_000) / 10_000
+/* Lifetime metrics of every published post, as the reference stores them:
+   [impressions, reach, likes, comments, shares, saves, link clicks, views]. */
+const METRICS: Record<string, [number, number, number, number, number, number, number, number]> = {
+  p28: [41693, 30985, 2442, 145, 172, 111, 155, 46572],
+  p11: [71470, 48060, 3404, 109, 247, 373, 301, 55398],
+  p45: [122308, 77149, 3820, 222, 363, 389, 1221, 162781],
+  p62: [17137, 14000, 584, 51, 13, 65, 150, 22485],
+  p74: [2615, 1869, 44, 2, 3, 3, 29, 0],
+  p27: [194857, 146647, 13170, 1079, 404, 1605, 2305, 0],
+  p44: [14511, 9653, 285, 23, 15, 26, 42, 0],
+  p10: [96646, 72078, 6698, 522, 202, 729, 682, 121770],
+  p61: [17154, 11885, 410, 31, 19, 33, 172, 0],
+  p73: [8342, 6337, 527, 17, 27, 28, 46, 0],
+  p9: [45446, 31449, 2478, 112, 131, 289, 318, 69862],
+  p43: [67057, 48432, 4128, 353, 182, 438, 524, 72910],
+  p60: [87007, 59451, 2691, 206, 204, 323, 240, 124569],
+  p26: [134597, 103815, 9196, 295, 238, 1411, 1123, 0],
+  p42: [52596, 33680, 1131, 69, 53, 96, 192, 68925],
+  p8: [75557, 54776, 5052, 178, 338, 582, 562, 54018],
+  p25: [50053, 39508, 1462, 122, 49, 199, 510, 0],
+  p59: [44112, 30287, 2997, 145, 148, 427, 335, 70132],
+  p58: [46173, 37419, 1599, 113, 34, 70, 191, 32826],
+  p24: [215344, 154157, 8932, 341, 723, 499, 1269, 245797],
+  p7: [45597, 36687, 2885, 87, 246, 449, 380, 72782],
+  p41: [161456, 112543, 5358, 338, 183, 230, 1312, 214442],
+  p72: [4653, 3122, 132, 6, 10, 21, 45, 0],
+  p40: [86601, 57733, 2638, 142, 123, 138, 652, 120647],
+  p6: [32404, 23906, 1052, 88, 83, 44, 160, 47163],
+  p23: [51292, 38976, 1885, 143, 89, 138, 476, 77336],
+  p57: [38286, 30367, 1193, 104, 88, 183, 331, 28900],
+  p71: [17542, 14242, 1246, 45, 65, 189, 154, 0],
+  p39: [133188, 105268, 4178, 169, 255, 522, 866, 138706],
+  p56: [12277, 8609, 348, 18, 14, 19, 128, 0],
+  p22: [87844, 60261, 1526, 120, 130, 107, 646, 120956],
+  p5: [31038, 21949, 770, 55, 62, 109, 331, 22304],
+  p21: [46388, 29394, 807, 64, 22, 93, 340, 63695],
+  p55: [25661, 17972, 937, 29, 63, 84, 148, 0],
+  p38: [15780, 10739, 544, 22, 49, 28, 81, 0],
+  p4: [48801, 38188, 2561, 156, 156, 175, 279, 0],
+  p37: [525874, 346861, 69241, 2411, 5938, 2825, 1987, 651353],
+  p3: [160665, 110602, 21781, 1561, 509, 2032, 1140, 185266],
+  p54: [141417, 91189, 12415, 948, 843, 1260, 1281, 193497],
+  p20: [183650, 130421, 14146, 935, 1028, 1975, 1238, 183695],
+  p70: [7497, 5153, 343, 16, 9, 30, 76, 0],
+  p2: [90262, 71158, 2797, 116, 116, 371, 736, 131368],
+  p19: [66097, 53981, 2382, 148, 212, 208, 770, 51075],
+  p36: [234391, 167997, 6623, 534, 589, 632, 1928, 248185],
+  p53: [46057, 35580, 1848, 153, 39, 203, 282, 46564],
+  p69: [3495, 2445, 243, 13, 16, 14, 38, 0],
+  p18: [121516, 86036, 6932, 610, 477, 1065, 420, 177635],
+  p1: [31532, 19757, 694, 62, 37, 65, 212, 46570],
+  p52: [54993, 42280, 1836, 104, 126, 183, 387, 0],
+  p35: [154063, 103587, 6964, 536, 495, 399, 1568, 230745],
 }
 
-/* The reference only exposes metrics for some posts; the top post's figures are
-   real (346.9K reach, 23.2%, 2.8K saves), the rest are plausible synthetic values. */
 function metricsFor(id: string): PostMetrics {
-  if (id === 'p37') return { impressions: 412_300, reach: 346_900, engagements: 80_480, engagementRate: 0.232, saves: 2_800, reachVsUsual: 8.9 }
-  const reach = Math.round(18_000 + seeded(id) * 92_000)
-  const engagementRate = 0.045 + seeded(`${id}er`) * 0.06
-  const engagements = Math.round(reach * engagementRate)
-  return {
-    impressions: Math.round(reach * (1.18 + seeded(`${id}im`) * 0.2)),
-    reach,
-    engagements,
-    engagementRate,
-    saves: Math.round(engagements * 0.18),
-    reachVsUsual: Math.round((0.7 + seeded(`${id}x`)) * 10) / 10,
-  }
+  const [impressions, reach, likes, comments, shares, saves, clicks, views] = METRICS[id]
+  return { impressions, reach, likes, comments, shares, saves, clicks, views }
 }
 
 const posts: Post[] = POSTS.map(([id, brandId, authorId, status, when, nets, image, text]) => ({
@@ -269,7 +289,7 @@ const minutesBefore = (m: number) => new Date(Date.parse(NOW) - m * 60_000).toIS
 
 export const workspace: Workspace = {
   now: NOW,
-  timeZone: 'UTC',
+  timeZone: 'Europe/Lisbon',
   currentUserId: 'camila',
   brands: [
     { id: 'eo', name: 'Ember & Oak', initials: 'EO', tone: 'coral', handle: 'emberandoak' },
@@ -285,34 +305,41 @@ export const workspace: Workspace = {
     { id: 'cp4', brandId: 'wb', name: 'Spring Ritual launch', start: '2026-10-10', end: '2026-11-08' },
   ],
   team: [
-    { id: 'camila', name: 'Camila Ortiz', role: 'Owner', avatar: avatar('camila'), title: 'Founder', brands: 'all' },
-    { id: 'malik', name: 'Malik Johnson', role: 'Admin', avatar: avatar('malik'), title: 'Operations lead', brands: 'all' },
-    { id: 'elise', name: 'Elise Marchand', role: 'Manager', avatar: avatar('elise'), title: 'Account manager', brands: ['eo', 'wb', 'ns'] },
-    { id: 'haruto', name: 'Haruto Sato', role: 'Manager', avatar: avatar('haruto'), title: 'Account manager', brands: ['vg', 'hh'] },
-    { id: 'nia', name: 'Nia Okoro', role: 'Editor', avatar: avatar('nia'), title: 'Content creator', brands: ['eo', 'wb'] },
-    { id: 'omar', name: 'Omar Saleh', role: 'Editor', avatar: avatar('omar'), title: 'Video editor', brands: ['vg', 'hh'] },
-    { id: 'freya', name: 'Freya Nilsen', role: 'Editor', avatar: avatar('freya'), title: 'Copywriter', brands: 'all' },
-    { id: 'ines', name: 'Ines Duarte', role: 'Community', avatar: avatar('ines'), title: 'Community manager', brands: 'all' },
+    { id: 'camila', name: 'Camila Ortiz', role: 'Owner', avatar: avatar('camila'), title: 'Founder', brands: 'all', email: 'camila@northlight.studio' },
+    { id: 'malik', name: 'Malik Johnson', role: 'Admin', avatar: avatar('malik'), title: 'Operations lead', brands: 'all', email: 'malik@northlight.studio' },
+    { id: 'elise', name: 'Elise Marchand', role: 'Manager', avatar: avatar('elise'), title: 'Account manager', brands: ['eo', 'wb', 'ns'], email: 'elise@northlight.studio' },
+    { id: 'haruto', name: 'Haruto Sato', role: 'Manager', avatar: avatar('haruto'), title: 'Account manager', brands: ['vg', 'hh'], email: 'haruto@northlight.studio' },
+    { id: 'nia', name: 'Nia Okoro', role: 'Editor', avatar: avatar('nia'), title: 'Content creator', brands: ['eo', 'wb'], email: 'nia@northlight.studio' },
+    { id: 'omar', name: 'Omar Saleh', role: 'Editor', avatar: avatar('omar'), title: 'Video editor', brands: ['vg', 'hh'], email: 'omar@northlight.studio' },
+    { id: 'freya', name: 'Freya Nilsen', role: 'Editor', avatar: avatar('freya'), title: 'Copywriter', brands: 'all', email: 'freya@northlight.studio' },
+    { id: 'ines', name: 'Ines Duarte', role: 'Community', avatar: avatar('ines'), title: 'Community manager', brands: 'all', email: 'ines@northlight.studio' },
   ],
+  /* The 19 connected accounts, in the order the reference lists them. */
   channels: [
-    { id: 'ch-hh-yt', brandId: 'hh', network: 'youtube', status: 'expiring', expiresInDays: 2 },
-    { id: 'ch-vg-fb', brandId: 'vg', network: 'facebook', status: 'disconnected' },
-    { id: 'ch-hh-pin', brandId: 'hh', network: 'pinterest', status: 'connected' },
+    { id: 'ch-eo-ig', brandId: 'eo', network: 'instagram', handle: '@emberandoak', followers: 48210, status: 'connected' },
+    { id: 'ch-eo-fb', brandId: 'eo', network: 'facebook', handle: 'Ember & Oak', followers: 21480, status: 'connected' },
+    { id: 'ch-eo-tt', brandId: 'eo', network: 'tiktok', handle: '@emberandoak', followers: 63900, status: 'connected' },
+    { id: 'ch-eo-th', brandId: 'eo', network: 'threads', handle: '@emberandoak', followers: 9120, status: 'connected' },
+    { id: 'ch-hh-ig', brandId: 'hh', network: 'instagram', handle: '@hollowhome', followers: 112400, status: 'connected' },
+    { id: 'ch-hh-pin', brandId: 'hh', network: 'pinterest', handle: '@hollowhome', followers: 86300, status: 'connected' },
+    { id: 'ch-hh-fb', brandId: 'hh', network: 'facebook', handle: 'Hollow Home', followers: 30950, status: 'connected' },
+    { id: 'ch-hh-yt', brandId: 'hh', network: 'youtube', handle: 'Hollow Home', followers: 18700, status: 'expiring', expiresInDays: 2 },
+    { id: 'ch-vg-ig', brandId: 'vg', network: 'instagram', handle: '@vantagegarage', followers: 74300, status: 'connected' },
+    { id: 'ch-vg-yt', brandId: 'vg', network: 'youtube', handle: 'Vantage Garage', followers: 129800, status: 'connected' },
+    { id: 'ch-vg-tt', brandId: 'vg', network: 'tiktok', handle: '@vantagegarage', followers: 201500, status: 'connected' },
+    { id: 'ch-vg-x', brandId: 'vg', network: 'x', handle: '@vantagegarage', followers: 15240, status: 'connected' },
+    { id: 'ch-vg-fb', brandId: 'vg', network: 'facebook', handle: 'Vantage Garage', followers: 22100, status: 'disconnected' },
+    { id: 'ch-wb-ig', brandId: 'wb', network: 'instagram', handle: '@wildroot', followers: 56800, status: 'connected' },
+    { id: 'ch-wb-tt', brandId: 'wb', network: 'tiktok', handle: '@wildroot', followers: 41200, status: 'connected' },
+    { id: 'ch-wb-pin', brandId: 'wb', network: 'pinterest', handle: '@wildroot', followers: 23900, status: 'connected' },
+    { id: 'ch-wb-th', brandId: 'wb', network: 'threads', handle: '@wildroot', followers: 7400, status: 'connected' },
+    { id: 'ch-ns-li', brandId: 'ns', network: 'linkedin', handle: 'Northlight Studio', followers: 8650, status: 'connected' },
+    { id: 'ch-ns-x', brandId: 'ns', network: 'x', handle: '@northlightstudio', followers: 4310, status: 'connected' },
   ],
   posts,
-  networkStats: [
-    { network: 'tiktok', followers: 306_633, growth30d: 0.07, engagementRate: 0.088 },
-    { network: 'instagram', followers: 291_690, growth30d: 0.088, engagementRate: 0.078 },
-    { network: 'youtube', followers: 148_490, growth30d: 0.193, engagementRate: 0.081 },
-    { network: 'pinterest', followers: 110_190, growth30d: 0.117, engagementRate: 0.068 },
-    { network: 'facebook', followers: 74_525, growth30d: 0.087, engagementRate: 0.078 },
-    { network: 'x', followers: 19_560, growth30d: 0.095, engagementRate: 0.081 },
-    { network: 'threads', followers: 16_520, growth30d: 0.08, engagementRate: 0.068 },
-    { network: 'linkedin', followers: 8_652, growth30d: 0.215, engagementRate: 0.08 },
-  ],
+  analytics: { series: SERIES, accounts: ACCOUNT_STATS, networkTrends: NETWORK_TRENDS, heat: HEAT },
+  reports: [],
   bestTimes: BEST_TIMES,
-  followerGrowth,
-  engagementRate30d: 0.10339841583396177,
   conversations,
   media: (
     [

@@ -52,6 +52,12 @@ const SENTIMENT: Record<Sentiment, string> = { positive: 'Positive', neutral: 'N
 
 type RouteText = { label: string; title: string; sections: string[] }
 
+const METRIC = { impressions: 'Impressions', engagements: 'Engagements', clicks: 'Link clicks' }
+const WEEKDAY_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+/** "8 AM"; 24 wraps to "12 AM". */
+const HOUR = (h: number) => `${h % 12 || 12} ${h % 24 < 12 ? 'AM' : 'PM'}`
+
 export const en = {
   /** Dates and times; every instant is shown in UTC, like the mock workspace. */
   dates: {
@@ -101,6 +107,8 @@ export const en = {
       const right = `${sameMonth ? '' : `${dt({ month: 'short' }).format(end)} `}${end.getUTCDate()}, ${end.getUTCFullYear()}`
       return `${left} – ${right}`
     },
+    /** "Mon, Nov 2, 9:00 AM" */
+    dayTime: (d: Date) => `${dayLong(d)}, ${time(d)}`,
     /** "Oct 30 · 4:49 PM" */
     stamp: (iso: string) => `${monthDay(new Date(iso))} · ${time(new Date(iso))}`,
     /** Conversation list: today → "4:49 PM", then "Yesterday", the weekday within a week, else "Oct 3". */
@@ -133,12 +141,16 @@ export const en = {
   },
 
   numbers: {
-    /** "976.3K" */
-    compact: (n: number) => num('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n),
+    /** "976.3K", "10.83M" */
+    compact: (n: number) => num('en', { notation: 'compact', maximumFractionDigits: Math.abs(n) >= 1e6 ? 2 : 1 }).format(n),
+    /** "2,305" */
+    int: (n: number) => num('en').format(n),
     pct1,
+    /** "30%" */
+    pct0: (f: number) => `${Math.round(f * 100)}%`,
     signedPct1: (f: number) => `${f >= 0 ? '+' : '−'}${pct1(Math.abs(f))}`,
     /** "8.9×" */
-    times: (n: number) => `${n}×`,
+    times: (n: number) => `${num('en', { maximumFractionDigits: 1 }).format(n)}×`,
   },
 
   common: {
@@ -192,9 +204,13 @@ export const en = {
     mobileNav: 'Mobile',
     mobileHome: 'Home',
     mobileInbox: 'Inbox',
+    more: 'More',
+    morePages: 'More pages',
+    dark: 'Dark',
+    light: 'Light',
     notRecreated: (routes: ReactNode[]) => (
       <>
-        Only {routes[0]}, {routes[1]} and {routes[2]} are recreated. This route exists in the reference with the sections below.
+        Only {routes[0]}, {routes[1]}, {routes[2]} and {routes[3]} are recreated. This route exists in the reference with the sections below.
       </>
     ),
   },
@@ -491,6 +507,169 @@ export const en = {
       untagged: (tag: string) => `Removed ${tag}`,
       unread: 'Marked as unread',
       copied: (handle: string) => `Copied @${handle}`,
+    },
+  },
+  analytics: {
+    title: 'Analytics',
+    audience: (accounts: number) => `Audience across ${plural(accounts, 'account', 'accounts')}`,
+    newFollowers: (days: number) => `New followers, last ${days} days`,
+    impressions: (days: number) => `Impressions, last ${days} days`,
+    engagement: (posts: number) => `Avg. engagement rate, ${plural(posts, 'post', 'posts')}`,
+    dateRange: 'Date range',
+    rangeOption: (days: number) => `${days}D`,
+    exportCsv: 'Export CSV',
+    scheduleReport: 'Schedule a report',
+    filterByNetwork: 'Filter by network',
+    allNetworks: 'All networks',
+    note: (brands: number, days: number) => `${plural(brands, 'brand', 'brands')} · last ${days} days`,
+    expand: 'Expand',
+    collapse: 'Collapse',
+    thisPeriod: 'This period',
+    previousPeriod: 'Previous period',
+    growth: {
+      title: 'Audience growth',
+      sub: (days: number, vsBefore: string | null) =>
+        `followers gained, last ${days} days · ${vsBefore === null ? 'no earlier period' : `${vsBefore} vs the ${days} days before`}`,
+      legend: 'Followers gained, this period',
+      chart: 'Followers gained per day, this period and the previous one',
+    },
+    metrics: {
+      title: 'Impressions & engagement',
+      label: 'Metric',
+      options: { impressions: 'Impressions', engagements: 'Engagements', clicks: 'Clicks' },
+      sub: (metric: 'impressions' | 'engagements' | 'clicks', days: number) => `${METRIC[metric].toLowerCase()}, last ${days} days`,
+      legend: (metric: 'impressions' | 'engagements' | 'clicks') => `${METRIC[metric]}, this period`,
+      chart: (metric: 'impressions' | 'engagements' | 'clicks') => `Daily ${METRIC[metric].toLowerCase()}, this period and the previous one`,
+    },
+    best: {
+      title: 'Best time to post',
+      sub: (timeZone: string) => `Engagement by weekday and hour, your time zone (${timeZone.replace('_', ' ')})`,
+      networks: 'Network',
+      all: 'All',
+      heatmap: (network: string | null, slots: string[]) =>
+        `Engagement heatmap for ${network ?? 'all networks'}. Best slots: ${slots.join(', ')}. Use the arrow keys to read any hour.`,
+      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      /** Axis ticks every three hours: "12a", "3p". */
+      hourTick: (h: number) => `${h % 12 || 12}${h < 12 ? 'a' : 'p'}`,
+      /** "Saturday 8 AM" */
+      slot: (day: number, hour: number) => `${WEEKDAY_LONG[day]} ${HOUR(hour)}`,
+      /** "Sat 8 AM" */
+      slotShort: (day: number, hour: number) => `${WEEKDAY_SHORT[day]} ${HOUR(hour)}`,
+      /** "Saturday · 8 AM–9 AM" */
+      cell: (day: number, hour: number) => `${WEEKDAY_LONG[day]} · ${HOUR(hour)}–${HOUR(hour + 1)}`,
+      index: (n: number) => `index ${n}`,
+      engagementIndex: 'Engagement index',
+      bestSlot: 'Best slot',
+      plan: (slot: string) => `Plan a post for ${slot}`,
+      bestSlots: 'Three best slots',
+      quiet: 'Quiet',
+      busy: 'Busy',
+    },
+    mix: {
+      title: 'Content mix',
+      sub: (posts: number, deliveries: number | null, days: number) =>
+        deliveries === null
+          ? `${posts === 1 ? 'post' : 'posts'} published, last ${days} days`
+          : `${posts === 1 ? 'post' : 'posts'} published, ${plural(deliveries, 'network delivery', 'network deliveries')}`,
+      row: (network: string, n: number, total: number) => `${network}: ${n} of ${plural(total, 'delivery', 'deliveries')}`,
+      emptyTitle: 'Nothing published',
+      emptyText: 'Posts that go out in this window are counted per network here.',
+    },
+    table: {
+      byNetwork: 'By network',
+      accountsOn: (network: string) => `${network} accounts`,
+      caption: (days: number, byAccount: boolean) =>
+        `Followers, growth, impressions, engagement rate and posts per ${byAccount ? 'account' : 'network'} for the last ${days} days. Column headers sort the table.`,
+      network: 'Network',
+      account: 'Account',
+      accounts: 'Accounts',
+      status: 'Status',
+      followers: 'Followers',
+      growth: 'Growth',
+      impressions: 'Impressions',
+      engRate: 'Eng. rate',
+      posts: 'Posts',
+      trend: 'Followers trend',
+      trendShort: 'Trend',
+      accountCount: (n: number) => plural(n, 'account', 'accounts'),
+      channelStatus: { connected: 'Connected', expiring: 'Expiring', disconnected: 'Disconnected' },
+      emptyTitle: 'No accounts here',
+      emptyText: (network: string | null) => (network ? `Nothing in this view is connected on ${network}.` : 'Connect a channel to start collecting numbers.'),
+    },
+    top: {
+      title: 'Top posts',
+      rankBy: 'Rank by',
+      options: { reach: 'Reach', eng: 'Eng. rate', clicks: 'Clicks' },
+      unit: { reach: 'reach', eng: 'engagement rate', clicks: 'link clicks' },
+      label: (rank: number, by: 'reach' | 'eng' | 'clicks', text: string) =>
+        `#${rank} by ${by === 'reach' ? 'reach' : by === 'eng' ? 'engagement rate' : 'link clicks'}: ${text}`,
+      impressions: 'Impressions',
+      engagements: 'Engagements',
+      emptyTitle: 'No published posts in this window',
+      emptyText: (network: string | null, days: number) => `Nothing went out ${network ? `on ${network} ` : ''}in the last ${days} days. Try a longer range.`,
+    },
+    brands: {
+      title: 'Brand comparison',
+      compareBy: 'Compare by',
+      options: { followers: 'Followers', eng: 'Eng. rate', impressions: 'Impressions' },
+      meta: (accounts: number, posts: number) => `${plural(accounts, 'account', 'accounts')} · ${plural(posts, 'post', 'posts')}`,
+    },
+    /** What a report covers: "All brands", "All brands · Instagram". */
+    scope: (network: string | null) => `All brands${network ? ` · ${network}` : ''}`,
+    exported: (days: number) => `Report for the last ${days} days exported`,
+    report: {
+      title: 'Schedule a report',
+      sub: (scope: string) => `The ${scope} report is emailed as a PDF and a CSV, every period, to the people you pick.`,
+      name: 'Report name',
+      defaultName: (scope: string) => `${scope} — performance`,
+      frequency: 'How often',
+      frequencies: { weekly: 'Weekly, Mondays at 9:00', monthly: 'Monthly, on the 1st at 9:00' },
+      recipients: 'Recipients',
+      pickOne: 'Pick at least one recipient.',
+      cancel: 'Cancel',
+      submit: 'Schedule',
+      scheduled: (frequency: 'weekly' | 'monthly', first: string) => `${frequency === 'weekly' ? 'Weekly' : 'Monthly'} report scheduled · first one ${first}`,
+      menu: 'Scheduled reports',
+      item: (name: string, frequency: 'weekly' | 'monthly', people: number) => `${name} · ${frequency}, ${plural(people, 'person', 'people')}`,
+      hint: (names: string[], next: string) => `Recipients: ${names.join(', ')}. Next: ${next}`,
+      newReport: 'New scheduled report',
+      stopTitle: 'Stop this report?',
+      stopText: (name: string, people: number) => `“${name}” stops going to ${plural(people, 'person', 'people')}.`,
+      stop: 'Stop report',
+      stopped: 'Report stopped',
+    },
+    csv: {
+      separator: ',',
+      file: (days: number, network: string | null) => `murmura-analytics-${days}d${network ? `-${network}` : ''}.csv`,
+      title: 'Murmura analytics report',
+      scope: 'Scope',
+      period: 'Period',
+      generated: 'Generated',
+      summary: 'Summary',
+      audience: 'Audience',
+      newFollowers: 'New followers',
+      followerGrowth: 'Follower growth',
+      impressions: 'Impressions',
+      avgEngagement: 'Avg. engagement rate',
+      postsPublished: 'Posts published',
+      date: 'Date',
+      followers: 'Followers',
+      engagements: 'Engagements',
+      linkClicks: 'Link clicks',
+      network: 'Network',
+      account: 'Account',
+      accounts: 'Accounts',
+      growth: 'Growth',
+      engRate: 'Eng. rate',
+      posts: 'Posts',
+      post: 'Post',
+      brand: 'Brand',
+      published: 'Published',
+      networks: 'Networks',
+      reach: 'Reach',
+      /** Percentages with two decimals: "10.10%". */
+      pct: (f: number) => `${(f * 100).toFixed(2)}%`,
+      stamp: (d: Date) => d.toLocaleString(L),
     },
   },
 }

@@ -25,23 +25,23 @@ export function PageTitle({ lines, label }: { lines: string[]; label: string }) 
     <h1
       aria-label={label}
       tabIndex={-1}
-      className="text-[clamp(30px,2.7vw,40px)] font-semibold leading-[1.04] tracking-[-0.025em] focus:outline-none"
+      className="text-[clamp(30px,2.7vw,40px)] font-semibold leading-[1.04] tracking-[-0.025em] focus:outline-none max-mobile:text-[28px]"
     >
       <SplitWords lines={lines} />
     </h1>
   )
 }
 
-/** Header stat: glass disc icon, big value (+ optional growth badge), muted label. */
+/** Header stat: glass disc icon, big value (+ optional growth badge), muted label. Phones drop the icon. */
 export function Stat({ icon: Icon, value, badge, label }: { icon: LucideIcon; value: string; badge?: string; label: string }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="grid size-12 shrink-0 place-items-center rounded-full border border-rim bg-glass-2">
+      <span className="grid size-12 shrink-0 place-items-center rounded-full border border-rim bg-glass-2 max-mobile:hidden">
         <Icon size={20} aria-hidden />
       </span>
       <div className="flex flex-col-reverse">
-        <dt className="max-w-[170px] text-2xs leading-[1.3] text-muted">{label}</dt>
-        <dd className="flex items-center gap-2.5 text-[23px] font-semibold tracking-[-0.01em]">
+        <dt className="max-w-[170px] text-2xs leading-[1.3] text-muted max-mobile:text-[12.5px]">{label}</dt>
+        <dd className="flex items-center gap-2.5 text-[23px] font-semibold tracking-[-0.01em] max-mobile:text-lg max-mobile:font-bold">
           <b className="num">{value}</b>
           {badge && <Badge tone="pine">{badge}</Badge>}
         </dd>
