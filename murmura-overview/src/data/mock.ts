@@ -1,12 +1,12 @@
 import { avatar } from './assets'
-import type { Conversation, DailyPoint, NetworkId, Post, PostMetrics, Workspace } from './types'
+import type { Conversation, DailyPoint, Message, NetworkId, Post, PostMetrics, Workspace } from './types'
 
 /**
  * Mock workspace mirroring the reference app at Fri, Oct 30 2026, 14:15 UTC.
  * Every figure the overview and calendar show is derived from these entities
  * (selectors.ts, calendar.ts): 976.3K audience = Σ networkStats.followers,
  * +89.6K = last 30 followerGrowth points, 19 posts this week, 6 todos,
- * 20 open conversations, 78 posts on the October grid, and so on.
+ * 20 open conversations (14 unread), 78 posts on the October grid, and so on.
  */
 
 const NOW = '2026-10-30T14:15:00Z'
@@ -172,53 +172,98 @@ const BEST_TIMES = [
   [0.53, 0.75, 0.91, 0.96, 0.34, 0.89, 0.88, 0.8, 0.39, 0.14, 0.41, 0.89, 0.81, 0.88, 1, 0.8, 0.48, 0.18],
 ]
 
-type Seed = [id: string, name: string, net: Conversation['network'], sentiment: Conversation['sentiment'], unread: boolean, priority: boolean, minutesAgo: number, preview: string]
-
-const CONVERSATIONS: Seed[] = [
-  ['c1', 'Abigail Shaw', 'instagram', 'positive', true, false, 4, 'This is the best flat white in Portland and I will not be taking questions 😍'],
-  ['c2', 'Ananya Rao', 'instagram', 'neutral', true, true, 11, 'Hi! Do you ship the Huila beans to Canada? And is the bag whole bean only?'],
-  ['c3', 'Tomás Ferreira', 'youtube', 'positive', false, false, 19, 'That paint correction video was oddly relaxing. More of these please.'],
-  ['c4', 'Elena Márquez', 'facebook', 'negative', true, true, 26, 'Ordered on the 2nd, still no tracking number. Not great for a subscription.'],
-  ['c5', 'Jonah Pierce', 'instagram', 'positive', true, false, 38, 'The Ro side table arrived and it is even better in person.'],
-  ['c6', 'Mei Tanaka', 'tiktok', 'positive', true, false, 52, 'Tried the three-step routine for a week. My skin says thank you.'],
-  ['c7', 'Lukas Weber', 'x', 'neutral', true, false, 64, 'Are you open on the 1st? Google says closed but your story says open.'],
-  ['c8', 'Priya Nair', 'instagram', 'negative', true, true, 81, 'The balm jar leaked in transit. Can I get a replacement?'],
-  ['c9', 'Samuel Okoye', 'facebook', 'positive', true, false, 97, 'Booked the ceramic coat, the car looks brand new. Great team.'],
-  ['c10', 'Chloé Martin', 'pinterest', 'neutral', true, false, 125, 'Is the smoked oak finish available on the dining bench too?'],
-  ['c11', 'Diego Alvarez', 'instagram', 'positive', true, false, 160, 'Cardamom bun supremacy. That is the tweet. Well, the comment.'],
-  ['c12', 'Hannah Becker', 'linkedin', 'neutral', true, false, 190, 'Would Northlight be open to a brand collaboration in Q1?'],
-  ['c14', 'Ravi Kapoor', 'youtube', 'positive', true, false, 240, 'Subscribed after the tyre swap guide. Super clear.'],
-  ['c15', 'Olivia Brooks', 'instagram', 'negative', true, true, 300, 'Got charged twice for the same order, can someone help?'],
-  ['c16', 'Noah Fischer', 'threads', 'positive', true, false, 360, 'Love how calm your feed is. A rare thing.'],
-  ['c17', 'Aiko Mori', 'tiktok', 'positive', false, false, 420, 'Latte art Friday entry incoming, prepare yourselves.'],
-  ['c18', 'Ben Carter', 'facebook', 'neutral', false, false, 480, 'What time does the showroom open on Saturdays?'],
-  ['c19', 'Zara Ahmed', 'instagram', 'positive', false, false, 560, 'The rose petals on the roof!! Dreamy.'],
-  ['c20', 'Marco Rossi', 'x', 'negative', false, false, 640, 'Waited forty minutes past my booking slot. Not okay.'],
-  ['c21', 'Lea Novak', 'pinterest', 'neutral', false, false, 720, 'Do you have care instructions for the linen throws?'],
-]
-
-const brandFor: Record<string, string> = {
-  c1: 'eo', c2: 'eo', c4: 'eo', c11: 'eo', c7: 'eo', c17: 'eo',
-  c3: 'vg', c9: 'vg', c14: 'vg', c20: 'vg',
-  c5: 'hh', c10: 'hh', c18: 'hh', c21: 'hh',
-  c6: 'wb', c8: 'wb', c15: 'wb', c19: 'wb',
-  c12: 'ns', c16: 'ns',
+interface ConversationSeed {
+  id: string
+  brand: string
+  network: Conversation['network']
+  kind: Conversation['kind']
+  name: string
+  handle: string
+  followers: number
+  post: string | null
+  sentiment: Conversation['sentiment']
+  unread: boolean
+  priority: boolean
+  status: Conversation['status']
+  assignee: string | null
+  tags: string[]
+  /** [from, minutes before NOW, text, author?] */
+  messages: [Message['from'], number, string, string?][]
 }
 
-const conversations: Conversation[] = CONVERSATIONS.map(
-  ([id, name, network, sentiment, unread, priority, minutesAgo, preview]) => ({
-    id,
-    brandId: brandFor[id],
-    network,
-    contact: { name, avatar: avatar(id) },
-    preview,
-    sentiment,
-    unread,
-    priority,
-    status: 'open',
-    updatedAt: new Date(Date.parse(NOW) - minutesAgo * 60_000).toISOString(),
-  }),
-)
+/* The 22 conversations in the reference inbox (20 open, 2 done), read from its
+   list, threads and contact panels. Timings keep their distance from "now". */
+const CONVERSATIONS: ConversationSeed[] = [
+  { id: 'c1', brand: 'eo', network: 'instagram', kind: 'comment', name: 'Abigail Shaw', handle: 'abigail.shaw', followers: 23100, post: 'p1', sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 20, 'This is the best flat white in Portland and I will not be taking questions 😍']] },
+  { id: 'c2', brand: 'eo', network: 'instagram', kind: 'message', name: 'Ananya Rao', handle: 'ananya.rao', followers: 16600, post: null, sentiment: 'neutral', unread: true, priority: false, status: 'open', assignee: 'haruto', tags: ['#sales'],
+    messages: [['them', 45, 'Hi! Do you ship the Huila beans to Canada? And is the bag whole bean only?']] },
+  { id: 'c4', brand: 'eo', network: 'facebook', kind: 'review', name: 'Elena Márquez', handle: 'elena.m.rquez', followers: 3300, post: null, sentiment: 'negative', unread: true, priority: true, status: 'open', assignee: 'ines', tags: ['#support'],
+    messages: [['them', 138, 'Ordered on the 2nd, still no tracking number. Not great for a subscription.']] },
+  { id: 'c5', brand: 'eo', network: 'threads', kind: 'mention', name: 'Grace Lin', handle: 'grace.lin', followers: 12500, post: null, sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 163, 'Shout out @emberandoak for the cupping session today, learned so much']] },
+  { id: 'c6', brand: 'hh', network: 'instagram', kind: 'message', name: 'Hiro Tanabe', handle: 'hiro.tanabe', followers: 2600, post: null, sentiment: 'neutral', unread: false, priority: false, status: 'open', assignee: null, tags: ['#sales'],
+    messages: [['them', 211, 'Is the Låg sofa available in a 3-seater? We have a small flat.']] },
+  { id: 'c7', brand: 'hh', network: 'pinterest', kind: 'comment', name: 'Imani Cole', handle: 'imani.cole', followers: 23300, post: 'p18', sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: 'elise', tags: [],
+    messages: [['them', 231, 'Saving this whole room. Where is the rug from?']] },
+  { id: 'c8', brand: 'hh', network: 'instagram', kind: 'comment', name: 'Karin Holm', handle: 'karin.holm', followers: 17700, post: 'p19', sentiment: 'negative', unread: true, priority: true, status: 'open', assignee: 'ines', tags: ['#support'],
+    messages: [['them', 264, 'Lamp arrived with a cracked base. Emailed support twice, no answer yet.']] },
+  { id: 'c9', brand: 'hh', network: 'facebook', kind: 'comment', name: 'Kwabena Mensah', handle: 'kwabena.mensah', followers: 18900, post: 'p20', sentiment: 'neutral', unread: false, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 306, 'Will the autumn collection be in the Oslo store too?']] },
+  { id: 'c10', brand: 'hh', network: 'youtube', kind: 'comment', name: 'Luca Ferraro', handle: 'luca.ferraro', followers: 23200, post: 'p18', sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 354, 'The mill tour was so calming. More of this please.']] },
+  { id: 'c11', brand: 'vg', network: 'instagram', kind: 'comment', name: 'Marisol Vega', handle: 'marisol.vega', followers: 22900, post: 'p36', sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 398, 'That 50/50 is unreal. How long does the ceramic last?']] },
+  { id: 'c12', brand: 'vg', network: 'tiktok', kind: 'comment', name: 'Owen Fletcher', handle: 'owen.fletcher', followers: 5800, post: 'p37', sentiment: 'positive', unread: false, priority: false, status: 'open', assignee: 'elise', tags: [],
+    messages: [['them', 414, 'bro the night reveal had me rewatching 6 times']] },
+  { id: 'c14', brand: 'vg', network: 'x', kind: 'mention', name: 'Rajiv Menon', handle: 'rajiv.menon', followers: 20900, post: null, sentiment: 'negative', unread: true, priority: true, status: 'open', assignee: 'ines', tags: ['#support'],
+    messages: [['them', 493, '@vantagegarage quoted me $1,900 then charged $2,250. Explain?']] },
+  { id: 'c15', brand: 'vg', network: 'instagram', kind: 'message', name: 'Samir Khoury', handle: 'samir.khoury', followers: 11700, post: null, sentiment: 'neutral', unread: false, priority: false, status: 'open', assignee: null, tags: ['#sales'],
+    messages: [['them', 522, 'Hey, any slots left in November for a full correction on a 911?']] },
+  { id: 'c16', brand: 'wb', network: 'instagram', kind: 'comment', name: 'Tess Albrecht', handle: 'tess.albrecht', followers: 19200, post: 'p52', sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 565, 'Bloom oil changed my skin this winter. Buying three.']] },
+  { id: 'c17', brand: 'wb', network: 'tiktok', kind: 'comment', name: 'Joon Park', handle: 'joon.park', followers: 19100, post: 'p53', sentiment: 'neutral', unread: true, priority: false, status: 'open', assignee: 'haruto', tags: [],
+    messages: [['them', 621, 'is it safe for sensitive skin? I react to most oils']] },
+  { id: 'c18', brand: 'wb', network: 'instagram', kind: 'message', name: 'Maya Brooks', handle: 'maya.brooks', followers: 156, post: null, sentiment: 'negative', unread: false, priority: true, status: 'open', assignee: 'ines', tags: ['#support'],
+    messages: [['them', 655, 'The dropper on my bottle is broken and the oil leaked all over the box.']] },
+  { id: 'c19', brand: 'wb', network: 'pinterest', kind: 'comment', name: 'Callum Reid', handle: 'callum.reid', followers: 21800, post: 'p52', sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 670, 'The dried flowers flatlay is gorgeous']] },
+  { id: 'c20', brand: 'wb', network: 'threads', kind: 'mention', name: 'Zara Iqbal', handle: 'zara.iqbal', followers: 4300, post: null, sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 720, 'Using @wildroot Spring Ritual tonight. Report tomorrow.']] },
+  { id: 'c21', brand: 'ns', network: 'linkedin', kind: 'comment', name: 'Abigail Shaw', handle: 'abigail.shaw', followers: 9000, post: 'p71', sentiment: 'positive', unread: false, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 758, 'Great breakdown. The approval loop point is so real.']] },
+  { id: 'c22', brand: 'ns', network: 'linkedin', kind: 'message', name: 'Ananya Rao', handle: 'ananya.rao', followers: 10700, post: null, sentiment: 'neutral', unread: true, priority: false, status: 'open', assignee: 'elise', tags: ['#sales'],
+    messages: [['them', 802, 'Hi Camila, we’re a coffee brand in Seattle looking for an agency. Do you have availability in Q1?']] },
+  { id: 'c3', brand: 'eo', network: 'tiktok', kind: 'comment', name: 'Darnell Hayes', handle: 'darnell.hayes', followers: 684, post: 'p3', sentiment: 'positive', unread: false, priority: false, status: 'done', assignee: null, tags: [],
+    messages: [['them', 87, 'the pour at 0:07 is so satisfying'], ['us', 65, 'Ha, that was Ada’s hundredth attempt. Worth it.', 'ines']] },
+  { id: 'c13', brand: 'vg', network: 'youtube', kind: 'comment', name: 'Peter Lawson', handle: 'peter.lawson', followers: 6700, post: 'p35', sentiment: 'neutral', unread: false, priority: false, status: 'done', assignee: null, tags: [],
+    messages: [['them', 466, 'What pads do you use for the second stage on soft paint?'], ['us', 444, 'Rupes yellow on a 15mm throw. We’ll do a full video on it.', 'ines']] },
+]
+
+// Wildroot Botanics' contacts have no profile photo in the reference, so they render as initials.
+const NO_PHOTO = new Set(['c16', 'c17', 'c18', 'c19', 'c20'])
+
+const conversations: Conversation[] = CONVERSATIONS.map((c) => ({
+  id: c.id,
+  brandId: c.brand,
+  network: c.network,
+  kind: c.kind,
+  contact: { name: c.name, handle: c.handle, avatar: NO_PHOTO.has(c.id) ? undefined : avatar(c.handle), followers: c.followers },
+  postId: c.post ?? undefined,
+  sentiment: c.sentiment,
+  unread: c.unread,
+  priority: c.priority,
+  status: c.status,
+  assigneeId: c.assignee ?? undefined,
+  tags: c.tags,
+  messages: c.messages.map(([from, minutesAgo, text, authorId], i) => ({
+    id: `${c.id}-m${i + 1}`,
+    from,
+    text,
+    at: new Date(Date.parse(NOW) - minutesAgo * 60_000).toISOString(),
+    ...(authorId && { authorId }),
+  })),
+}))
 
 const minutesBefore = (m: number) => new Date(Date.parse(NOW) - m * 60_000).toISOString()
 
@@ -240,14 +285,14 @@ export const workspace: Workspace = {
     { id: 'cp4', brandId: 'wb', name: 'Spring Ritual launch', start: '2026-10-10', end: '2026-11-08' },
   ],
   team: [
-    { id: 'camila', name: 'Camila Ortiz', role: 'Owner', avatar: avatar('camila') },
-    { id: 'elise', name: 'Elise Marchand', role: 'Admin', avatar: avatar('elise') },
-    { id: 'malik', name: 'Malik Johnson', role: 'Admin', avatar: avatar('malik') },
-    { id: 'haruto', name: 'Haruto Sato', role: 'Editor', avatar: avatar('haruto') },
-    { id: 'omar', name: 'Omar Saleh', role: 'Editor', avatar: avatar('omar') },
-    { id: 'nia', name: 'Nia Okoro', role: 'Contributor', avatar: avatar('nia') },
-    { id: 'freya', name: 'Freya Nilsen', role: 'Contributor', avatar: avatar('freya') },
-    { id: 'ines', name: 'Ines Duarte', role: 'Community', avatar: avatar('ines') },
+    { id: 'camila', name: 'Camila Ortiz', role: 'Owner', avatar: avatar('camila'), title: 'Founder', brands: 'all' },
+    { id: 'malik', name: 'Malik Johnson', role: 'Admin', avatar: avatar('malik'), title: 'Operations lead', brands: 'all' },
+    { id: 'elise', name: 'Elise Marchand', role: 'Manager', avatar: avatar('elise'), title: 'Account manager', brands: ['eo', 'wb', 'ns'] },
+    { id: 'haruto', name: 'Haruto Sato', role: 'Manager', avatar: avatar('haruto'), title: 'Account manager', brands: ['vg', 'hh'] },
+    { id: 'nia', name: 'Nia Okoro', role: 'Editor', avatar: avatar('nia'), title: 'Content creator', brands: ['eo', 'wb'] },
+    { id: 'omar', name: 'Omar Saleh', role: 'Editor', avatar: avatar('omar'), title: 'Video editor', brands: ['vg', 'hh'] },
+    { id: 'freya', name: 'Freya Nilsen', role: 'Editor', avatar: avatar('freya'), title: 'Copywriter', brands: 'all' },
+    { id: 'ines', name: 'Ines Duarte', role: 'Community', avatar: avatar('ines'), title: 'Community manager', brands: 'all' },
   ],
   channels: [
     { id: 'ch-hh-yt', brandId: 'hh', network: 'youtube', status: 'expiring', expiresInDays: 2 },
@@ -269,6 +314,42 @@ export const workspace: Workspace = {
   followerGrowth,
   engagementRate30d: 0.10339841583396177,
   conversations,
+  media: (
+    [
+      ['eo', 'ember-latte', 'Latte art, close'],
+      ['eo', 'ember-pour', 'Milk pour'],
+      ['eo', 'ember-roastery', 'The roastery'],
+      ['eo', 'ember-shot', 'Espresso pull'],
+      ['eo', 'ember-weigh', 'Weighing the dose'],
+      ['hh', 'hollow-chair', 'Bouclé lounge chair'],
+      ['hh', 'hollow-lamp', 'Pleat table lamp'],
+      ['hh', 'hollow-throw', 'Wool throw'],
+      ['hh', 'hollow-sofa', 'Friends on the Låg sofa'],
+      ['hh', 'hollow-detail', 'Oak side table'],
+      ['hh', 'hollow-room', 'Reading corner'],
+      ['hh', 'hollow-living', 'Living room, full set'],
+      ['vg', 'vantage-gauge', 'Redline'],
+      ['vg', 'vantage-wheel', 'Fresh ceramic coat'],
+      ['vg', 'vantage-night', 'Parking deck reveal'],
+      ['vg', 'vantage-lift', 'Wheel balancing'],
+      ['vg', 'vantage-drive', 'Delivery drive'],
+      ['vg', 'vantage-engine', 'Engine bay detail'],
+      ['wb', 'wild-daisy', 'Daisy bath'],
+      ['wb', 'wild-dried', 'Dried botanicals'],
+      ['wb', 'wild-dropper', 'Facial oil drop'],
+      ['wb', 'wild-petals', 'Rose petals'],
+      ['wb', 'wild-bloom', 'Rose & jasmine'],
+      ['wb', 'wild-vials', 'Tincture vials'],
+      ['wb', 'wild-golden', 'Golden hour dropper'],
+    ] as const
+  ).map(([brandId, seed, title]) => ({ brandId, seed, title })),
+  savedReplies: [
+    { id: 'sr1', title: 'Thanks!', text: 'Thank you so much — that means a lot to the whole team 🧡' },
+    { id: 'sr2', title: 'Shipping', text: 'We ship worldwide! Orders leave within 2 working days and you’ll get tracking by email.' },
+    { id: 'sr3', title: 'Sorry + DM', text: 'We’re really sorry about this. Could you send us your order number in a DM? We’ll sort it today.' },
+    { id: 'sr4', title: 'Booking', text: 'We’d love to have you in. You can pick a slot here: link in bio, or reply with your preferred week.' },
+    { id: 'sr5', title: 'Sensitive skin', text: 'Bloom is fragrance-free and patch-tested, but we always suggest a small test on your wrist first.' },
+  ],
   todos: [
     { kind: 'approval', id: 'ap-p78', postId: 'p78' },
     { kind: 'approval', id: 'ap-p83', postId: 'p83' },

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Flag, LayoutGrid, Plus, Send, ShieldCheck, Sparkles, TriangleAlert, X } from 'lucide-react'
 import { PageTitle, Stat } from '../components/PageHead'
 import { useToast } from '../components/Toast'
+import { usePostActions } from '../components/usePostActions'
 import { Button, IconButton, NetIcon, Segmented, cn } from '../components/ui'
 import { Chip, STATUS_FILTERS, StatusDot } from '../components/calendar/parts'
 import { ListView } from '../components/calendar/ListView'
@@ -98,24 +99,7 @@ export function Calendar({ now }: { now: Date }) {
     move(id, when)
   }
 
-  const publish = (id: string) => {
-    const before = ws.posts
-    const p = ws.posts.find((x) => x.id === id)
-    dispatch({ type: 'publish', id, at: now.toISOString() })
-    setOpenId(null)
-    toast({ text: `Published to ${p?.networks.map((n) => NETWORK_LABEL[n]).join(', ')}`, icon: Send, undo: () => dispatch({ type: 'restore', posts: before }) })
-  }
-  const duplicate = (id: string) => {
-    const before = ws.posts
-    dispatch({ type: 'duplicate', id, newId: `p${Date.now()}` })
-    toast({ text: 'Duplicated as a draft', undo: () => dispatch({ type: 'restore', posts: before }) })
-  }
-  const remove = (id: string) => {
-    const before = ws.posts
-    dispatch({ type: 'delete', id })
-    setOpenId(null)
-    toast({ text: 'Post deleted', undo: () => dispatch({ type: 'restore', posts: before }) })
-  }
+  const { publish, duplicate, remove } = usePostActions(now, () => setOpenId(null))
 
   const createAt = () => (window.location.hash = '#/compose')
   const toggleCampaign = (id: string) => setFilters((f) => ({ ...f, campaignId: f.campaignId === id ? null : id }))

@@ -59,6 +59,15 @@
   --gutter: clamp(16px, 1.6vw, 28px);
   /* Strength of the calendar's "Best times" shading. */
   --heat-k: 0.52;
+  /* Inbox (chat) surfaces */
+  --ib-acc-text: color-mix(in srgb, var(--sea) 78%, var(--text));
+  --ib-us: color-mix(in srgb, var(--sea) 13%, var(--float));
+  --ib-wall: #f3f2ef;
+  --ib-dot: #0000001a;
+  --ib-ring: #0000000e;
+  --ib-note: color-mix(in srgb, var(--butter) 26%, var(--float));
+  --ib-note-rim: color-mix(in srgb, var(--butter) 70%, transparent);
+  --ib-bar: color-mix(in srgb, var(--float) 60%, var(--solid));
   --dock-x: 18px;
   --dock-w: 68px;
   color-scheme: light;
@@ -105,6 +114,12 @@
   --pill: #eef0ee;
   --on-pill: #16191d;
   --heat-k: 0.62;
+  --ib-us: color-mix(in srgb, var(--sea) 34%, var(--float));
+  --ib-wall: #141416;
+  --ib-dot: #ffffff14;
+  --ib-ring: #ffffff0b;
+  --ib-note: color-mix(in srgb, var(--butter) 20%, var(--float));
+  --ib-bar: var(--float);
   color-scheme: dark;
 }
 
@@ -179,6 +194,13 @@
   --color-n-youtube: var(--n-youtube);
   --color-n-pinterest: var(--n-pinterest);
   --color-n-threads: var(--n-threads);
+
+  --color-ib-acc-text: var(--ib-acc-text);
+  --color-ib-us: var(--ib-us);
+  --color-ib-wall: var(--ib-wall);
+  --color-ib-note: var(--ib-note);
+  --color-ib-note-rim: var(--ib-note-rim);
+  --color-ib-bar: var(--ib-bar);
 
   --shadow-card: var(--shadow);
   --shadow-pop: var(--shadow-pop);
@@ -273,6 +295,40 @@ html.cl-dragging,
 html.cl-dragging * {
   cursor: grabbing !important;
   user-select: none !important;
+}
+
+/* Chat wallpaper: dot grid plus faint rings, as on the reference thread. */
+@utility ib-wall {
+  background-color: var(--ib-wall);
+  background-image:
+    radial-gradient(circle at 2px 2px, var(--ib-dot) 1.1px, transparent 1.6px),
+    radial-gradient(circle at 15px 15px, transparent 3px, var(--ib-ring) 3.3px, transparent 4.2px);
+  background-size: 22px 22px, 44px 44px;
+}
+
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@utility animate-chip-in {
+  animation: chip-in 0.3s var(--ease-soft) both;
+}
+
+@keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+@utility animate-stamp {
+  animation: stamp 0.42s var(--ease-soft) both;
 }
 
 @utility animate-breathe {

@@ -9,6 +9,7 @@ import { selectOverview } from './data/selectors'
 import { WorkspaceProvider, useWorkspace } from './data/store'
 import type { NavItem } from './data/types'
 import { Calendar } from './pages/Calendar'
+import { Inbox } from './pages/Inbox'
 import { Overview } from './pages/Overview'
 
 type Theme = 'light' | 'dark'
@@ -77,9 +78,11 @@ function Shell() {
   const route = matchRoute(hash)
   const routeId = route.path.slice(2)
 
+  const openContact = routeId === 'inbox' ? ws.conversations.find((c) => c.id === hash.split('/')[2])?.contact.name : undefined
+
   useEffect(() => {
-    document.title = `${route.label} · Murmura`
-  }, [route])
+    document.title = openContact ? `${openContact} · ${route.label} · Murmura` : `${route.label} · Murmura`
+  }, [route, openContact])
 
   const tabs: NavItem[] = tabRoutes.map((r) => ({
     id: r.path.slice(2),
@@ -98,11 +101,14 @@ function Shell() {
             <Overview model={model} now={now} />
           ) : routeId === 'calendar' ? (
             <Calendar now={now} />
+          ) : routeId === 'inbox' ? (
+            <Inbox now={now} hash={hash} />
           ) : (
             <Card title={route.title} className="max-w-3xl">
               <p className="text-sm text-muted">
-                Only <code className="font-semibold text-text">#/overview</code> and{' '}
-                <code className="font-semibold text-text">#/calendar</code> are recreated. This route exists in the
+                Only <code className="font-semibold text-text">#/overview</code>,{' '}
+                <code className="font-semibold text-text">#/calendar</code> and{' '}
+                <code className="font-semibold text-text">#/inbox</code> are recreated. This route exists in the
                 reference with the sections below.
               </p>
               <ul className="mt-4 flex flex-wrap gap-2">

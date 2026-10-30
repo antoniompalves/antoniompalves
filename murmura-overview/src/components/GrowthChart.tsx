@@ -157,7 +157,7 @@ export function GrowthChart({ data, label, formatDate }: GrowthChartProps) {
             </g>
           ))}
           {geo.xLabels.map(({ i, text }) => (
-            <text key={i} x={geo.x(i)} y={HEIGHT - 7} textAnchor="middle">
+            <text key={i} x={geo.x(i)} y={HEIGHT - 6} textAnchor="middle">
               {text}
             </text>
           ))}

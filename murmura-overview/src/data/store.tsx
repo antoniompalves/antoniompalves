@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer } from 'react'
 import type { Dispatch, ReactNode } from 'react'
-import type { Post, Workspace } from './types'
+import type { Conversation, Message, Post, Workspace } from './types'
 
 /**
  * Single in-memory workspace shared by every view, so rescheduling a post on
@@ -13,6 +13,10 @@ export type WorkspaceAction =
   | { type: 'publish'; id: string; at: string }
   | { type: 'duplicate'; id: string; newId: string }
   | { type: 'delete'; id: string }
+  | { type: 'conversation'; id: string; patch: Partial<Conversation> }
+  | { type: 'send'; id: string; message: Message; close?: boolean }
+  | { type: 'readAll' }
+  | { type: 'restoreConversations'; conversations: Conversation[] }
 
 function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
   const update = (id: string, patch: (p: Post) => Post) => ({
@@ -33,6 +37,21 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
     }
     case 'delete':
       return { ...ws, posts: ws.posts.filter((p) => p.id !== action.id) }
+    case 'conversation':
+      return { ...ws, conversations: ws.conversations.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
+    case 'send':
+      return {
+        ...ws,
+        conversations: ws.conversations.map((c) =>
+          c.id === action.id
+            ? { ...c, unread: false, messages: [...c.messages, action.message], ...(action.close && { status: 'done' as const }) }
+            : c,
+        ),
+      }
+    case 'readAll':
+      return { ...ws, conversations: ws.conversations.map((c) => (c.status === 'open' && c.unread ? { ...c, unread: false } : c)) }
+    case 'restoreConversations':
+      return { ...ws, conversations: action.conversations }
   }
 }
 

@@ -11,6 +11,7 @@ import type {
   Tone,
   Workspace,
 } from './types'
+import { byActivity, lastMessage } from './inbox'
 
 /* ───────────────────────── formatting ───────────────────────── */
 
@@ -207,10 +208,11 @@ export function selectOverview(ws: Workspace, now: Date) {
     neutral: open.filter((c) => c.sentiment === 'neutral').length,
     negative: open.filter((c) => c.sentiment === 'negative').length,
   }
-  const latestUnread: Conversation[] = open
+  const latestUnread = open
     .filter((c) => c.unread)
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+    .sort(byActivity)
     .slice(0, 3)
+    .map((c: Conversation) => ({ ...c, preview: lastMessage(c).text }))
 
   // Team activity
   const feed = ws.audit.map((e: AuditEvent) => ({ ...e, actor: member(e.actorId), actorFirstName: firstName(member(e.actorId)) }))

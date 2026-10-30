@@ -1,4 +1,4 @@
-# Murmura · `#/overview` + `#/calendar` — reverse-engineering notes
+# Murmura · `#/overview`, `#/calendar` + `#/inbox` — reverse-engineering notes
 
 Reference: `https://demo.codeandchill.store/murmura/#/overview`, inspected with the
 Playwright MCP on **2026-10-30 ~14:15 UTC** at a **1440×900** viewport (light theme,
@@ -144,7 +144,7 @@ Numbers use `font-variant-numeric: tabular-nums`.
 | `#/overview` | tab | Afternoon, Camila → Up next, Needs you, Audience growth, Top post this month, The week ahead, Network pulse, Inbox pulse, Team activity |
 | `#/compose` | tab | Compose → New post, Preview, When, Your drafts |
 | `#/calendar` | tab | Publishing calendar → Week/Month/List, Jump to a date, Unscheduled drafts, This week by network |
-| `#/inbox` (badge = unread) | tab | Inbox → conversation list + thread |
+| `#/inbox` (badge = unread) | tab | Inbox → conversation list (views, search, filters), thread + composer, contact info |
 | `#/approvals` (badge = awaiting) | tab | Approvals → Waiting for me · All pending · Changes requested · My submissions · Recently approved; The rule in force; Who approves |
 | `#/analytics` | tab | Analytics → 7D/30D/90D; Audience growth, Impressions & engagement, Best time to post, Content mix, By network, Top posts, Brand comparison |
 | `#/listening` | tab | Listening → Tracked keywords, Mentions, Share of voice, Trending terms, Sentiment over time, Competitors |
@@ -195,7 +195,7 @@ Known differences:
 - Curve uses monotone-X interpolation; the original's smoothing differs slightly.
 - The demo's live simulation (new inbox messages arriving, count-up stats, mesh
   parallax, magnetic buttons) is not reproduced; the countdown and "x min ago" do tick.
-- `#/overview` and `#/calendar` are recreated; other routes render a placeholder listing their sections.
+- `#/overview`, `#/calendar` and `#/inbox` are recreated; other routes render a placeholder listing their sections.
 
 ## 8. Calendar (`#/calendar`)
 
@@ -280,3 +280,98 @@ preview card's height follows the photo's aspect (the reference photos are
 portrait, the placeholders square); the "Failed" chip groups failed and
 changes-requested posts (the reference's "needs attention" colour); the reference
 persists edits in `localStorage`, this recreation keeps them in memory.
+
+## 9. Inbox (`#/inbox`)
+
+Reached from the **Inbox** tab of the top bar (the dock has no inbox link either)
+and from the overview's Inbox pulse. `#/inbox` opens the first conversation on
+wide screens (`#/inbox/c1`); every conversation has its own deep link. Inspected
+with computed styles and the lazily loaded `inbox-*.css` / `inbox-*.js` chunks
+(read for behaviour only: toasts, menus, tag rules), cleaned DOM per pane, and the
+22 conversations read back one by one.
+
+### Layout
+
+```
+.ib-app   one card, h = max(560px, 100dvh − 120px)  (109,100 · 1293×780 at 1440×900)
+          [ list clamp(300px, 27vw, 376px) | thread 1fr ]
+          + contact info ≥ 1280px: [ list clamp(320px, 25vw, 376px) | thread | info 320px ]
+          1000–1279px: info slides over the thread · ≤ 999px: list minmax(270px, 300px)
+          ≤ 760px: one pane at a time (list ↔ thread by hash), info full screen
+```
+
+| List (`.ib-side`) | Value |
+| --- | --- |
+| Head | "Inbox" 21/700 −0.02em + count chip; "13 unread · 22m median first reply"; Filters (count badge) and Mark all read, 38px round buttons |
+| Search | 36px pill, `--glass-2`, line-2 border, "/" key cap (12.5/600, r8; hidden on touch) |
+| Views | 32px chips with counts: All 20 · Unread 13 · Mine · Unassigned 11 · Priority 4 · Done 2 (sideways scroll) |
+| Row | **72px**, `48px 1fr` grid, gap 13; 48px face + 20px network badge (`--float` ring); name 16 (600, 800 while unread), brand dot, time (accent while unread); kind glyph 15px, preview of the last non-note message ("You:" / "Note:" / "Photo"), priority flag, 20px assignee, 21px unread disc; current row `--well` |
+| Faces | photo, or initials on one of four tints (`#f4dba8 #cde8de #f3cdbf #cfe3f1`, Σ char codes mod 4) for the five Wildroot contacts without a photo |
+
+| Thread (`.ib-th`) | Value |
+| --- | --- |
+| Head | 60px; 40px face, name 16/700, "Instagram · Comment on Ember & Oak’s post"; 38px tools: assign (26px avatar, "Assigned to Haruto Sato — reassign"), priority (coral when on), done (E) / reopen, info (pressed), more |
+| Pin bar | 50px, 3px sea rule, 36px thumb, "On Ember & Oak’s post · Oct 28" 12.5/700 accent + caption; opens the post drawer |
+| Wall | `--ib-wall` with a 22px dot grid, sticky day pills ("Today", "Yesterday", weekday, "Oct 3") 12.5/600 on `--float` |
+| Bubble | max `min(65%, 560px)`, r9, padding 6/9/7, 15px/1.38; 8×12 clip-path tail on the first of a run (gap 10, else 2); theirs `--float`, ours `--ib-us` with the sender's first name 12.5/700 accent; time + ✓✓ (accent once read) bottom-right, an inline 66/84px spacer keeps text clear of it; `#tags`, `@handles`, links 600 accent |
+| Note | centred, `min(78%, 440px)`, r10, `--ib-note` + `--ib-note-rim`, "Note · only your team sees this", "Camila · 5:13 PM" |
+| Composer | Attach + Internal note (38px), pill input r22 growing 21 → 121px (dashed butter in note mode, "Note for the team…"), 30px caret (opens only with something to send), 44px send (sea; note mode swaps in the note glyph, "Add note") |
+
+| Contact info (`.ib-info`, 320px) / popovers | Value |
+| --- | --- |
+| Hero | 96px face, name 20/700, @handle, network · followers, brand chip |
+| Sections | padding 14/18, uppercase 12.5/700 headings; rows ≥ 30px, gap 10: Kind, Status pill, Sentiment (3 segments, 32px), Priority switch 46×28 |
+| Assignee / Tags / Post / Activity | `--well` button with 28px avatar + job title; 30px tag chips with × and "+ Tag"; 72px thumb + first line (90 chars); messages "n · x in · y out", first contact, last message; footer Mark done (pine) / Reopen |
+| `.pop` | r18, 6px padding, 210 → `min(380px, 100vw − 24px)`, 8px from its trigger, flips when there's no room, clamped to the viewport |
+| Menus | 46px rows (18px glyph, gap 10), separators 1px with 4/6 margins, check mark on the selected radio item |
+| Sizes | Filters 288 (Kind / Network / Sentiment with counts; Clear at 45% until something is ticked), Attach 210, Saved replies 360 (5 replies, 34px bolt), Choose a photo 360 (3-col grid), Add a tag 314 (42px "#" field, ≤ 10 suggestions) |
+
+### Interactions
+
+- Opening a conversation reads it; the unread disc counts inbound messages since
+  our last reply. J / K move, E closes (stamp, then the next row), R focuses the
+  composer, "/" the search; Enter sends, Shift+Enter breaks the line, ⌘⇧Enter sends
+  and closes.
+- Toasts mirror the reference, with Undo where it has one: "Done · Abigail’s
+  comment closed", "Reopened …", "Sent to Abigail · conversation closed",
+  "Marked 13 as read", "Marked as priority" / "Priority removed", "Marked
+  positive", "Removed #press", "Tagged #press" (only while the contact panel is
+  closed), "Marked as unread". Assigning confirms in place, with no toast.
+- "Mark as unread" also leaves the conversation and parks the inbox on its empty
+  state instead of reopening the first row.
+- Search matches name, handle, tags and message text, highlighting hits; views and
+  filters combine, each with its own empty state.
+- The assign menu lists you, then teammates with access to the conversation's
+  brand (team order, titles and brand access taken from the reference).
+- Tags are normalised like the reference (`#`, lowercase, spaces → `-`, `[a-z0-9-]`,
+  24 chars); suggestions are the workspace's tags, then support, sales, shipping,
+  refund, wholesale, press, ugc, question, vip.
+
+### Data
+
+22 conversations (20 open, 2 done) with every message, author, minute offset,
+sentiment, tag and assignee read from the reference into `src/data/mock.ts`,
+plus 5 saved replies and each brand's media library (25 titled photos). Derived
+values match: **13** unread after the first conversation opens (14 on the tab
+badge before), **11** unassigned, **4** priority, kinds **11 · 5 · 3 · 1**,
+networks **8 · 2 · 1 · 2 · 2 · 1 · 2 · 2**, sentiment **10 · 6 · 4**, median first
+reply **22m**. The inbox shares the workspace store with the overview, so replying
+or marking read updates the Inbox pulse and the tab badge immediately.
+
+### Verification (1440×900)
+
+| Check | Result |
+| --- | --- |
+| List head, search, view chips, 3 rows, thread head, pin bar, bubble, composer (92 landmarks) | identical to the pixel |
+| Contact info open on c5 / c8 / c18 (42–48 landmarks each, incl. initials avatar) | identical |
+| Attach, More, Assign menus: position and every item | identical |
+| Filters (288×524), Saved replies (360 wide), Choose a photo grid, Add a tag chips | identical |
+| Dark theme and the mobile thread view | visually matched |
+| Overview / calendar after the change | unchanged (calendar differs only by grid scroll, which follows the clock) |
+
+Known differences: the reference's live simulation (new comments every minute with
+a "New comment from … on Instagram" toast) is not reproduced and times come from
+the frozen clock; photos are placeholders; assignee notifications, the audit log
+and role-based locks ("Your role can’t reply") are not modelled because the mock
+user is the owner; the mobile app chrome follows the earlier overview recreation,
+which differs from the reference's current phone header and bottom bar.

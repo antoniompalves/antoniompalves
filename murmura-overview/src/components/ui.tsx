@@ -113,7 +113,7 @@ interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
 
 export function Button({ variant = 'ink', size = 'md', icon: Icon, href, className, children, ...rest }: ButtonProps) {
   const cls = cn(
-    'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full border font-semibold transition-[filter,background-color] duration-150',
+    'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full border font-semibold transition-[filter,background-color] duration-150 disabled:cursor-not-allowed disabled:opacity-45 disabled:filter-none',
     size === 'md' ? 'h-11 px-[19px] text-sm' : 'h-9 px-[15px] text-2xs',
     buttonVariant[variant],
     className,
@@ -235,9 +235,28 @@ export function BrandMark({ brand, size = 'sm', className }: { brand: Brand; siz
   )
 }
 
-const avatarSize = { sm: 'size-7', md: 'size-9', lg: 'size-[42px]' } as const
+const avatarSize = { xs: 'size-5 text-[9px]', menu: 'size-[22px] text-[9.5px]', xsm: 'size-[26px] text-[10px]', sm: 'size-7 text-[11px]', md: 'size-9 text-[13px]', lg: 'size-[42px] text-sm' } as const
 
-export function Avatar({ src, name, size = 'md', className }: { src: string; name: string; size?: keyof typeof avatarSize; className?: string }) {
+const AVATAR_TONES = ['bg-[#f4dba8]', 'bg-[#cde8de]', 'bg-[#f3cdbf]', 'bg-[#cfe3f1]'] as const
+
+/** People without a photo get their initials on a tint picked from the name, so it is the same on every render. */
+export function Initials({ name, className }: { name: string; className?: string }) {
+  const tone = AVATAR_TONES[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % AVATAR_TONES.length]
+  const letters = name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+  return (
+    <span aria-hidden className={cn('inline-grid shrink-0 place-items-center rounded-full font-bold text-[#16191d]', tone, className)}>
+      {letters}
+    </span>
+  )
+}
+
+export function Avatar({ src, name, size = 'md', className }: { src?: string; name: string; size?: keyof typeof avatarSize; className?: string }) {
+  if (!src) return <Initials name={name} className={cn(avatarSize[size], className)} />
   return (
     <img
       src={src}
@@ -327,13 +346,13 @@ export function NetworkGlyph({ network, className }: { network: NetworkId; class
   )
 }
 
-const netSize = { '2xs': 'size-5', xs: 'size-[22px]', sm: 'size-7', md: 'size-9', lg: 'size-[46px]' } as const
+const netSize = { '3xs': 'size-[18px]', '2xs': 'size-5', xs: 'size-[22px]', sm: 'size-7', md: 'size-9', lg: 'size-[46px]' } as const
 
 interface NetIconProps {
   network: NetworkId
   size?: keyof typeof netSize
   /** Surface the badge sits on; tunes background + ring so stacks read cleanly. */
-  surface?: 'default' | 'stack' | 'on-ink' | 'on-photo'
+  surface?: 'default' | 'stack' | 'on-ink' | 'on-photo' | 'badge'
   className?: string
 }
 
@@ -352,6 +371,7 @@ export function NetIcon({ network, size = 'xs', surface = 'default', className }
         surface === 'stack' && 'border-transparent bg-solid shadow-[0_0_0_2px_var(--solid)]',
         surface === 'on-ink' && 'border-transparent bg-on-ink shadow-[0_0_0_2px_var(--ink)]',
         surface === 'on-photo' && cn('border-transparent bg-white/92 shadow-[0_0_0_2px_var(--solid)]', mono && 'text-[#16191d]'),
+        surface === 'badge' && 'border-transparent bg-float shadow-[0_0_0_2px_var(--float)]',
         className,
       )}
     >

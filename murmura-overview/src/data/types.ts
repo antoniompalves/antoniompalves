@@ -19,7 +19,7 @@ export type NetworkId =
 /** Semantic colour roles used for badges, chips, brand marks and meters. */
 export type Tone = 'butter' | 'pine' | 'coral' | 'sea' | 'lilac' | 'ink' | 'plain'
 
-export type Role = 'Owner' | 'Admin' | 'Editor' | 'Contributor' | 'Community' | 'Analyst'
+export type Role = 'Owner' | 'Admin' | 'Manager' | 'Editor' | 'Contributor' | 'Community' | 'Analyst'
 
 export interface Brand {
   id: string
@@ -45,6 +45,10 @@ export interface TeamMember {
   name: string
   role: Role
   avatar: string
+  /** Job title shown when they're assigned a conversation. */
+  title?: string
+  /** Brands they work on; only these teammates are offered when assigning a conversation. */
+  brands: string[] | 'all'
 }
 
 export type ChannelStatus = 'connected' | 'expiring' | 'disconnected'
@@ -106,17 +110,60 @@ export interface DailyPoint {
 
 export type Sentiment = 'positive' | 'neutral' | 'negative'
 
+/** What kind of inbound item opened the conversation. */
+export type ConversationKind = 'comment' | 'message' | 'mention' | 'review'
+
+export interface Message {
+  id: string
+  from: 'them' | 'us'
+  /** Internal note: shown to the team only, never sent to the contact. */
+  note?: boolean
+  /** Teammate who wrote it (replies and notes). */
+  authorId?: string
+  text: string
+  at: ISODate
+  /** Photo seed attached to the message (see assets.ts). */
+  image?: string
+  /** Replies only: whether the contact has seen it. */
+  read?: boolean
+}
+
+export interface Contact {
+  name: string
+  handle: string
+  /** Missing for contacts without a photo: the UI falls back to tinted initials. */
+  avatar?: string
+  followers: number
+}
+
 export interface Conversation {
   id: string
   brandId: string
   network: NetworkId
-  contact: { name: string; avatar: string }
-  preview: string
+  kind: ConversationKind
+  contact: Contact
+  /** Post a comment was left on (comments only). */
+  postId?: string
+  messages: Message[]
   sentiment: Sentiment
   unread: boolean
   priority: boolean
-  status: 'open' | 'closed'
-  updatedAt: ISODate
+  status: 'open' | 'done'
+  assigneeId?: string
+  tags: string[]
+}
+
+/** A picture in a brand's media library, offered by the composer's "Photo from the library". */
+export interface MediaAsset {
+  seed: string
+  brandId: string
+  title: string
+}
+
+export interface SavedReply {
+  id: string
+  title: string
+  text: string
 }
 
 export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox'
@@ -155,6 +202,8 @@ export interface Workspace {
   followerGrowth: DailyPoint[]
   engagementRate30d: number
   conversations: Conversation[]
+  savedReplies: SavedReply[]
+  media: MediaAsset[]
   todos: TodoItem[]
   audit: AuditEvent[]
   notifications: { unread: number }
