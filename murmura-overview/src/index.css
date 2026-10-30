@@ -1,0 +1,243 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens reverse-engineered from the computed :root custom properties
+ * of the reference app (light + [data-theme="dark"]). Raw values live in CSS
+ * variables so the theme can switch at runtime; @theme inline maps them to
+ * Tailwind utilities (bg-glass, text-muted, border-rim, rounded-card, ...).
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --bg: #f1f2ef;
+  --mesh-a: #cde9e4;
+  --mesh-b: #f3e3c8;
+  --mesh-c: #d3e6f3;
+  --glass: #ffffff85;
+  --glass-2: #ffffffb3;
+  --glass-3: #ffffffdb;
+  --solid: #f6f7f4;
+  --float: #fdfdfb;
+  --well: #161a1e0f;
+  --line: #161a1e17;
+  --line-2: #161a1e29;
+  --rim: #ffffffd1;
+  --shadow: 0 1px 0 #ffffffbf inset, 0 24px 48px -30px #1e282d47;
+  --shadow-pop: 0 24px 60px -18px #14181c4d, 0 2px 6px #14181c14;
+  --text: #16191d;
+  --muted: #5b6064;
+  --faint: #696e72;
+  --cream: #f6f7f5;
+  --butter: #f2b740;
+  --on-butter: #16191d;
+  --pine: #11745a;
+  --on-pine: #f6f7f5;
+  --coral: #c43c30;
+  --on-coral: #f6f7f5;
+  --sea: #1f68a8;
+  --on-sea: #f6f7f5;
+  --lilac: #0b7a87;
+  --on-lilac: #f6f7f5;
+  --ink: #16191d;
+  --on-ink: #f6f7f5;
+  --good: #11745a;
+  --bad: #b8382c;
+  --warn: #855c00;
+  --n-instagram: #c13584;
+  --n-facebook: #1665d8;
+  --n-x: #16191d;
+  --n-linkedin: #0a66c2;
+  --n-tiktok: #16191d;
+  --n-youtube: #d61f1f;
+  --n-pinterest: #d0021b;
+  --n-threads: #16191d;
+  --dock: #16191d;
+  --on-dock: #f6f7f5;
+  --pill: #16191d;
+  --on-pill: #f6f7f5;
+  --gutter: clamp(16px, 1.6vw, 28px);
+  --dock-x: 18px;
+  --dock-w: 68px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #101214;
+  --mesh-a: #0b7a874d;
+  --mesh-b: #f2b7401f;
+  --mesh-c: #1f68a84d;
+  --glass: #ffffff0d;
+  --glass-2: #ffffff16;
+  --glass-3: #212428;
+  --solid: #191b1f;
+  --float: #1f2226;
+  --well: #ffffff0f;
+  --line: #ffffff14;
+  --line-2: #ffffff29;
+  --rim: #ffffff12;
+  --shadow: 0 1px 0 #ffffff0d inset, 0 24px 48px -30px #000000b3;
+  --shadow-pop: 0 24px 60px -18px #000000b3, 0 0 0 1px #ffffff14;
+  --text: #eef0ee;
+  --muted: #a6abaa;
+  --faint: #868b8a;
+  --ink: #eef0ee;
+  --on-ink: #16191d;
+  --coral: #c8402f;
+  --sea: #2370b3;
+  --lilac: #0a7582;
+  --pine: #117a5d;
+  --good: #5fcfa6;
+  --bad: #ff8f80;
+  --warn: #e9c15a;
+  --n-instagram: #e573b3;
+  --n-facebook: #6ea4f5;
+  --n-x: #eef0ee;
+  --n-linkedin: #6fb1f5;
+  --n-tiktok: #eef0ee;
+  --n-youtube: #ff6b6b;
+  --n-pinterest: #ff6b7d;
+  --n-threads: #eef0ee;
+  --dock: #ffffff14;
+  --on-dock: #eef0ee;
+  --pill: #eef0ee;
+  --on-pill: #16191d;
+  color-scheme: dark;
+}
+
+@media (height <= 820px) and (width >= 761px) {
+  :root { --dock-w: 64px; }
+}
+
+@theme {
+  /* Type scale: replace Tailwind's sizes so text-* only sets font-size and
+     line-height keeps inheriting the body's 1.45, as in the reference. */
+  --text-*: initial;
+  --text-2xs: 13px;
+  --text-xs: 14px;
+  --text-sm: 15px;
+  --text-md: 16px;
+  --text-base: 17px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+
+  --font-sans: "Urbanist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-card: 26px;
+  --radius-tile: 22px;
+
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --breakpoint-mobile: 761px;
+  --breakpoint-tablet: 861px;
+  --breakpoint-desk: 1280px;
+  --breakpoint-wide: 1341px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-glass: var(--glass);
+  --color-glass-2: var(--glass-2);
+  --color-glass-3: var(--glass-3);
+  --color-solid: var(--solid);
+  --color-float: var(--float);
+  --color-well: var(--well);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-rim: var(--rim);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-cream: var(--cream);
+  --color-butter: var(--butter);
+  --color-on-butter: var(--on-butter);
+  --color-pine: var(--pine);
+  --color-on-pine: var(--on-pine);
+  --color-coral: var(--coral);
+  --color-on-coral: var(--on-coral);
+  --color-sea: var(--sea);
+  --color-on-sea: var(--on-sea);
+  --color-lilac: var(--lilac);
+  --color-on-lilac: var(--on-lilac);
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+  --color-warn: var(--warn);
+  --color-dock: var(--dock);
+  --color-on-dock: var(--on-dock);
+  --color-pill: var(--pill);
+  --color-on-pill: var(--on-pill);
+  --color-n-instagram: var(--n-instagram);
+  --color-n-facebook: var(--n-facebook);
+  --color-n-x: var(--n-x);
+  --color-n-linkedin: var(--n-linkedin);
+  --color-n-tiktok: var(--n-tiktok);
+  --color-n-youtube: var(--n-youtube);
+  --color-n-pinterest: var(--n-pinterest);
+  --color-n-threads: var(--n-threads);
+
+  --shadow-card: var(--shadow);
+  --shadow-pop: var(--shadow-pop);
+}
+
+@layer base {
+  html {
+    text-size-adjust: 100%;
+    scrollbar-gutter: stable;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font: 500 16px/1.45 var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-wrap: break-word;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--butter);
+    color: #16191d;
+  }
+  time,
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+}
+
+@utility animate-breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+@utility animate-rise {
+  animation: rise 0.7s var(--ease-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
