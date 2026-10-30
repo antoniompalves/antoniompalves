@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import { ArrowLeft, ArrowUpRight, ChevronDown, Download, Eye, Heart, ImageOff, Layers, Link, PieChart, TrendingUp, Users } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, Download, Eye, Heart, ImageOff, Layers, Link, PieChart, TrendingUp, Users } from 'lucide-react'
 import { PageTitle, Stat } from '../components/PageHead'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
@@ -10,9 +9,12 @@ import { Heatmap } from '../components/analytics/Heatmap'
 import { PeriodChart } from '../components/analytics/PeriodChart'
 import type { ChartTone } from '../components/analytics/PeriodChart'
 import { ReportControls } from '../components/analytics/ReportControls'
+import { Websites } from '../components/analytics/Websites'
 import { Sparkline } from '../components/analytics/Sparkline'
+import { AnCard, CELL_LABEL, Empty, FilterChip, Figure, Legend, SortHeader, TD } from '../components/analytics/parts'
+import type { Sort } from '../components/analytics/parts'
 import { analyticsCsv, download } from '../components/analytics/exportCsv'
-import { Badge, BrandMark, Button, IconButton, LegendDot, NetIcon, NetStack, Segmented, StatusPill, cn } from '../components/ui'
+import { Badge, BrandMark, Button, NetIcon, NetStack, Segmented, StatusPill, cn } from '../components/ui'
 import {
   RANGES,
   activeNetworks,
@@ -31,7 +33,7 @@ import { useI18n } from '../i18n'
 
 type Metric = 'impressions' | 'engagements' | 'clicks'
 type SortKey = 'name' | 'accounts' | 'followers' | 'growth' | 'impressions' | 'eng' | 'posts'
-type CardId = 'grow' | 'imp' | 'best' | 'mix' | 'net' | 'top' | 'brands'
+type CardId = 'grow' | 'imp' | 'best' | 'mix' | 'net' | 'top' | 'brands' | 'web' | 'src' | 'pages'
 
 const METRIC_TONE: Record<Metric, ChartTone> = { impressions: 'sea', engagements: 'coral', clicks: 'lilac' }
 const CHANNEL_TONE: Record<ChannelStatus, Tone> = { connected: 'pine', expiring: 'butter', disconnected: 'coral' }
@@ -94,7 +96,7 @@ export function Analytics({ now, hash }: { now: Date; hash: string }) {
     toast({ text: a.exported(range), icon: Download })
   }
 
-  const card = (id: CardId) => ({
+  const card = <T extends CardId>(id: T) => ({
     id,
     expanded: expanded === id,
     onToggle: () => setExpanded((cur) => (cur === id ? null : id)),
@@ -128,30 +130,22 @@ export function Analytics({ now, hash }: { now: Date; hash: string }) {
           EDGE_FADE,
         )}
       >
-        {model.chips.map((chip) => {
-          const current = chip.network === network
-          return (
-            <a
-              key={chip.network ?? 'all'}
-              href={chip.network ? `#/analytics/${chip.network}` : '#/analytics'}
-              aria-current={current ? 'page' : undefined}
-              className={cn(
-                'inline-flex h-[38px] shrink-0 items-center gap-2 whitespace-nowrap rounded-full border pl-1.5 pr-3 text-2xs font-semibold transition-colors duration-200 pointer-coarse:h-11',
-                current ? 'border-transparent bg-pill text-on-pill' : 'border-rim bg-glass-2 text-text hover:bg-glass-3',
-              )}
-            >
-              {chip.network ? (
-                <NetIcon network={chip.network} surface={current ? 'on-pill' : 'chip'} />
+        {model.chips.map((chip) => (
+          <FilterChip
+            key={chip.network ?? 'all'}
+            href={chip.network ? `#/analytics/${chip.network}` : '#/analytics'}
+            current={chip.network === network}
+            lead={
+              chip.network ? (
+                <NetIcon network={chip.network} surface={chip.network === network ? 'on-pill' : 'chip'} />
               ) : (
                 <Layers size={18} aria-hidden className="ml-1" />
-              )}
-              {chip.network ? NETWORK_LABEL[chip.network] : a.allNetworks}
-              <span className={cn('inline-grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[12.5px] font-bold', current ? 'bg-white/16 dark:bg-black/10' : 'bg-well')}>
-                {chip.accounts}
-              </span>
-            </a>
-          )
-        })}
+              )
+            }
+            label={chip.network ? NETWORK_LABEL[chip.network] : a.allNetworks}
+            count={chip.accounts}
+          />
+        ))}
         <span className="ml-auto text-2xs font-semibold text-muted max-mobile:hidden">{a.note(ws.brands.length, range)}</span>
       </nav>
 
@@ -251,6 +245,8 @@ export function Analytics({ now, hash }: { now: Date; hash: string }) {
         </AnCard>
       </div>
 
+      <Websites range={range} network={network} card={card} />
+
       <PostDrawer
         post={open}
         brand={open ? ws.brands.find((b) => b.id === open.brandId) : undefined}
@@ -262,108 +258,6 @@ export function Analytics({ now, hash }: { now: Date; hash: string }) {
         onDelete={remove}
       />
     </>
-  )
-}
-
-/* ───────────────────────── card shell ───────────────────────── */
-
-interface AnCardProps {
-  id: CardId
-  area: CardId
-  title: string
-  tools?: ReactNode
-  /** On phones the tools and the Expand button drop under the title (the ranking toggles). */
-  wrapTools?: boolean
-  expanded: boolean
-  onToggle: () => void
-  children: ReactNode
-}
-
-/**
- * A grid card with the reference's "Expand" button: the card lifts out over a
- * scrim, centred and up to 1165px wide, leaving a dashed outline in its place.
- */
-function AnCard({ id, area, title, tools, wrapTools, expanded, onToggle, children }: AnCardProps) {
-  const { t } = useI18n()
-  const ref = useRef<HTMLElement>(null)
-  const [height, setHeight] = useState(0)
-  const titleId = `an-${id}-t`
-
-  const toggle = () => {
-    if (!expanded) setHeight(ref.current?.offsetHeight ?? 0)
-    onToggle()
-  }
-
-  return (
-    <>
-      {expanded && <div aria-hidden className="rounded-card border-2 border-dashed border-line-2" style={{ gridArea: area, height }} />}
-      <section
-        ref={ref}
-        aria-labelledby={titleId}
-        style={expanded ? undefined : { gridArea: area }}
-        className={cn(
-          'flex min-w-0 flex-col rounded-card border border-rim p-5 max-mobile:p-4',
-          expanded
-            ? 'fixed inset-x-0 top-[8vh] z-[60] mx-auto max-h-[84vh] w-[min(1165px,92%)] animate-rise overflow-y-auto overscroll-contain bg-solid shadow-pop max-mobile:inset-x-2.5 max-mobile:top-2.5 max-mobile:max-h-[calc(100dvh-20px)] max-mobile:w-auto'
-            : 'relative bg-glass shadow-card',
-        )}
-      >
-        <header className={cn('mb-3.5 flex min-h-[42px] items-center justify-between gap-3', wrapTools && 'max-mobile:min-h-0 max-mobile:flex-wrap')}>
-          <h2 id={titleId} className="text-base font-semibold tracking-[-0.005em]">
-            {title}
-          </h2>
-          <div
-            className={cn(
-              'flex items-center gap-2',
-              wrapTools && 'max-mobile:order-2 max-mobile:w-full max-mobile:[&>[role=group]]:flex max-mobile:[&>[role=group]]:min-w-0 max-mobile:[&>[role=group]]:flex-1 max-mobile:[&_[role=group]>button]:flex-1 max-mobile:[&_[role=group]>button]:px-1.5',
-            )}
-          >
-            {tools}
-            <IconButton label={expanded ? t.analytics.collapse : t.analytics.expand} icon={ArrowUpRight} aria-expanded={expanded} onClick={toggle} />
-          </div>
-        </header>
-        {children}
-      </section>
-    </>
-  )
-}
-
-/* ───────────────────────── small parts ───────────────────────── */
-
-/** Big figure with its caption on the same baseline (".an-fig"). */
-function Figure({ value, children }: { value: string; children: ReactNode }) {
-  return (
-    <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <b className="text-[clamp(28px,2.5vw,36px)] font-semibold leading-[1.05] tracking-[-0.03em] tabular-nums">{value}</b>
-      {children}
-    </p>
-  )
-}
-
-function Legend({ tone, label, previous }: { tone: ChartTone; label: string; previous: string }) {
-  return (
-    <div className="mb-1.5 mt-3 flex flex-wrap gap-x-4 gap-y-2 text-2xs text-muted">
-      <span className="inline-flex items-center gap-1.5">
-        <LegendDot tone={tone} />
-        {label}
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <i aria-hidden className="h-0 w-4 border-t-2 border-dashed border-faint" />
-        {previous}
-      </span>
-    </div>
-  )
-}
-
-function Empty({ icon: Icon, title, text }: { icon: typeof Link; title: string; text: string }) {
-  return (
-    <div className="grid justify-items-center gap-1.5 px-2 py-[26px] text-center">
-      <span className="mb-1 grid size-12 place-items-center rounded-full bg-well text-muted">
-        <Icon size={22} aria-hidden />
-      </span>
-      <b className="text-sm font-semibold">{title}</b>
-      <p className="max-w-[320px] text-2xs text-muted">{text}</p>
-    </div>
   )
 }
 
@@ -410,8 +304,8 @@ interface NetTableProps {
   byAccount: boolean
   range: Range
   network: string | null
-  sort: { key: SortKey; dir: 1 | -1 }
-  onSort: (s: { key: SortKey; dir: 1 | -1 }) => void
+  sort: Sort<SortKey>
+  onSort: (s: Sort<SortKey>) => void
 }
 
 function NetTable({ rows, byAccount, range, network, sort, onSort }: NetTableProps) {
@@ -435,8 +329,7 @@ function NetTable({ rows, byAccount, range, network, sort, onSort }: NetTablePro
     { key: 'eng', label: tb.engRate, right: true },
     { key: 'posts', label: tb.posts, right: true },
   ]
-  const td = 'px-3 py-2.5 text-right tabular-nums max-mobile:p-0 max-mobile:text-left max-mobile:text-sm'
-  const cellLabel = 'hidden max-mobile:mb-px max-mobile:block max-mobile:text-[12.5px] max-mobile:font-semibold max-mobile:text-muted'
+  const td = TD
 
   return (
     <div className="-mx-1.5 overflow-x-auto">
@@ -444,34 +337,9 @@ function NetTable({ rows, byAccount, range, network, sort, onSort }: NetTablePro
         <caption className="sr-only">{tb.caption(range, byAccount)}</caption>
         <thead className="max-mobile:hidden">
           <tr>
-            {columns.map((c) => {
-              const active = sort.key === c.key
-              return (
-                <th
-                  key={c.key}
-                  scope="col"
-                  aria-sort={active ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
-                  className={cn('group whitespace-nowrap border-b border-line px-3 py-2.5 text-2xs font-semibold text-muted', c.right ? 'text-right' : 'text-left')}
-                >
-                  <button
-                    type="button"
-                    onClick={() => onSort(active ? { key: c.key, dir: sort.dir === 1 ? -1 : 1 } : { key: c.key, dir: c.key === 'name' ? 1 : -1 })}
-                    className={cn('inline-flex cursor-pointer items-center gap-1.5 py-1 font-semibold', c.right && 'ml-auto flex-row-reverse', active && 'text-text')}
-                  >
-                    {c.label}
-                    <ChevronDown
-                      size={14}
-                      aria-hidden
-                      className={cn(
-                        'transition-[opacity,transform] duration-300 ease-soft',
-                        active ? 'opacity-100' : 'opacity-0 group-hover:opacity-45',
-                        active && sort.dir === 1 && 'rotate-180',
-                      )}
-                    />
-                  </button>
-                </th>
-              )
-            })}
+            {columns.map((c) => (
+              <SortHeader key={c.key} label={c.label} right={c.right} sort={sort} column={c.key} onSort={onSort} />
+            ))}
             <th scope="col" className="w-[120px] whitespace-nowrap border-b border-line px-3 py-2.5 text-left text-2xs font-semibold text-muted">
               {tb.trend}
             </th>
@@ -511,7 +379,7 @@ function NetTable({ rows, byAccount, range, network, sort, onSort }: NetTablePro
                     )}
                   </th>
                   <td className={cn(td, !byAccount && 'max-mobile:hidden')}>
-                    <span className={cellLabel}>{byAccount ? tb.status : tb.accounts}</span>
+                    <span className={CELL_LABEL}>{byAccount ? tb.status : tb.accounts}</span>
                     {r.channel ? (
                       <StatusPill tone={CHANNEL_TONE[r.channel.status]} size="md">
                         {tb.channelStatus[r.channel.status]}
@@ -521,23 +389,23 @@ function NetTable({ rows, byAccount, range, network, sort, onSort }: NetTablePro
                     )}
                   </td>
                   <td className={cn(td, 'font-semibold')}>
-                    <span className={cellLabel}>{tb.followers}</span>
+                    <span className={CELL_LABEL}>{tb.followers}</span>
                     {t.numbers.compact(r.followers)}
                   </td>
                   <td className={td}>
-                    <span className={cellLabel}>{tb.growth}</span>
+                    <span className={CELL_LABEL}>{tb.growth}</span>
                     <span className={cn('font-bold', r.growth >= 0 ? 'text-good' : 'text-bad')}>{t.numbers.signedPct1(r.growth)}</span>
                   </td>
                   <td className={td}>
-                    <span className={cellLabel}>{tb.impressions}</span>
+                    <span className={CELL_LABEL}>{tb.impressions}</span>
                     {t.numbers.compact(r.impressions)}
                   </td>
                   <td className={td}>
-                    <span className={cellLabel}>{tb.engRate}</span>
+                    <span className={CELL_LABEL}>{tb.engRate}</span>
                     {r.posts ? t.numbers.pct1(r.engagementRate) : '—'}
                   </td>
                   <td className={td}>
-                    <span className={cellLabel}>{tb.posts}</span>
+                    <span className={CELL_LABEL}>{tb.posts}</span>
                     {r.posts}
                   </td>
                   <td className="px-3 py-2.5 max-mobile:col-start-3 max-mobile:row-start-1 max-mobile:justify-self-end max-mobile:p-0">

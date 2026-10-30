@@ -469,7 +469,7 @@ function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals }: { 
       <span aria-hidden className="absolute left-1/2 top-2 h-1 w-9 -translate-x-1/2 rounded-full bg-line-2" />
       <div className="relative grid gap-[18px] px-[18px] pb-[calc(22px+env(safe-area-inset-bottom))] pt-[41px]">
         <span className="absolute right-[18px] top-4">
-          <IconButton label={t.common.close} icon={X} onClick={onClose} className="size-11" />
+          <IconButton label={t.common.close} icon={X} onClick={onClose} size="lg" />
         </span>
         <h2 className="pr-[52px] text-[23px] font-bold leading-[1.4] tracking-[-0.02em]">{t.shell.more}</h2>
         <nav aria-label={t.shell.morePages} className="grid grid-cols-2 gap-2">

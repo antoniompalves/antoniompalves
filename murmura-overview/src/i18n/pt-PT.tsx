@@ -69,6 +69,7 @@ const agree = (kind: ConversationKind, masc: string, fem: string) => (KIND_NOUN[
 
 const SENTIMENT: Record<Sentiment, string> = { positive: 'Positivo', neutral: 'Neutro', negative: 'Negativo' }
 
+const WEB_METRIC = { sessions: 'Sessões', views: 'Visualizações', keyEvents: 'Eventos principais' }
 const METRIC = { impressions: 'Impressões', engagements: 'Interações', clicks: 'Cliques em links' }
 const WEEKDAY_LONG = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo']
 const WEEKDAY_SHORT = ['seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.', 'dom.']
@@ -642,6 +643,115 @@ export const ptPT: Messages = {
       stopText: (name: string, people: number) => `«${name}» deixa de ser enviado a ${plural(people, 'pessoa', 'pessoas')}.`,
       stop: 'Parar relatório',
       stopped: 'Relatório parado',
+    },
+    web: {
+      title: 'Sites',
+      source: {
+        demo: 'Google Analytics 4 · dados de demonstração',
+        connecting: 'A ligar ao Google Analytics…',
+        live: (time: string) => `Google Analytics 4 · em direto · atualizado às ${time}`,
+      },
+      connect: 'Ligar o Google Analytics',
+      settings: 'Definições do GA4',
+      refresh: 'Atualizar',
+      disconnect: 'Desligar',
+      filter: 'Filtrar por site',
+      allSites: 'Todos os sites',
+      noSite: (brands: string[]) => `Sem site: ${brands.join(', ')}`,
+      waiting: (domains: string[]) => `Aparecem depois de ligar o Google Analytics: ${domains.join(', ')}`,
+      noProperty: (domains: string[]) => `Sem propriedade GA4: ${domains.join(', ')}`,
+      emptyTitle: 'Ainda sem dados dos sites',
+      emptyText: 'Ligue o Google Analytics para ver sessões, origens do tráfego e páginas de destino dos seus sites.',
+      /** "1 min 12 s" */
+      duration: (seconds: number) => {
+        const s = Math.round(seconds)
+        return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${s % 60} s`
+      },
+      traffic: {
+        title: 'Tráfego dos sites',
+        label: 'Métrica',
+        options: { sessions: 'Sessões', views: 'Visualizações', keyEvents: 'Eventos principais' },
+        sub: (metric: 'sessions' | 'views' | 'keyEvents', days: number) => `${WEB_METRIC[metric].toLowerCase()}, últimos ${days} dias`,
+        legend: (metric: 'sessions' | 'views' | 'keyEvents') => `${WEB_METRIC[metric]}, este período`,
+        chart: (metric: 'sessions' | 'views' | 'keyEvents') => `${WEB_METRIC[metric]} por dia, este período e o anterior`,
+        engagementRate: 'Taxa de interação',
+        avgTime: 'Tempo médio de interação',
+        keyEventRate: 'Taxa de eventos principais',
+        points: (delta: string) => `${delta} p.p.`,
+      },
+      sources: {
+        title: 'Origens do tráfego',
+        sub: (share: string) => `sessões vindas das redes sociais · ${share} do total`,
+        label: 'Detalhe',
+        options: { social: 'Redes sociais', channels: 'Canais' },
+        channels: {
+          organicSearch: 'Pesquisa orgânica',
+          direct: 'Direto',
+          organicSocial: 'Social orgânico',
+          paidSocial: 'Social pago',
+          referral: 'Referência',
+          email: 'E-mail',
+          paidSearch: 'Pesquisa paga',
+          organicVideo: 'Vídeo orgânico',
+          display: 'Display',
+          other: 'Outros',
+        },
+        row: (name: string, sessions: string, share: string) => `${name}: ${sessions} sessões, ${share}`,
+        emptySocial: 'Sem visitas vindas das redes sociais neste período.',
+      },
+      pages: {
+        title: 'Páginas de destino',
+        caption: (days: number) => `Sessões, variação, interação e eventos principais por página de destino nos últimos ${days} dias. Os cabeçalhos das colunas ordenam a tabela.`,
+        page: 'Página de destino',
+        sessions: 'Sessões',
+        change: 'Variação',
+        engRate: 'Tx. interação',
+        avgTime: 'Tempo médio',
+        keyEvents: 'Eventos princ.',
+        keyRate: 'Tx. eventos',
+        trend: 'Evolução',
+        showAll: (n: number) => `Mostrar todas (${n})`,
+        showFewer: 'Mostrar menos',
+        empty: 'Nenhuma página de destino teve sessões neste período.',
+      },
+      dialog: {
+        title: 'Ligar o Google Analytics',
+        sub: 'Acesso só de leitura às suas propriedades GA4. O token de acesso fica neste separador e nunca é guardado.',
+        clientId: 'ID de cliente OAuth',
+        clientIdHint: 'Google Cloud → APIs e serviços → Credenciais, do tipo «Aplicação Web», com este endereço como origem JavaScript autorizada. Ative a Google Analytics Data API no mesmo projeto.',
+        sites: 'Sites',
+        sitesHint: 'Uma marca pode ter vários sites, ou nenhum. Deixe o ID da propriedade vazio para manter um site fora dos dados em direto.',
+        brand: 'Marca',
+        domain: 'Domínio',
+        property: 'ID da propriedade GA4',
+        propertyPlaceholder: 'p. ex. 123456789',
+        addSite: 'Adicionar site',
+        remove: (domain: string) => `Remover ${domain || 'este site'}`,
+        invalidProperty: 'Os IDs de propriedade são números, como 123456789 (Administrador → Detalhes da propriedade).',
+        needDomain: 'Indique o domínio.',
+        needClient: 'Indique o ID de cliente OAuth para ligar.',
+        needProperty: 'Indique pelo menos um ID de propriedade para ligar.',
+        cancel: 'Cancelar',
+        save: 'Guardar',
+        connect: 'Guardar e ligar',
+        disconnect: 'Desligar',
+      },
+      toast: {
+        connected: (sites: number) => `Google Analytics ligado · ${plural(sites, 'site', 'sites')}`,
+        refreshed: 'Dados do Google Analytics atualizados',
+        disconnected: 'Desligado · de volta aos dados de demonstração',
+        saved: 'Definições dos sites guardadas',
+      },
+      errors: {
+        unreachable: 'Não foi possível carregar o início de sessão Google. Verifique a ligação ou algum bloqueador.',
+        closed: 'A janela da Google foi fechada antes de conceder acesso.',
+        signIn: 'O início de sessão Google falhou.',
+        denied: 'Esta conta Google não tem acesso a essa propriedade.',
+        expired: 'A sessão Google expirou. Atualize para voltar a entrar.',
+        notFound: 'Propriedade não encontrada. Verifique o ID.',
+        api: 'O Google Analytics devolveu um erro.',
+      },
+      siteError: (domain: string, message: string) => `${domain}: ${message}`,
     },
     csv: {
       // O Excel em português usa ";" como separador de listas.

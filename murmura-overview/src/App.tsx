@@ -8,6 +8,7 @@ import { workspace } from './data/mock'
 import { matchRoute, tabRoutes } from './data/routes'
 import { selectOverview } from './data/selectors'
 import { WorkspaceProvider, useWorkspace } from './data/store'
+import { Ga4Provider, withSavedWebsites } from './data/ga4Store'
 import type { NavItem } from './data/types'
 import { Analytics } from './pages/Analytics'
 import { Calendar } from './pages/Calendar'
@@ -59,12 +60,14 @@ function useMockNow(start: string) {
 export default function App() {
   return (
     <I18nProvider>
-      <WorkspaceProvider initial={workspace}>
-        <ToastProvider>
-          <LucideProvider size={20} strokeWidth={1.7}>
-            <Shell />
-          </LucideProvider>
-        </ToastProvider>
+      <WorkspaceProvider initial={withSavedWebsites(workspace)}>
+        <Ga4Provider>
+          <ToastProvider>
+            <LucideProvider size={20} strokeWidth={1.7}>
+              <Shell />
+            </LucideProvider>
+          </ToastProvider>
+        </Ga4Provider>
       </WorkspaceProvider>
     </I18nProvider>
   )

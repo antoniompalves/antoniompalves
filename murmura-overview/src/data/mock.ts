@@ -336,6 +336,16 @@ export const workspace: Workspace = {
     { id: 'ch-ns-li', brandId: 'ns', network: 'linkedin', handle: 'Northlight Studio', followers: 8650, status: 'connected' },
     { id: 'ch-ns-x', brandId: 'ns', network: 'x', handle: '@northlightstudio', followers: 4310, status: 'connected' },
   ],
+  /* Brands' websites (not in the reference): Vantage Garage and Wildroot run a second
+     site, Northlight Studio has none. Their demo traffic comes from webAnalytics.ts. */
+  websites: [
+    { id: 'web-eo', brandId: 'eo', domain: 'emberandoak.com', demo: true },
+    { id: 'web-hh', brandId: 'hh', domain: 'hollowhome.com', demo: true },
+    { id: 'web-vg', brandId: 'vg', domain: 'vantagegarage.com', demo: true },
+    { id: 'web-vg-book', brandId: 'vg', domain: 'book.vantagegarage.com', demo: true },
+    { id: 'web-wb', brandId: 'wb', domain: 'wildroot.co', demo: true },
+    { id: 'web-wb-ritual', brandId: 'wb', domain: 'springritual.wildroot.co', demo: true },
+  ],
   posts,
   analytics: { series: SERIES, accounts: ACCOUNT_STATS, networkTrends: NETWORK_TRENDS, heat: HEAT },
   reports: [],

@@ -476,3 +476,15 @@ data; recipients are the 8 team members of this workspace (the reference also
 lists an analyst and two client logins); role locks ("Your role can't export
 reports") are not modelled because the mock user is the owner.
 
+## 11. Websites · Google Analytics 4 (addition)
+
+Not in the reference: requested on top of the recreation. The Websites section
+under the analytics cards is built only from the reference's own parts (expandable
+cards, 38px chips, the period chart, mix rows, the sortable table and its phone
+card layout), so it reads as the same product, and it is placed after the
+reference cards so the measured layout above stays identical (every landmark of
+section 10 still matches at 1440 and 390 px; the page is longer). Websites are
+owned by brands like social accounts — several, one or none per brand. Data
+model, demo generation, the live GA4 connection and how it was tested are in
+[`GOOGLE_ANALYTICS.md`](GOOGLE_ANALYTICS.md).
+

@@ -70,6 +70,21 @@ export interface Channel {
   expiresInDays?: number
 }
 
+/**
+ * A website a brand owns, measured with Google Analytics 4. Like social
+ * accounts, a brand can have none, one or several.
+ */
+export interface Website {
+  id: string
+  brandId: string
+  /** Hostname shown in the UI, e.g. "emberandoak.com". */
+  domain: string
+  /** GA4 property ID (digits only). With one, "Connect Google Analytics" reads the site's real data. */
+  propertyId?: string
+  /** Sites from the mock come with generated demo traffic; sites people add only ever show live data. */
+  demo?: boolean
+}
+
 export type PostStatus =
   | 'draft'
   | 'awaiting_approval'
@@ -228,6 +243,7 @@ export interface Workspace {
   campaigns: Campaign[]
   team: TeamMember[]
   channels: Channel[]
+  websites: Website[]
   posts: Post[]
   /** Follower, impression, engagement and click history per network and account (analyticsData.ts). */
   analytics: AnalyticsHistory

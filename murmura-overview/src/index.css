@@ -386,6 +386,30 @@ html.cl-dragging * {
   }
 }
 
+/* Websites (GA4) grid under the reference cards: traffic 7 | sources 5, then landing pages. */
+.an-web-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "web web web web web web web src src src src src"
+    "pages pages pages pages pages pages pages pages pages pages pages pages";
+}
+@media (width <= 1340px) {
+  .an-web-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      "web web web src src src"
+      "pages pages pages pages pages pages";
+  }
+}
+@media (width <= 1000px) {
+  .an-web-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "web" "src" "pages";
+  }
+}
+
 @utility animate-rise {
   animation: rise 0.7s var(--ease-soft) both;
 }

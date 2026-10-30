@@ -47,6 +47,15 @@ posts (opening the post drawer) and a brand comparison. Every card expands over 
 page; reports export as CSV or are scheduled by email (with Undo). On phones the
 bottom bar's **More** sheet leads to it and to every other page.
 
+Below the social cards, **Websites** adds Google Analytics 4: sessions, traffic
+sources (social networks first) and landing pages for each brand's sites — a brand
+can have several sites or none. It runs on demo data and reads real GA4 properties
+once you connect an OAuth client; see [`docs/GOOGLE_ANALYTICS.md`](docs/GOOGLE_ANALYTICS.md).
+
+| Websites (demo data) | Connect Google Analytics |
+| --- | --- |
+| ![Websites section](docs/screenshots/analytics-websites.png) | ![GA4 connection dialog](docs/screenshots/analytics-ga4-dialog.png) |
+
 | Português (Portugal) · Visão geral | Calendário | Mensagens |
 | --- | --- | --- |
 | ![Overview in European Portuguese](docs/screenshots/overview-pt.png) | ![Calendar in European Portuguese](docs/screenshots/calendar-pt.png) | ![Inbox in European Portuguese with the language menu](docs/screenshots/inbox-pt.png) |
@@ -66,7 +75,7 @@ src/
     Overview.tsx          #/overview: header + 8 cards on a 12-col grid
     Calendar.tsx          #/calendar: stats, filters, views, side panel, drawer wiring
     Inbox.tsx             #/inbox/:id: selection, actions + toasts, shortcuts, responsive panes
-    Analytics.tsx         #/analytics/:network: stats, chips, expandable cards, table, top posts, brands
+    Analytics.tsx         #/analytics/:network: stats, chips, expandable cards, table, top posts, brands, websites
   components/
     AppShell.tsx          mesh background, top bar (sliding tab pill), dock, mobile nav + More sheet
     PageHead.tsx          letter-by-letter page title, header stat
@@ -85,6 +94,9 @@ src/
       PostDrawer.tsx      <dialog> post preview with per-network mockups and actions
       useCalendarDrag.ts  pointer-based drag & drop with 30-min snapping
     analytics/
+      parts.tsx           expandable card shell, figure, legend, empty state, filter chip, sortable header
+      Websites.tsx        Websites (GA4): site chips, traffic, sources, landing pages
+      Ga4Dialog.tsx       GA4 client ID + websites editor, connect / disconnect
       PeriodChart.tsx     this period vs the previous one: area + dashed line, nice axis, tooltip
       Heatmap.tsx         weekday × hour engagement grid, best slots, keyboard reading
       Sparkline.tsx       96×28 follower trend for table rows
@@ -97,12 +109,15 @@ src/
       TagPopover.tsx        "Add a tag" field with suggestions
   data/
     types.ts              Workspace schema (brands, campaigns, team, posts, channels, inbox, audit…)
-    mock.ts               mock workspace frozen at Fri 30 Oct 2026, 14:15 UTC (80 posts, 19 channels, 22 conversations)
+    mock.ts               mock workspace frozen at Fri 30 Oct 2026, 14:15 UTC (80 posts, 19 channels, 6 websites, 22 conversations)
     selectors.ts          overview view-model (worded through the active catalogue)
     calendar.ts           calendar date math, lanes, ribbons, filters, stats
     inbox.ts              inbox views, filters, search, unread counts, time labels, tag rules
     analytics.ts          analytics view-model: ranges, network filter, every figure on #/analytics
     analyticsData.ts      180 days per network, per-account totals and curves, heatmaps (from the reference)
+    webAnalytics.ts       website traffic shape (GA4-like), demo generator, websites view model
+    ga4.ts                GA4 Data API from the browser: Google sign-in token, batchRunReports, mapping
+    ga4Store.tsx          demo ↔ live switch, GA4 settings saved per browser
     store.tsx             shared in-memory store (posts, conversations and scheduled reports, with undo)
     routes.ts             the SPA's hash routes (their names live in the catalogues)
     assets.ts             image URL helpers (swap for real assets here)

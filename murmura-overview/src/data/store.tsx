@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer } from 'react'
 import type { Dispatch, ReactNode } from 'react'
-import type { Conversation, Message, Post, ScheduledReport, Workspace } from './types'
+import type { Conversation, Message, Post, ScheduledReport, Website, Workspace } from './types'
 
 /**
  * Single in-memory workspace shared by every view, so rescheduling a post on
@@ -19,6 +19,7 @@ export type WorkspaceAction =
   | { type: 'restoreConversations'; conversations: Conversation[] }
   | { type: 'addReport'; report: ScheduledReport }
   | { type: 'restoreReports'; reports: ScheduledReport[] }
+  | { type: 'setWebsites'; websites: Website[] }
 
 function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
   const update = (id: string, patch: (p: Post) => Post) => ({
@@ -58,6 +59,8 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, reports: [...ws.reports, action.report] }
     case 'restoreReports':
       return { ...ws, reports: action.reports }
+    case 'setWebsites':
+      return { ...ws, websites: action.websites }
   }
 }
 

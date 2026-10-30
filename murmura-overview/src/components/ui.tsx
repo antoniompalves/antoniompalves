@@ -141,7 +141,8 @@ interface IconButtonProps extends ComponentPropsWithoutRef<'button'> {
   icon: LucideIcon
   href?: string
   variant?: 'line' | 'glass' | 'on-dark'
-  size?: 'md' | 'sm'
+  /** sm 34px · md 42px · lg 44px (touch screens always get 44px). */
+  size?: 'md' | 'sm' | 'lg'
 }
 
 export function IconButton({ label, icon: Icon, href, variant = 'line', size = 'md', className, ...rest }: IconButtonProps) {
@@ -150,7 +151,7 @@ export function IconButton({ label, icon: Icon, href, variant = 'line', size = '
     variant === 'line' && 'border-line-2 text-text hover:bg-glass-2',
     variant === 'glass' && 'size-[46px] border-rim bg-glass-2 text-text hover:bg-glass-3',
     variant === 'on-dark' && 'border-on-ink/28 text-inherit hover:bg-on-ink/12',
-    variant !== 'glass' && (size === 'sm' ? 'size-[34px]' : 'size-[42px]'),
+    variant !== 'glass' && (size === 'sm' ? 'size-[34px]' : size === 'lg' ? 'size-11' : 'size-[42px]'),
     // Touch screens get 44px targets, as in the reference.
     variant !== 'glass' && 'pointer-coarse:size-11',
     className,
