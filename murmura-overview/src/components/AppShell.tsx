@@ -8,6 +8,7 @@ import {
   Clock,
   Image,
   Inbox,
+  Languages,
   LayoutGrid,
   Layers,
   Link,
@@ -20,6 +21,8 @@ import {
   Waves,
 } from 'lucide-react'
 import type { NavItem, TeamMember } from '../data/types'
+import { LOCALES, useI18n } from '../i18n'
+import { MenuItem, Popover } from './Popover'
 import { Avatar, cn } from './ui'
 
 /* ───────────────────────── background ───────────────────────── */
@@ -55,6 +58,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarProps) {
+  const { t } = useI18n()
   const trackRef = useRef<HTMLDivElement>(null)
   const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
 
@@ -77,7 +81,7 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
     <header className="mb-[26px] grid grid-cols-[auto_1fr] items-center gap-5 max-mobile:mb-[18px] max-mobile:gap-x-3 max-mobile:gap-y-2.5 wide:grid-cols-[auto_1fr_auto]">
       <a
         href="#/overview"
-        aria-label="Murmura — overview"
+        aria-label={t.shell.home}
         className="inline-flex items-center gap-3 text-[26px] font-bold tracking-[-0.02em] max-mobile:gap-2.5 max-mobile:text-[23px]"
       >
         <span className="grid size-12 place-items-center rounded-[15px] bg-pill text-on-pill max-mobile:size-11 max-mobile:rounded-[13px]">
@@ -87,7 +91,7 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
       </a>
 
       <nav
-        aria-label="Main"
+        aria-label={t.shell.mainNav}
         className="col-span-full row-start-2 min-w-0 max-w-full justify-self-start overflow-x-auto rounded-full [scrollbar-width:none] max-mobile:-mx-3.5 max-mobile:w-[calc(100%+28px)] max-mobile:max-w-none max-mobile:rounded-none max-mobile:px-2.5 wide:col-span-1 wide:col-start-2 wide:row-start-1 wide:justify-self-center"
       >
         <div ref={trackRef} className="relative flex w-max gap-0.5 p-1">
@@ -123,21 +127,21 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
       <div className="col-start-2 row-start-1 flex items-center gap-2.5 justify-self-end wide:col-start-3">
         <button
           type="button"
-          aria-label="Brand: all brands"
+          aria-label={t.shell.brandSwitcher}
           aria-haspopup="menu"
           className="inline-flex h-[46px] max-w-60 cursor-pointer items-center gap-[9px] rounded-full border border-rim bg-glass-2 pl-1.5 pr-3.5 text-sm font-semibold max-mobile:w-[46px] max-mobile:justify-center max-mobile:p-0"
         >
           <span className="grid size-[34px] place-items-center rounded-full bg-pill text-on-pill">
             <Layers size={17} aria-hidden />
           </span>
-          <span className="truncate max-mobile:hidden">All brands</span>
+          <span className="truncate max-mobile:hidden">{t.shell.allBrands}</span>
           <ChevronDown size={16} className="text-muted max-mobile:hidden" aria-hidden />
         </button>
 
         <button
           type="button"
-          aria-label={`Notifications, ${unreadNotifications} unread`}
-          title="Notifications"
+          aria-label={t.shell.notificationsUnread(unreadNotifications)}
+          title={t.shell.notifications}
           className="relative inline-grid size-[46px] cursor-pointer place-items-center rounded-full border border-rim bg-glass-2 hover:bg-glass-3"
         >
           <Bell size={20} aria-hidden />
@@ -146,19 +150,57 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
           )}
         </button>
 
-        <button
-          type="button"
-          aria-label={`Account: ${user.name}, ${user.role}`}
-          className="inline-flex h-12 cursor-pointer items-center gap-2.5 rounded-full border border-rim bg-glass-2 p-0.5"
-        >
-          <Avatar src={user.avatar} name={user.name} size="lg" />
-          <span className="hidden pr-3.5 text-left leading-[1.15] min-[1500px]:block">
-            <b className="block text-xs font-bold">{user.name}</b>
-            <small className="block text-[12.5px] text-muted">{user.role}</small>
-          </span>
-        </button>
+        <AccountButton user={user} />
       </div>
     </header>
+  )
+}
+
+/** Avatar button; its menu holds the account's preferences, starting with the interface language. */
+function AccountButton({ user }: { user: TeamMember }) {
+  const { t, locale, setLocale } = useI18n()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLButtonElement>(null)
+  const role = t.roles[user.role]
+  return (
+    <>
+      <button
+        ref={ref}
+        type="button"
+        aria-label={t.shell.account(user.name, role)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-12 cursor-pointer items-center gap-2.5 rounded-full border border-rim bg-glass-2 p-0.5"
+      >
+        <Avatar src={user.avatar} name={user.name} size="lg" />
+        <span className="hidden pr-3.5 text-left leading-[1.15] min-[1500px]:block">
+          <b className="block text-xs font-bold">{user.name}</b>
+          <small className="block text-[12.5px] text-muted">{role}</small>
+        </span>
+      </button>
+      <Popover open={open} onClose={() => setOpen(false)} anchor={ref} placement="bottom-end" label={t.shell.accountMenu}>
+        <p className="px-3 pb-1 pt-2 text-[12.5px] font-bold uppercase tracking-[0.06em] text-muted" id="account-language">
+          {t.shell.language}
+        </p>
+        <div role="menu" aria-labelledby="account-language">
+          {LOCALES.map((l) => (
+            <MenuItem
+              key={l.id}
+              icon={Languages}
+              lang={l.id}
+              checked={locale === l.id}
+              onClick={() => {
+                setLocale(l.id)
+                setOpen(false)
+              }}
+            >
+              {l.name}
+            </MenuItem>
+          ))}
+        </div>
+      </Popover>
+    </>
   )
 }
 
@@ -216,27 +258,28 @@ interface DockProps {
 }
 
 export function Dock({ route, theme, onToggleTheme, channelsNeedAttention }: DockProps) {
+  const { t } = useI18n()
   const top: DockEntry[] = [
-    { id: 'search', label: 'Search', kbd: '⌘K', icon: Search },
-    { id: 'new', label: 'Create', kbd: 'N', icon: Plus, primary: true },
-    { id: 'today', label: 'Today’s queue', icon: Clock },
-    { id: 'library', label: 'Library', icon: Image, href: '#/library' },
+    { id: 'search', label: t.shell.search, kbd: '⌘K', icon: Search },
+    { id: 'new', label: t.shell.create, kbd: 'N', icon: Plus, primary: true },
+    { id: 'today', label: t.shell.todaysQueue, icon: Clock },
+    { id: 'library', label: t.routes.library.label, icon: Image, href: '#/library' },
   ]
   const bottom: DockEntry[] = [
-    { id: 'channels', label: 'Channels', icon: Link, href: '#/channels', dot: channelsNeedAttention },
-    { id: 'team', label: 'Team & roles', icon: ShieldCheck, href: '#/team' },
-    { id: 'settings', label: 'Settings', icon: Settings, href: '#/settings' },
+    { id: 'channels', label: t.routes.channels.label, icon: Link, href: '#/channels', dot: channelsNeedAttention },
+    { id: 'team', label: t.routes.team.label, icon: ShieldCheck, href: '#/team' },
+    { id: 'settings', label: t.routes.settings.label, icon: Settings, href: '#/settings' },
     {
       id: 'theme',
-      label: theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
-      tip: 'Theme',
+      label: theme === 'dark' ? t.shell.toLight : t.shell.toDark,
+      tip: t.shell.theme,
       icon: theme === 'dark' ? Sun : Moon,
       onClick: onToggleTheme,
     },
   ]
   return (
     <nav
-      aria-label="Quick actions"
+      aria-label={t.shell.dock}
       className="fixed inset-y-0 left-[var(--dock-x)] z-30 my-auto flex h-fit flex-col gap-1 rounded-full bg-dock p-2 text-on-dock shadow-[0_20px_40px_-18px_rgb(0_0_0/0.45)] max-mobile:hidden dark:border dark:border-line"
     >
       {top.map((e) => (
@@ -252,16 +295,17 @@ export function Dock({ route, theme, onToggleTheme, channelsNeedAttention }: Doc
 
 /** Below 761px the dock collapses into a bottom bar, as in the reference. */
 export function MobileNav({ route, onToggleTheme, theme }: { route: string; onToggleTheme: () => void; theme: 'light' | 'dark' }) {
+  const { t } = useI18n()
   const items: { id: string; label: string; icon: LucideIcon; href?: string }[] = [
-    { id: 'overview', label: 'Home', icon: LayoutGrid, href: '#/overview' },
-    { id: 'calendar', label: 'Calendar', icon: CalendarDays, href: '#/calendar' },
-    { id: 'new', label: 'Create', icon: Plus },
-    { id: 'inbox', label: 'Inbox', icon: Inbox, href: '#/inbox' },
+    { id: 'overview', label: t.shell.mobileHome, icon: LayoutGrid, href: '#/overview' },
+    { id: 'calendar', label: t.routes.calendar.label, icon: CalendarDays, href: '#/calendar' },
+    { id: 'new', label: t.shell.create, icon: Plus },
+    { id: 'inbox', label: t.shell.mobileInbox, icon: Inbox, href: '#/inbox' },
   ]
   const item = 'flex flex-col items-center justify-center gap-1 text-[11.5px] font-semibold'
   return (
     <nav
-      aria-label="Mobile"
+      aria-label={t.shell.mobileNav}
       className="fixed inset-x-0 bottom-0 z-30 grid h-[calc(64px+env(safe-area-inset-bottom))] grid-cols-5 border-t border-line bg-float/92 px-1.5 pb-[env(safe-area-inset-bottom)] backdrop-blur-[16px] backdrop-saturate-150 mobile:hidden"
     >
       {items.map(({ id, label, icon: Icon, href }) =>
@@ -280,7 +324,7 @@ export function MobileNav({ route, onToggleTheme, theme }: { route: string; onTo
       )}
       <button type="button" onClick={onToggleTheme} className={cn(item, 'text-muted')}>
         {theme === 'dark' ? <Sun size={21} aria-hidden /> : <Moon size={21} aria-hidden />}
-        Theme
+        {t.shell.theme}
       </button>
     </nav>
   )

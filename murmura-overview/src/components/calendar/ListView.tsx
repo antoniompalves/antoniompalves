@@ -1,6 +1,8 @@
 import type { Brand, Post, TeamMember } from '../../data/types'
-import { dayKey, fmtMonthDay, fmtRelativeDay, fmtTime, fmtWeekday, postsByDay } from '../../data/calendar'
-import { STATUS_META } from '../../data/selectors'
+import { dayKey, postsByDay } from '../../data/calendar'
+import { STATUS_TONE } from '../../data/selectors'
+import { useI18n } from '../../i18n'
+import { dayDiff } from '../../i18n/format'
 import { photo } from '../../data/assets'
 import { Avatar, BrandMark, NetStack, PostStatusPill, cn } from '../ui'
 
@@ -25,6 +27,7 @@ interface ListViewProps {
 
 /** Two weeks as an agenda (".cl-list"): one group per day that has posts. */
 export function ListView({ days, posts, brands, team, now, onOpen }: ListViewProps) {
+  const { t } = useI18n()
   const byDay = postsByDay(posts)
   const today = dayKey(now)
   const groups = days.map((d) => ({ d, k: dayKey(d), posts: byDay.get(dayKey(d)) ?? [] })).filter((g) => g.posts.length)
@@ -32,22 +35,22 @@ export function ListView({ days, posts, brands, team, now, onOpen }: ListViewPro
   return (
     <div className="relative grid gap-5">
       {groups.map(({ d, k, posts: dayPosts }) => {
-        const rel = fmtRelativeDay(d, now)
+        const near = dayDiff(now, d)
         return (
-          <section key={k} className={cn(k < today && 'opacity-82')} aria-label={fmtMonthDay(d)}>
+          <section key={k} className={cn(k < today && 'opacity-82')} aria-label={t.dates.monthDayLong(d)}>
             <h3 className="mx-1 mb-2 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
               <b className={cn('text-lg font-bold tracking-[-0.01em]', k === today && 'text-bad')}>
-                {rel === 'Today' || rel === 'Tomorrow' ? rel : fmtWeekday(d)}
+                {near === 0 || near === 1 ? t.dates.relativeDay(d, now) : t.dates.weekdayTitle(d)}
               </b>
               <small className="text-2xs font-semibold text-muted max-mobile:text-xs">
-                {fmtMonthDay(d)} · {dayPosts.length} {dayPosts.length === 1 ? 'post' : 'posts'}
+                {t.dates.monthDayLong(d)} · {t.common.post(dayPosts.length)}
               </small>
             </h3>
             <div className="grid gap-1.5">
               {dayPosts.map((p) => {
                 const brand = brands.get(p.brandId)!
                 const author = team.get(p.authorId)
-                const tone = STATUS_META[p.status].tone
+                const tone = STATUS_TONE[p.status]
                 return (
                   <button
                     key={p.id}
@@ -61,7 +64,7 @@ export function ListView({ days, posts, brands, team, now, onOpen }: ListViewPro
                       'max-mobile:grid-cols-[52px_minmax(0,1fr)_auto] max-mobile:items-start max-mobile:gap-x-3 max-mobile:gap-y-1 max-mobile:py-2.5 max-mobile:[grid-template-areas:"thumb_time_who"_"thumb_main_main"_"thumb_state_state"]',
                     )}
                   >
-                    <span className="whitespace-nowrap text-xs font-bold tabular-nums max-mobile:self-center max-mobile:[grid-area:time]">{fmtTime(new Date(p.scheduledAt))}</span>
+                    <span className="whitespace-nowrap text-xs font-bold tabular-nums max-mobile:self-center max-mobile:[grid-area:time]">{t.dates.time(new Date(p.scheduledAt))}</span>
                     <span className="grid size-[52px] place-items-center overflow-hidden rounded-[14px] bg-well max-mobile:[grid-area:thumb]">
                       {p.image ? (
                         <img src={photo(p.image, 120)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />

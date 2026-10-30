@@ -92,7 +92,8 @@ export interface Post {
   /** Publish time; for drafts, the time they are pencilled in for. */
   scheduledAt: ISODate
   metrics?: PostMetrics
-  failure?: { network: NetworkId; reason: string }
+  /** Why publishing failed; the UI words it per language. */
+  failure?: { network: NetworkId; code: 'disconnected' }
 }
 
 export interface NetworkStat {
@@ -168,12 +169,23 @@ export interface SavedReply {
 
 export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox'
 
+export type Permission = 'assignConversations'
+
+/** What happened, as data: the activity feed turns it into a sentence in the current language. */
+export type AuditAction =
+  | { type: 'approved'; excerpt: string; brandId: string }
+  | { type: 'reconnected'; brandId: string; network: NetworkId }
+  | { type: 'requestedChanges'; brandId: string }
+  | { type: 'invited'; name: string; role: Role }
+  | { type: 'grantedPermission'; role: Role; permission: Permission }
+  | { type: 'scheduled'; count: number; brandId: string }
+  | { type: 'closedConversations'; count: number }
+
 export interface AuditEvent {
   id: string
   actorId: string
   kind: AuditKind
-  /** Sentence that follows the actor's first name. */
-  summary: string
+  action: AuditAction
   at: ISODate
 }
 

@@ -4,15 +4,12 @@ import type { Brand, Post, TeamMember } from '../../data/types'
 import {
   addMonths,
   dayKey,
-  fmtAriaDay,
-  fmtDayLong,
-  fmtMonthYear,
-  fmtTime,
   monthGrid,
   networkCounts,
   startOfMonth,
 } from '../../data/calendar'
 import { NETWORK_LABEL } from '../../data/selectors'
+import { useI18n } from '../../i18n'
 import { Badge, BrandMark, Card, IconButton, NetIcon, cn } from '../ui'
 import type { DragApi } from './WeekView'
 
@@ -29,6 +26,7 @@ interface MiniCalendarProps {
 
 /** "Jump to a date" (".cl-mini"): month grid with post-density dots and the visible range shaded. */
 export function MiniCalendar({ anchor, now, range, counts, onPick }: MiniCalendarProps) {
+  const { t } = useI18n()
   const [month, setMonth] = useState(() => startOfMonth(anchor))
   useEffect(() => setMonth(startOfMonth(anchor)), [anchor])
   const today = dayKey(now)
@@ -36,17 +34,17 @@ export function MiniCalendar({ anchor, now, range, counts, onPick }: MiniCalenda
   return (
     <section aria-labelledby="cl-mini-t" className="relative min-w-0 rounded-card border border-rim bg-glass p-[18px] shadow-card max-desk:hidden">
       <h2 id="cl-mini-t" className="sr-only">
-        Jump to a date
+        {t.calendar.jumpToDate}
       </h2>
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <b className="text-base font-bold tracking-[-0.01em]">{fmtMonthYear(month)}</b>
+        <b className="text-base font-bold tracking-[-0.01em]">{t.dates.monthYear(month)}</b>
         <span className="flex gap-1.5">
-          <IconButton size="sm" label="Previous month" icon={ChevronLeft} onClick={() => setMonth(addMonths(month, -1))} />
-          <IconButton size="sm" label="Next month" icon={ChevronRight} onClick={() => setMonth(addMonths(month, 1))} />
+          <IconButton size="sm" label={t.calendar.previousMonth} icon={ChevronLeft} onClick={() => setMonth(addMonths(month, -1))} />
+          <IconButton size="sm" label={t.calendar.nextMonth} icon={ChevronRight} onClick={() => setMonth(addMonths(month, 1))} />
         </span>
       </div>
       <div aria-hidden className="grid grid-cols-7">
-        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+        {t.dates.weekdayInitials.map((d, i) => (
           <span key={i} className="pb-1 text-center text-[12.5px] font-bold text-faint">
             {d}
           </span>
@@ -61,7 +59,7 @@ export function MiniCalendar({ anchor, now, range, counts, onPick }: MiniCalenda
             <button
               key={k}
               type="button"
-              aria-label={`${fmtAriaDay(d)}, ${n} posts`}
+              aria-label={t.calendar.dayPosts(t.dates.dayFull(d), n)}
               onClick={() => onPick(d)}
               className={cn(
                 'group relative grid h-9 cursor-pointer place-items-center text-2xs font-semibold tabular-nums',
@@ -100,15 +98,16 @@ interface DraftsCardProps {
 }
 
 export function DraftsCard({ drafts, brands, team, drag, onOpen }: DraftsCardProps) {
+  const { t } = useI18n()
   return (
     <Card
-      title="Unscheduled drafts"
-      sub="Drag one onto the calendar to give it a time"
+      title={t.calendar.unscheduledDrafts}
+      sub={t.calendar.draftsHint}
       tools={<Badge tone="plain">{drafts.length}</Badge>}
       pad="p-[18px]"
     >
       {drafts.length === 0 ? (
-        <p className="px-2 py-[18px] text-center text-xs text-muted">No drafts waiting for a slot.</p>
+        <p className="px-2 py-[18px] text-center text-xs text-muted">{t.calendar.noDrafts}</p>
       ) : (
         <ul className="grid gap-1.5">
           {drafts.map((p) => {
@@ -118,7 +117,7 @@ export function DraftsCard({ drafts, brands, team, drag, onOpen }: DraftsCardPro
                 <button
                   type="button"
                   data-drag-id={p.id}
-                  aria-label={`Draft: ${p.text}. Drag onto the calendar`}
+                  aria-label={t.calendar.draftLabel(p.text)}
                   onPointerDown={(e) => drag.onPointerDown(e, p.id)}
                   onClick={() => !drag.wasDragged() && onOpen(p.id)}
                   className={cn(
@@ -130,7 +129,7 @@ export function DraftsCard({ drafts, brands, team, drag, onOpen }: DraftsCardPro
                   <span className="min-w-0">
                     <b className="block truncate text-xs font-semibold max-mobile:text-sm">{p.text}</b>
                     <small className="mt-0.5 block truncate text-[12.5px] text-muted">
-                      {team.get(p.authorId)?.name.split(' ')[0]} · pencilled {fmtDayLong(when)}, <span data-time>{fmtTime(when)}</span>
+                      {t.calendar.pencilled(team.get(p.authorId)?.name.split(' ')[0] ?? '', t.dates.dayLong(when), <span data-time>{t.dates.time(when)}</span>)}
                     </small>
                   </span>
                   <span aria-hidden className="grid w-7 place-items-center text-faint">
@@ -149,12 +148,13 @@ export function DraftsCard({ drafts, brands, team, drag, onOpen }: DraftsCardPro
 /* ───────────────────────── this week by network ───────────────────────── */
 
 export function NetworkCard({ posts, period }: { posts: Post[]; period: string }) {
+  const { t } = useI18n()
   const rows = networkCounts(posts)
   const max = rows[0]?.count ?? 1
   return (
-    <Card title="This week by network" sub={`${period} · ${posts.length} ${posts.length === 1 ? 'post' : 'posts'}`} pad="p-[18px]">
+    <Card title={t.calendar.thisWeekByNetwork} sub={`${period} · ${t.common.post(posts.length)}`} pad="p-[18px]">
       {rows.length === 0 ? (
-        <p className="px-1.5 py-3.5 text-center text-xs text-muted">Nothing goes out this week.</p>
+        <p className="px-1.5 py-3.5 text-center text-xs text-muted">{t.calendar.nothingThisWeek}</p>
       ) : (
         <ul className="grid gap-2.5">
           {rows.map(({ network, count }) => (

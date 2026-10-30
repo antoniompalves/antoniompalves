@@ -17,14 +17,11 @@ import {
   calendarStats,
   dayKey,
   days,
-  fmtRelativeDay,
-  fmtShortDate,
-  fmtTime,
   fromKey,
   hasFilters,
   matchesFilters,
+  periodBounds,
   periodDays,
-  periodLabel,
   startOfDay,
   startOfWeek,
   stepAnchor,
@@ -32,12 +29,9 @@ import {
 import { NETWORK_LABEL, NETWORK_ORDER } from '../data/selectors'
 import { useWorkspace } from '../data/store'
 import type { NetworkId } from '../data/types'
+import { useI18n } from '../i18n'
 
-const VIEWS: { value: CalendarView; label: string }[] = [
-  { value: 'week', label: 'Week' },
-  { value: 'month', label: 'Month' },
-  { value: 'list', label: 'List' },
-]
+const VIEWS: CalendarView[] = ['week', 'month', 'list']
 
 const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
 
@@ -50,6 +44,7 @@ const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x
 export function Calendar({ now }: { now: Date }) {
   const { ws, dispatch } = useWorkspace()
   const toast = useToast()
+  const { t } = useI18n()
   const [view, setView] = useState<CalendarView>('week')
   const [anchor, setAnchor] = useState(() => startOfDay(now))
   const [filters, setFilters] = useState<Filters>(NO_FILTERS)
@@ -86,10 +81,10 @@ export function Calendar({ now }: { now: Date }) {
     dispatch({ type: 'move', id, to: when.toISOString() })
     setLandedId(id)
     window.setTimeout(() => setLandedId((cur) => (cur === id ? null : cur)), 1300)
-    toast({ text: `Moved to ${fmtRelativeDay(when, now)} · ${fmtTime(when)}`, undo: () => dispatch({ type: 'restore', posts: before }) })
+    toast({ text: t.calendar.moved(t.dates.relativeDay(when, now), t.dates.time(when)), undo: () => dispatch({ type: 'restore', posts: before }) })
   }
-  const denied = () => toast({ text: 'That time has already passed. Pick a later slot.', icon: TriangleAlert })
-  const drag = useCalendarDrag({ posts: ws.posts, now, onDrop: move, onDenied: denied })
+  const denied = () => toast({ text: t.calendar.pastSlot, icon: TriangleAlert })
+  const drag = useCalendarDrag({ posts: ws.posts, now, onDrop: move, onDenied: denied, formatTime: t.dates.time })
 
   const keyMove = (id: string, delta: number) => {
     const p = ws.posts.find((x) => x.id === id)
@@ -110,28 +105,29 @@ export function Calendar({ now }: { now: Date }) {
 
   const open = openId ? ws.posts.find((p) => p.id === openId) ?? null : null
   const unit = view === 'month' ? 'month' : 'week'
+  const period = (v: CalendarView) => t.dates.period(...periodBounds(v, anchor))
 
   return (
     <>
       <header className="mb-6 flex flex-wrap items-center gap-x-[clamp(28px,4vw,72px)] gap-y-[18px]">
-        <PageTitle lines={['Publishing', 'calendar']} label="Publishing calendar" />
+        <PageTitle lines={t.calendar.titleLines} label={t.calendar.title} />
         <dl className="flex flex-wrap gap-x-[clamp(24px,3.2vw,56px)] gap-y-3.5">
-          <Stat icon={CalendarDays} value={String(stats.scheduled)} label="Scheduled this week" />
-          <Stat icon={ShieldCheck} value={String(stats.awaiting)} label="Awaiting approval" />
-          <Stat icon={Send} value={String(stats.published)} label="Published this week" />
-          <Stat icon={LayoutGrid} value={String(stats.emptyDays)} label="Empty days in the next 7" />
+          <Stat icon={CalendarDays} value={String(stats.scheduled)} label={t.calendar.scheduledThisWeek} />
+          <Stat icon={ShieldCheck} value={String(stats.awaiting)} label={t.calendar.awaitingApproval} />
+          <Stat icon={Send} value={String(stats.published)} label={t.calendar.publishedThisWeek} />
+          <Stat icon={LayoutGrid} value={String(stats.emptyDays)} label={t.calendar.emptyDays} />
         </dl>
         <div className="ml-auto flex flex-wrap items-center gap-2.5">
-          <Segmented label="Calendar view" value={view} onChange={setView} options={VIEWS} />
+          <Segmented label={t.calendar.view} value={view} onChange={setView} options={VIEWS.map((v) => ({ value: v, label: t.calendar.views[v] }))} />
           <div className="flex items-center gap-1.5">
-            <IconButton label={`Previous ${unit}`} icon={ChevronLeft} onClick={() => setAnchor(stepAnchor(view, anchor, -1))} />
+            <IconButton label={t.calendar.previous(unit)} icon={ChevronLeft} onClick={() => setAnchor(stepAnchor(view, anchor, -1))} />
             <Button variant="ghost" className="h-[42px]" onClick={() => setAnchor(startOfDay(now))}>
-              Today
+              {t.common.today}
             </Button>
-            <IconButton label={`Next ${unit}`} icon={ChevronRight} onClick={() => setAnchor(stepAnchor(view, anchor, 1))} />
+            <IconButton label={t.calendar.next(unit)} icon={ChevronRight} onClick={() => setAnchor(stepAnchor(view, anchor, 1))} />
           </div>
           <Button icon={Plus} href="#/compose">
-            New post
+            {t.common.newPost}
           </Button>
         </div>
       </header>
@@ -146,26 +142,24 @@ export function Calendar({ now }: { now: Date }) {
           <header className="mb-3.5 flex min-h-[42px] flex-wrap items-end justify-between gap-x-3 gap-y-2 max-mobile:px-1">
             <div className="min-w-0">
               <h2 id="cl-cal-t" aria-live="polite" className="whitespace-nowrap text-[22px] font-bold leading-[1.15] tracking-[-0.02em] max-mobile:text-[19px]">
-                {periodLabel(view, anchor)}
+                {period(view)}
               </h2>
-              <p className="text-2xs text-muted">
-                {inPeriod.length} {inPeriod.length === 1 ? 'post' : 'posts'} · {brandCount} {brandCount === 1 ? 'brand' : 'brands'}
-              </p>
+              <p className="text-2xs text-muted">{t.calendar.periodSummary(inPeriod.length, brandCount)}</p>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
               {heat && view === 'week' ? (
                 <span className="inline-flex items-center gap-1.5 text-2xs font-semibold text-text">
                   <Sparkles size={16} className="text-lilac" aria-hidden />
-                  Best times
+                  {t.calendar.bestTimes}
                   <i className="h-2 w-[70px] rounded bg-[linear-gradient(90deg,color-mix(in_srgb,var(--lilac)_10%,transparent),var(--lilac))]" />
-                  <span className="text-muted">quiet → busy</span>
+                  <span className="text-muted">{t.calendar.quietBusy}</span>
                 </span>
               ) : (
                 <div className="flex flex-wrap justify-end gap-x-3.5 gap-y-1.5 text-2xs font-semibold text-muted max-mobile:hidden">
-                  {STATUS_FILTERS.filter((s) => s.value !== 'draft').map((s) => (
-                    <span key={s.value} className="inline-flex items-center gap-1.5">
-                      <StatusDot status={s.value} />
-                      {s.legend}
+                  {STATUS_FILTERS.filter((s) => s !== 'draft').map((s) => (
+                    <span key={s} className="inline-flex items-center gap-1.5">
+                      <StatusDot status={s} />
+                      {t.calendar.statusFilters[s].legend}
                     </span>
                   ))}
                 </div>
@@ -173,15 +167,15 @@ export function Calendar({ now }: { now: Date }) {
               {view === 'week' && (
                 <Chip
                   pressed={heat}
-                  title="Shade each hour by how well posts do then"
+                  title={t.calendar.bestTimesHint}
                   onClick={() => {
                     setHeat((h) => !h)
-                    if (!heat) toast({ text: 'Best times on — darker hours get more engagement', icon: Sparkles })
+                    if (!heat) toast({ text: t.calendar.bestTimesOn, icon: Sparkles })
                   }}
                   pressedClassName="border-transparent bg-lilac text-on-lilac"
                 >
                   <Sparkles size={16} className={heat ? 'text-inherit' : 'text-lilac'} aria-hidden />
-                  Best times
+                  {t.calendar.bestTimes}
                 </Chip>
               )}
             </div>
@@ -229,10 +223,10 @@ export function Calendar({ now }: { now: Date }) {
             {hasFilters(filters) && inPeriod.length === 0 && (
               <div className={cn('pointer-events-none z-[7] grid place-items-center p-4', view === 'list' ? 'py-[30px]' : 'absolute inset-0')}>
                 <div className="pointer-events-auto grid max-w-[340px] justify-items-center gap-1.5 rounded-[22px] border border-line bg-float px-7 py-[26px] text-center shadow-pop">
-                  <b className="font-semibold">Nothing matches these filters</b>
-                  <p className="text-xs text-muted">Nothing in this {unit} fits that combination. Try another network or status.</p>
+                  <b className="font-semibold">{t.calendar.nothingMatches}</b>
+                  <p className="text-xs text-muted">{t.calendar.nothingInPeriod(unit)}</p>
                   <Button size="sm" variant="ghost" icon={X} className="mt-2" onClick={() => setFilters(NO_FILTERS)}>
-                    Clear filters
+                    {t.common.clearFilters}
                   </Button>
                 </div>
               </div>
@@ -240,7 +234,7 @@ export function Calendar({ now }: { now: Date }) {
           </div>
         </section>
 
-        <aside aria-label="Planning tools" className="grid min-w-0 content-start gap-4 max-desk:grid-cols-2 max-desk:items-start max-mobile:grid-cols-1">
+        <aside aria-label={t.calendar.planningTools} className="grid min-w-0 content-start gap-4 max-desk:grid-cols-2 max-desk:items-start max-mobile:grid-cols-1">
           <MiniCalendar
             anchor={anchor}
             now={now}
@@ -249,7 +243,7 @@ export function Calendar({ now }: { now: Date }) {
             onPick={(d) => setAnchor(d)}
           />
           <DraftsCard drafts={drafts} brands={brands} team={team} drag={drag} onOpen={setOpenId} />
-          <NetworkCard posts={weekPosts} period={periodLabel('week', anchor)} />
+          <NetworkCard posts={weekPosts} period={period('week')} />
         </aside>
       </div>
 
@@ -277,13 +271,14 @@ interface FilterBarProps {
 }
 
 function FilterBar({ filters, setFilters, campaigns, brandName }: FilterBarProps) {
+  const { t } = useI18n()
   const sep = <span aria-hidden className="h-[22px] w-px shrink-0 bg-line-2" />
   return (
     <div className="mb-4 flex items-center justify-between gap-3 max-[1100px]:flex-wrap">
       <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-2 max-mobile:-mx-3.5 max-mobile:w-[calc(100%+28px)] max-mobile:flex-nowrap max-mobile:overflow-x-auto max-mobile:px-3.5 max-mobile:py-0.5 max-mobile:[scrollbar-width:none]">
-        <div role="group" aria-label="Filter by network" className="flex gap-1.5 max-mobile:flex-nowrap max-[760px]:shrink-0 min-[761px]:flex-wrap">
+        <div role="group" aria-label={t.calendar.byNetwork} className="flex gap-1.5 max-mobile:flex-nowrap max-[760px]:shrink-0 min-[761px]:flex-wrap">
           <Chip pressed={filters.networks.length === 0} onClick={() => setFilters((f) => ({ ...f, networks: [] }))}>
-            All networks
+            {t.calendar.allNetworks}
           </Chip>
           {NETWORK_ORDER.map((n: NetworkId) => {
             const pressed = filters.networks.includes(n)
@@ -302,30 +297,30 @@ function FilterBar({ filters, setFilters, campaigns, brandName }: FilterBarProps
           })}
         </div>
         {sep}
-        <div role="group" aria-label="Filter by status" className="flex gap-1.5 max-mobile:shrink-0 max-mobile:flex-nowrap min-[761px]:flex-wrap">
+        <div role="group" aria-label={t.calendar.byStatus} className="flex gap-1.5 max-mobile:shrink-0 max-mobile:flex-nowrap min-[761px]:flex-wrap">
           {STATUS_FILTERS.map((s) => {
-            const pressed = filters.statuses.includes(s.value)
+            const pressed = filters.statuses.includes(s)
             return (
-              <Chip key={s.value} pressed={pressed} onClick={() => setFilters((f) => ({ ...f, statuses: toggle<StatusFilter>(f.statuses, s.value) }))}>
-                <StatusDot status={s.value} className={cn(pressed && 'ring-[1.5px] ring-on-pill')} />
-                {s.label}
+              <Chip key={s} pressed={pressed} onClick={() => setFilters((f) => ({ ...f, statuses: toggle<StatusFilter>(f.statuses, s) }))}>
+                <StatusDot status={s} className={cn(pressed && 'ring-[1.5px] ring-on-pill')} />
+                {t.calendar.statusFilters[s].label}
               </Chip>
             )
           })}
         </div>
         {sep}
         <label className="relative inline-flex shrink-0 items-center">
-          <span className="sr-only">Campaign</span>
+          <span className="sr-only">{t.calendar.campaign}</span>
           <Flag size={16} aria-hidden className="pointer-events-none absolute left-3 text-muted" />
           <select
             value={filters.campaignId ?? ''}
             onChange={(e) => setFilters((f) => ({ ...f, campaignId: e.target.value || null }))}
             className="h-[34px] max-w-[210px] cursor-pointer appearance-none rounded-full border border-line-2 bg-glass-2 pl-[34px] pr-[34px] text-2xs font-semibold text-text outline-none focus:border-text max-mobile:text-md"
           >
-            <option value="">All campaigns</option>
+            <option value="">{t.calendar.allCampaigns}</option>
             {campaigns.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} · {brandName(c.brandId)} ({fmtShortDate(fromKey(c.start))} – {fmtShortDate(fromKey(c.end))})
+                {c.name} · {brandName(c.brandId)} ({t.dates.monthDay(fromKey(c.start))} – {t.dates.monthDay(fromKey(c.end))})
               </option>
             ))}
           </select>
@@ -333,7 +328,7 @@ function FilterBar({ filters, setFilters, campaigns, brandName }: FilterBarProps
         </label>
         {hasFilters(filters) && (
           <Button size="sm" variant="ghost" icon={X} className="h-[34px]" onClick={() => setFilters(NO_FILTERS)}>
-            Clear
+            {t.common.clear}
           </Button>
         )}
       </div>

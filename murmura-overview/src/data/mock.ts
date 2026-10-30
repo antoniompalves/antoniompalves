@@ -156,7 +156,7 @@ const posts: Post[] = POSTS.map(([id, brandId, authorId, status, when, nets, ima
   text,
   ...(status === 'published' && { metrics: metricsFor(id) }),
   ...(id === 'p89' && {
-    failure: { network: 'facebook' as const, reason: 'Facebook disconnected the page — reconnect Vantage Garage to retry.' },
+    failure: { network: 'facebook' as const, code: 'disconnected' as const },
   }),
 }))
 
@@ -359,13 +359,13 @@ export const workspace: Workspace = {
     { kind: 'channel', id: 'rc-vg-fb', channelId: 'ch-vg-fb' },
   ],
   audit: [
-    { id: 'au1', actorId: 'elise', kind: 'approval', summary: 'approved “New harvest from Huila…” for Ember & Oak', at: minutesBefore(14) },
-    { id: 'au2', actorId: 'malik', kind: 'channel', summary: 'reconnected Hollow Home on Pinterest', at: minutesBefore(2 * 60) },
-    { id: 'au3', actorId: 'haruto', kind: 'review', summary: 'requested changes on a Vantage Garage post', at: minutesBefore(5 * 60) },
-    { id: 'au4', actorId: 'camila', kind: 'member', summary: 'invited Sara Whitfield as Editor', at: minutesBefore(7 * 60) },
-    { id: 'au5', actorId: 'malik', kind: 'permission', summary: 'gave Community the “Assign conversations” permission', at: minutesBefore(9 * 60) },
-    { id: 'au6', actorId: 'omar', kind: 'schedule', summary: 'scheduled 3 posts for Vantage Garage', at: minutesBefore(11 * 60) },
-    { id: 'au7', actorId: 'ines', kind: 'inbox', summary: 'closed 14 conversations', at: minutesBefore(13 * 60) },
+    { id: 'au1', actorId: 'elise', kind: 'approval', action: { type: 'approved', excerpt: 'New harvest from Huila…', brandId: 'eo' }, at: minutesBefore(14) },
+    { id: 'au2', actorId: 'malik', kind: 'channel', action: { type: 'reconnected', brandId: 'hh', network: 'pinterest' }, at: minutesBefore(2 * 60) },
+    { id: 'au3', actorId: 'haruto', kind: 'review', action: { type: 'requestedChanges', brandId: 'vg' }, at: minutesBefore(5 * 60) },
+    { id: 'au4', actorId: 'camila', kind: 'member', action: { type: 'invited', name: 'Sara Whitfield', role: 'Editor' }, at: minutesBefore(7 * 60) },
+    { id: 'au5', actorId: 'malik', kind: 'permission', action: { type: 'grantedPermission', role: 'Community', permission: 'assignConversations' }, at: minutesBefore(9 * 60) },
+    { id: 'au6', actorId: 'omar', kind: 'schedule', action: { type: 'scheduled', count: 3, brandId: 'vg' }, at: minutesBefore(11 * 60) },
+    { id: 'au7', actorId: 'ines', kind: 'inbox', action: { type: 'closedConversations', count: 14 }, at: minutesBefore(13 * 60) },
   ],
   notifications: { unread: 4 },
 }

@@ -1,7 +1,8 @@
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import type { Brand, NetworkId, PostStatus, Tone } from '../data/types'
-import { NETWORK_LABEL, STATUS_META } from '../data/selectors'
+import { NETWORK_LABEL, STATUS_TONE } from '../data/selectors'
+import { useI18n } from '../i18n'
 
 export const cn = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(' ')
 
@@ -198,11 +199,14 @@ export function StatusPill({ tone, size = 'sm', className, children }: { tone: T
   )
 }
 
-export const PostStatusPill = ({ status, size, className }: { status: PostStatus; size?: 'sm' | 'md'; className?: string }) => (
-  <StatusPill tone={STATUS_META[status].tone} size={size} className={className}>
-    {STATUS_META[status].label}
-  </StatusPill>
-)
+export function PostStatusPill({ status, size, className }: { status: PostStatus; size?: 'sm' | 'md'; className?: string }) {
+  const { t } = useI18n()
+  return (
+    <StatusPill tone={STATUS_TONE[status]} size={size} className={className}>
+      {t.status[status]}
+    </StatusPill>
+  )
+}
 
 export const LegendDot = ({ tone, className }: { tone: Tone | 'faint'; className?: string }) => (
   <i className={cn('inline-block size-[9px] rounded-full', tone === 'faint' ? 'bg-faint' : toneFill[tone], className)} />

@@ -4,8 +4,9 @@ import { AtSign, Check, CheckCheck, Flag, Image as ImageIcon, ListFilter, Mail, 
 import type { LucideIcon } from 'lucide-react'
 import type { Brand, Conversation, ConversationKind, NetworkId, Sentiment, TeamMember } from '../../data/types'
 import type { InboxFilters, InboxView, inboxStats } from '../../data/inbox'
-import { KIND_LABEL, VIEWS, filterCount, fmtDuration, lastInbound, previewMessage, rowTime, splitMatches, unreadCount } from '../../data/inbox'
+import { VIEWS, filterCount, lastInbound, previewMessage, splitMatches, unreadCount } from '../../data/inbox'
 import { NETWORK_LABEL, NETWORK_ORDER } from '../../data/selectors'
+import { useI18n } from '../../i18n'
 import { Popover } from '../Popover'
 import { Avatar, Button, Initials, NetIcon, NetworkGlyph, cn, toneFill } from '../ui'
 
@@ -16,10 +17,10 @@ export const KIND_ICON: Record<ConversationKind, LucideIcon> = {
   review: Star,
 }
 
-const SENTIMENTS: { value: Sentiment; label: string; dot: string }[] = [
-  { value: 'positive', label: 'Positive', dot: 'bg-good' },
-  { value: 'neutral', label: 'Neutral', dot: 'bg-faint' },
-  { value: 'negative', label: 'Negative', dot: 'bg-coral' },
+const SENTIMENTS: { value: Sentiment; dot: string }[] = [
+  { value: 'positive', dot: 'bg-good' },
+  { value: 'neutral', dot: 'bg-faint' },
+  { value: 'negative', dot: 'bg-coral' },
 ]
 
 const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
@@ -79,6 +80,7 @@ interface ListProps {
 /** Left pane (".ib-side"): title + figures, search, view chips, filter popover, rows. */
 export function ConversationList(props: ListProps) {
   const { all, rows, currentId, view, setView, stats, filters, setFilters, query, setQuery, searchRef, brands, team, now, stampId, onMarkAllRead } = props
+  const { t } = useI18n()
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterBtn = useRef<HTMLButtonElement>(null)
   const active = filterCount(filters)
@@ -88,25 +90,28 @@ export function ConversationList(props: ListProps) {
     'relative inline-grid size-[38px] shrink-0 cursor-pointer place-items-center rounded-full text-muted transition-colors hover:bg-well hover:text-text disabled:cursor-not-allowed disabled:opacity-40'
 
   return (
-    <aside aria-label="Conversations" className="flex min-h-0 min-w-0 flex-col border-r border-line bg-[color-mix(in_srgb,var(--float)_55%,transparent)] max-mobile:border-r-0 max-mobile:bg-transparent">
+    <aside aria-label={t.inbox.conversations} className="flex min-h-0 min-w-0 flex-col border-r border-line bg-[color-mix(in_srgb,var(--float)_55%,transparent)] max-mobile:border-r-0 max-mobile:bg-transparent">
       <header className="flex items-center justify-between gap-2.5 pb-2.5 pl-4 pr-2.5 pt-3.5 max-mobile:pb-2 max-mobile:pl-3.5 max-mobile:pr-2 max-mobile:pt-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-[21px] font-bold leading-[1.15] tracking-[-0.02em]">
-            Inbox
-            <span aria-label="open conversations" className="inline-grid h-[22px] min-w-[26px] place-items-center rounded-full bg-well px-[7px] text-[12.5px] font-bold tabular-nums">
+            {t.inbox.title}
+            <span aria-label={t.inbox.openCount} className="inline-grid h-[22px] min-w-[26px] place-items-center rounded-full bg-well px-[7px] text-[12.5px] font-bold tabular-nums">
               {stats.open}
             </span>
           </h2>
           <p className="mt-0.5 truncate text-[12.5px] text-muted">
-            <b className="font-bold text-text tabular-nums">{stats.unread}</b> unread · <b className="font-bold text-text tabular-nums">{fmtDuration(stats.medianReply)}</b> median first reply
+            {t.inbox.summary(
+              <b className="font-bold text-text tabular-nums">{stats.unread}</b>,
+              <b className="font-bold text-text tabular-nums">{t.dates.duration(stats.medianReply)}</b>,
+            )}
           </p>
         </div>
         <div className="flex shrink-0 gap-0.5">
           <button
             ref={filterBtn}
             type="button"
-            aria-label="Filters"
-            title="Filters"
+            aria-label={t.inbox.filters}
+            title={t.inbox.filters}
             aria-haspopup="dialog"
             aria-expanded={filtersOpen}
             onClick={() => setFiltersOpen((v) => !v)}
@@ -119,7 +124,7 @@ export function ConversationList(props: ListProps) {
               </span>
             )}
           </button>
-          <button type="button" aria-label="Mark all read" title="Mark all read" onClick={onMarkAllRead} disabled={stats.unread === 0} className={ic}>
+          <button type="button" aria-label={t.inbox.markAllRead} title={t.inbox.markAllRead} onClick={onMarkAllRead} disabled={stats.unread === 0} className={ic}>
             <CheckCheck size={20} aria-hidden />
           </button>
         </div>
@@ -133,8 +138,8 @@ export function ConversationList(props: ListProps) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Escape' && (setQuery(''), e.currentTarget.blur())}
-          placeholder="Search or filter chats"
-          aria-label="Search conversations"
+          placeholder={t.inbox.searchPlaceholder}
+          aria-label={t.inbox.searchLabel}
           autoComplete="off"
           className="h-full min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-muted"
         />
@@ -143,18 +148,18 @@ export function ConversationList(props: ListProps) {
 
       <div
         role="group"
-        aria-label="Views"
+        aria-label={t.inbox.viewsLabel}
         className="flex shrink-0 gap-1.5 overflow-x-auto px-3 py-2.5 [mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] [scrollbar-width:none]"
       >
         {VIEWS.map((v) => {
-          const pressed = view === v.value
-          const n = stats.views[v.value]
+          const pressed = view === v
+          const n = stats.views[v]
           return (
             <button
-              key={v.value}
+              key={v}
               type="button"
               aria-pressed={pressed}
-              onClick={() => setView(v.value)}
+              onClick={() => setView(v)}
               className={cn(
                 'inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-2xs font-semibold transition-colors',
                 pressed
@@ -162,7 +167,7 @@ export function ConversationList(props: ListProps) {
                   : 'bg-well text-muted hover:bg-line-2 hover:text-text',
               )}
             >
-              {v.label}
+              {t.inbox.views[v]}
               {n > 0 && <b className="text-[12.5px] font-bold tabular-nums">{n}</b>}
             </button>
           )
@@ -189,16 +194,16 @@ export function ConversationList(props: ListProps) {
         )}
       </div>
 
-      <Popover open={filtersOpen} onClose={() => setFiltersOpen(false)} anchor={filterBtn} label="Filters" className="w-[288px]">
+      <Popover open={filtersOpen} onClose={() => setFiltersOpen(false)} anchor={filterBtn} label={t.inbox.filters} className="w-[288px]">
         <div className="flex items-center justify-between gap-2.5 px-2.5 pb-1.5 pt-2">
-          <b className="text-sm font-bold">Filters</b>
+          <b className="text-sm font-bold">{t.inbox.filters}</b>
           <Button size="sm" variant="ghost" disabled={active === 0} onClick={() => setFilters({ kinds: [], networks: [], sentiments: [] })}>
-            Clear
+            {t.common.clear}
           </Button>
         </div>
         <div className="max-h-[min(60vh,460px)] overflow-y-auto px-1 pb-1.5">
-          <FilterGroup title="Kind">
-            {(Object.keys(KIND_LABEL) as ConversationKind[]).map((k) => {
+          <FilterGroup title={t.inbox.kind}>
+            {(Object.keys(KIND_ICON) as ConversationKind[]).map((k) => {
               const Icon = KIND_ICON[k]
               return (
                 <FilterCheck
@@ -208,12 +213,12 @@ export function ConversationList(props: ListProps) {
                   count={open.filter((c) => c.kind === k).length}
                   lead={<Icon size={17} className="text-muted" aria-hidden />}
                 >
-                  {KIND_LABEL[k].many}
+                  {t.kinds[k].many}
                 </FilterCheck>
               )
             })}
           </FilterGroup>
-          <FilterGroup title="Network">
+          <FilterGroup title={t.inbox.network}>
             {(['instagram', 'facebook', 'x', 'linkedin', 'tiktok', 'youtube', 'pinterest', 'threads'] as NetworkId[])
               .filter((n) => NETWORK_ORDER.includes(n))
               .map((n) => (
@@ -233,7 +238,7 @@ export function ConversationList(props: ListProps) {
                 </FilterCheck>
               ))}
           </FilterGroup>
-          <FilterGroup title="Sentiment">
+          <FilterGroup title={t.inbox.sentimentLabel}>
             {SENTIMENTS.map((s) => (
               <FilterCheck
                 key={s.value}
@@ -242,7 +247,7 @@ export function ConversationList(props: ListProps) {
                 count={open.filter((c) => c.sentiment === s.value).length}
                 lead={<i className={cn('size-[9px] shrink-0 rounded-full', s.dot)} />}
               >
-                {s.label}
+                {t.sentiment[s.value]}
               </FilterCheck>
             ))}
           </FilterGroup>
@@ -288,6 +293,7 @@ interface RowProps {
 
 /** One conversation (".ib-row"): 72px, avatar + network, name, brand dot, time, kind, snippet, badges. */
 function Row({ c, last, current, stamped, brand, assignee, query, now }: RowProps) {
+  const { t } = useI18n()
   const link = useRef<HTMLAnchorElement>(null)
   // Keep the open conversation in sight when it's picked with J/K or arrives from a link.
   useEffect(() => {
@@ -304,7 +310,7 @@ function Row({ c, last, current, stamped, brand, assignee, query, now }: RowProp
         ref={link}
         href={`#/inbox/${c.id}`}
         aria-current={current ? 'true' : undefined}
-        aria-label={`${c.contact.name}, ${KIND_LABEL[c.kind].one} on ${NETWORK_LABEL[c.network]}, ${brand.name}${unread ? `, ${count} unread` : ''}${c.priority ? ', priority' : ''}${assignee ? `, assigned to ${assignee.name}` : ''}`}
+        aria-label={t.inbox.row({ name: c.contact.name, kind: t.kinds[c.kind].one, network: NETWORK_LABEL[c.network], brand: brand.name, unread: count, priority: c.priority, assignee: assignee?.name })}
         className={cn(
           'relative grid h-[72px] grid-cols-[48px_minmax(0,1fr)] items-center gap-[13px] pl-3.5 pr-3 text-text focus-visible:rounded-md focus-visible:-outline-offset-2 max-mobile:h-[76px] max-mobile:pl-3 max-mobile:pr-2.5',
           current ? 'bg-well' : 'hover:bg-[color-mix(in_srgb,var(--well)_60%,transparent)]',
@@ -318,26 +324,26 @@ function Row({ c, last, current, stamped, brand, assignee, query, now }: RowProp
             </b>
             <i title={brand.name} className={cn('size-[7px] shrink-0 rounded-full', toneFill[brand.tone])} />
             <time dateTime={inbound.at} className={cn('ml-auto shrink-0 pl-1.5 text-[12.5px]', unread ? 'font-bold text-ib-acc-text' : 'text-muted')}>
-              {rowTime(inbound.at, now)}
+              {t.dates.listTime(inbound.at, now)}
             </time>
           </span>
           <span className="flex min-w-0 items-center gap-1.5">
-            <span title={KIND_LABEL[c.kind].one} className="inline-grid shrink-0 text-faint">
+            <span title={t.kinds[c.kind].one} className="inline-grid shrink-0 text-faint">
               <Icon size={15} aria-hidden />
             </span>
             <span className={cn('min-w-0 flex-1 truncate text-xs max-mobile:text-sm', unread ? 'text-text' : 'text-muted')}>
-              {msg.from === 'us' && <em className="font-semibold not-italic">{msg.note ? 'Note: ' : 'You: '}</em>}
+              {msg.from === 'us' && <em className="font-semibold not-italic">{msg.note ? t.inbox.previewNote : t.inbox.previewYou}</em>}
               {msg.image && (
                 <>
                   <ImageIcon size={15} aria-hidden className="mr-[3px] inline-block align-[-3px]" />
-                  Photo{' '}
+                  {t.inbox.photo}{' '}
                 </>
               )}
               <Hl text={msg.text} q={query} />
             </span>
             <span className="inline-flex shrink-0 items-center gap-[5px]">
               {c.priority && c.status === 'open' && <Flag size={15} className="text-coral" aria-hidden />}
-              {c.status === 'done' && <Check size={15} strokeWidth={2.2} className="text-good" aria-label="Done" />}
+              {c.status === 'done' && <Check size={15} strokeWidth={2.2} className="text-good" aria-label={t.inbox.done} />}
               {assignee && <Avatar src={assignee.avatar} name={assignee.name} size="xs" />}
               {unread && (
                 <b className="inline-grid h-[21px] min-w-[21px] place-items-center rounded-full bg-sea px-1.5 text-[12.5px] font-bold text-on-sea tabular-nums">{count}</b>
@@ -362,22 +368,9 @@ function Row({ c, last, current, stamped, brand, assignee, query, now }: RowProp
 }
 
 function EmptyList({ view, query, filtered, onClear }: { view: InboxView; query: string; filtered: boolean; onClear: () => void }) {
+  const { t } = useI18n()
   const caughtUp = !query && !filtered && (view === 'unread' || view === 'all')
-  const copy = query
-    ? { title: 'Nothing matches', text: `No conversation here mentions “${query}”.` }
-    : filtered
-      ? { title: 'Nothing matches', text: 'No conversation fits these filters.' }
-      : view === 'unread'
-        ? { title: 'All caught up', text: 'Nothing unread across your networks.' }
-        : view === 'all'
-          ? { title: 'Inbox zero', text: 'Every conversation is handled.' }
-          : view === 'mine'
-            ? { title: 'Nothing assigned to you', text: 'Conversations a teammate hands you show up here.' }
-            : view === 'priority'
-              ? { title: 'No priorities', text: 'Flag a conversation to keep it at hand.' }
-              : view === 'done'
-                ? { title: 'Nothing closed yet', text: 'Conversations you mark done land here.' }
-                : { title: 'Everyone has an owner', text: 'Every open conversation is assigned.' }
+  const copy = query ? t.inbox.empty.search(query) : filtered ? t.inbox.empty.filtered : t.inbox.empty[view]
   return (
     <div className="grid h-full place-items-center px-[18px] py-8 text-center">
       <div className="grid justify-items-center gap-1.5 text-muted">
@@ -390,7 +383,7 @@ function EmptyList({ view, query, filtered, onClear }: { view: InboxView; query:
         <p className="max-w-[320px] text-xs">{copy.text}</p>
         {(query || filtered) && (
           <Button size="sm" variant="ghost" icon={X} className="mt-2" onClick={onClear}>
-            Clear filters
+            {t.common.clearFilters}
           </Button>
         )}
       </div>

@@ -26,8 +26,8 @@ import {
   Zap,
 } from 'lucide-react'
 import type { Brand, Conversation, MediaAsset, Message, Post, SavedReply, Sentiment, TeamMember } from '../../data/types'
-import { contextLine, dayLabel, fmtClock } from '../../data/inbox'
 import { NETWORK_LABEL } from '../../data/selectors'
+import { useI18n } from '../../i18n'
 import { photo } from '../../data/assets'
 import { MenuDivider, MenuItem, Popover } from '../Popover'
 import { Avatar, cn } from '../ui'
@@ -93,21 +93,22 @@ export function AssignMenu({ open, onClose, anchor, placement, assignable, curre
   me: TeamMember
   onAssign: (id: string | null) => void
 }) {
+  const { t } = useI18n()
   const pick = (id: string | null) => {
     onAssign(id)
     onClose()
   }
   return (
-    <Popover open={open} onClose={onClose} anchor={anchor} placement={placement} label="Assign">
+    <Popover open={open} onClose={onClose} anchor={anchor} placement={placement} label={t.inbox.assign}>
       <div role="menu">
         <MenuItem icon={UserRound} checked={!current} onClick={() => pick(null)}>
-          Unassigned
+          {t.inbox.unassigned}
         </MenuItem>
         <MenuDivider />
         {assignable.map((m) => (
           <MenuItem key={m.id} lead={<Avatar src={m.avatar} name={m.name} size="menu" className="-my-[3px]" />} checked={current === m.id} onClick={() => pick(m.id)}>
             {m.name}
-            {m.id === me.id && ' (you)'}
+            {m.id === me.id && t.inbox.you}
           </MenuItem>
         ))}
       </div>
@@ -115,15 +116,12 @@ export function AssignMenu({ open, onClose, anchor, placement, assignable, curre
   )
 }
 
-const SENTIMENT_ITEMS: { value: Sentiment; label: string }[] = [
-  { value: 'positive', label: 'Positive' },
-  { value: 'neutral', label: 'Neutral' },
-  { value: 'negative', label: 'Negative' },
-]
+const SENTIMENT_ITEMS: { value: Sentiment }[] = [{ value: 'positive' }, { value: 'neutral' }, { value: 'negative' }]
 
 /** Right pane (".ib-th"): header with actions, the post it's about, the message log and the composer. */
 export function Thread(props: ThreadProps) {
   const { c, brand, post, team, assignable, me, now, infoOpen, mobileOpen } = props
+  const { t } = useI18n()
   const scrollRef = useRef<HTMLDivElement>(null)
   const assignBtn = useRef<HTMLButtonElement>(null)
   const moreBtn = useRef<HTMLButtonElement>(null)
@@ -140,34 +138,34 @@ export function Thread(props: ThreadProps) {
 
   return (
     <section
-      aria-label="Conversation"
+      aria-label={t.inbox.conversation}
       className={cn(
         'relative flex min-h-0 min-w-0 flex-col bg-ib-wall',
         mobileOpen ? 'max-mobile:fixed max-mobile:inset-0 max-mobile:z-[70] max-mobile:rounded-none' : 'max-mobile:hidden',
       )}
     >
       <header className="relative z-[3] flex h-[60px] shrink-0 items-center gap-1.5 border-b border-line bg-ib-bar pl-2.5 pr-2 max-mobile:h-[calc(58px+env(safe-area-inset-top))] max-mobile:pl-0.5 max-mobile:pr-1 max-mobile:pt-[env(safe-area-inset-top)]">
-        <a href="#/inbox" aria-label="Back to chats" className={cn(ibIc, 'mobile:hidden')}>
+        <a href="#/inbox" aria-label={t.inbox.backToChats} className={cn(ibIc, 'mobile:hidden')}>
           <ArrowLeft size={20} aria-hidden />
         </a>
         <button
           type="button"
           onClick={props.onToggleInfo}
-          aria-label={`Contact info for ${c.contact.name}`}
+          aria-label={t.inbox.contactInfoFor(c.contact.name)}
           className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-[11px] rounded-xl px-1.5 text-left focus-visible:-outline-offset-4 max-mobile:gap-[9px] max-mobile:px-0.5"
         >
           <Face c={c} size="md" />
           <span className="grid min-w-0">
             <b className="truncate text-md font-bold">{c.contact.name}</b>
-            <small className="truncate text-[12.5px] text-muted">{contextLine(c, brand, NETWORK_LABEL[c.network])}</small>
+            <small className="truncate text-[12.5px] text-muted">{t.inbox.context(c.kind, NETWORK_LABEL[c.network], brand.name)}</small>
           </span>
         </button>
         <div className="flex shrink-0 items-center gap-0.5">
           <button
             ref={assignBtn}
             type="button"
-            aria-label={assignee ? `Assigned to ${assignee.name} — reassign` : 'Assign'}
-            title={assignee ? `Assigned to ${assignee.name} — reassign` : 'Assign'}
+            aria-label={assignee ? t.inbox.assignedTo(assignee.name) : t.inbox.assign}
+            title={assignee ? t.inbox.assignedTo(assignee.name) : t.inbox.assign}
             aria-haspopup="menu"
             aria-expanded={menu === 'assign'}
             onClick={() => setMenu(menu === 'assign' ? null : 'assign')}
@@ -177,8 +175,8 @@ export function Thread(props: ThreadProps) {
           </button>
           <button
             type="button"
-            aria-label={c.priority ? 'Remove priority' : 'Mark as priority'}
-            title={c.priority ? 'Remove priority' : 'Mark as priority'}
+            aria-label={c.priority ? t.inbox.removePriority : t.inbox.markPriority}
+            title={c.priority ? t.inbox.removePriority : t.inbox.markPriority}
             aria-pressed={c.priority}
             onClick={props.onPriority}
             className={cn(ibIc, 'max-[999px]:w-[34px]', c.priority && 'bg-[color-mix(in_srgb,var(--coral)_13%,transparent)] text-coral hover:text-coral')}
@@ -187,8 +185,8 @@ export function Thread(props: ThreadProps) {
           </button>
           <button
             type="button"
-            aria-label={c.status === 'done' ? 'Reopen (E)' : 'Mark done (E)'}
-            title={c.status === 'done' ? 'Reopen (E)' : 'Mark done (E)'}
+            aria-label={c.status === 'done' ? t.inbox.reopenKey : t.inbox.markDoneKey}
+            title={c.status === 'done' ? t.inbox.reopenKey : t.inbox.markDoneKey}
             onClick={props.onDone}
             className={cn(ibIc, 'max-[999px]:w-[34px]', c.status === 'done' && 'text-good')}
           >
@@ -196,8 +194,8 @@ export function Thread(props: ThreadProps) {
           </button>
           <button
             type="button"
-            aria-label="Contact info"
-            title="Contact info"
+            aria-label={t.inbox.contactInfo}
+            title={t.inbox.contactInfo}
             aria-pressed={infoOpen}
             onClick={props.onToggleInfo}
             className={cn(ibIc, 'max-[999px]:w-[34px] max-mobile:hidden', infoOpen && 'bg-[color-mix(in_srgb,var(--sea)_13%,transparent)] text-ib-acc-text')}
@@ -207,8 +205,8 @@ export function Thread(props: ThreadProps) {
           <button
             ref={moreBtn}
             type="button"
-            aria-label="More actions"
-            title="More actions"
+            aria-label={t.inbox.moreActions}
+            title={t.inbox.moreActions}
             aria-haspopup="menu"
             aria-expanded={menu === 'more'}
             onClick={() => setMenu(menu === 'more' ? null : 'more')}
@@ -227,26 +225,26 @@ export function Thread(props: ThreadProps) {
           me={me}
           onAssign={props.onAssign}
         />
-        <Popover open={menu === 'more'} onClose={() => setMenu(null)} anchor={moreBtn} placement="bottom-end" label="More actions">
+        <Popover open={menu === 'more'} onClose={() => setMenu(null)} anchor={moreBtn} placement="bottom-end" label={t.inbox.moreActions}>
           <div role="menu" onClick={() => setMenu(null)}>
             <MenuItem icon={UserRound} onClick={props.onToggleInfo}>
-              Contact info
+              {t.inbox.contactInfo}
             </MenuItem>
             <MenuItem icon={Bell} onClick={props.onMarkUnread} disabled={c.unread}>
-              Mark as unread
+              {t.inbox.markUnread}
             </MenuItem>
             {post && (
               <MenuItem icon={Image} onClick={props.onOpenPost}>
-                Open the post
+                {t.inbox.openThePost}
               </MenuItem>
             )}
             <MenuItem icon={Copy} onClick={props.onCopyHandle}>
-              Copy @{c.contact.handle}
+              {t.inbox.copyHandle(c.contact.handle)}
             </MenuItem>
             <MenuDivider />
             {SENTIMENT_ITEMS.map((s) => (
               <MenuItem key={s.value} icon={Smile} checked={c.sentiment === s.value} onClick={() => props.onSentiment(s.value)}>
-                {s.label}
+                {t.sentiment[s.value]}
               </MenuItem>
             ))}
             <MenuItem
@@ -256,13 +254,13 @@ export function Thread(props: ThreadProps) {
                 setTagging(true)
               }}
             >
-              Add a tag…
+              {t.inbox.addTagEllipsis}
             </MenuItem>
             {c.assigneeId !== me.id && (
               <>
                 <MenuDivider />
                 <MenuItem icon={UserRound} onClick={() => props.onAssign(me.id)}>
-                  Assign to me
+                  {t.inbox.assignToMe}
                 </MenuItem>
               </>
             )}
@@ -275,7 +273,7 @@ export function Thread(props: ThreadProps) {
         <button
           type="button"
           onClick={props.onOpenPost}
-          aria-label={`Open the post: ${post.text}`}
+          aria-label={t.inbox.openPostLabel(post.text)}
           className="relative z-[2] flex w-full shrink-0 cursor-pointer items-center gap-2.5 border-b border-line bg-ib-bar px-3.5 py-1.5 text-left before:my-0.5 before:w-[3px] before:shrink-0 before:self-stretch before:rounded-[3px] before:bg-sea before:content-[''] hover:bg-float"
         >
           <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[7px] bg-well">
@@ -283,7 +281,7 @@ export function Thread(props: ThreadProps) {
           </span>
           <span className="grid min-w-0 flex-1">
             <small className="text-[12.5px] font-bold text-ib-acc-text">
-              On {brand.name}’s post · {new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' }).format(new Date(post.scheduledAt))}
+              {t.inbox.onPost(brand.name, t.dates.monthDay(new Date(post.scheduledAt)))}
             </small>
             <b className="truncate text-2xs font-medium text-muted">{post.text}</b>
           </span>
@@ -301,14 +299,15 @@ export function Thread(props: ThreadProps) {
 }
 
 function MessageLog({ c, team, now }: { c: Conversation; team: Map<string, TeamMember>; now: Date }) {
+  const { t } = useI18n()
   const days: { label: string; messages: Message[] }[] = []
   for (const m of c.messages) {
-    const label = dayLabel(m.at, now)
+    const label = t.dates.threadDay(m.at, now)
     if (days[days.length - 1]?.label !== label) days.push({ label, messages: [] })
     days[days.length - 1].messages.push(m)
   }
   return (
-    <div role="log" aria-label={`Conversation with ${c.contact.name}`} className="flex flex-col">
+    <div role="log" aria-label={t.inbox.log(c.contact.name)} className="flex flex-col">
       {days.map((d) => (
         <section key={d.label} className="flex flex-col">
           <div className="pointer-events-none sticky top-2 z-[2] mb-1 mt-3 flex justify-center">
@@ -343,14 +342,15 @@ function RichText({ text }: { text: string }) {
 }
 
 function Bubble({ m, first, author }: { m: Message; first: boolean; author?: TeamMember }) {
-  const time = <time dateTime={m.at}>{fmtClock(m.at)}</time>
+  const { t } = useI18n()
+  const time = <time dateTime={m.at}>{t.dates.time(new Date(m.at))}</time>
   if (m.note) {
     return (
       <div className="mt-2.5 flex justify-center">
         <div className="max-w-[min(78%,440px)] rounded-[10px] border border-ib-note-rim bg-ib-note px-3 py-[7px] text-xs leading-[1.4] text-text shadow-[0_1px_.5px_color-mix(in_srgb,var(--text)_10%,transparent)]">
           <span className="mb-0.5 flex items-center gap-1.5 text-[12.5px] font-bold">
             <EyeOff size={14} aria-hidden />
-            Note · only your team sees this
+            {t.inbox.noteBadge}
           </span>
           {m.image && <img src={photo(m.image, 320)} alt="" className="my-0.5 mb-[5px] block aspect-square w-40 max-w-full rounded-md object-cover" />}
           <p className="whitespace-pre-wrap">{m.text}</p>
@@ -382,7 +382,7 @@ function Bubble({ m, first, author }: { m: Message; first: boolean; author?: Tea
         </span>
         <span className="absolute bottom-1 right-2 inline-flex items-center gap-[3px] whitespace-nowrap text-[12.5px] leading-none text-muted">
           {time}
-          {us && <CheckCheck size={16} strokeWidth={2} aria-label={m.read ? 'Read' : 'Delivered'} className={m.read ? 'text-ib-acc-text' : 'text-faint'} />}
+          {us && <CheckCheck size={16} strokeWidth={2} aria-label={m.read ? t.inbox.read : t.inbox.delivered} className={m.read ? 'text-ib-acc-text' : 'text-faint'} />}
         </span>
       </div>
     </div>
@@ -391,6 +391,7 @@ function Bubble({ m, first, author }: { m: Message; first: boolean; author?: Tea
 
 function Composer(props: ThreadProps & { first: string }) {
   const { c, brand, draft, setDraft, composerRef, savedReplies, library, first, onSend } = props
+  const { t } = useI18n()
   const attachBtn = useRef<HTMLButtonElement>(null)
   const caretBtn = useRef<HTMLButtonElement>(null)
   const [menu, setMenu] = useState<'attach' | 'saved' | 'library' | 'send' | null>(null)
@@ -431,8 +432,8 @@ function Composer(props: ThreadProps & { first: string }) {
       <button
         ref={attachBtn}
         type="button"
-        aria-label="Attach"
-        title="Attach"
+        aria-label={t.inbox.attach}
+        title={t.inbox.attach}
         aria-haspopup="menu"
         aria-expanded={menu !== null && menu !== 'send'}
         onClick={() => setMenu(menu ? null : 'attach')}
@@ -442,8 +443,8 @@ function Composer(props: ThreadProps & { first: string }) {
       </button>
       <button
         type="button"
-        aria-label="Internal note"
-        title="Internal note"
+        aria-label={t.inbox.internalNote}
+        title={t.inbox.internalNote}
         aria-pressed={draft.note}
         onClick={() => setDraft({ ...draft, note: !draft.note })}
         className={cn(ibIc, 'mb-[3px]', draft.note && 'bg-[color-mix(in_srgb,var(--butter)_55%,transparent)] text-text')}
@@ -463,7 +464,7 @@ function Composer(props: ThreadProps & { first: string }) {
             <span className="min-w-0 truncate">{library.find((m) => m.seed === draft.image)?.title ?? draft.image}</span>
             <button
               type="button"
-              aria-label="Remove photo"
+              aria-label={t.inbox.removePhoto}
               onClick={() => setDraft({ ...draft, image: undefined })}
               className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-muted hover:bg-line"
             >
@@ -472,7 +473,7 @@ function Composer(props: ThreadProps & { first: string }) {
           </span>
         )}
         <label htmlFor="ib-ta" className="sr-only">
-          Reply to {c.contact.name}
+          {t.inbox.replyTo(c.contact.name)}
         </label>
         <textarea
           id="ib-ta"
@@ -481,7 +482,7 @@ function Composer(props: ThreadProps & { first: string }) {
           value={draft.text}
           onChange={(e) => setDraft({ ...draft, text: e.target.value })}
           onKeyDown={onKeyDown}
-          placeholder={draft.note ? 'Note for the team…' : `Reply to ${first}`}
+          placeholder={draft.note ? t.inbox.notePlaceholder : t.inbox.replyTo(first)}
           enterKeyHint="send"
           className="block max-h-[121px] min-h-[21px] w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-sm leading-[21px] text-text outline-none placeholder:text-faint max-mobile:min-h-6 max-mobile:text-md max-mobile:leading-6"
         />
@@ -491,8 +492,8 @@ function Composer(props: ThreadProps & { first: string }) {
         <button
           ref={caretBtn}
           type="button"
-          aria-label="More send options"
-          title="More send options"
+          aria-label={t.inbox.moreSendOptions}
+          title={t.inbox.moreSendOptions}
           aria-haspopup="menu"
           aria-expanded={menu === 'send'}
           // Like the reference, the menu only opens once there's something to send.
@@ -504,8 +505,8 @@ function Composer(props: ThreadProps & { first: string }) {
       )}
       <button
         type="submit"
-        aria-label={draft.note ? 'Add note' : 'Send'}
-        title={draft.note ? 'Add note (Enter)' : 'Send (Enter)'}
+        aria-label={draft.note ? t.inbox.addNote : t.inbox.send}
+        title={t.inbox.keyHint(draft.note ? t.inbox.addNote : t.inbox.send)}
         disabled={!canSend}
         className={cn(
           'grid size-11 shrink-0 cursor-pointer place-items-center rounded-full transition-colors disabled:cursor-default disabled:bg-well disabled:text-faint disabled:shadow-none',
@@ -515,23 +516,23 @@ function Composer(props: ThreadProps & { first: string }) {
         {draft.note ? <NoteIcon size={20} aria-hidden /> : <Send size={20} aria-hidden />}
       </button>
 
-      <Popover open={menu === 'attach'} onClose={() => setMenu(null)} anchor={attachBtn} placement="top-start" label="Attach">
+      <Popover open={menu === 'attach'} onClose={() => setMenu(null)} anchor={attachBtn} placement="top-start" label={t.inbox.attach}>
         <div role="menu">
           <MenuItem icon={Zap} onClick={() => setMenu('saved')}>
-            Saved replies
+            {t.inbox.savedReplies}
           </MenuItem>
           <MenuItem icon={Image} onClick={() => setMenu('library')}>
-            Photo from the library
+            {t.inbox.photoFromLibrary}
           </MenuItem>
           <MenuItem icon={AtSign} onClick={() => insert(`@${c.contact.handle}`)}>
-            Insert @{c.contact.handle}
+            {t.inbox.insertHandle(c.contact.handle)}
           </MenuItem>
         </div>
       </Popover>
 
-      <Popover open={menu === 'saved'} onClose={() => setMenu(null)} anchor={attachBtn} placement="top-start" label="Saved replies" className="w-[360px]">
+      <Popover open={menu === 'saved'} onClose={() => setMenu(null)} anchor={attachBtn} placement="top-start" label={t.inbox.savedReplies} className="w-[360px]">
         <div className="flex items-center justify-between gap-2.5 px-2.5 pb-1.5 pt-2">
-          <b className="text-sm font-bold">Saved replies</b>
+          <b className="text-sm font-bold">{t.inbox.savedReplies}</b>
           <span className="text-2xs font-medium leading-[1.45] text-muted">{savedReplies.length}</span>
         </div>
         <div className="grid gap-0.5">
@@ -549,12 +550,12 @@ function Composer(props: ThreadProps & { first: string }) {
         </div>
       </Popover>
 
-      <Popover open={menu === 'library'} onClose={() => setMenu(null)} anchor={attachBtn} placement="top-start" label="Choose a photo" className="w-[360px]">
+      <Popover open={menu === 'library'} onClose={() => setMenu(null)} anchor={attachBtn} placement="top-start" label={t.inbox.choosePhoto} className="w-[360px]">
         <div className="flex items-center justify-between gap-2.5 px-2.5 pb-1.5 pt-2">
-          <b className="text-sm font-bold">{brand.name} library</b>
+          <b className="text-sm font-bold">{t.inbox.library(brand.name)}</b>
           <span className="text-2xs font-medium leading-[1.45] text-muted">{library.length}</span>
         </div>
-        {library.length === 0 && <p className="grid justify-items-center gap-1.5 px-4 py-9 text-center text-muted">No photos for this brand yet.</p>}
+        {library.length === 0 && <p className="grid justify-items-center gap-1.5 px-4 py-9 text-center text-muted">{t.inbox.noPhotos}</p>}
         <div className="grid grid-cols-3 gap-1.5 px-2 pb-2 pt-1 empty:hidden">
           {library.map(({ seed, title }) => (
             <button
@@ -575,7 +576,7 @@ function Composer(props: ThreadProps & { first: string }) {
         </div>
       </Popover>
 
-      <Popover open={menu === 'send'} onClose={() => setMenu(null)} anchor={caretBtn} placement="top-end" label="Send options">
+      <Popover open={menu === 'send'} onClose={() => setMenu(null)} anchor={caretBtn} placement="top-end" label={t.inbox.sendOptions}>
         <div role="menu">
           <MenuItem
             icon={CheckCheck}
@@ -585,7 +586,7 @@ function Composer(props: ThreadProps & { first: string }) {
               submit(undefined, true)
             }}
           >
-            Send &amp; close
+            {t.inbox.sendAndClose}
           </MenuItem>
           <MenuItem
             icon={NoteIcon}
@@ -595,7 +596,7 @@ function Composer(props: ThreadProps & { first: string }) {
               composerRef.current?.focus()
             }}
           >
-            Write an internal note
+            {t.inbox.writeNote}
           </MenuItem>
         </div>
       </Popover>

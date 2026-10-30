@@ -40,7 +40,8 @@ import {
 import { photo } from '../data/assets'
 import type { AuditKind } from '../data/types'
 import type { GrowthRange, OverviewModel } from '../data/selectors'
-import { NETWORK_LABEL, NETWORK_ORDER, STATUS_META, ago, clip, compact, countdown, pct1, signedPct1 } from '../data/selectors'
+import { NETWORK_LABEL, NETWORK_ORDER, STATUS_TONE, clip } from '../data/selectors'
+import { useI18n } from '../i18n'
 
 interface OverviewProps {
   model: OverviewModel
@@ -75,6 +76,7 @@ type SectionProps = { model: OverviewModel; className?: string }
 /* ───────────────────────── header ───────────────────────── */
 
 function OverviewHead({ model }: { model: OverviewModel }) {
+  const { t } = useI18n()
   const [salute, name] = model.greeting.split(', ')
   return (
     <header className="mb-6 flex flex-wrap items-center gap-x-[clamp(28px,4vw,72px)] gap-y-[18px]">
@@ -82,16 +84,16 @@ function OverviewHead({ model }: { model: OverviewModel }) {
       <dl className="flex flex-wrap gap-x-[clamp(24px,3.2vw,56px)] gap-y-3.5">
         <Stat
           icon={Users}
-          value={compact(model.stats.audience)}
-          badge={`${signedPct1(model.stats.audienceGrowth30d)} in 30 days`}
-          label="Audience across your channels"
+          value={t.numbers.compact(model.stats.audience)}
+          badge={t.overview.audienceGrowthBadge(t.numbers.signedPct1(model.stats.audienceGrowth30d))}
+          label={t.overview.audience}
         />
-        <Stat icon={Heart} value={pct1(model.stats.engagementRate)} label="Engagement rate, last 30 days" />
-        <Stat icon={CalendarDays} value={String(model.stats.postsThisWeek)} label="Posts going out this week" />
+        <Stat icon={Heart} value={t.numbers.pct1(model.stats.engagementRate)} label={t.overview.engagement} />
+        <Stat icon={CalendarDays} value={String(model.stats.postsThisWeek)} label={t.overview.postsThisWeek} />
       </dl>
       <div className="ml-auto flex flex-wrap items-center gap-2.5">
         <Button icon={PenLine} href="#/compose">
-          New post
+          {t.common.newPost}
         </Button>
       </div>
     </header>
@@ -102,55 +104,56 @@ function OverviewHead({ model }: { model: OverviewModel }) {
 
 function UpNext({ model, now, className }: SectionProps & { now: Date }) {
   const { hero, comingUp } = model.upNext
-  const { dates } = model
+  const { t } = useI18n()
+  const dates = t.dates
   const tools = (
     <>
       <span className="inline-flex items-center gap-[7px] text-2xs font-semibold text-muted">
         <i className="size-2 animate-breathe rounded-full bg-good shadow-[0_0_0_0_color-mix(in_srgb,var(--good)_50%,transparent)]" />
-        Live queue
+        {t.overview.liveQueue}
       </span>
-      <IconButton label="Open calendar" icon={ArrowUpRight} href="#/calendar" />
+      <IconButton label={t.overview.openCalendar} icon={ArrowUpRight} href="#/calendar" />
     </>
   )
 
   return (
-    <Card title="Up next" tools={tools} className={cn('flex flex-col', className)}>
+    <Card title={t.overview.upNext} tools={tools} className={cn('flex flex-col', className)}>
       {hero && (
         <article className="grid h-[clamp(250px,20vw,290px)] grid-cols-[clamp(170px,30%,250px)_minmax(0,1fr)] items-stretch gap-5 rounded-tile bg-ink p-3.5 text-on-ink max-[600px]:h-auto max-[600px]:grid-cols-1 max-[600px]:gap-3.5 max-[600px]:p-3">
-          <button type="button" aria-label="Open post" className="relative block cursor-pointer overflow-hidden rounded-2xl bg-white/6 max-[600px]:aspect-video">
+          <button type="button" aria-label={t.overview.openPost} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-white/6 max-[600px]:aspect-video">
             {hero.image && <img src={photo(hero.image, 600)} alt="" className="absolute inset-0 size-full object-cover" />}
           </button>
           <div className="flex min-w-0 flex-col gap-2 pb-0.5 pr-1.5 pt-1.5">
             <p className="flex min-w-0 items-center gap-[9px] text-xs font-semibold">
               <BrandMark brand={hero.brand} size="sm" />
               <span className="truncate">{hero.brand.name}</span>
-              <Badge tone={STATUS_META[hero.status].tone} className="ml-auto shrink-0">
-                {STATUS_META[hero.status].label}
+              <Badge tone={STATUS_TONE[hero.status]} className="ml-auto shrink-0">
+                {t.status[hero.status]}
               </Badge>
             </p>
             <p className="mt-1 grid gap-0.5">
-              <span className="text-2xs font-semibold opacity-70">goes out in</span>
+              <span className="text-2xs font-semibold opacity-70">{t.overview.goesOutIn}</span>
               <b className="text-[clamp(30px,2.8vw,42px)] font-semibold leading-none tracking-[-0.035em] tabular-nums">
-                {countdown(Date.parse(hero.scheduledAt) - now.getTime())}
+                {dates.countdown(Date.parse(hero.scheduledAt) - now.getTime())}
               </b>
             </p>
             <p className="flex items-center gap-[7px] text-xs opacity-78">
               <Clock size={16} aria-hidden />
               <time dateTime={hero.scheduledAt}>
-                {dates.day(new Date(hero.scheduledAt), now)} · {dates.time(new Date(hero.scheduledAt))}
+                {dates.relativeDay(new Date(hero.scheduledAt), now)} · {dates.time(new Date(hero.scheduledAt))}
               </time>
             </p>
             <p className="line-clamp-2 text-sm leading-[1.45] opacity-92">{hero.text}</p>
             <div className="mt-auto flex items-center gap-2.5">
               <NetStack networks={hero.networks} size="sm" surface="on-ink" />
               <span className="flex-1" />
-              <IconButton label="Open post" icon={ArrowUpRight} variant="on-dark" />
+              <IconButton label={t.overview.openPost} icon={ArrowUpRight} variant="on-dark" />
             </div>
           </div>
         </article>
       )}
 
-      <p className="mx-0.5 mb-2 mt-4 text-2xs font-bold uppercase tracking-[0.07em] text-muted">Coming up</p>
+      <p className="mx-0.5 mb-2 mt-4 text-2xs font-bold uppercase tracking-[0.07em] text-muted">{t.overview.comingUp}</p>
       <ol className="grid grid-cols-2 content-start gap-2 max-[600px]:grid-cols-1">
         {comingUp.map((p) => (
           <li key={p.id}>
@@ -162,7 +165,7 @@ function UpNext({ model, now, className }: SectionProps & { now: Date }) {
               <span className="min-w-0 flex-1">
                 <b className="block truncate text-xs font-semibold">{clip(p.text, 43)}</b>
                 <small className="block text-2xs text-muted">
-                  {dates.day(new Date(p.scheduledAt), now)} · {dates.time(new Date(p.scheduledAt))}
+                  {dates.relativeDay(new Date(p.scheduledAt), now)} · {dates.time(new Date(p.scheduledAt))}
                 </small>
               </span>
               <span className="grid justify-items-end gap-[5px]">
@@ -182,50 +185,51 @@ function UpNext({ model, now, className }: SectionProps & { now: Date }) {
 const VISIBLE_TODOS = 4
 
 function NeedsYou({ model, className }: SectionProps) {
+  const { t } = useI18n()
   const [expanded, setExpanded] = useState(false)
   const todos = expanded ? model.todos : model.todos.slice(0, VISIBLE_TODOS)
   const hidden = model.todos.length - VISIBLE_TODOS
 
   return (
-    <Card title="Needs you" tools={<Badge tone="coral">{model.todos.length}</Badge>} className={cn('flex flex-col', className)}>
+    <Card title={t.overview.needsYou} tools={<Badge tone="coral">{model.todos.length}</Badge>} className={cn('flex flex-col', className)}>
       <ul className="grid grid-cols-1 content-start gap-2">
-        {todos.map((t) => (
+        {todos.map((todo) => (
           <li
-            key={t.id}
+            key={todo.id}
             className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 rounded-[18px] border border-line bg-glass-2 p-3 [grid-template-areas:'ico_txt'_'ico_act']"
           >
             <span className="[grid-area:ico]">
-              {t.kind === 'approval' && <Thumb src={t.post?.image && photo(t.post.image, 120)} className="size-11 rounded-[13px]" />}
-              {t.kind === 'failed_post' && (
+              {todo.kind === 'approval' && <Thumb src={todo.post?.image && photo(todo.post.image, 120)} className="size-11 rounded-[13px]" />}
+              {todo.kind === 'failed_post' && (
                 <span className={cn('grid size-10 place-items-center rounded-[13px]', toneFill.coral)}>
                   <TriangleAlert size={19} aria-hidden />
                 </span>
               )}
-              {t.kind === 'channel' && t.channel && <NetIcon network={t.channel.network} size="md" />}
+              {todo.kind === 'channel' && todo.channel && <NetIcon network={todo.channel.network} size="md" />}
             </span>
             <div className="min-w-0 [grid-area:txt]">
-              <b className="block text-xs font-semibold">{t.title}</b>
-              <small className="line-clamp-2 text-2xs text-muted">{t.detail}</small>
+              <b className="block text-xs font-semibold">{todo.title}</b>
+              <small className="line-clamp-2 text-2xs text-muted">{todo.detail}</small>
             </div>
             <div className="flex flex-wrap gap-1.5 [grid-area:act]">
-              {t.kind === 'approval' && (
+              {todo.kind === 'approval' && (
                 <>
                   <Button size="sm" variant="pine" icon={Check}>
-                    Approve
+                    {t.overview.approve}
                   </Button>
                   <Button size="sm" variant="ghost">
-                    Review
+                    {t.overview.review}
                   </Button>
                 </>
               )}
-              {t.kind === 'failed_post' && (
+              {todo.kind === 'failed_post' && (
                 <Button size="sm" variant="ink" icon={RotateCw}>
-                  Retry
+                  {t.overview.retry}
                 </Button>
               )}
-              {t.kind === 'channel' && (
+              {todo.kind === 'channel' && (
                 <Button size="sm" variant="ghost" icon={Link}>
-                  Reconnect
+                  {t.overview.reconnect}
                 </Button>
               )}
             </div>
@@ -241,7 +245,7 @@ function NeedsYou({ model, className }: SectionProps) {
               onClick={() => setExpanded((v) => !v)}
               className="[&[aria-expanded=true]>svg]:rotate-180 [&>svg]:transition-transform"
             >
-              {expanded ? 'Show less' : `Show ${hidden} more`}
+              {expanded ? t.overview.showLess : t.overview.showMore(hidden)}
             </Button>
           </li>
         )}
@@ -255,10 +259,11 @@ function NeedsYou({ model, className }: SectionProps) {
 function AudienceGrowth({ model, className }: SectionProps) {
   const [range, setRange] = useState<GrowthRange>(30)
   const g = model.growth(range)
+  const { t } = useI18n()
 
   const tools = (
     <>
-      <div role="group" aria-label="Growth range" className="inline-flex rounded-full bg-well p-[3px]">
+      <div role="group" aria-label={t.overview.growthRange} className="inline-flex rounded-full bg-well p-[3px]">
         {([30, 90] as const).map((r) => (
           <button
             key={r}
@@ -270,32 +275,30 @@ function AudienceGrowth({ model, className }: SectionProps) {
               range === r ? 'bg-glass-3 text-text shadow-[0_2px_8px_rgb(0_0_0/0.08)] dark:bg-white/14' : 'text-muted',
             )}
           >
-            {r}D
+            {t.overview.rangeOption(r)}
           </button>
         ))}
       </div>
-      <IconButton label="Expand" icon={ArrowUpRight} />
+      <IconButton label={t.overview.expand} icon={ArrowUpRight} />
     </>
   )
 
   return (
-    <Card title="Audience growth" tools={tools} className={className}>
+    <Card title={t.overview.audienceGrowth} tools={tools} className={className}>
       <div className="mb-2 flex flex-wrap items-baseline gap-3">
-        <b className="text-[clamp(32px,3vw,44px)] font-semibold tracking-[-0.03em] tabular-nums">+{compact(g.added)}</b>
-        <span className="text-2xs text-muted">
-          new followers in {range} days · {pct1(g.rate)} growth
-        </span>
+        <b className="text-[clamp(32px,3vw,44px)] font-semibold tracking-[-0.03em] tabular-nums">+{t.numbers.compact(g.added)}</b>
+        <span className="text-2xs text-muted">{t.overview.newFollowersIn(range, t.numbers.pct1(g.rate))}</span>
       </div>
       <div className="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 text-2xs text-muted">
         <span className="inline-flex items-center gap-1.5">
           <LegendDot tone="sea" />
-          New followers per day
+          {t.overview.newFollowersPerDay}
         </span>
         {NETWORK_ORDER.map((n) => (
           <NetIcon key={n} network={n} />
         ))}
       </div>
-      <GrowthChart key={range} data={g.series} label="New followers per day" formatDate={model.dates.monthDay} />
+      <GrowthChart key={range} data={g.series} label={t.overview.newFollowersPerDay} formatDate={t.dates.monthDay} />
     </Card>
   )
 }
@@ -304,18 +307,19 @@ function AudienceGrowth({ model, className }: SectionProps) {
 
 function TopPost({ model, className }: SectionProps) {
   const p = model.topPost
+  const { t } = useI18n()
   return (
-    <Card title="Top post this month" className={cn('flex flex-col', className)}>
+    <Card title={t.overview.topPost} className={cn('flex flex-col', className)}>
       {p && (
         <button
           type="button"
-          aria-label="Open the top post"
+          aria-label={t.overview.openTopPost}
           className="relative block min-h-[300px] w-full flex-1 cursor-pointer overflow-hidden rounded-tile text-left text-[#f6f7f5] max-desk:min-h-[320px]"
         >
           {p.image && <img src={photo(p.image, 900)} alt="" className="absolute inset-0 size-full object-cover" />}
           <span className="absolute inset-0 bg-[linear-gradient(rgb(10_10_12/0)_30%,rgb(10_10_12/0.78))]" />
           <Badge tone="butter" className="absolute left-3.5 top-3.5">
-            {p.metrics.reachVsUsual}× usual reach
+            {t.overview.usualReach(t.numbers.times(p.metrics.reachVsUsual))}
           </Badge>
           <span className="absolute inset-x-0 bottom-0 grid gap-2.5 p-4">
             <span className="flex items-center justify-between gap-2.5">
@@ -328,9 +332,9 @@ function TopPost({ model, className }: SectionProps) {
             <span className="text-md font-semibold leading-[1.35]">{p.text}</span>
             <span className="flex gap-[22px] text-2xs opacity-90">
               {[
-                [compact(p.metrics.reach), 'reach'],
-                [pct1(p.metrics.engagementRate), 'eng. rate'],
-                [compact(p.metrics.saves), 'saves'],
+                [t.numbers.compact(p.metrics.reach), t.overview.reach],
+                [t.numbers.pct1(p.metrics.engagementRate), t.overview.engRate],
+                [t.numbers.compact(p.metrics.saves), t.overview.saves],
               ].map(([v, l]) => (
                 <span key={l}>
                   <b className="block text-[22px] font-bold tracking-[-0.02em] tabular-nums">{v}</b>
@@ -350,13 +354,14 @@ function TopPost({ model, className }: SectionProps) {
 const MAX_CHIPS = 3
 
 function WeekAhead({ model, className }: SectionProps) {
-  const { dates } = model
+  const { t } = useI18n()
+  const dates = t.dates
   return (
     <Card
-      title="The week ahead"
+      title={t.overview.weekAhead}
       tools={
         <Button size="sm" variant="ghost" icon={CalendarDays} href="#/calendar">
-          Calendar
+          {t.common.calendar}
         </Button>
       }
       className={className}
@@ -383,7 +388,7 @@ function WeekAhead({ model, className }: SectionProps) {
                     key={p.id}
                     className={cn(
                       'flex items-center justify-between gap-1.5 rounded-full py-1 pl-[9px] pr-1 text-[12.5px] font-bold',
-                      toneFill[STATUS_META[p.status].tone],
+                      toneFill[STATUS_TONE[p.status]],
                     )}
                   >
                     <span className="tabular-nums">{dates.shortTime(new Date(p.scheduledAt))}</span>
@@ -402,7 +407,7 @@ function WeekAhead({ model, className }: SectionProps) {
                 )}
               </span>
               <span className={cn('text-2xs', day.isToday ? 'opacity-70' : 'text-muted')}>
-                {day.posts.length} {day.posts.length === 1 ? 'post' : 'posts'}
+                {t.common.post(day.posts.length)}
               </span>
             </a>
           )
@@ -415,8 +420,9 @@ function WeekAhead({ model, className }: SectionProps) {
 /* ───────────────────────── network pulse ───────────────────────── */
 
 function NetworkPulse({ model, className }: SectionProps) {
+  const { t } = useI18n()
   return (
-    <Card title="Network pulse" tools={<IconButton label="Channels" icon={Link} href="#/channels" />} className={className}>
+    <Card title={t.overview.networkPulse} tools={<IconButton label={t.overview.channels} icon={Link} href="#/channels" />} className={className}>
       <ul className="grid grid-cols-1 gap-1">
         {model.networkPulse.map((n) => (
           <li key={n.network} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-line py-[9px] last:border-b-0">
@@ -424,13 +430,13 @@ function NetworkPulse({ model, className }: SectionProps) {
             <div>
               <p className="mb-1.5 flex justify-between gap-2 text-xs">
                 <b className="font-semibold">{NETWORK_LABEL[n.network]}</b>
-                <span className="tabular-nums">{compact(n.followers)}</span>
+                <span className="tabular-nums">{t.numbers.compact(n.followers)}</span>
               </p>
               <Meter value={n.share} />
             </div>
             <div className="text-right">
-              <span className={cn('block text-xs font-bold', n.growth30d >= 0 ? 'text-good' : 'text-bad')}>{signedPct1(n.growth30d)}</span>
-              <small className="text-[12.5px] text-muted">{pct1(n.engagementRate)} eng.</small>
+              <span className={cn('block text-xs font-bold', n.growth30d >= 0 ? 'text-good' : 'text-bad')}>{t.numbers.signedPct1(n.growth30d)}</span>
+              <small className="text-[12.5px] text-muted">{t.overview.engShort(t.numbers.pct1(n.engagementRate))}</small>
             </div>
           </li>
         ))}
@@ -447,14 +453,15 @@ function InboxPulse({ model, className }: SectionProps) {
   const { inbox } = model
   const { positive, neutral, negative } = inbox.sentiment
   const total = positive + neutral + negative || 1
+  const { t } = useI18n()
 
   return (
-    <Card title="Inbox pulse" tools={<IconButton label="Open inbox" icon={Inbox} href="#/inbox" />} className={className}>
+    <Card title={t.overview.inboxPulse} tools={<IconButton label={t.overview.openInbox} icon={Inbox} href="#/inbox" />} className={className}>
       <div className="mb-3.5 grid grid-cols-3 gap-2">
         {[
-          [inbox.open, 'open'],
-          [inbox.unread, 'unread'],
-          [inbox.priority, 'priority'],
+          [inbox.open, t.overview.open],
+          [inbox.unread, t.overview.unread],
+          [inbox.priority, t.overview.priority],
         ].map(([v, l]) => (
           <p key={l} className="rounded-2xl border border-line bg-glass-2 px-3 py-2.5">
             <b className="block text-[24px] font-bold tracking-[-0.02em] tabular-nums">{v}</b>
@@ -463,7 +470,7 @@ function InboxPulse({ model, className }: SectionProps) {
         ))}
       </div>
 
-      <div role="img" aria-label={`${positive} positive, ${neutral} neutral, ${negative} negative`} className="mb-2 flex h-3 gap-[3px]">
+      <div role="img" aria-label={t.overview.sentimentSplit(positive, neutral, negative)} className="mb-2 flex h-3 gap-[3px]">
         <span className="min-w-1.5 rounded-full bg-pine" style={{ flex: positive / total }} />
         <span className="min-w-1.5 rounded-full bg-faint" style={{ flex: neutral / total }} />
         <span className="min-w-1.5 rounded-full bg-coral" style={{ flex: negative / total }} />
@@ -471,15 +478,15 @@ function InboxPulse({ model, className }: SectionProps) {
       <p className="mb-3 flex flex-wrap gap-x-4 gap-y-2 text-2xs text-muted">
         <span className="inline-flex items-center gap-1.5">
           <LegendDot tone="pine" />
-          Positive {positive}
+          {t.overview.sentimentLegend('positive', positive)}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <LegendDot tone="faint" />
-          Neutral {neutral}
+          {t.overview.sentimentLegend('neutral', neutral)}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <LegendDot tone="coral" />
-          Negative {negative}
+          {t.overview.sentimentLegend('negative', negative)}
         </span>
       </p>
 
@@ -491,14 +498,14 @@ function InboxPulse({ model, className }: SectionProps) {
               <span className="min-w-0 flex-1">
                 <b className="flex items-center gap-1.5 text-xs font-semibold">
                   {c.contact.name}
-                  {c.unread && <i aria-label="unread" className="inline-block size-[7px] rounded-full bg-coral" />}
+                  {c.unread && <i aria-label={t.overview.unread} className="inline-block size-[7px] rounded-full bg-coral" />}
                 </b>
                 <small className="block truncate text-2xs text-muted">{c.preview}</small>
               </span>
               <span className="grid justify-items-end gap-1">
                 <NetIcon network={c.network} />
-                <StatusPill tone={SENTIMENT_TONE[c.sentiment]} className="py-0.5 pl-[7px] pr-2 text-[12px] capitalize">
-                  {c.sentiment}
+                <StatusPill tone={SENTIMENT_TONE[c.sentiment]} className="py-0.5 pl-[7px] pr-2 text-[12px]">
+                  {t.sentiment[c.sentiment]}
                 </StatusPill>
               </span>
             </a>
@@ -522,8 +529,9 @@ const AUDIT_ICON: Record<AuditKind, LucideIcon> = {
 }
 
 function TeamActivity({ model, now, className }: SectionProps & { now: Date }) {
+  const { t } = useI18n()
   return (
-    <Card title="Team activity" tools={<IconButton label="Audit log" icon={History} href="#/team/audit" />} className={className}>
+    <Card title={t.overview.teamActivity} tools={<IconButton label={t.overview.auditLog} icon={History} href="#/team/audit" />} className={className}>
       <ol className="grid grid-cols-1 gap-0.5">
         {model.feed.map((e) => {
           const Icon = AUDIT_ICON[e.kind]
@@ -534,7 +542,7 @@ function TeamActivity({ model, now, className }: SectionProps & { now: Date }) {
                 <b className="font-bold">{e.actorFirstName}</b> {e.summary}
                 <small className="mt-0.5 flex items-center gap-[5px] text-[12.5px] text-muted">
                   <Icon size={13} aria-hidden />
-                  <time dateTime={e.at}>{ago(e.at, now)}</time>
+                  <time dateTime={e.at}>{t.dates.ago(e.at, now)}</time>
                 </small>
               </p>
             </li>

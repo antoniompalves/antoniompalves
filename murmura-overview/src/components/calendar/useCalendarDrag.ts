@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { Post } from '../../data/types'
-import { DAY_START, HOUR_PX, atMinutes, fmtTime, fromKey, minutesOfDay, snapMinutes } from '../../data/calendar'
+import { DAY_START, HOUR_PX, atMinutes, fromKey, minutesOfDay, snapMinutes } from '../../data/calendar'
 
 export interface DropTarget {
   day: string
@@ -17,6 +17,8 @@ interface Options {
   now: Date
   onDrop: (id: string, when: Date) => void
   onDenied: () => void
+  /** Words the floating clone's time while it moves ("2:30 PM" / "14:30"). */
+  formatTime: (d: Date) => string
 }
 
 const THRESHOLD = 5
@@ -29,7 +31,7 @@ const EDGE = 48
  * Week columns map the clone's top edge to a 30-minute slot; month cells keep
  * the post's time of day.
  */
-export function useCalendarDrag({ posts, now, onDrop, onDenied }: Options) {
+export function useCalendarDrag({ posts, now, onDrop, onDenied, formatTime }: Options) {
   const [dragId, setDragId] = useState<string | null>(null)
   const [target, setTarget] = useState<DropTarget | null>(null)
   const justDragged = useRef(false)
@@ -92,7 +94,7 @@ export function useCalendarDrag({ posts, now, onDrop, onDenied }: Options) {
         current = resolve(ev.clientX, ev.clientY, grabY, post)
         setTarget(current)
         const label = clone.querySelector<HTMLElement>('[data-time]')
-        if (label && current) label.textContent = fmtTime(atMinutes(fromKey(current.day), current.minutes))
+        if (label && current) label.textContent = formatTime(atMinutes(fromKey(current.day), current.minutes))
         clone.style.outline = current && !current.ok ? '2px solid var(--bad)' : ''
 
         // Nudge the scrolling week grid when the pointer hugs its edges.
@@ -132,7 +134,7 @@ export function useCalendarDrag({ posts, now, onDrop, onDenied }: Options) {
       window.addEventListener('pointercancel', cancel)
       window.addEventListener('keydown', esc)
     },
-    [posts, resolve, onDrop, onDenied],
+    [posts, resolve, onDrop, onDenied, formatTime],
   )
 
   return {

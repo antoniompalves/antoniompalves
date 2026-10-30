@@ -1,4 +1,4 @@
-import type { Brand, Conversation, ConversationKind, Message, NetworkId, Sentiment } from './types'
+import type { Conversation, ConversationKind, Message, NetworkId, Sentiment } from './types'
 
 /**
  * Inbox selectors, reverse-engineered from the reference #/inbox: the list is
@@ -17,48 +17,7 @@ export interface InboxFilters {
 
 export const NO_INBOX_FILTERS: InboxFilters = { kinds: [], networks: [], sentiments: [] }
 
-export const KIND_LABEL: Record<ConversationKind, { one: string; many: string }> = {
-  comment: { one: 'Comment', many: 'Comments' },
-  message: { one: 'Message', many: 'Messages' },
-  mention: { one: 'Mention', many: 'Mentions' },
-  review: { one: 'Review', many: 'Reviews' },
-}
-
-export const VIEWS: { value: InboxView; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'unread', label: 'Unread' },
-  { value: 'mine', label: 'Mine' },
-  { value: 'unassigned', label: 'Unassigned' },
-  { value: 'priority', label: 'Priority' },
-  { value: 'done', label: 'Done' },
-]
-
-const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', ...opts })
-const F = {
-  time: fmt({ hour: 'numeric', minute: '2-digit' }),
-  weekday: fmt({ weekday: 'short' }),
-  monthDay: fmt({ month: 'short', day: 'numeric' }),
-  long: fmt({ weekday: 'long', month: 'long', day: 'numeric' }),
-}
-const dayIndex = (iso: string | Date) => Math.floor(new Date(iso).getTime() / 86_400_000)
-
-export const fmtClock = (iso: string) => F.time.format(new Date(iso))
-/** "Oct 30 · 4:49 PM" */
-export const fmtStamp = (iso: string) => `${F.monthDay.format(new Date(iso))} · ${fmtClock(iso)}`
-
-/** List time: today → "4:49 PM", then "Yesterday", the weekday within a week, else "Oct 3". */
-export function rowTime(iso: string, now: Date) {
-  const diff = dayIndex(now) - dayIndex(iso)
-  if (diff <= 0) return fmtClock(iso)
-  if (diff === 1) return 'Yesterday'
-  return diff < 7 ? F.weekday.format(new Date(iso)) : F.monthDay.format(new Date(iso))
-}
-
-/** Sticky day separators in the thread. */
-export function dayLabel(iso: string, now: Date) {
-  const diff = dayIndex(now) - dayIndex(iso)
-  return diff <= 0 ? 'Today' : diff === 1 ? 'Yesterday' : F.long.format(new Date(iso))
-}
+export const VIEWS: InboxView[] = ['all', 'unread', 'mine', 'unassigned', 'priority', 'done']
 
 export const lastMessage = (c: Conversation) => c.messages[c.messages.length - 1]
 /** What a list row previews: the latest message people actually exchanged, notes only when there's nothing else. */
@@ -80,18 +39,6 @@ export function unreadCount(c: Conversation) {
 /** Ordered newest first by the contact's latest message. */
 export const byActivity = (a: Conversation, b: Conversation) => Date.parse(lastInbound(b).at) - Date.parse(lastInbound(a).at)
 
-export function contextLine(c: Conversation, brand: Brand, networkLabel: string) {
-  const what =
-    c.kind === 'comment'
-      ? `Comment on ${brand.name}’s post`
-      : c.kind === 'message'
-        ? `Message to ${brand.name}`
-        : c.kind === 'mention'
-          ? `Mentioned ${brand.name}`
-          : `Review of ${brand.name}`
-  return `${networkLabel} · ${what}`
-}
-
 export function medianFirstReply(conversations: Conversation[]) {
   const gaps = conversations
     .map((c) => {
@@ -105,8 +52,6 @@ export function medianFirstReply(conversations: Conversation[]) {
   const mid = gaps.length / 2
   return Math.round(gaps.length % 2 ? gaps[Math.floor(mid)] : (gaps[mid - 1] + gaps[mid]) / 2)
 }
-
-export const fmtDuration = (min: number | null) => (min === null ? '—' : min < 60 ? `${min}m` : `${Math.floor(min / 60)}h ${min % 60}m`)
 
 export function inView(c: Conversation, view: InboxView, me: string) {
   if (view === 'done') return c.status === 'done'
@@ -127,20 +72,34 @@ export function matchesInboxFilters(c: Conversation, f: InboxFilters) {
 
 export const filterCount = (f: InboxFilters) => f.kinds.length + f.networks.length + f.sentiments.length
 
+/**
+ * Lower-case and drop accents so "marquez" finds "Márquez" and "acucar" finds
+ * "açúcar". Folds one character at a time and keeps any character whose fold
+ * would change its length, so indices still line up with the original text.
+ */
+export function fold(text: string) {
+  let out = ''
+  for (const ch of text) {
+    const f = ch.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+    out += f.length === ch.length ? f : ch
+  }
+  return out
+}
+
 export function matchesSearch(c: Conversation, q: string) {
-  const needle = q.trim().toLowerCase()
+  const needle = fold(q.trim())
   if (!needle) return true
-  const hay = [c.contact.name, c.contact.handle, ...c.tags, ...c.messages.map((m: Message) => m.text)].join('\n').toLowerCase()
+  const hay = fold([c.contact.name, c.contact.handle, ...c.tags, ...c.messages.map((m: Message) => m.text)].join('\n'))
   return hay.includes(needle)
 }
 
-/** Split text around case-insensitive matches so the UI can wrap them in <mark>. */
+/** Split text around case- and accent-insensitive matches so the UI can wrap them in <mark>. */
 export function splitMatches(text: string, q: string): { text: string; hit: boolean }[] {
   const needle = q.trim()
   if (!needle) return [{ text, hit: false }]
   const parts: { text: string; hit: boolean }[] = []
-  const lower = text.toLowerCase()
-  const n = needle.toLowerCase()
+  const lower = fold(text)
+  const n = fold(needle)
   let i = 0
   for (let at = lower.indexOf(n); at !== -1; at = lower.indexOf(n, i)) {
     if (at > i) parts.push({ text: text.slice(i, at), hit: false })
@@ -158,7 +117,7 @@ export function inboxStats(conversations: Conversation[], me: string) {
     open: open.length,
     unread: count('unread'),
     medianReply: medianFirstReply(conversations),
-    views: Object.fromEntries(VIEWS.map((v) => [v.value, count(v.value)])) as Record<InboxView, number>,
+    views: Object.fromEntries(VIEWS.map((v) => [v, count(v)])) as Record<InboxView, number>,
   }
 }
 
@@ -169,11 +128,13 @@ export function tagSuggestions(all: Conversation[], c: Conversation) {
   return [...new Set([...all.flatMap((x) => x.tags), ...DEFAULT_TAGS])].filter((t) => !c.tags.includes(t)).slice(0, 10)
 }
 
-/** "Big Order!" → "#big-order": lowercase, hyphenated, letters/digits only, 24 characters at most. */
+/** "Big Order!" → "#big-order", "Devolução" → "#devolucao": lowercase, unaccented, hyphenated, letters/digits only, 24 characters at most. */
 export function normalizeTag(raw: string) {
   const slug = raw
     .trim()
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
     .replace(/^#/, '')
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '')

@@ -2,18 +2,19 @@ import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Check, ChevronDown, Plus, RotateCcw, UserPlus, X } from 'lucide-react'
 import type { Brand, Conversation, Post, Sentiment, TeamMember } from '../../data/types'
-import { KIND_LABEL, fmtStamp, lastMessage } from '../../data/inbox'
-import { NETWORK_LABEL, ago, clip, compact } from '../../data/selectors'
+import { lastMessage } from '../../data/inbox'
+import { NETWORK_LABEL, clip } from '../../data/selectors'
+import { useI18n } from '../../i18n'
 import { photo } from '../../data/assets'
 import { Avatar, BrandMark, Button, NetIcon, cn } from '../ui'
 import { Face, KIND_ICON } from './ConversationList'
 import { AssignMenu, ibIc } from './Thread'
 import { TagPopover } from './TagPopover'
 
-const SEGS: { value: Sentiment; label: string; dot: string }[] = [
-  { value: 'positive', label: 'Positive', dot: 'bg-good' },
-  { value: 'neutral', label: 'Neutral', dot: 'bg-faint' },
-  { value: 'negative', label: 'Negative', dot: 'bg-coral' },
+const SEGS: { value: Sentiment; dot: string }[] = [
+  { value: 'positive', dot: 'bg-good' },
+  { value: 'neutral', dot: 'bg-faint' },
+  { value: 'negative', dot: 'bg-coral' },
 ]
 
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -56,6 +57,7 @@ interface ContactInfoProps {
 /** Third column (".ib-info"): who they are, how the conversation stands, who owns it. */
 export function ContactInfo(props: ContactInfoProps) {
   const { c, brand, post, team, assignable, me, now, tagSuggestions, tagOpen, setTagOpen, onClose } = props
+  const { t } = useI18n()
   const assignBtn = useRef<HTMLButtonElement>(null)
   const tagBtn = useRef<HTMLButtonElement>(null)
   const [assignOpen, setAssignOpen] = useState(false)
@@ -66,14 +68,14 @@ export function ContactInfo(props: ContactInfoProps) {
 
   return (
     <aside
-      aria-label="Contact info"
+      aria-label={t.inbox.contactInfo}
       className="flex min-h-0 flex-col border-l border-line bg-ib-bar max-desk:absolute max-desk:inset-y-0 max-desk:right-0 max-desk:z-[6] max-desk:w-[min(340px,100%)] max-desk:shadow-pop max-mobile:fixed max-mobile:inset-0 max-mobile:z-[72] max-mobile:w-auto max-mobile:border-l-0 max-mobile:pb-[env(safe-area-inset-bottom)] max-mobile:pt-[env(safe-area-inset-top)] max-mobile:shadow-none"
     >
       <header className="flex h-[60px] shrink-0 items-center gap-2 border-b border-line px-2.5">
-        <button type="button" aria-label="Close contact info" title="Close contact info" onClick={onClose} className={ibIc}>
+        <button type="button" aria-label={t.inbox.closeInfo} title={t.inbox.closeInfo} onClick={onClose} className={ibIc}>
           <X size={20} aria-hidden />
         </button>
-        <h3 className="text-md font-bold">Contact info</h3>
+        <h3 className="text-md font-bold">{t.inbox.contactInfo}</h3>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[18px] [scrollbar-width:thin]">
@@ -83,7 +85,7 @@ export function ContactInfo(props: ContactInfoProps) {
           <p className="text-2xs text-muted">@{c.contact.handle}</p>
           <p className="mb-2 inline-flex items-center gap-1.5 text-2xs text-muted">
             <NetIcon network={c.network} />
-            {NETWORK_LABEL[c.network]} · {compact(c.contact.followers)} followers
+            {t.inbox.followers(NETWORK_LABEL[c.network], t.numbers.compact(c.contact.followers))}
           </p>
           <span className="inline-flex items-center gap-[7px] whitespace-nowrap text-2xs font-semibold">
             <BrandMark brand={brand} size="xs" />
@@ -91,26 +93,26 @@ export function ContactInfo(props: ContactInfoProps) {
           </span>
         </div>
 
-        <Section title="Conversation">
+        <Section title={t.inbox.conversation}>
           <dl className="grid gap-2.5">
-            <Row k="Kind">
+            <Row k={t.inbox.kindLabel}>
               <span className="inline-flex items-center gap-1.5">
                 <KindIcon size={16} className="text-muted" aria-hidden />
-                {KIND_LABEL[c.kind].one}
+                {t.kinds[c.kind].one}
               </span>
             </Row>
-            <Row k="Status">
+            <Row k={t.inbox.statusLabel}>
               <span
                 className={cn(
                   'inline-flex rounded-full px-2.5 py-0.5 text-[12.5px] font-bold',
                   c.status === 'done' ? 'bg-[color-mix(in_srgb,var(--pine)_16%,transparent)] text-good' : 'bg-[color-mix(in_srgb,var(--sea)_14%,transparent)] text-ib-acc-text',
                 )}
               >
-                {c.status === 'done' ? 'Done' : 'Open'}
+                {c.status === 'done' ? t.inbox.done : t.inbox.open}
               </span>
             </Row>
-            <Row k="Sentiment" stack>
-              <div role="group" aria-label="Sentiment" className="grid grid-cols-3 rounded-full bg-well p-0.5">
+            <Row k={t.inbox.sentimentLabel} stack>
+              <div role="group" aria-label={t.inbox.sentimentLabel} className="grid grid-cols-3 rounded-full bg-well p-0.5">
                 {SEGS.map((s) => (
                   <button
                     key={s.value}
@@ -123,12 +125,12 @@ export function ContactInfo(props: ContactInfoProps) {
                     )}
                   >
                     <i className={cn('size-[9px] shrink-0 rounded-full', s.dot)} />
-                    {s.label}
+                    {t.sentiment[s.value]}
                   </button>
                 ))}
               </div>
             </Row>
-            <Row k="Priority" id="ib-pri-l">
+            <Row k={t.inbox.priority} id="ib-pri-l">
               <button
                 type="button"
                 role="switch"
@@ -144,7 +146,7 @@ export function ContactInfo(props: ContactInfoProps) {
           </dl>
         </Section>
 
-        <Section title="Assignee">
+        <Section title={t.inbox.assignee}>
           <button
             ref={assignBtn}
             type="button"
@@ -161,8 +163,8 @@ export function ContactInfo(props: ContactInfoProps) {
               </span>
             )}
             <span className="grid min-w-0 flex-1">
-              <b className="text-xs font-bold">{assignee ? assignee.name : 'Unassigned'}</b>
-              <small className="text-[12.5px] text-muted">{assignee ? assignee.title : 'Hand this to a teammate'}</small>
+              <b className="text-xs font-bold">{assignee ? assignee.name : t.inbox.unassigned}</b>
+              <small className="text-[12.5px] text-muted">{assignee ? assignee.title : t.inbox.handOff}</small>
             </span>
             <ChevronDown size={17} className="text-muted" aria-hidden />
           </button>
@@ -178,15 +180,15 @@ export function ContactInfo(props: ContactInfoProps) {
           />
         </Section>
 
-        <Section title="Tags">
+        <Section title={t.inbox.tags}>
           <div className="flex flex-wrap gap-1.5">
-            {c.tags.map((t) => (
-              <span key={t} className="inline-flex h-[30px] items-center gap-0.5 rounded-full bg-well pl-[11px] pr-[3px] text-2xs font-semibold">
-                {t}
+            {c.tags.map((tag) => (
+              <span key={tag} className="inline-flex h-[30px] items-center gap-0.5 rounded-full bg-well pl-[11px] pr-[3px] text-2xs font-semibold">
+                {tag}
                 <button
                   type="button"
-                  aria-label={`Remove tag ${t.slice(1)}`}
-                  onClick={() => props.onRemoveTag(t)}
+                  aria-label={t.inbox.removeTag(tag.slice(1))}
+                  onClick={() => props.onRemoveTag(tag)}
                   className="inline-grid size-6 cursor-pointer place-items-center rounded-full text-muted hover:bg-line [@media(pointer:coarse)]:size-[34px]"
                 >
                   <X size={13} aria-hidden />
@@ -202,7 +204,7 @@ export function ContactInfo(props: ContactInfoProps) {
               className="inline-flex h-[30px] cursor-pointer items-center gap-[7px] rounded-full border border-line bg-glass-2 px-[11px] text-2xs font-semibold hover:bg-glass-3"
             >
               <Plus size={16} aria-hidden />
-              Tag
+              {t.inbox.tag}
             </button>
           </div>
           <TagPopover
@@ -215,7 +217,7 @@ export function ContactInfo(props: ContactInfoProps) {
         </Section>
 
         {post && (
-          <Section title="On this post">
+          <Section title={t.inbox.onThisPost}>
             <button type="button" onClick={props.onOpenPost} className="flex w-full cursor-pointer items-center gap-3 text-left text-2xs text-muted">
               <span className="size-[72px] shrink-0 overflow-hidden rounded-xl bg-well">
                 {post.image && <img src={photo(post.image, 160)} alt="" className="size-full object-cover" />}
@@ -225,27 +227,27 @@ export function ContactInfo(props: ContactInfoProps) {
           </Section>
         )}
 
-        <Section title="Activity">
+        <Section title={t.inbox.activity}>
           <dl className="grid gap-2.5">
-            <Row k="Messages">
+            <Row k={t.inbox.messages}>
               {sent.length}{' '}
               <small className="text-[smaller] font-medium text-muted">
-                · {inbound} in · {sent.length - inbound} out
+                {t.inbox.inOut(inbound, sent.length - inbound)}
               </small>
             </Row>
-            <Row k="First contact">{fmtStamp(c.messages[0].at)}</Row>
-            <Row k="Last message">{ago(lastMessage(c).at, now)}</Row>
+            <Row k={t.inbox.firstContact}>{t.dates.stamp(c.messages[0].at)}</Row>
+            <Row k={t.inbox.lastMessage}>{t.dates.ago(lastMessage(c).at, now)}</Row>
           </dl>
         </Section>
 
         <div className="px-[18px] pt-4">
           {c.status === 'done' ? (
             <Button variant="ghost" icon={RotateCcw} className="w-full" onClick={props.onDone}>
-              Reopen
+              {t.inbox.reopen}
             </Button>
           ) : (
             <Button variant="pine" icon={Check} className="w-full" onClick={props.onDone}>
-              Mark done
+              {t.inbox.markDone}
             </Button>
           )}
         </div>

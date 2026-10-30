@@ -6,9 +6,13 @@ workspace demo, rebuilt from scratch with **React 19, TypeScript, Tailwind CSS v
 and Lucide icons**. Design tokens, layout metrics, routes and the data model were
 reverse-engineered with Playwright; see [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md).
 
+The app speaks **English** and **European Portuguese**: it follows the browser's
+language, can be switched from the account menu (avatar, top right) or forced with
+`?lang=pt-PT` / `?lang=en`. See [`docs/I18N.md`](docs/I18N.md).
+
 ```bash
 npm install
-npm run dev        # http://localhost:5173/#/overview  ·  #/calendar  ·  #/inbox
+npm run dev        # http://localhost:5173/#/overview  ·  #/calendar  ·  #/inbox  (add ?lang=pt-PT before the #)
 npm run build      # type-check + production build
 ```
 
@@ -32,12 +36,21 @@ The inbox has views, search with highlighting, filters, replies, internal notes,
 saved replies, photos from the brand library, assignment, priority, sentiment,
 tags, J / K / E / R / `/` shortcuts and Undo on every change the original lets you undo.
 
+| Português (Portugal) · Visão geral | Calendário | Mensagens |
+| --- | --- | --- |
+| ![Overview in European Portuguese](docs/screenshots/overview-pt.png) | ![Calendar in European Portuguese](docs/screenshots/calendar-pt.png) | ![Inbox in European Portuguese with the language menu](docs/screenshots/inbox-pt.png) |
+
 ## Layout
 
 ```
 src/
   index.css               design tokens (light + dark) mapped to Tailwind via @theme
   App.tsx                 providers, hash router, theme toggle, ticking mock clock
+  i18n/
+    en.tsx                English catalogue (source of truth, defines the Messages type)
+    pt-PT.tsx             European Portuguese catalogue, type-checked against English
+    format.ts             cached Intl formatters pinned to UTC
+    index.tsx             I18nProvider, useI18n(), locale detection and persistence
   pages/
     Overview.tsx          #/overview: header + 8 cards on a 12-col grid
     Calendar.tsx          #/calendar: stats, filters, views, side panel, drawer wiring
@@ -65,14 +78,15 @@ src/
   data/
     types.ts              Workspace schema (brands, campaigns, team, posts, channels, inbox, audit…)
     mock.ts               mock workspace frozen at Fri 30 Oct 2026, 14:15 UTC (80 posts, 22 conversations)
-    selectors.ts          overview view-model + formatting helpers
+    selectors.ts          overview view-model (worded through the active catalogue)
     calendar.ts           calendar date math, lanes, ribbons, filters, stats
     inbox.ts              inbox views, filters, search, unread counts, time labels, tag rules
     store.tsx             shared in-memory store (posts and conversations, with undo)
-    routes.ts             the SPA's hash routes and what each view contains
+    routes.ts             the SPA's hash routes (their names live in the catalogues)
     assets.ts             image URL helpers (swap for real assets here)
 ```
 
-Theme follows `html[data-theme]` and is toggled from the dock (persisted per browser).
+Theme follows `html[data-theme]` and is toggled from the dock; the language follows
+`html[lang]` and is picked from the account menu (both persisted per browser).
 Every visible figure is computed from `mock.ts`, so editing the mock updates the
 header stats, badges, week columns, meters and chart consistently.

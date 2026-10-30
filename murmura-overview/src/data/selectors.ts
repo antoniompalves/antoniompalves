@@ -11,16 +11,13 @@ import type {
   Tone,
   Workspace,
 } from './types'
+import { addDays, dayKey, startOfDay } from './calendar'
 import { byActivity, lastMessage } from './inbox'
+import type { Messages } from '../i18n'
 
-/* ───────────────────────── formatting ───────────────────────── */
+/* ───────────────────────── labels ───────────────────────── */
 
-const compactFmt = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 })
-
-export const compact = (n: number) => compactFmt.format(n)
-export const pct1 = (f: number) => `${(f * 100).toFixed(1)}%`
-export const signedPct1 = (f: number) => `${f >= 0 ? '+' : '−'}${pct1(Math.abs(f))}`
-
+// Network names are brands: the same in every language.
 export const NETWORK_LABEL: Record<NetworkId, string> = {
   instagram: 'Instagram',
   facebook: 'Facebook',
@@ -35,67 +32,18 @@ export const NETWORK_LABEL: Record<NetworkId, string> = {
 /** Order the reference uses whenever it lists every network. */
 export const NETWORK_ORDER: NetworkId[] = ['instagram', 'facebook', 'tiktok', 'threads', 'pinterest', 'youtube', 'x', 'linkedin']
 
-export const STATUS_META: Record<PostStatus, { label: string; tone: Tone }> = {
-  draft: { label: 'Draft', tone: 'plain' },
-  awaiting_approval: { label: 'Awaiting approval', tone: 'butter' },
-  changes_requested: { label: 'Changes requested', tone: 'coral' },
-  scheduled: { label: 'Scheduled', tone: 'sea' },
-  published: { label: 'Published', tone: 'pine' },
-  failed: { label: 'Failed', tone: 'coral' },
+/** Colour of each post status; the words come from `t.status`. */
+export const STATUS_TONE: Record<PostStatus, Tone> = {
+  draft: 'plain',
+  awaiting_approval: 'butter',
+  changes_requested: 'coral',
+  scheduled: 'sea',
+  published: 'pine',
+  failed: 'coral',
 }
 
 /** Truncate the way the reference does: hard cut, then an ellipsis. */
 export const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max)}…` : text)
-
-export function makeDates(timeZone: string) {
-  const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
-  const timeFull = new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', minute: '2-digit' })
-  const hourOnly = new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric' })
-  const minuteOf = new Intl.DateTimeFormat('en-US', { timeZone, minute: 'numeric' })
-  const dayLong = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short', month: 'short', day: 'numeric' })
-  const weekday = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' })
-  const dayNum = new Intl.DateTimeFormat('en-US', { timeZone, day: 'numeric' })
-  const monthDay = new Intl.DateTimeFormat('en-US', { timeZone, month: 'short', day: 'numeric' })
-  const hourOfDay = new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', hourCycle: 'h23' })
-
-  const key = (d: Date) => dayKey.format(d)
-  const addDays = (d: Date, n: number) => new Date(d.getTime() + n * 86_400_000)
-
-  return {
-    key,
-    addDays,
-    /** "9:00 AM" */
-    time: (d: Date) => timeFull.format(d),
-    /** "9 AM" or "9:30 AM" — used on calendar chips. */
-    shortTime: (d: Date) => (Number(minuteOf.format(d)) === 0 ? hourOnly.format(d) : timeFull.format(d)),
-    /** "Today" / "Tomorrow" / "Sun, Nov 1" relative to now. */
-    day: (d: Date, now: Date) => {
-      if (key(d) === key(now)) return 'Today'
-      if (key(d) === key(addDays(now, 1))) return 'Tomorrow'
-      return dayLong.format(d)
-    },
-    weekday: (d: Date) => weekday.format(d),
-    dayNum: (d: Date) => dayNum.format(d),
-    monthDay: (d: Date) => monthDay.format(d),
-    hour: (d: Date) => Number(hourOfDay.format(d)),
-  }
-}
-
-export function countdown(ms: number) {
-  const mins = Math.max(0, Math.floor(ms / 60_000))
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  if (h >= 48) return `${Math.floor(h / 24)} d ${h % 24} h`
-  return h > 0 ? `${h} h ${m} min` : `${m} min`
-}
-
-export function ago(iso: string, now: Date) {
-  const mins = Math.max(0, Math.round((now.getTime() - Date.parse(iso)) / 60_000))
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins} min ago`
-  const h = Math.floor(mins / 60)
-  return h < 24 ? `${h} h ago` : `${Math.floor(h / 24)} d ago`
-}
 
 /* ───────────────────────── view model ───────────────────────── */
 
@@ -116,16 +64,15 @@ export interface DayView {
   posts: (Post & { brand: Brand })[]
 }
 
-export function selectOverview(ws: Workspace, now: Date) {
-  const dates = makeDates(ws.timeZone)
+export function selectOverview(ws: Workspace, now: Date, t: Messages) {
   const brand = (id: string) => ws.brands.find((b) => b.id === id)!
   const member = (id: string) => ws.team.find((m) => m.id === id)!
   const post = (id: string) => ws.posts.find((p) => p.id === id)!
   const user = member(ws.currentUserId)
   const firstName = (m: TeamMember) => m.name.split(' ')[0]
 
-  const hour = dates.hour(now)
-  const greeting = `${hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'}, ${firstName(user)}`
+  // The workspace runs on UTC, like every date in the mock.
+  const greeting = t.overview.greeting(now.getUTCHours(), firstName(user))
 
   // Header stats
   const audience = ws.networkStats.reduce((sum, n) => sum + n.followers, 0)
@@ -135,10 +82,10 @@ export function selectOverview(ws: Workspace, now: Date) {
     return { series, added, rate: added / (audience - added) }
   }
 
-  const todayStart = new Date(`${dates.key(now)}T00:00:00Z`)
+  const todayStart = startOfDay(now)
   // "This week" is the calendar week (Mon–Sun), the same range the calendar opens on.
-  const weekStart = dates.addDays(todayStart, -((todayStart.getUTCDay() + 6) % 7))
-  const weekEnd = dates.addDays(weekStart, 7)
+  const weekStart = addDays(todayStart, -((todayStart.getUTCDay() + 6) % 7))
+  const weekEnd = addDays(weekStart, 7)
   const postsThisWeek = ws.posts.filter((p) => {
     const t = Date.parse(p.scheduledAt)
     return p.status !== 'draft' && t >= weekStart.getTime() && t < weekEnd.getTime()
@@ -151,46 +98,47 @@ export function selectOverview(ws: Workspace, now: Date) {
     .map((p) => ({ ...p, brand: brand(p.brandId) }))
 
   // Needs you
-  const todos: TodoView[] = ws.todos.map((t) => {
-    if (t.kind === 'channel') {
-      const channel = ws.channels.find((c) => c.id === t.channelId)!
+  const todos: TodoView[] = ws.todos.map((todo) => {
+    if (todo.kind === 'channel') {
+      const channel = ws.channels.find((c) => c.id === todo.channelId)!
       const b = brand(channel.brandId)
       const net = NETWORK_LABEL[channel.network]
       return channel.status === 'expiring'
-        ? { id: t.id, kind: t.kind, channel, title: `${b.name} · ${net} expires in ${channel.expiresInDays} d`, detail: 'Reconnect now so nothing stops going out.' }
-        : { id: t.id, kind: t.kind, channel, title: `${b.name} · ${net} is disconnected`, detail: 'Posts to it will fail until someone reconnects it.' }
+        ? { id: todo.id, kind: todo.kind, channel, title: t.overview.todo.expiring(b.name, net, channel.expiresInDays ?? 0), detail: t.overview.todo.expiringDetail }
+        : { id: todo.id, kind: todo.kind, channel, title: t.overview.todo.disconnected(b.name, net), detail: t.overview.todo.disconnectedDetail }
     }
-    const p = post(t.postId)
+    const p = post(todo.postId)
     const b = brand(p.brandId)
-    if (t.kind === 'failed_post') {
-      return { id: t.id, kind: t.kind, post: p, title: `A ${b.name} post failed`, detail: p.failure?.reason ?? 'Publishing failed.' }
+    if (todo.kind === 'failed_post') {
+      const detail = p.failure ? t.failure(NETWORK_LABEL[p.failure.network], b.name) : t.overview.todo.failedDetail
+      return { id: todo.id, kind: todo.kind, post: p, title: t.overview.todo.failed(b.name), detail }
     }
     const when = new Date(p.scheduledAt)
     return {
-      id: t.id,
-      kind: t.kind,
+      id: todo.id,
+      kind: todo.kind,
       post: p,
       title: clip(p.text, 51),
-      detail: `${firstName(member(p.authorId))} wants approval · ${b.name} · ${dates.day(when, now)} ${dates.time(when)}`,
+      detail: t.overview.todo.approval(firstName(member(p.authorId)), b.name, `${t.dates.relativeDay(when, now)} ${t.dates.time(when)}`),
     }
   })
 
   // Top post this month
-  const monthKey = dates.key(now).slice(0, 7)
+  const monthKey = dayKey(now).slice(0, 7)
   const topPost = ws.posts
-    .filter((p) => p.status === 'published' && p.metrics && dates.key(new Date(p.scheduledAt)).startsWith(monthKey))
+    .filter((p) => p.status === 'published' && p.metrics && p.scheduledAt.startsWith(monthKey))
     .sort((a, b) => b.metrics!.reach - a.metrics!.reach)
     .map((p) => ({ ...p, brand: brand(p.brandId), metrics: p.metrics! }))[0]
 
   // The week ahead
   const week: DayView[] = Array.from({ length: 7 }, (_, i) => {
-    const date = dates.addDays(todayStart, i)
-    const k = dates.key(date)
+    const date = addDays(todayStart, i)
+    const k = dayKey(date)
     return {
       date,
       isToday: i === 0,
       posts: ws.posts
-        .filter((p) => p.status !== 'draft' && p.status !== 'published' && dates.key(new Date(p.scheduledAt)) === k)
+        .filter((p) => p.status !== 'draft' && p.status !== 'published' && p.scheduledAt.startsWith(k))
         .sort((a, b) => Date.parse(a.scheduledAt) - Date.parse(b.scheduledAt))
         .map((p) => ({ ...p, brand: brand(p.brandId) })),
     }
@@ -215,10 +163,14 @@ export function selectOverview(ws: Workspace, now: Date) {
     .map((c: Conversation) => ({ ...c, preview: lastMessage(c).text }))
 
   // Team activity
-  const feed = ws.audit.map((e: AuditEvent) => ({ ...e, actor: member(e.actorId), actorFirstName: firstName(member(e.actorId)) }))
+  const feed = ws.audit.map((e: AuditEvent) => ({
+    ...e,
+    actor: member(e.actorId),
+    actorFirstName: firstName(member(e.actorId)),
+    summary: t.activity(e.action, (id) => brand(id).name, (n) => NETWORK_LABEL[n]),
+  }))
 
   return {
-    dates,
     user,
     greeting,
     stats: {

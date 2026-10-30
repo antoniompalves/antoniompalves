@@ -13,6 +13,9 @@ tab/dock/in-page link visited to map routes.
 > are seeded placeholders (`src/data/assets.ts`). Check the template's licence before
 > shipping anything derived from its design commercially.
 
+The recreation also runs in European Portuguese (the English shown and measured
+here is unchanged); see [`I18N.md`](I18N.md).
+
 ## 1. What the original is built with
 
 | Aspect | Finding |

@@ -10,7 +10,8 @@ function SplitWords({ lines }: { lines: string[] }) {
       <span aria-hidden className="-mb-[0.08em] inline-block overflow-hidden pb-[0.08em] align-top">
         {[...line].map((ch, c) => (
           <span key={c} className="inline-block animate-rise" style={{ animationDelay: `${i++ * 22}ms` }}>
-            {ch}
+            {/* An inline-block holding only a space collapses to nothing, so keep it as a no-break space. */}
+            {ch === ' ' ? '\u00a0' : ch}
           </span>
         ))}
       </span>

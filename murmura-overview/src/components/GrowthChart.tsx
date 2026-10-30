@@ -1,7 +1,7 @@
 import { useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent, PointerEvent } from 'react'
 import type { DailyPoint } from '../data/types'
-import { compact } from '../data/selectors'
+import { useI18n } from '../i18n'
 
 /* Geometry measured on the reference SVG (viewBox 706×230 at a 1440px viewport). */
 const HEIGHT = 230
@@ -54,6 +54,7 @@ function monotonePath(pts: [number, number][]) {
 }
 
 export function GrowthChart({ data, label, formatDate }: GrowthChartProps) {
+  const { t } = useI18n()
   const wrapRef = useRef<HTMLDivElement>(null)
   const tipRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(706)
@@ -148,11 +149,11 @@ export function GrowthChart({ data, label, formatDate }: GrowthChartProps) {
         </defs>
 
         <g className="fill-muted text-[12px] font-medium">
-          {geo.ticks.map((t) => (
-            <g key={t}>
-              <line x1={PAD.left} x2={width - PAD.right} y1={geo.y(t)} y2={geo.y(t)} className="stroke-line [stroke-dasharray:3_4]" />
-              <text x={PAD.left - 8} y={geo.y(t) + 4} textAnchor="end">
-                {compact(t)}
+          {geo.ticks.map((tick) => (
+            <g key={tick}>
+              <line x1={PAD.left} x2={width - PAD.right} y1={geo.y(tick)} y2={geo.y(tick)} className="stroke-line [stroke-dasharray:3_4]" />
+              <text x={PAD.left - 8} y={geo.y(tick) + 4} textAnchor="end">
+                {t.numbers.compact(tick)}
               </text>
             </g>
           ))}
@@ -189,8 +190,8 @@ export function GrowthChart({ data, label, formatDate }: GrowthChartProps) {
             <b className="font-bold">{formatDate(new Date(data[active].date))}</b>
             <span className="flex items-center gap-1.5 text-muted">
               <i className="size-2 rounded-full bg-sea" />
-              New followers
-              <strong className="ml-auto pl-2.5 text-text">{compact(data[active].value)}</strong>
+              {t.overview.newFollowers}
+              <strong className="ml-auto pl-2.5 text-text">{t.numbers.compact(data[active].value)}</strong>
             </span>
           </>
         )}

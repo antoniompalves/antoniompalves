@@ -3,6 +3,7 @@ import { LucideProvider } from 'lucide-react'
 import { AppFrame, Dock, Mesh, MobileNav, TopBar } from './components/AppShell'
 import { Card } from './components/ui'
 import { ToastProvider } from './components/Toast'
+import { I18nProvider, useI18n } from './i18n'
 import { workspace } from './data/mock'
 import { matchRoute, tabRoutes } from './data/routes'
 import { selectOverview } from './data/selectors'
@@ -56,37 +57,41 @@ function useMockNow(start: string) {
 
 export default function App() {
   return (
-    <WorkspaceProvider initial={workspace}>
-      <ToastProvider>
-        <LucideProvider size={20} strokeWidth={1.7}>
-          <Shell />
-        </LucideProvider>
-      </ToastProvider>
-    </WorkspaceProvider>
+    <I18nProvider>
+      <WorkspaceProvider initial={workspace}>
+        <ToastProvider>
+          <LucideProvider size={20} strokeWidth={1.7}>
+            <Shell />
+          </LucideProvider>
+        </ToastProvider>
+      </WorkspaceProvider>
+    </I18nProvider>
   )
 }
 
 function Shell() {
   const { ws } = useWorkspace()
+  const { t } = useI18n()
   const hash = useHash()
   const [theme, toggleTheme] = useTheme()
   const now = useMockNow(ws.now)
   const minuteKey = Math.floor(now.getTime() / 60_000)
   // Recompute once a minute (or when the data changes): countdowns and "x min ago" only change that often.
-  const model = useMemo(() => selectOverview(ws, new Date(minuteKey * 60_000)), [ws, minuteKey])
+  const model = useMemo(() => selectOverview(ws, new Date(minuteKey * 60_000), t), [ws, minuteKey, t])
 
   const route = matchRoute(hash)
-  const routeId = route.path.slice(2)
+  const routeId = route.id
+  const page = t.routes[routeId]
 
   const openContact = routeId === 'inbox' ? ws.conversations.find((c) => c.id === hash.split('/')[2])?.contact.name : undefined
 
   useEffect(() => {
-    document.title = openContact ? `${openContact} · ${route.label} · Murmura` : `${route.label} · Murmura`
-  }, [route, openContact])
+    document.title = t.shell.documentTitle(page.label, openContact)
+  }, [t, page, openContact])
 
   const tabs: NavItem[] = tabRoutes.map((r) => ({
-    id: r.path.slice(2),
-    label: r.label,
+    id: r.id,
+    label: t.routes[r.id].label,
     href: r.path,
     badge: r.path === '#/inbox' ? model.badges.inbox : r.path === '#/approvals' ? model.badges.approvals : undefined,
   }))
@@ -104,15 +109,18 @@ function Shell() {
           ) : routeId === 'inbox' ? (
             <Inbox now={now} hash={hash} />
           ) : (
-            <Card title={route.title} className="max-w-3xl">
+            <Card title={page.title} className="max-w-3xl">
               <p className="text-sm text-muted">
-                Only <code className="font-semibold text-text">#/overview</code>,{' '}
-                <code className="font-semibold text-text">#/calendar</code> and{' '}
-                <code className="font-semibold text-text">#/inbox</code> are recreated. This route exists in the
-                reference with the sections below.
+                {t.shell.notRecreated(
+                  ['#/overview', '#/calendar', '#/inbox'].map((r) => (
+                    <code key={r} className="font-semibold text-text">
+                      {r}
+                    </code>
+                  )),
+                )}
               </p>
               <ul className="mt-4 flex flex-wrap gap-2">
-                {route.sections?.map((s) => (
+                {page.sections.map((s) => (
                   <li key={s} className="rounded-full border border-line bg-glass-2 px-3 py-1.5 text-2xs font-semibold">
                     {s}
                   </li>

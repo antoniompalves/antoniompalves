@@ -10,6 +10,8 @@ import type { Draft } from '../components/inbox/Thread'
 import type { InboxFilters, InboxView } from '../data/inbox'
 import { NO_INBOX_FILTERS, byActivity, inView, inboxStats, matchesInboxFilters, matchesSearch, tagSuggestions } from '../data/inbox'
 import { useWorkspace } from '../data/store'
+import { useI18n } from '../i18n'
+import type { Messages } from '../i18n'
 import type { Conversation, Message, Sentiment } from '../data/types'
 import { cn } from '../components/ui'
 
@@ -38,6 +40,7 @@ const go = (id?: string) => {
 export function Inbox({ now, hash }: { now: Date; hash: string }) {
   const { ws, dispatch } = useWorkspace()
   const toast = useToast()
+  const { t } = useI18n()
   const [view, setView] = useState<InboxView>('all')
   const [filters, setFilters] = useState<InboxFilters>(NO_INBOX_FILTERS)
   const [query, setQuery] = useState('')
@@ -96,7 +99,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
     const before = ws.conversations
     if (c.status === 'done') {
       patch(c.id, { status: 'open' })
-      toast({ text: `Reopened ${firstName(c)}’s ${c.kind}`, icon: RotateCcw, undo: undoTo(before, c.id) })
+      toast({ text: t.inbox.toast.reopened(firstName(c), c.kind), icon: RotateCcw, undo: undoTo(before, c.id) })
       return
     }
     const next = nextAfter(c.id)
@@ -104,7 +107,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
     window.setTimeout(() => {
       setStampId(null)
       patch(c.id, { status: 'done', unread: false })
-      toast({ text: `Done · ${firstName(c)}’s ${c.kind} closed`, icon: CheckCheck, undo: undoTo(before, c.id) })
+      toast({ text: t.inbox.toast.done(firstName(c), c.kind), icon: CheckCheck, undo: undoTo(before, c.id) })
       if (view !== 'done') go(next)
     }, 450)
   }
@@ -124,7 +127,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
     dispatch({ type: 'send', id: c.id, message, close: closing })
     setDrafts((d) => ({ ...d, [c.id]: EMPTY_DRAFT }))
     if (closing) {
-      toast({ text: `Sent to ${firstName(c)} · conversation closed`, icon: Send, undo: undoTo(before, c.id) })
+      toast({ text: t.inbox.toast.sentAndClosed(firstName(c)), icon: Send, undo: undoTo(before, c.id) })
       if (view !== 'done') go(nextAfter(c.id))
     }
   }
@@ -133,7 +136,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
     const before = ws.conversations
     const n = stats.unread
     dispatch({ type: 'readAll' })
-    toast({ text: `Marked ${n} as read`, icon: CheckCheck, undo: undoTo(before) })
+    toast({ text: t.inbox.toast.markedRead(n), icon: CheckCheck, undo: undoTo(before) })
   }
 
   // The reference confirms assignment in place (avatar on the row and header), without a toast.
@@ -142,27 +145,27 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   const priority = (c: Conversation) => {
     const before = ws.conversations
     patch(c.id, { priority: !c.priority })
-    toast({ text: c.priority ? 'Priority removed' : 'Marked as priority', icon: Flag, undo: undoTo(before) })
+    toast({ text: c.priority ? t.inbox.toast.priorityOff : t.inbox.toast.priorityOn, icon: Flag, undo: undoTo(before) })
   }
 
   const sentiment = (c: Conversation, s: Sentiment) => {
     if (c.sentiment === s) return
     const before = ws.conversations
     patch(c.id, { sentiment: s })
-    toast({ text: `Marked ${s}`, icon: Smile, undo: undoTo(before) })
+    toast({ text: t.inbox.toast.sentiment(s), icon: Smile, undo: undoTo(before) })
   }
 
   const addTag = (c: Conversation, tag: string) => {
     if (c.tags.includes(tag)) return
     patch(c.id, { tags: [...c.tags, tag] })
     // With the contact panel open the new chip is confirmation enough.
-    if (!showInfo) toast({ text: `Tagged ${tag}`, icon: Hash })
+    if (!showInfo) toast({ text: t.inbox.toast.tagged(tag), icon: Hash })
   }
 
   const removeTag = (c: Conversation, tag: string) => {
     const before = ws.conversations
-    patch(c.id, { tags: c.tags.filter((t) => t !== tag) })
-    toast({ text: `Removed ${tag}`, icon: Hash, undo: undoTo(before) })
+    patch(c.id, { tags: c.tags.filter((x) => x !== tag) })
+    toast({ text: t.inbox.toast.untagged(tag), icon: Hash, undo: undoTo(before) })
   }
 
   // "Mark as unread" puts the conversation back and parks the inbox on its empty state.
@@ -170,7 +173,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
     patch(c.id, { unread: true })
     parked.current = true
     window.location.replace('#/inbox')
-    toast({ text: 'Marked as unread', icon: Bell })
+    toast({ text: t.inbox.toast.unread, icon: Bell })
   }
 
   const { publish, duplicate, remove } = usePostActions(now, () => setOpenPostId(null))
@@ -210,7 +213,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   return (
     <>
       <h1 className="sr-only" tabIndex={-1}>
-        Inbox
+        {t.inbox.title}
       </h1>
       <div
         className={cn(
@@ -262,11 +265,11 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
             onMarkUnread={() => markUnread(current)}
             onSentiment={(s) => sentiment(current, s)}
             tagSuggestions={tagSuggestions(ws.conversations, current)}
-            onAddTag={(t) => addTag(current, t)}
+            onAddTag={(tag) => addTag(current, tag)}
             onOpenPost={() => current.postId && setOpenPostId(current.postId)}
             onCopyHandle={() => {
               navigator.clipboard?.writeText(`@${current.contact.handle}`).catch(() => {})
-              toast({ text: `Copied @${current.contact.handle}` })
+              toast({ text: t.inbox.toast.copied(current.contact.handle) })
             }}
             onSend={(d, close) => send(current, d, close)}
           />
@@ -288,8 +291,8 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
             setTagOpen={setTagOpen}
             onClose={() => setInfoOpen(false)}
             onSentiment={(s) => sentiment(current, s)}
-            onAddTag={(t) => addTag(current, t)}
-            onRemoveTag={(t) => removeTag(current, t)}
+            onAddTag={(tag) => addTag(current, tag)}
+            onRemoveTag={(tag) => removeTag(current, tag)}
             onAssign={(id) => assign(current, id)}
             onPriority={() => priority(current)}
             onDone={() => done(current)}
@@ -312,24 +315,25 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   )
 }
 
-const KEYS: [string[], string][] = [
-  [['J', 'K'], 'Next / previous'],
-  [['E'], 'Mark done'],
-  [['R'], 'Reply'],
-  [['/'], 'Search'],
-  [['Enter'], 'Send'],
+const KEYS: [string[], keyof Messages['inbox']['keys']][] = [
+  [['J', 'K'], 'nav'],
+  [['E'], 'done'],
+  [['R'], 'reply'],
+  [['/'], 'search'],
+  [['Enter'], 'send'],
 ]
 
 /** Thread placeholder when nothing is selected (".ib-hello"). */
 function Hello() {
+  const { t } = useI18n()
   return (
-    <section aria-label="Conversation" className="grid min-h-0 place-items-center bg-ib-wall p-6 max-mobile:hidden">
+    <section aria-label={t.inbox.conversation} className="grid min-h-0 place-items-center bg-ib-wall p-6 max-mobile:hidden">
       <div className="grid max-w-[360px] justify-items-center gap-2 rounded-[22px] bg-ib-bar px-6 pb-[18px] pt-[26px] text-center shadow-[0_1px_2px_color-mix(in_srgb,var(--text)_8%,transparent)]">
         <span className="mb-1 grid size-[58px] place-items-center rounded-full bg-sea text-on-sea">
           <InboxIcon size={26} aria-hidden />
         </span>
-        <h2 className="text-[21px] font-bold tracking-[-0.02em]">Pick a conversation</h2>
-        <p className="text-xs text-muted">Every comment, message, mention and review from all your networks lands in one list.</p>
+        <h2 className="text-[21px] font-bold tracking-[-0.02em]">{t.inbox.pick}</h2>
+        <p className="text-xs text-muted">{t.inbox.pickHint}</p>
         <dl className="mt-2.5 grid w-full">
           {KEYS.map(([keys, label]) => (
             <div key={label} className="flex items-center justify-between gap-4 border-b border-line px-0.5 py-[7px] text-2xs last:border-b-0">
@@ -340,7 +344,7 @@ function Hello() {
                   </kbd>
                 ))}
               </dt>
-              <dd className="text-muted">{label}</dd>
+              <dd className="text-muted">{t.inbox.keys[label]}</dd>
             </div>
           ))}
         </dl>

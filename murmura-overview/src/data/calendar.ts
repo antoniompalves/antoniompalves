@@ -42,54 +42,14 @@ export const minutesOfDay = (d: Date) => d.getUTCHours() * 60 + d.getUTCMinutes(
 /** Fractional hour rows from the top of the week grid. */
 export const rowOf = (d: Date) => (minutesOfDay(d) - DAY_START * 60) / 60
 
-const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', ...opts })
-const F = {
-  weekday: fmt({ weekday: 'short' }),
-  weekdayLong: fmt({ weekday: 'long' }),
-  monthShort: fmt({ month: 'short' }),
-  monthLong: fmt({ month: 'long' }),
-  monthYear: fmt({ month: 'long', year: 'numeric' }),
-  dayLong: fmt({ weekday: 'short', month: 'short', day: 'numeric' }),
-  ariaDay: fmt({ weekday: 'long', month: 'long', day: 'numeric' }),
-  time: fmt({ hour: 'numeric', minute: '2-digit' }),
-  hour: fmt({ hour: 'numeric' }),
-}
-
-export const fmtWeekday = (d: Date) => F.weekday.format(d)
-export const fmtWeekdayLong = (d: Date) => F.weekdayLong.format(d)
-/** "Oct 10" */
-export const fmtShortDate = (d: Date) => `${F.monthShort.format(d)} ${d.getUTCDate()}`
-export const fmtMonthDay = (d: Date) => `${F.monthLong.format(d)} ${d.getUTCDate()}`
-export const fmtMonthYear = (d: Date) => F.monthYear.format(d)
-export const fmtDayLong = (d: Date) => F.dayLong.format(d)
-export const fmtAriaDay = (d: Date) => F.ariaDay.format(d)
-/** "9:30 AM" */
-export const fmtTime = (d: Date) => F.time.format(d)
-/** Hour gutter label: "6 AM" */
-export const fmtHour = (h: number) => F.hour.format(new Date(Date.UTC(2026, 0, 1, h)))
-/** Month chips: "9:45a", "8p" */
-export function fmtTimeShort(d: Date, alwaysMinutes = false) {
-  const h = d.getUTCHours()
-  const m = d.getUTCMinutes()
-  const mm = m || alwaysMinutes ? `:${String(m).padStart(2, '0')}` : ''
-  return `${h % 12 || 12}${mm}${h < 12 ? 'a' : 'p'}`
-}
-/** "Today" · "Tomorrow" · "Sun, Nov 1" */
-export function fmtRelativeDay(d: Date, now: Date) {
-  const diff = Math.round((startOfDay(d).getTime() - startOfDay(now).getTime()) / DAY_MS)
-  return diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : fmtDayLong(d)
-}
-
-/** "Oct 26 – Nov 1, 2026", "Oct 12 – 25, 2026", "October 2026" */
-export function periodLabel(view: CalendarView, anchor: Date) {
-  if (view === 'month') return fmtMonthYear(anchor)
+/**
+ * The range a view's heading names: a week (Mon–Sun), two weeks for the list,
+ * or the whole month (end = null). The words come from `t.dates.period`.
+ */
+export function periodBounds(view: CalendarView, anchor: Date): [Date, Date | null] {
+  if (view === 'month') return [startOfMonth(anchor), null]
   const start = startOfWeek(anchor)
-  const end = addDays(start, view === 'week' ? 6 : 13)
-  const sameMonth = start.getUTCMonth() === end.getUTCMonth()
-  const sameYear = start.getUTCFullYear() === end.getUTCFullYear()
-  const left = `${F.monthShort.format(start)} ${start.getUTCDate()}${sameYear ? '' : `, ${start.getUTCFullYear()}`}`
-  const right = `${sameMonth ? '' : `${F.monthShort.format(end)} `}${end.getUTCDate()}, ${end.getUTCFullYear()}`
-  return `${left} – ${right}`
+  return [start, addDays(start, view === 'week' ? 6 : 13)]
 }
 
 /** Visible day range for a view: [start, start + count). */

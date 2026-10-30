@@ -2,18 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Plus } from 'lucide-react'
 import type { Brand, Campaign, Post } from '../../data/types'
-import {
-  dayKey,
-  fmtAriaDay,
-  fmtDayLong,
-  fmtShortDate,
-  fmtTimeShort,
-  fromKey,
-  isMovable,
-  postsByDay,
-  ribbons,
-} from '../../data/calendar'
-import { STATUS_META } from '../../data/selectors'
+import { dayKey, fromKey, isMovable, postsByDay, ribbons } from '../../data/calendar'
+import { STATUS_TONE } from '../../data/selectors'
+import { useI18n } from '../../i18n'
 import { BrandMark, cn, toneFill } from '../ui'
 import type { DragApi } from './WeekView'
 
@@ -34,11 +25,11 @@ interface MonthViewProps {
 }
 
 const MAX_CHIPS = 3
-const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 /** Six-week month grid (".cl-month") with campaign hairlines and up to three post chips a day. */
 export function MonthView(props: MonthViewProps) {
   const { days, anchor, posts, brands, campaigns, selectedCampaign, onToggleCampaign } = props
+  const { t } = useI18n()
   const byDay = postsByDay(posts)
   const weeks = Array.from({ length: days.length / 7 }, (_, w) => days.slice(w * 7, w * 7 + 7))
   const first = dayKey(days[0])
@@ -67,7 +58,7 @@ export function MonthView(props: MonthViewProps) {
                 <i className={cn('size-2 rounded-full', toneFill[brand.tone])} />
                 {c.name}
                 <small className={cn('text-[12.5px]', pressed ? 'text-inherit opacity-72' : 'text-muted')}>
-                  {fmtShortDate(fromKey(c.start))} – {fmtShortDate(fromKey(c.end))}
+                  {t.dates.monthDay(fromKey(c.start))} – {t.dates.monthDay(fromKey(c.end))}
                 </small>
               </button>
             )
@@ -77,7 +68,7 @@ export function MonthView(props: MonthViewProps) {
 
       <div className="relative grid gap-1.5">
         <div aria-hidden className="grid grid-cols-7 gap-1.5 px-2.5 text-[12.5px] font-bold uppercase tracking-[0.05em] text-muted">
-          {DOW.map((d) => (
+          {t.dates.weekdayHeads.map((d) => (
             <span key={d}>{d}</span>
           ))}
         </div>
@@ -96,6 +87,7 @@ interface MonthRowProps extends MonthViewProps {
 }
 
 function MonthRow({ week, byDay, month, campaigns, brands, selectedCampaign, now, drag, landedId, onOpen, onGoWeek, onCreateAt }: MonthRowProps) {
+  const { t } = useI18n()
   const ribs = ribbons(campaigns, week[0], 7)
   const today = dayKey(now)
   return (
@@ -127,7 +119,7 @@ function MonthRow({ week, byDay, month, campaigns, brands, selectedCampaign, now
             <div className="flex h-7 shrink-0 items-center gap-1.5" style={{ marginBottom: ribs.length * 8 }}>
               <button
                 type="button"
-                aria-label={`Open the week of ${fmtAriaDay(d)}`}
+                aria-label={t.calendar.openWeekOf(t.dates.dayFull(d))}
                 onClick={() => onGoWeek(d)}
                 className={cn(
                   'grid h-7 min-w-7 cursor-pointer place-items-center rounded-full px-1 text-2xs font-bold tabular-nums',
@@ -140,7 +132,7 @@ function MonthRow({ week, byDay, month, campaigns, brands, selectedCampaign, now
               {!past && (
                 <button
                   type="button"
-                  aria-label={`New post on ${fmtAriaDay(d)}`}
+                  aria-label={t.calendar.newPostOn(t.dates.dayFull(d))}
                   onClick={() => onCreateAt(d)}
                   className="ml-auto grid size-[26px] shrink-0 cursor-pointer place-items-center rounded-full bg-pill text-on-pill opacity-0 transition-opacity duration-200 ease-soft group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:hidden"
                 >
@@ -198,25 +190,26 @@ interface MonthChipProps {
 }
 
 function MonthChip({ post, brand, lifted, landed, onPointerDown, onClick }: MonthChipProps) {
+  const { t } = useI18n()
   const when = new Date(post.scheduledAt)
   const draft = post.status === 'draft'
   return (
     <button
       type="button"
       data-drag-id={post.id}
-      aria-label={`${brand.name}, ${STATUS_META[post.status].label}, ${fmtDayLong(when)}: ${post.text}`}
+      aria-label={t.calendar.chip(brand.name, t.status[post.status], t.dates.dayLong(when), post.text)}
       onPointerDown={onPointerDown}
       onClick={onClick}
       className={cn(
         'relative flex h-6 min-w-0 touch-none select-none items-center gap-[5px] whitespace-nowrap rounded-lg px-[7px] text-left text-[12.5px] font-semibold hover:brightness-106',
-        draft ? 'bg-glass-3 text-text shadow-[inset_0_0_0_1.5px_var(--line-2)] dark:bg-[#24272b]' : toneFill[STATUS_META[post.status].tone],
+        draft ? 'bg-glass-3 text-text shadow-[inset_0_0_0_1.5px_var(--line-2)] dark:bg-[#24272b]' : toneFill[STATUS_TONE[post.status]],
         isMovable(post) ? 'cursor-grab' : 'cursor-pointer',
         lifted && 'opacity-28',
         landed && 'animate-land',
       )}
     >
       <b data-time className="shrink-0 font-bold tabular-nums max-[900px]:hidden">
-        {fmtTimeShort(when)}
+        {t.dates.compactTime(when)}
       </b>
       <span className="min-w-0 truncate opacity-92">{post.text}</span>
     </button>
@@ -225,6 +218,7 @@ function MonthChip({ post, brand, lifted, landed, onPointerDown, onClick }: Mont
 
 /** "+N more" opens a small list of the whole day (".cl-morelist"). */
 function MoreButton({ day, posts, brands, onOpen }: { day: Date; posts: Post[]; brands: Map<string, Brand>; onOpen: (id: string) => void }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -248,11 +242,11 @@ function MoreButton({ day, posts, brands, onOpen }: { day: Date; posts: Post[]; 
         onClick={() => setOpen((v) => !v)}
         className="block h-[22px] w-full cursor-pointer rounded-[7px] px-[7px] text-left text-[12.5px] font-bold text-muted hover:bg-well hover:text-text"
       >
-        +{posts.length - MAX_CHIPS} more
+        {t.calendar.more(posts.length - MAX_CHIPS)}
       </button>
       {open && (
         <div className="absolute left-0 top-full z-20 mt-1 grid w-[270px] animate-rise gap-0.5 rounded-[18px] border border-line bg-float p-2 shadow-pop">
-          <b className="px-2 pb-1 pt-0.5 text-2xs font-bold text-muted">{fmtAriaDay(day)}</b>
+          <b className="px-2 pb-1 pt-0.5 text-2xs font-bold text-muted">{t.dates.dayFull(day)}</b>
           {posts.map((p) => {
             const brand = brands.get(p.brandId)!
             return (
@@ -269,7 +263,7 @@ function MoreButton({ day, posts, brands, onOpen }: { day: Date; posts: Post[]; 
                 <span className="min-w-0 flex-1">
                   <b className="block truncate text-xs font-semibold">{p.text}</b>
                   <small className="block text-[12.5px] text-muted">
-                    {fmtTimeShort(new Date(p.scheduledAt))} · {STATUS_META[p.status].label}
+                    {t.dates.compactTime(new Date(p.scheduledAt))} · {t.status[p.status]}
                   </small>
                 </span>
               </button>

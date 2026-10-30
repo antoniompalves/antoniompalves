@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { useI18n } from '../i18n'
 
 interface ToastInput {
   text: string
@@ -21,6 +22,7 @@ const TIMEOUT = 5200
 
 /** One toast at a time, bottom-centred ink pill (".toast" in the reference). */
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n()
   const [toast, setToast] = useState<ToastItem | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
@@ -54,7 +56,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 }}
                 className="cursor-pointer rounded-full bg-butter px-[13px] py-[7px] font-bold text-[#16191d]"
               >
-                Undo
+                {t.common.undo}
               </button>
             )}
           </div>

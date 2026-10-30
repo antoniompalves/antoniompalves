@@ -9,13 +9,7 @@ import {
   SNAP_MIN,
   atMinutes,
   dayKey,
-  fmtDayLong,
   fromKey,
-  fmtHour,
-  fmtShortDate,
-  fmtTime,
-  fmtTimeShort,
-  fmtWeekday,
   isLive,
   isMovable,
   layoutLanes,
@@ -25,7 +19,8 @@ import {
   startOfDay,
   statusGroup,
 } from '../../data/calendar'
-import { STATUS_META } from '../../data/selectors'
+import { STATUS_TONE } from '../../data/selectors'
+import { useI18n } from '../../i18n'
 import { photo } from '../../data/assets'
 import { BrandMark, NetStack, cn, toneFill } from '../ui'
 import type { DropTarget } from './useCalendarDrag'
@@ -64,6 +59,7 @@ const KEY_STEP: Record<string, number> = { ArrowUp: -SNAP_MIN, ArrowDown: SNAP_M
  */
 export function WeekView(props: WeekViewProps) {
   const { days, posts, allPosts, brands, campaigns, selectedCampaign, now } = props
+  const { t } = useI18n()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<{ day: string; minutes: number } | null>(null)
   const byDay = postsByDay(posts)
@@ -102,7 +98,7 @@ export function WeekView(props: WeekViewProps) {
           const gap = !past && !allPosts.some((p) => p.scheduledAt.startsWith(k) && isLive(p.status))
           return (
             <div key={k} className="row-start-1 grid min-w-0 justify-items-center gap-px py-0.5 text-center">
-              <small className={cn('text-[12.5px] font-bold uppercase tracking-[0.05em]', past ? 'text-faint' : 'text-muted')}>{fmtWeekday(d)}</small>
+              <small className={cn('text-[12.5px] font-bold uppercase tracking-[0.05em]', past ? 'text-faint' : 'text-muted')}>{t.dates.weekdayHead(d)}</small>
               <b
                 className={cn(
                   'grid size-[34px] place-items-center rounded-full text-base font-bold tabular-nums',
@@ -113,10 +109,10 @@ export function WeekView(props: WeekViewProps) {
               </b>
               <span
                 className="inline-flex items-center gap-[5px] whitespace-nowrap text-[12.5px] font-semibold text-muted"
-                title={gap ? 'Nothing scheduled yet' : undefined}
+                title={gap ? t.calendar.nothingScheduled : undefined}
               >
                 {gap && <i aria-hidden className="size-1.5 rounded-full bg-coral" />}
-                {count === 0 ? 'Free' : `${count} ${count === 1 ? 'post' : 'posts'}`}
+                {count === 0 ? t.calendar.free : t.common.post(count)}
               </span>
             </div>
           )
@@ -125,12 +121,12 @@ export function WeekView(props: WeekViewProps) {
         {ribs.length > 0 && (
           <div className="col-span-full mt-2 grid auto-rows-[24px] grid-cols-subgrid gap-y-1">
             <span
-              title="Campaigns"
+              title={t.calendar.campaigns}
               className="sticky left-0 z-[1] col-start-1 flex items-center justify-end bg-solid pr-2 text-faint"
               style={{ gridRow: `1 / span ${ribs.length}` }}
             >
               <Flag size={17} aria-hidden />
-              <span className="sr-only">Campaigns</span>
+              <span className="sr-only">{t.calendar.campaigns}</span>
             </span>
             {ribs.map((r) => {
               const brand = brands.get(r.campaign.brandId)!
@@ -140,7 +136,7 @@ export function WeekView(props: WeekViewProps) {
                   key={r.campaign.id}
                   type="button"
                   aria-pressed={pressed}
-                  title={`${r.campaign.name} · ${fmtShortDate(fromKey(r.campaign.start))} – ${fmtShortDate(fromKey(r.campaign.end))}`}
+                  title={`${r.campaign.name} · ${t.dates.monthDay(fromKey(r.campaign.start))} – ${t.dates.monthDay(fromKey(r.campaign.end))}`}
                   onClick={() => props.onToggleCampaign(r.campaign.id)}
                   className={cn(
                     '@container mx-[3px] flex h-6 min-w-0 cursor-pointer items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full pl-[3px] pr-[9px] text-left text-[12.5px] font-bold transition-opacity',
@@ -157,7 +153,7 @@ export function WeekView(props: WeekViewProps) {
                   </span>
                   <span className="min-w-0 truncate">{r.campaign.name}</span>
                   <small className="ml-auto shrink-0 pl-2 text-[12.5px] font-semibold opacity-78 @max-[210px]:hidden">
-                    until {fmtShortDate(fromKey(r.campaign.end))}
+                    {t.calendar.until(t.dates.monthDay(fromKey(r.campaign.end)))}
                   </small>
                 </button>
               )
@@ -171,7 +167,7 @@ export function WeekView(props: WeekViewProps) {
         <div aria-hidden className="sticky left-0 z-[4] grid auto-rows-[72px] bg-solid">
           {Array.from({ length: DAY_HOURS }, (_, h) => (
             <span key={h} className="-mt-[9px] whitespace-nowrap pr-2 text-right text-[12.5px] font-semibold text-muted">
-              {fmtHour(DAY_START + h)}
+              {t.dates.hour(DAY_START + h)}
             </span>
           ))}
           {days.some((d) => dayKey(d) === today) && nowRow >= 0 && nowRow < DAY_HOURS && (
@@ -179,7 +175,7 @@ export function WeekView(props: WeekViewProps) {
               className="absolute right-[3px] rounded-full bg-coral px-1.5 py-px text-[12.5px] font-bold leading-[18px] text-on-coral tabular-nums"
               style={{ top: nowRow * HOUR_PX - 10 }}
             >
-              {fmtTimeShort(now, true)}
+              {t.dates.compactTime(now, true)}
             </b>
           )}
         </div>
@@ -201,6 +197,7 @@ interface DayColumnProps extends WeekViewProps {
 }
 
 function DayColumn({ day, ci, dayPosts, hover, setHover, now, heat, bestTimes, drag, brands, landedId, onOpen, onKeyMove, onCreateAt }: DayColumnProps) {
+  const { t } = useI18n()
   const k = dayKey(day)
   const today = dayKey(now)
   const past = k < today
@@ -255,7 +252,7 @@ function DayColumn({ day, ci, dayPosts, hover, setHover, now, heat, bestTimes, d
               className="pointer-events-none absolute right-[5px] top-[5px] rounded-full bg-lilac px-[7px] text-[12.5px] font-bold not-italic leading-[19px] text-on-lilac transition-opacity delay-300 duration-400"
               style={{ opacity: heat ? 1 : 0 }}
             >
-              Peak
+              {t.calendar.peak}
             </i>
           )}
         </span>
@@ -292,7 +289,7 @@ function DayColumn({ day, ci, dayPosts, hover, setHover, now, heat, bestTimes, d
           style={{ top: ((ghost.minutes - DAY_START * 60) / 60) * HOUR_PX + 2, height: HOUR_PX / 2 - 4 }}
         >
           <Plus size={15} className="shrink-0 text-text" />
-          {fmtTime(atMinutes(day, ghost.minutes))}
+          {t.dates.time(atMinutes(day, ghost.minutes))}
         </span>
       )}
 
@@ -311,7 +308,7 @@ function DayColumn({ day, ci, dayPosts, hover, setHover, now, heat, bestTimes, d
               drop.ok ? 'bg-pill text-on-pill' : 'bg-coral text-on-coral',
             )}
           >
-            {fmtWeekday(day)} · {fmtTime(atMinutes(startOfDay(day), drop.minutes))}
+            {t.dates.weekday(day)} · {t.dates.time(atMinutes(startOfDay(day), drop.minutes))}
           </span>
         </div>
       )}
@@ -332,6 +329,7 @@ interface TileProps {
 
 /** A post on the week grid (".cl-tile"); its contents shed detail as the lane narrows. */
 function Tile({ post, brand, lane, lifted, landed, onPointerDown, onClick, onKeyDown }: TileProps) {
+  const { t } = useI18n()
   const when = new Date(post.scheduledAt)
   const draft = post.status === 'draft'
   const failed = statusGroup(post.status) === 'failed'
@@ -343,7 +341,7 @@ function Tile({ post, brand, lane, lifted, landed, onPointerDown, onClick, onKey
       type="button"
       data-tile
       data-drag-id={post.id}
-      aria-label={`${brand.name}, ${STATUS_META[post.status].label}, ${fmtDayLong(when)} ${fmtTime(when)}: ${post.text}${movable ? '. Alt plus arrow keys move it' : ''}`}
+      aria-label={t.calendar.tile(brand.name, t.status[post.status], `${t.dates.dayLong(when)} ${t.dates.time(when)}`, post.text, movable)}
       onPointerDown={onPointerDown}
       onClick={onClick}
       onKeyDown={onKeyDown}
@@ -351,7 +349,7 @@ function Tile({ post, brand, lane, lifted, landed, onPointerDown, onClick, onKey
         '@container absolute z-[1] flex touch-none select-none gap-1.5 overflow-hidden rounded-[14px] py-1.5 pl-2 pr-1.5 text-left hover:z-[2] focus-visible:z-[3] focus-visible:outline-offset-1',
         draft
           ? 'bg-glass-3 text-text outline-[1.5px] -outline-offset-[1.5px] outline-dashed outline-line-2 dark:bg-[#24272b]'
-          : cn(toneFill[STATUS_META[post.status].tone], 'shadow-[0_10px_18px_-14px_rgb(0_0_0/0.6)] hover:shadow-[0_14px_24px_-14px_rgb(0_0_0/0.7)]'),
+          : cn(toneFill[STATUS_TONE[post.status]], 'shadow-[0_10px_18px_-14px_rgb(0_0_0/0.6)] hover:shadow-[0_14px_24px_-14px_rgb(0_0_0/0.7)]'),
         movable ? 'cursor-grab' : 'cursor-pointer',
         lifted && 'opacity-28',
         landed && 'animate-land',
@@ -366,7 +364,7 @@ function Tile({ post, brand, lane, lifted, landed, onPointerDown, onClick, onKey
       <span className="grid min-w-0 flex-1 content-start gap-0.5">
         <span className={cn('flex min-w-0 items-center gap-[5px] whitespace-nowrap text-[12.5px] font-bold leading-[1.25] tabular-nums', thumbPad)}>
           <span data-time className="truncate">
-            {fmtTime(when)}
+            {t.dates.time(when)}
           </span>
           {failed && <TriangleAlert size={15} className="shrink-0" aria-hidden />}
         </span>

@@ -15,13 +15,8 @@ export const StatusDot = ({ status, className }: { status: StatusFilter; classNa
   <i className={cn('inline-block size-2 shrink-0 rounded-full', DOT[status], className)} />
 )
 
-export const STATUS_FILTERS: { value: StatusFilter; label: string; legend: string }[] = [
-  { value: 'scheduled', label: 'Scheduled', legend: 'Scheduled' },
-  { value: 'pending', label: 'Awaiting approval', legend: 'Awaiting' },
-  { value: 'published', label: 'Published', legend: 'Published' },
-  { value: 'draft', label: 'Drafts', legend: 'Drafts' },
-  { value: 'failed', label: 'Failed', legend: 'Needs attention' },
-]
+/** Filter chips and legend, in the reference's order; labels come from `t.calendar.statusFilters`. */
+export const STATUS_FILTERS: StatusFilter[] = ['scheduled', 'pending', 'published', 'draft', 'failed']
 
 interface ChipProps extends ComponentPropsWithoutRef<'button'> {
   pressed: boolean
