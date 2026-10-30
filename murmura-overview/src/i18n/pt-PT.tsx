@@ -186,8 +186,8 @@ export const ptPT: Messages = {
   },
 
   shell: {
-    documentTitle: (page: string, contact?: string) => (contact ? `${contact} · ${page} · Murmura` : `${page} · Murmura`),
-    home: 'Murmura — visão geral',
+    documentTitle: (page: string, contact?: string) => (contact ? `${contact} · ${page} · Kataru` : `${page} · Kataru`),
+    home: 'Kataru — visão geral',
     mainNav: 'Principal',
     brandSwitcher: 'Marca: todas as marcas',
     allBrands: 'Todas as marcas',
@@ -764,8 +764,8 @@ export const ptPT: Messages = {
     csv: {
       // O Excel em português usa ";" como separador de listas.
       separator: ';',
-      file: (days: number, network: string | null) => `murmura-analises-${days}d${network ? `-${network}` : ''}.csv`,
-      title: 'Relatório de análises Murmura',
+      file: (days: number, network: string | null) => `kataru-analises-${days}d${network ? `-${network}` : ''}.csv`,
+      title: 'Relatório de análises Kataru',
       scope: 'Âmbito',
       period: 'Período',
       generated: 'Gerado em',
@@ -881,7 +881,7 @@ export const ptPT: Messages = {
     },
     dialog: {
       title: 'Seguir uma palavra-chave',
-      sub: 'O Murmura ouve todas as redes ligadas e recupera as menções dos últimos dias.',
+      sub: 'O Kataru ouve todas as redes ligadas e recupera as menções dos últimos dias.',
       term: 'Palavra-chave, hashtag ou nome',
       placeholder: '#flatwhite, “cold brew”, um concorrente…',
       kind: 'Tipo',

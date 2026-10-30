@@ -16,6 +16,12 @@ tab/dock/in-page link visited to map routes.
 The recreation also runs in European Portuguese (the English shown and measured
 here is unchanged); see [`I18N.md`](I18N.md).
 
+The recreation is now called **Kataru**, with its own logo (see the README); this
+document keeps the reference's name, Murmura, where it describes the reference.
+The only visible differences the rename makes are the mark, the wordmark and the
+document titles: the brand keeps the reference's width at ≥ 1341px, so every
+measurement below still holds.
+
 ## 1. What the original is built with
 
 | Aspect | Finding |
@@ -452,7 +458,7 @@ network pulse and top-post multiplier from the same data, with identical output.
 - Hover or arrow keys on the heatmap (a live region reads the hour aloud); hover or
   ←/→ on the charts. Plan buttons go to Compose, like the calendar's slots.
 - Top post cards open the calendar's post drawer (publish, duplicate, delete, Undo).
-- **Export CSV** downloads `murmura-analytics-30d[-network].csv`: scope, period,
+- **Export CSV** downloads `kataru-analytics-30d[-network].csv`: scope, period,
   summary, the daily series, the table and every post (pt-PT uses `;` and decimal commas).
 - **Schedule a report**: name, Weekly (Mondays 9:00) / Monthly (1st, 9:00), recipients
   (you preselected, "Pick at least one recipient."), toast with the first send and

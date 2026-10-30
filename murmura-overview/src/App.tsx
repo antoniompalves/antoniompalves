@@ -5,6 +5,7 @@ import { Card } from './components/ui'
 import { ToastProvider } from './components/Toast'
 import { I18nProvider, useI18n } from './i18n'
 import { workspace } from './data/mock'
+import { loadSetting, saveSetting } from './storage'
 import { matchRoute, tabRoutes } from './data/routes'
 import { selectOverview } from './data/selectors'
 import { WorkspaceProvider, useWorkspace } from './data/store'
@@ -29,20 +30,10 @@ function useHash() {
 }
 
 function useTheme() {
-  const [theme, setTheme] = useState<Theme>(() => {
-    try {
-      return (localStorage.getItem('murmura-theme') as Theme) || 'light'
-    } catch {
-      return 'light'
-    }
-  })
+  const [theme, setTheme] = useState<Theme>(() => (loadSetting('theme') as Theme) || 'light')
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    try {
-      localStorage.setItem('murmura-theme', theme)
-    } catch {
-      /* storage unavailable: theme still applies for this session */
-    }
+    saveSetting('theme', theme)
   }, [theme])
   return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))] as const
 }

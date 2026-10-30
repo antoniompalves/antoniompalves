@@ -4,11 +4,14 @@
  * own CDN or /public folder to drop real assets in without touching components.
  */
 
+/** Seed prefix of the placeholders, from before the app was renamed; changing it would change every picture. */
+const SEED = 'murmura'
+
 export const photo = (seed: string, size = 720) =>
-  `https://picsum.photos/seed/murmura-${seed}/${size}/${size}`
+  `https://picsum.photos/seed/${SEED}-${seed}/${size}/${size}`
 
 export const avatar = (seed: string, size = 96) =>
-  `https://i.pravatar.cc/${size}?u=murmura-${seed}`
+  `https://i.pravatar.cc/${size}?u=${SEED}-${seed}`
 
 /** Photo of someone met through listening: "elena_m_rquez" gets the inbox contact "elena.m.rquez"'s picture. */
 export const personPhoto = (handle: string) => avatar(handle.replace(/_/g, '.'))

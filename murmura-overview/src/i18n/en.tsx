@@ -189,8 +189,8 @@ export const en = {
   } satisfies Record<string, RouteText>,
 
   shell: {
-    documentTitle: (page: string, contact?: string) => (contact ? `${contact} · ${page} · Murmura` : `${page} · Murmura`),
-    home: 'Murmura — overview',
+    documentTitle: (page: string, contact?: string) => (contact ? `${contact} · ${page} · Kataru` : `${page} · Kataru`),
+    home: 'Kataru — overview',
     mainNav: 'Main',
     brandSwitcher: 'Brand: all brands',
     allBrands: 'All brands',
@@ -760,8 +760,8 @@ export const en = {
     },
     csv: {
       separator: ',',
-      file: (days: number, network: string | null) => `murmura-analytics-${days}d${network ? `-${network}` : ''}.csv`,
-      title: 'Murmura analytics report',
+      file: (days: number, network: string | null) => `kataru-analytics-${days}d${network ? `-${network}` : ''}.csv`,
+      title: 'Kataru analytics report',
       scope: 'Scope',
       period: 'Period',
       generated: 'Generated',
@@ -880,7 +880,7 @@ export const en = {
     },
     dialog: {
       title: 'Track a keyword',
-      sub: 'Murmura listens on every connected network and backfills the last few days.',
+      sub: 'Kataru listens on every connected network and backfills the last few days.',
       term: 'Keyword, hashtag or name',
       placeholder: '#flatwhite, “cold brew”, a competitor…',
       kind: 'Kind',

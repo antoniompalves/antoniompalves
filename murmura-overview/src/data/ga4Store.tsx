@@ -6,6 +6,7 @@ import { useWorkspace } from './store'
 import type { Website, Workspace } from './types'
 import { demoHistory } from './webAnalytics'
 import type { SiteEntry, SiteHistory } from './webAnalytics'
+import { loadSetting, saveSetting } from '../storage'
 
 /**
  * Where the Websites section gets its numbers: generated demo traffic, or live
@@ -14,8 +15,6 @@ import type { SiteEntry, SiteHistory } from './webAnalytics'
  * lives in memory and is gone on reload.
  */
 
-const STORAGE_KEY = 'murmura-ga4'
-
 interface Saved {
   clientId?: string
   websites?: Website[]
@@ -23,7 +22,7 @@ interface Saved {
 
 function readSaved(): Saved {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Saved
+    return JSON.parse(loadSetting('ga4') ?? '{}') as Saved
   } catch {
     return {}
   }
@@ -78,11 +77,7 @@ export function Ga4Provider({ children }: { children: ReactNode }) {
       first.current = false
       return
     }
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ clientId, websites: ws.websites }))
-    } catch {
-      /* storage unavailable: settings last for this visit */
-    }
+    saveSetting('ga4', JSON.stringify({ clientId, websites: ws.websites }))
   }, [clientId, ws.websites])
 
   const sync = useCallback(

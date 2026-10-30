@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { KataruMark } from './Logo'
 import {
   Bell,
   CalendarDays,
@@ -23,7 +24,6 @@ import {
   ShieldCheck,
   Sun,
   Users,
-  Waves,
   X,
 } from 'lucide-react'
 import type { RouteId } from '../data/routes'
@@ -86,15 +86,16 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
 
   return (
     <header className="mb-[26px] grid grid-cols-[auto_1fr] items-center gap-5 max-mobile:mb-[18px] max-mobile:gap-x-3 max-mobile:gap-y-2.5 wide:grid-cols-[auto_1fr_auto]">
+      {/* On wide screens the brand keeps the reference's 165px so the centred tab bar stays where it was measured. */}
       <a
         href="#/overview"
         aria-label={t.shell.home}
-        className="inline-flex items-center gap-3 text-[26px] font-bold tracking-[-0.02em] max-mobile:gap-2.5 max-mobile:text-[23px]"
+        className="inline-flex items-center gap-3 text-[26px] font-bold tracking-[-0.02em] max-mobile:gap-2.5 max-mobile:text-[23px] wide:min-w-[165px]"
       >
         <span className="grid size-12 place-items-center rounded-[15px] bg-pill text-on-pill max-mobile:size-11 max-mobile:rounded-[13px]">
-          <Waves size={28} strokeWidth={2.1} aria-hidden />
+          <KataruMark />
         </span>
-        <span className="max-[359px]:hidden">murmura</span>
+        <span className="max-[359px]:hidden">kataru</span>
       </a>
 
       <nav

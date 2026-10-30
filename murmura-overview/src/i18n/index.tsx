@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { en } from './en'
 import type { Messages } from './en'
 import { ptPT } from './pt-PT'
+import { loadSetting, saveSetting } from '../storage'
 
 export type { Messages }
 export type Locale = 'en' | 'pt-PT'
@@ -14,7 +15,6 @@ export const LOCALES: { id: Locale; name: string }[] = [
 ]
 
 const CATALOGUES: Record<Locale, Messages> = { en, 'pt-PT': ptPT }
-const STORAGE_KEY = 'murmura-locale'
 
 /** Any Portuguese tag maps to pt-PT (the only Portuguese shipped), any English one to en. */
 export function matchLocale(tag: string | null | undefined): Locale | null {
@@ -29,12 +29,8 @@ export function matchLocale(tag: string | null | undefined): Locale | null {
 export function detectLocale(): Locale {
   const fromUrl = matchLocale(new URLSearchParams(window.location.search).get('lang'))
   if (fromUrl) return fromUrl
-  try {
-    const saved = matchLocale(localStorage.getItem(STORAGE_KEY))
-    if (saved) return saved
-  } catch {
-    /* storage unavailable: fall through to the browser languages */
-  }
+  const saved = matchLocale(loadSetting('locale'))
+  if (saved) return saved
   for (const tag of navigator.languages?.length ? navigator.languages : [navigator.language]) {
     const l = matchLocale(tag)
     if (l) return l
@@ -59,11 +55,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l)
-    try {
-      localStorage.setItem(STORAGE_KEY, l)
-    } catch {
-      /* storage unavailable: the choice lasts for this visit */
-    }
+    saveSetting('locale', l)
     // An explicit choice beats a ?lang= link, so drop it to keep reloads consistent.
     const url = new URL(window.location.href)
     if (url.searchParams.has('lang')) {

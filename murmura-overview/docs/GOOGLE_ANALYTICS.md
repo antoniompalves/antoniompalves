@@ -22,7 +22,8 @@ section says ("No website: Northlight Studio").
 Sites are edited in the **Connect Google Analytics** dialog (**GA4 settings**
 once connected): add or remove sites, move them between brands, and give each one
 a GA4 property ID. The list and the client ID are saved in this browser
-(`localStorage["murmura-ga4"]`); the access token never is.
+(`localStorage["kataru-ga4"]`, read from `murmura-ga4` when saved before the
+rename); the access token never is.
 
 ## What the section shows
 

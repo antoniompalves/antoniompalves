@@ -1,10 +1,29 @@
-# Murmura overview, calendar, inbox, analytics & listening — React + Tailwind recreation
+# Kataru — overview, calendar, inbox, analytics & listening (React + Tailwind)
 
-Pixel-matched recreation of the `#/overview` dashboard, the `#/calendar`
+**Kataru** (語る, *to narrate, to tell a story*) is a social-media workspace for
+brands and their teams. It is a pixel-matched recreation of the `#/overview` dashboard, the `#/calendar`
 publishing calendar, the `#/inbox` messaging view, the `#/analytics` reports and the
 `#/listening` social listening page of the Murmura social-media workspace demo, rebuilt from scratch with **React 19, TypeScript, Tailwind CSS v4
 and Lucide icons**. Design tokens, layout metrics, routes and the data model were
 reverse-engineered with Playwright; see [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md).
+
+### Name and logo
+
+<img src="public/favicon.svg" width="56" alt="Kataru logo" align="left">
+
+The mark is 言, the "speech" half of the kanji 語 in 語る, reduced to its strokes:
+a dot, two lines of a story and an open mouth. It is drawn on the same 24px grid,
+with the same round 2.1 strokes, as the Lucide icons around it
+(`src/components/Logo.tsx`, `public/favicon.svg`), and sits in the ink tile the
+top bar already had, next to a lowercase `kataru` wordmark in Urbanist.
+<br clear="left">
+
+The rename touches what people see (logo, wordmark, document titles, CSV names,
+dialog text) and the per-browser settings (`kataru-theme`, `kataru-locale`,
+`kataru-ga4`; values saved under the old `murmura-*` keys are still read). The
+reverse-engineering notes keep the reference's name, Murmura, where they describe
+it. On wide screens the brand keeps the reference's 165px so the centred tab bar
+stays exactly where it was measured.
 
 The app speaks **English** and **European Portuguese**: it follows the browser's
 language, can be switched from the account menu (avatar, top right) or forced with
