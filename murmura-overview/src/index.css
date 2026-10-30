@@ -410,6 +410,48 @@ html.cl-dragging * {
   }
 }
 
+/* Listening grid (".ls-grid"): keywords 4 | stream 5 | share of voice 3 over
+   trending terms 3, then sentiment 7 | competitors 5; 6 columns from 1340px,
+   then one column (stream first) from 1000px. */
+.ls-grid {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "kw kw kw kw st st st st st sov sov sov"
+    "kw kw kw kw st st st st st tr tr tr"
+    "sent sent sent sent sent sent sent comp comp comp comp comp";
+}
+@media (width <= 1340px) {
+  .ls-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-rows: none;
+    grid-template-areas:
+      "kw kw kw st st st"
+      "sov sov sov tr tr tr"
+      "sent sent sent sent sent sent"
+      "comp comp comp comp comp comp";
+  }
+}
+@media (width <= 1000px) {
+  .ls-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "st" "kw" "sov" "tr" "sent" "comp";
+  }
+}
+
+@keyframes beat {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@utility animate-beat {
+  animation: beat 1.6s ease-in-out infinite;
+}
+
 @utility animate-rise {
   animation: rise 0.7s var(--ease-soft) both;
 }

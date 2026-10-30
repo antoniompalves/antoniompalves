@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   Clock,
+  Ear,
   Heart,
   History,
   Inbox,
@@ -526,6 +527,7 @@ const AUDIT_ICON: Record<AuditKind, LucideIcon> = {
   permission: KeyRound,
   schedule: Send,
   inbox: Inbox,
+  listening: Ear,
 }
 
 function TeamActivity({ model, now, className }: SectionProps & { now: Date }) {

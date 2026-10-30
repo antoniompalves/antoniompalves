@@ -1,6 +1,7 @@
-import { avatar } from './assets'
+import { avatar, personPhoto } from './assets'
 import { ACCOUNT_STATS, HEAT, NETWORK_TRENDS, SERIES } from './analyticsData'
-import type { Conversation, Message, NetworkId, Post, PostMetrics, Workspace } from './types'
+import { COMPETITORS, KEYWORDS, MENTIONS } from './listeningData'
+import type { Competitor, Conversation, Keyword, Mention, Message, NetworkId, Post, PostMetrics, Workspace } from './types'
 
 /**
  * Mock workspace mirroring the reference app at Fri, Oct 30 2026, 14:15 UTC.
@@ -287,6 +288,36 @@ const conversations: Conversation[] = CONVERSATIONS.map((c) => ({
 
 const minutesBefore = (m: number) => new Date(Date.parse(NOW) - m * 60_000).toISOString()
 
+/* Listening: the reference's 14 keywords, the 90 mentions they caught over the
+   last six days and nine competitors. People who also write to the inbox keep
+   the same photo there and here. */
+const keywords: Keyword[] = KEYWORDS.map(([id, brandId, term, kind, history]) => ({ id, brandId, term, kind, history }))
+
+const mentions: Mention[] = MENTIONS.map(([id, keywordId, network, author, handle, hasPhoto, minutesAgo, sentiment, reach, text]) => ({
+  id,
+  keywordId,
+  network: network as NetworkId,
+  author,
+  handle,
+  ...(hasPhoto && { avatar: personPhoto(handle) }),
+  text,
+  at: minutesBefore(minutesAgo),
+  sentiment,
+  reach,
+}))
+
+const competitors: Competitor[] = COMPETITORS.map(([id, brandId, name, handle, followers, growth, engagementRate, postsPerWeek, mentions]) => ({
+  id,
+  brandId,
+  name,
+  handle,
+  followers,
+  growth,
+  engagementRate,
+  postsPerWeek,
+  mentions,
+}))
+
 export const workspace: Workspace = {
   now: NOW,
   timeZone: 'Europe/Lisbon',
@@ -351,6 +382,9 @@ export const workspace: Workspace = {
   reports: [],
   bestTimes: BEST_TIMES,
   conversations,
+  keywords,
+  mentions,
+  competitors,
   media: (
     [
       ['eo', 'ember-latte', 'Latte art, close'],

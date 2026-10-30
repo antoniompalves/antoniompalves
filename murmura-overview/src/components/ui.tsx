@@ -115,7 +115,8 @@ interface ButtonProps extends ComponentProps<'button'> {
 export function Button({ variant = 'ink', size = 'md', icon: Icon, href, className, children, ...rest }: ButtonProps) {
   const cls = cn(
     'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full border font-semibold transition-[filter,background-color] duration-150 disabled:cursor-not-allowed disabled:opacity-45 disabled:filter-none',
-    size === 'md' ? 'h-11 px-[19px] text-sm' : 'h-9 px-[15px] text-2xs',
+    // Small buttons grow to 44px touch targets on touch screens, as in the reference.
+    size === 'md' ? 'h-11 px-[19px] text-sm' : 'h-9 px-[15px] text-2xs pointer-coarse:h-11 pointer-coarse:px-4',
     buttonVariant[variant],
     className,
   )
@@ -218,6 +219,7 @@ export const LegendDot = ({ tone, className }: { tone: Tone | 'faint'; className
 /* ───────────────────────── brand mark & avatar ───────────────────────── */
 
 const markSize = {
+  '3xs': 'size-4 rounded-[5px] text-[8px]',
   '2xs': 'size-5 rounded-md text-[9px]',
   xs: 'size-[22px] rounded-[7px] text-[11.5px]',
   sm: 'size-[30px] rounded-[9px] text-[12.5px]',

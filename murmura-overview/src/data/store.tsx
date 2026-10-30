@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer } from 'react'
 import type { Dispatch, ReactNode } from 'react'
-import type { Conversation, Message, Post, ScheduledReport, Website, Workspace } from './types'
+import type { AuditEvent, Conversation, Keyword, Mention, Message, Post, ScheduledReport, Website, Workspace } from './types'
 
 /**
  * Single in-memory workspace shared by every view, so rescheduling a post on
@@ -20,6 +20,13 @@ export type WorkspaceAction =
   | { type: 'addReport'; report: ScheduledReport }
   | { type: 'restoreReports'; reports: ScheduledReport[] }
   | { type: 'setWebsites'; websites: Website[] }
+  | { type: 'audit'; event: AuditEvent }
+  /** `index` puts a keyword back where it was (undoing "Stop tracking"). */
+  | { type: 'track'; keyword: Keyword; mentions: Mention[]; index?: number }
+  | { type: 'untrack'; id: string }
+  | { type: 'mentionArrived'; mention: Mention }
+  | { type: 'mention'; id: string; patch: Partial<Mention> }
+  | { type: 'mentionToInbox'; id: string; conversation: Conversation }
 
 function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
   const update = (id: string, patch: (p: Post) => Post) => ({
@@ -61,8 +68,29 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, reports: action.reports }
     case 'setWebsites':
       return { ...ws, websites: action.websites }
+    case 'audit':
+      return { ...ws, audit: [action.event, ...ws.audit] }
+    case 'track': {
+      const keywords = [...ws.keywords]
+      keywords.splice(action.index ?? keywords.length, 0, action.keyword)
+      return { ...ws, keywords, mentions: newestFirst([...ws.mentions, ...action.mentions]) }
+    }
+    case 'untrack':
+      return { ...ws, keywords: ws.keywords.filter((k) => k.id !== action.id), mentions: ws.mentions.filter((m) => m.keywordId !== action.id) }
+    case 'mentionArrived':
+      return { ...ws, mentions: [action.mention, ...ws.mentions] }
+    case 'mention':
+      return { ...ws, mentions: ws.mentions.map((m) => (m.id === action.id ? { ...m, ...action.patch } : m)) }
+    case 'mentionToInbox':
+      return {
+        ...ws,
+        conversations: [action.conversation, ...ws.conversations],
+        mentions: ws.mentions.map((m) => (m.id === action.id ? { ...m, conversationId: action.conversation.id } : m)),
+      }
   }
 }
+
+const newestFirst = (mentions: Mention[]) => [...mentions].sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
 
 const WorkspaceContext = createContext<{ ws: Workspace; dispatch: Dispatch<WorkspaceAction> } | null>(null)
 

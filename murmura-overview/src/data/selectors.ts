@@ -181,8 +181,8 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
     .slice(0, 3)
     .map((c: Conversation) => ({ ...c, preview: lastMessage(c).text }))
 
-  // Team activity
-  const feed = ws.audit.map((e: AuditEvent) => ({
+  // Team activity: the seven latest events
+  const feed = ws.audit.slice(0, 7).map((e: AuditEvent) => ({
     ...e,
     actor: member(e.actorId),
     actorFirstName: firstName(member(e.actorId)),

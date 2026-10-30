@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { AuditAction, ConversationKind, NetworkId, Permission, PostStatus, Role, Sentiment } from '../data/types'
+import type { AuditAction, ConversationKind, KeywordKind, NetworkId, Permission, PostStatus, Role, Sentiment } from '../data/types'
 import { dayDiff, num, splitMinutes, utc } from './format'
 
 /**
@@ -124,12 +124,14 @@ export const en = {
       const diff = dayDiff(iso, now)
       return diff <= 0 ? 'Today' : diff === 1 ? 'Yesterday' : dt({ weekday: 'long', month: 'long', day: 'numeric' }).format(new Date(iso))
     },
+    /** "just now", "45 min ago", "2 h ago" (rounded), "3 d ago", then the date. */
     ago: (iso: string, now: Date) => {
-      const mins = Math.max(0, Math.round((now.getTime() - Date.parse(iso)) / 60_000))
-      if (mins < 1) return 'just now'
-      if (mins < 60) return `${mins} min ago`
-      const h = Math.floor(mins / 60)
-      return h < 24 ? `${h} h ago` : `${Math.floor(h / 24)} d ago`
+      const ms = Math.max(0, now.getTime() - Date.parse(iso))
+      if (ms < 60_000) return 'just now'
+      const mins = Math.round(ms / 60_000)
+      const hours = Math.round(ms / 3_600_000)
+      const days = Math.round(ms / 86_400_000)
+      return mins < 60 ? `${mins} min ago` : hours < 24 ? `${hours} h ago` : days < 7 ? `${days} d ago` : monthDay(new Date(iso))
     },
     /** Up next: "18 h 45 min", "12 min", "3 d 4 h" from 48 h on. */
     countdown: (ms: number) => {
@@ -150,6 +152,8 @@ export const en = {
     /** "30%" */
     pct0: (f: number) => `${Math.round(f * 100)}%`,
     signedPct1: (f: number) => `${f >= 0 ? '+' : '−'}${pct1(Math.abs(f))}`,
+    /** "2.5", "10" */
+    decimal: (n: number) => num('en', { maximumFractionDigits: 1 }).format(n),
     /** "8.9×" */
     times: (n: number) => `${num('en', { maximumFractionDigits: 1 }).format(n)}×`,
   },
@@ -211,7 +215,7 @@ export const en = {
     light: 'Light',
     notRecreated: (routes: ReactNode[]) => (
       <>
-        Only {routes[0]}, {routes[1]}, {routes[2]} and {routes[3]} are recreated. This route exists in the reference with the sections below.
+        Only {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]} and {routes[4]} are recreated. This route exists in the reference with the sections below.
       </>
     ),
   },
@@ -289,6 +293,12 @@ export const en = {
         return `scheduled ${plural(a.count, 'post', 'posts')} for ${brand(a.brandId)}`
       case 'closedConversations':
         return `closed ${plural(a.count, 'conversation', 'conversations')}`
+      case 'trackedKeyword':
+        return `started tracking “${a.term}” for ${brand(a.brandId)}`
+      case 'untrackedKeyword':
+        return `stopped tracking “${a.term}” for ${brand(a.brandId)}`
+      case 'openedMention':
+        return `opened a conversation from ${/^[aeiox]/i.test(network(a.network)) ? 'an' : 'a'} ${network(a.network)} mention of “${a.term}”`
     }
   },
 
@@ -780,6 +790,116 @@ export const en = {
       /** Percentages with two decimals: "10.10%". */
       pct: (f: number) => `${(f * 100).toFixed(2)}%`,
       stamp: (d: Date) => d.toLocaleString(L),
+    },
+  },
+
+  listening: {
+    title: 'Listening',
+    stats: {
+      mentions: 'Mentions this week',
+      net: 'Net sentiment, positive − negative',
+      reach: 'Potential reach this week',
+      share: (brand: string) => `Share of voice, ${brand}`,
+    },
+    track: 'Track a keyword',
+    kinds: { brand: 'Brand', hashtag: 'Hashtag', topic: 'Topic', competitor: 'Competitor' } satisfies Record<KeywordKind, string>,
+    keywords: {
+      title: 'Tracked keywords',
+      hint: 'Pick a keyword to filter the stream. Lines show 14 days of volume.',
+      /** After the count: "9 this week". */
+      thisWeek: 'this week',
+      split: (pos: string, neu: string, neg: string) => `${pos} positive, ${neu} neutral, ${neg} negative`,
+      splitTitle: (pos: string, neu: string, neg: string) => `${pos} positive · ${neu} neutral · ${neg} negative`,
+      stop: (term: string) => `Stop tracking ${term}`,
+      showAll: 'Show all keywords',
+      showFewer: 'Show fewer',
+      noneTitle: 'No keywords yet',
+      noneText: 'Track your brand name, a hashtag or a competitor to start hearing what people say.',
+    },
+    stream: {
+      title: 'Mentions',
+      live: 'Live',
+      paused: 'Paused',
+      pause: 'Pause the live stream',
+      resume: 'Resume the live stream',
+      sentiment: 'Sentiment',
+      all: 'All',
+      network: 'Network',
+      allNetworks: 'All networks',
+      saved: 'Saved',
+      activeFilters: 'Active filters',
+      clearKeyword: (term: string) => `Clear keyword filter: ${term}`,
+      clearTerm: (term: string) => `Clear search: ${term}`,
+      reach: (n: string) => `${n} reach`,
+      reply: 'Reply in inbox',
+      openInInbox: 'Open in inbox',
+      save: 'Save',
+      unsave: 'Unsave',
+      hide: 'Hide',
+      more: (n: number) => `Show ${n} more`,
+      everything: 'That’s every mention in view.',
+      noneTitle: 'No mentions yet',
+      noneText: 'New mentions of your keywords land here as they happen.',
+      noMatchTitle: 'Nothing matches these filters',
+      noMatchText: 'Try another sentiment or network, or clear the filters.',
+      noSaved: 'Star a mention to keep it here.',
+    },
+    voice: {
+      title: 'Share of voice',
+      brand: 'Brand',
+      of: 'of the conversation, this week',
+      you: 'You',
+      count: (name: string, n: number) => `${name}: ${plural(n, 'mention', 'mentions')} this week`,
+      noneTitle: 'No competitors tracked',
+      noneText: (brand: string) => `Add competitors for ${brand} to see how loud you are next to them.`,
+    },
+    trending: {
+      title: 'Trending terms',
+      sub: 'This week, in the mentions you track. Pick one to search the stream.',
+      count: (n: number) => `${plural(n, 'mention', 'mentions')} this week`,
+      noneTitle: 'Quiet week',
+      noneText: 'Terms people use around your keywords will gather here.',
+    },
+    sentiment: {
+      title: 'Sentiment over time',
+      /** Next to the net figure; `pts` is the change in percentage points (rounded). */
+      sub: (pts: number) => `net sentiment this week · ${pts === 0 ? 'level with' : `${pts > 0 ? '+' : '−'}${Math.abs(pts)} pts vs`} the week before`,
+      chart: 'Mentions per day by sentiment, last 14 days',
+    },
+    competitors: {
+      title: 'Competitors',
+      caption: 'Followers, monthly growth, engagement rate and posts per week for the brand and its competitors.',
+      account: 'Account',
+      followers: 'Followers',
+      growth: 'Growth',
+      engagement: 'Engagement',
+      perWeek: 'Posts / wk',
+      you: 'You · last 30 days',
+      noneTitle: 'No competitors for this brand',
+      noneText: 'Competitors are set up per brand by an admin.',
+    },
+    dialog: {
+      title: 'Track a keyword',
+      sub: 'Murmura listens on every connected network and backfills the last few days.',
+      term: 'Keyword, hashtag or name',
+      placeholder: '#flatwhite, “cold brew”, a competitor…',
+      kind: 'Kind',
+      brand: 'For brand',
+      cancel: 'Cancel',
+      submit: 'Start tracking',
+      tooShort: 'That keyword is too short to listen for.',
+      duplicate: (brand: string, term: string) => `${brand} already tracks “${term}”.`,
+    },
+    toast: {
+      tracking: (term: string, n: number) => `Tracking “${term}” · ${plural(n, 'mention', 'mentions')} backfilled`,
+      stopped: (term: string) => `Stopped tracking “${term}”`,
+      paused: 'Live stream paused — new mentions wait until you resume',
+      resumed: 'Live stream resumed',
+      hidden: 'Mention hidden from the stream',
+      saved: 'Saved · find it under Saved',
+      unsaved: 'Removed from saved',
+      moved: (brand: string) => `Moved to the inbox · ${brand}`,
+      noChannel: (brand: string) => `${brand} has no connected channel to reply from`,
     },
   },
 }

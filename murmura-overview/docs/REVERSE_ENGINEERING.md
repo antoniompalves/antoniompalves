@@ -1,4 +1,4 @@
-# Murmura · `#/overview`, `#/calendar`, `#/inbox` + `#/analytics` — reverse-engineering notes
+# Murmura · `#/overview`, `#/calendar`, `#/inbox`, `#/analytics` + `#/listening` — reverse-engineering notes
 
 Reference: `https://demo.codeandchill.store/murmura/#/overview`, inspected with the
 Playwright MCP on **2026-10-30 ~14:15 UTC** at a **1440×900** viewport (light theme,
@@ -199,7 +199,7 @@ Known differences:
 - Curve uses monotone-X interpolation; the original's smoothing differs slightly.
 - The demo's live simulation (new inbox messages arriving, count-up stats, mesh
   parallax, magnetic buttons) is not reproduced; the countdown and "x min ago" do tick.
-- `#/overview`, `#/calendar`, `#/inbox` and `#/analytics` are recreated; other routes render a placeholder listing their sections.
+- `#/overview`, `#/calendar`, `#/inbox`, `#/analytics` and `#/listening` are recreated; other routes render a placeholder listing their sections.
 
 ## 8. Calendar (`#/calendar`)
 
@@ -487,4 +487,106 @@ section 10 still matches at 1440 and 390 px; the page is longer). Websites are
 owned by brands like social accounts — several, one or none per brand. Data
 model, demo generation, the live GA4 connection and how it was tested are in
 [`GOOGLE_ANALYTICS.md`](GOOGLE_ANALYTICS.md).
+
+## 12. Listening (`#/listening`)
+
+Reached from the **Listening** tab, and on phones from the bottom bar's **More**
+sheet. Inspected the same way as analytics: computed styles at 1440 / 1280 / 960 /
+390 px (touch pointer on the phone), the page's lazily loaded `listening-*` CSS and
+JS (read for behaviour and wording only), every chart path, and the reference's own
+state (14 keywords, 90 mentions, 9 competitors) read from its `localStorage` with the
+clock pinned to Fri 30 Oct 2026, 14:15 UTC.
+
+| Listening · 1440 | Keyword + term filters | Phone |
+| --- | --- | --- |
+| ![Listening, light theme](screenshots/listening-light.png) | ![Stream filtered by Ember & Oak and "best"](screenshots/listening-filtered.png) | ![Listening on a phone](screenshots/listening-mobile.png) |
+
+| Track a keyword | Dark | Escuta (pt-PT) |
+| --- | --- | --- |
+| ![Track a keyword dialog](screenshots/listening-track.png) | ![Sentiment and competitors, dark theme](screenshots/listening-dark.png) | ![Listening in European Portuguese](screenshots/listening-pt.png) |
+
+### Layout
+
+```
+header   title · 4 stats (message, smile, eye, pie) · Track a keyword (ink)
+.ls-grid 12 cols, gap 16, rows auto 1fr auto:
+           kw 4 | stream 5 | share of voice 3
+           kw   | stream   | trending terms 3
+           sentiment 7 | competitors 5
+         ≤ 1340px: 6 cols (kw 3 | stream 3 / sov 3 | trending 3 / sentiment 6 / competitors 6)
+         ≤ 1000px: 1 col, the stream first
+```
+
+| Part | Value |
+| --- | --- |
+| Keyword row | r18, padding 8 8 10, `1fr auto` with a 34px remove button over both rows; selected = `--glass-2` + `--line-2` border; kind badge min-width 84 (Brand ink, Hashtag sea, Topic pine, Competitor coral); term 15/700 + 16px brand mark and "9 this week"; 92×30 sea line of 14 days with a 3.2px end dot; 6px sentiment split (good / line-2 / coral, 2px gaps) indented 96px. Phones: badge on its own line, 72px line, 6 rows until "Show all keywords 14" |
+| Stream filters | segmented All / Positive / Neutral / Negative (full width on phones), 34px chips "All networks" (menu) and "Saved n", butter chips for the active keyword / term |
+| Live | 34px pill, `--well` → coral 14% with a 9px dot beating at 1.6s |
+| Mention | `auto 1fr`, gap 12, padding 14 4, hairline; 36px face + 20px network disc; name 15/700, "@handle · 45 min ago", sentiment pill (13px, 27px tall); text 16/1.45 with the keyword (or the searched term) in a butter `<mark>`; footer 12.5px: kind dot + keyword, reach, Reply in inbox (36px) · Save (34px, butter when on) · Hide. 8 per page (6 on phones), "Show 8 more 82" |
+| Share of voice | brand picker chip (34px), `clamp(28px, 2.5vw, 36px)` figure, rows `auto 1fr 3.2em`: 30px mark, name (+ ink "You" pill), %, 10px track filled to share ÷ loudest (brand ink, competitors `--faint`) |
+| Trending terms | centred wrap, gap 6 8; pills padding 4 11, sizes 13 (muted) / 15 / 18 / 22 / 27 px bold; keywords outlined on `--glass-2`; picked = ink |
+| Sentiment chart | viewBox `width × 230`, plot x 44 → width − 12, y 12 → 204; positive 2.5px pine over a 22% area, neutral muted and negative coral 2px; one date label per ≥ 60px of plot, the one before the last dropped within 40px of it; tooltip with the three counts |
+| Competitors | table 14px, header 13/600; rows 60px with a 38px mark, name 14/600 and handle 13px; "You" row on `--well` with 14px rounded ends; growth pine / coral bold. Names are never truncated: like the reference, the table scrolls sideways when the card is narrower (its last cell's padding at 1440) |
+| Touch | 44px Live pill, chips, small buttons, keyword rows and cloud terms; 46px menu rows |
+
+### How every figure is computed (`src/data/listening.ts`)
+
+| Figure | Rule |
+| --- | --- |
+| This week | a rolling week: mentions from the last 7 × 24 h |
+| Mentions · net sentiment · potential reach | count; (positive − negative) ÷ count; Σ reach |
+| Share of voice | for the picked brand: its own keywords' mentions this week (competitor keywords excluded) against each competitor's baseline + the mentions of a competitor keyword with its name. Ember & Oak 19 · Stumptown 28 + 5 · Heart Roasters 26 · Coava 18 → 20 / 34 / 27 / 19 % |
+| Keyword row | count this week; split = shares of all its mentions; line = the week before (stored per keyword) + this week's mentions per calendar day |
+| Sentiment over time | 14 calendar days; this week counted from the mentions, the week before from each keyword's stored volume split like its mentions (positive and negative rounded, neutral the rest); caption = net this week vs the week before in points (39 % · −8 pts) |
+| Trending terms | each keyword with its mentions this week, plus hashtags that aren't keywords and words of 4+ letters that aren't filler or part of a keyword (words need 2 mentions), from this week's mentions newest first; the 22 busiest; type size 1 + round((n − min) ÷ (max − min) × 4); even ranks keep their place and odd ranks fill in from the quiet end, so big and small alternate |
+| You (competitors) | Σ followers of the brand's accounts; growth = 30-day gains ÷ (followers − gains); engagement = mean rate of its posts published in the last 28 days; posts / wk = that count ÷ 4 → 142.7K · +8.5 % · 9.2 % · 2.5 |
+| Mention text | the post's text, led by "Keyword — " when the text doesn't contain the keyword |
+
+Data (`src/data/listeningData.ts`): the 14 keywords with the week before as 7
+daily values (decoded from the reference's sparklines), the 90 mentions as minutes
+before "now", and the 9 competitors. All 14 lines, the 42 sentiment points, the
+cloud (terms, counts, sizes and order), every stat and both tables were checked
+against the reference: identical. People who also write to the inbox keep the
+same placeholder photo in both places.
+
+### Interactions
+
+- A keyword row or a keyword in the cloud filters the stream to it; any other term
+  searches the stream (and marks it), scrolling the stream into view; butter chips
+  clear them, "Clear filters" clears everything.
+- Sentiment, network menu and Saved filters; "Show N more" pages by 8 (6 on phones);
+  "That's every mention in view." once all are listed.
+- **Live**: every 12 s while the page is visible a new mention of a random keyword
+  arrives on top, lit up; pausing / resuming says so in a toast.
+- **Save** (star) and **Hide** (with Undo).
+- **Reply in inbox** opens a conversation with the author for the keyword's brand
+  (from its account on that network, else its first connected one), with the
+  mention as the first message, `#listening` tag, priority when negative; logs
+  "opened a conversation from an Instagram mention of “…”" in the team activity,
+  toasts "Moved to the inbox · Northlight Studio" and goes to `#/inbox/:id`. The
+  button then reads "Open in inbox".
+- **Track a keyword**: term (hashtags get their `#` and lose spaces), kind, brand;
+  "That keyword is too short to listen for.", "Ember & Oak already tracks “…”.";
+  backfills 3 mentions (3 h, 29 h and 55 h ago) and toasts with Undo. **Stop
+  tracking** (×) removes the keyword and its mentions, Undo puts both back in place.
+  Both are logged in the team activity.
+- Every card expands over the page like the analytics cards.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| 43 landmarks (header, 6 cards, keyword row parts, filters, 3 mentions and their parts, share-of-voice rows, cloud terms, chart, table rows and headers) at **1440**, **1280**, **960** and **390** px (touch) | identical to the pixel; page heights the same |
+| Chart date labels at the four widths | identical |
+| Seed data replayed through the rules above | the reference's sparklines, sentiment series, cloud and figures, exactly |
+| 41 interaction checks (filters, cloud, menus, save / hide / undo, paging, brand picker and empty states, track + validation + undo, stop + undo in place, live pause / arrival, reply in inbox → thread → "Open in inbox" → activity feed, expand / Escape) | all pass, no console errors |
+| English text of the other pages | unchanged apart from the placeholder's route list |
+
+Known differences: new mentions are made from the phrases and people already in
+the data with this app's own seeded generator (the reference uses its own); the
+reference animates the lines, bars and cloud in; role locks ("Your role can't
+manage listening") are not modelled because the mock user is the owner. The
+relative times ("2 h ago") now round like the reference everywhere (they used to
+round down), which changed no text on the other pages. The overview's team
+activity shows the seven latest events, so listening events push older ones out.
 

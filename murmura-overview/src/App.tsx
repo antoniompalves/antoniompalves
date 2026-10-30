@@ -13,6 +13,7 @@ import type { NavItem } from './data/types'
 import { Analytics } from './pages/Analytics'
 import { Calendar } from './pages/Calendar'
 import { Inbox } from './pages/Inbox'
+import { Listening } from './pages/Listening'
 import { Overview } from './pages/Overview'
 
 type Theme = 'light' | 'dark'
@@ -114,11 +115,13 @@ function Shell() {
             <Inbox now={now} hash={hash} />
           ) : routeId === 'analytics' ? (
             <Analytics now={now} hash={hash} />
+          ) : routeId === 'listening' ? (
+            <Listening now={now} />
           ) : (
             <Card title={page.title} className="max-w-3xl">
               <p className="text-sm text-muted">
                 {t.shell.notRecreated(
-                  ['#/overview', '#/calendar', '#/inbox', '#/analytics'].map((r) => (
+                  ['#/overview', '#/calendar', '#/inbox', '#/analytics', '#/listening'].map((r) => (
                     <code key={r} className="font-semibold text-text">
                       {r}
                     </code>

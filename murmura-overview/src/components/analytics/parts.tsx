@@ -19,6 +19,8 @@ export interface AnCardProps {
   wrapTools?: boolean
   expanded: boolean
   onToggle: () => void
+  /** Placement in the page grid (align-self) while the card sits in it. */
+  className?: string
   children: ReactNode
 }
 
@@ -26,7 +28,7 @@ export interface AnCardProps {
  * A grid card with the reference's "Expand" button: the card lifts out over a
  * scrim, centred and up to 1165px wide, leaving a dashed outline in its place.
  */
-export function AnCard({ id, area, title, tools, wrapTools, expanded, onToggle, children }: AnCardProps) {
+export function AnCard({ id, area, title, tools, wrapTools, expanded, onToggle, className, children }: AnCardProps) {
   const { t } = useI18n()
   const ref = useRef<HTMLElement>(null)
   const [height, setHeight] = useState(0)
@@ -48,7 +50,7 @@ export function AnCard({ id, area, title, tools, wrapTools, expanded, onToggle, 
           'flex min-w-0 flex-col rounded-card border border-rim p-5 max-mobile:p-4',
           expanded
             ? 'fixed inset-x-0 top-[8vh] z-[60] mx-auto max-h-[84vh] w-[min(1165px,92%)] animate-rise overflow-y-auto overscroll-contain bg-solid shadow-pop max-mobile:inset-x-2.5 max-mobile:top-2.5 max-mobile:max-h-[calc(100dvh-20px)] max-mobile:w-auto'
-            : 'relative bg-glass shadow-card',
+            : cn('relative bg-glass shadow-card', className),
         )}
       >
         <header className={cn('mb-3.5 flex min-h-[42px] items-center justify-between gap-3', wrapTools && 'max-mobile:min-h-0 max-mobile:flex-wrap')}>

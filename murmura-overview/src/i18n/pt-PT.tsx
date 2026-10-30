@@ -127,11 +127,12 @@ export const ptPT: Messages = {
       return diff <= 0 ? 'Hoje' : diff === 1 ? 'Ontem' : capitalize(dayFull(new Date(iso)))
     },
     ago: (iso: string, now: Date) => {
-      const mins = Math.max(0, Math.round((now.getTime() - Date.parse(iso)) / 60_000))
-      if (mins < 1) return 'agora mesmo'
-      if (mins < 60) return `há ${mins} min`
-      const h = Math.floor(mins / 60)
-      return h < 24 ? `há ${h} h` : `há ${Math.floor(h / 24)} d`
+      const ms = Math.max(0, now.getTime() - Date.parse(iso))
+      if (ms < 60_000) return 'agora mesmo'
+      const mins = Math.round(ms / 60_000)
+      const hours = Math.round(ms / 3_600_000)
+      const days = Math.round(ms / 86_400_000)
+      return mins < 60 ? `há ${mins} min` : hours < 24 ? `há ${hours} h` : days < 7 ? `há ${days} d` : monthDay(new Date(iso))
     },
     countdown: (ms: number) => {
       const { h, m } = splitMinutes(ms / 60_000)
@@ -150,6 +151,7 @@ export const ptPT: Messages = {
     /** "30%" */
     pct0: (f: number) => num(L, { style: 'percent', maximumFractionDigits: 0 }).format(f),
     signedPct1: (f: number) => `${f >= 0 ? '+' : '−'}${pct1(Math.abs(f))}`,
+    decimal: (n: number) => num(L, { maximumFractionDigits: 1 }).format(n),
     times: (n: number) => `${num(L, { maximumFractionDigits: 1 }).format(n)}×`,
   },
 
@@ -210,7 +212,7 @@ export const ptPT: Messages = {
     light: 'Claro',
     notRecreated: (routes: ReactNode[]) => (
       <>
-        Só {routes[0]}, {routes[1]}, {routes[2]} e {routes[3]} estão recriadas. Esta secção existe na referência com as partes abaixo.
+        Só {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]} e {routes[4]} estão recriadas. Esta secção existe na referência com as partes abaixo.
       </>
     ),
   },
@@ -287,6 +289,12 @@ export const ptPT: Messages = {
         return `agendou ${plural(a.count, 'publicação', 'publicações')} para ${brand(a.brandId)}`
       case 'closedConversations':
         return `fechou ${plural(a.count, 'conversa', 'conversas')}`
+      case 'trackedKeyword':
+        return `começou a seguir “${a.term}” para ${brand(a.brandId)}`
+      case 'untrackedKeyword':
+        return `deixou de seguir “${a.term}” para ${brand(a.brandId)}`
+      case 'openedMention':
+        return `abriu uma conversa a partir de uma menção de “${a.term}” no ${network(a.network)}`
     }
   },
 
@@ -785,6 +793,114 @@ export const ptPT: Messages = {
       reach: 'Alcance',
       pct: (f: number) => num(L, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(f),
       stamp: (d: Date) => d.toLocaleString(L),
+    },
+  },
+
+  listening: {
+    title: 'Escuta',
+    stats: {
+      mentions: 'Menções esta semana',
+      net: 'Sentimento líquido, positivas − negativas',
+      reach: 'Alcance potencial esta semana',
+      share: (brand: string) => `Quota de voz, ${brand}`,
+    },
+    track: 'Seguir uma palavra-chave',
+    kinds: { brand: 'Marca', hashtag: 'Hashtag', topic: 'Tema', competitor: 'Concorrente' },
+    keywords: {
+      title: 'Palavras-chave seguidas',
+      hint: 'Escolha uma palavra-chave para filtrar as menções. As linhas mostram 14 dias de volume.',
+      thisWeek: 'esta semana',
+      split: (pos: string, neu: string, neg: string) => `${pos} positivas, ${neu} neutras, ${neg} negativas`,
+      splitTitle: (pos: string, neu: string, neg: string) => `${pos} positivas · ${neu} neutras · ${neg} negativas`,
+      stop: (term: string) => `Deixar de seguir ${term}`,
+      showAll: 'Mostrar todas as palavras-chave',
+      showFewer: 'Mostrar menos',
+      noneTitle: 'Ainda sem palavras-chave',
+      noneText: 'Siga o nome da marca, uma hashtag ou um concorrente para começar a ouvir o que se diz.',
+    },
+    stream: {
+      title: 'Menções',
+      live: 'Em direto',
+      paused: 'Em pausa',
+      pause: 'Pausar as menções em direto',
+      resume: 'Retomar as menções em direto',
+      sentiment: 'Sentimento',
+      all: 'Todas',
+      network: 'Rede',
+      allNetworks: 'Todas as redes',
+      saved: 'Guardadas',
+      activeFilters: 'Filtros ativos',
+      clearKeyword: (term: string) => `Limpar o filtro de palavra-chave: ${term}`,
+      clearTerm: (term: string) => `Limpar a pesquisa: ${term}`,
+      reach: (n: string) => `${n} de alcance`,
+      reply: 'Responder',
+      openInInbox: 'Abrir em Mensagens',
+      save: 'Guardar',
+      unsave: 'Remover das guardadas',
+      hide: 'Ocultar',
+      more: (n: number) => `Mostrar mais ${n}`,
+      everything: 'Já está a ver todas as menções.',
+      noneTitle: 'Ainda sem menções',
+      noneText: 'As novas menções das suas palavras-chave aparecem aqui à medida que surgem.',
+      noMatchTitle: 'Nada corresponde a estes filtros',
+      noMatchText: 'Experimente outro sentimento ou outra rede, ou limpe os filtros.',
+      noSaved: 'Marque uma menção com a estrela para a guardar aqui.',
+    },
+    voice: {
+      title: 'Quota de voz',
+      brand: 'Marca',
+      of: 'da conversa, esta semana',
+      you: 'Você',
+      count: (name: string, n: number) => `${name}: ${plural(n, 'menção', 'menções')} esta semana`,
+      noneTitle: 'Sem concorrentes seguidos',
+      noneText: (brand: string) => `Adicione concorrentes de ${brand} para ver quanto se fala de si ao lado deles.`,
+    },
+    trending: {
+      title: 'Termos em tendência',
+      sub: 'Esta semana, nas menções que segue. Escolha um para o procurar nas menções.',
+      count: (n: number) => `${plural(n, 'menção', 'menções')} esta semana`,
+      noneTitle: 'Semana calma',
+      noneText: 'Os termos que se usam à volta das suas palavras-chave vão aparecer aqui.',
+    },
+    sentiment: {
+      title: 'Sentimento ao longo do tempo',
+      sub: (pts: number) => `sentimento líquido esta semana · ${pts === 0 ? 'igual à semana anterior' : `${pts > 0 ? '+' : '−'}${Math.abs(pts)} p.p. face à semana anterior`}`,
+      chart: 'Menções por dia e por sentimento, últimos 14 dias',
+    },
+    competitors: {
+      title: 'Concorrentes',
+      caption: 'Seguidores, crescimento mensal, taxa de interação e publicações por semana da marca e dos seus concorrentes.',
+      account: 'Conta',
+      followers: 'Seguidores',
+      growth: 'Cresc.',
+      engagement: 'Interação',
+      perWeek: 'Pub. / sem.',
+      you: 'Você · 30 dias',
+      noneTitle: 'Sem concorrentes para esta marca',
+      noneText: 'Os concorrentes são definidos por marca por um administrador.',
+    },
+    dialog: {
+      title: 'Seguir uma palavra-chave',
+      sub: 'O Murmura ouve todas as redes ligadas e recupera as menções dos últimos dias.',
+      term: 'Palavra-chave, hashtag ou nome',
+      placeholder: '#flatwhite, “cold brew”, um concorrente…',
+      kind: 'Tipo',
+      brand: 'Para a marca',
+      cancel: 'Cancelar',
+      submit: 'Começar a seguir',
+      tooShort: 'Essa palavra-chave é demasiado curta para a ouvirmos.',
+      duplicate: (brand: string, term: string) => `${brand} já segue “${term}”.`,
+    },
+    toast: {
+      tracking: (term: string, n: number) => `A seguir “${term}” · ${plural(n, 'menção recuperada', 'menções recuperadas')}`,
+      stopped: (term: string) => `Deixou de seguir “${term}”`,
+      paused: 'Menções em direto em pausa — as novas esperam até retomar',
+      resumed: 'Menções em direto retomadas',
+      hidden: 'Menção ocultada',
+      saved: 'Guardada · está em Guardadas',
+      unsaved: 'Removida das guardadas',
+      moved: (brand: string) => `Movida para Mensagens · ${brand}`,
+      noChannel: (brand: string) => `${brand} não tem nenhum canal ligado para responder`,
     },
   },
 }

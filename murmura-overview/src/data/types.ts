@@ -1,5 +1,5 @@
 /**
- * Data model for the Murmura overview. Shapes were derived from what the
+ * Data model for the Kataru workspace. Shapes were derived from what the
  * reference UI renders (DOM text, data-* attributes, chart paths), normalised
  * into entities so every widget on #/overview can be computed from them.
  */
@@ -185,7 +185,7 @@ export interface SavedReply {
   text: string
 }
 
-export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox'
+export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox' | 'listening'
 
 export type Permission = 'assignConversations'
 
@@ -208,6 +208,9 @@ export type AuditAction =
   | { type: 'grantedPermission'; role: Role; permission: Permission }
   | { type: 'scheduled'; count: number; brandId: string }
   | { type: 'closedConversations'; count: number }
+  | { type: 'trackedKeyword'; term: string; brandId: string }
+  | { type: 'untrackedKeyword'; term: string; brandId: string }
+  | { type: 'openedMention'; network: NetworkId; term: string }
 
 export interface AuditEvent {
   id: string
@@ -221,6 +224,58 @@ export type TodoItem =
   | { kind: 'approval'; id: string; postId: string }
   | { kind: 'failed_post'; id: string; postId: string }
   | { kind: 'channel'; id: string; channelId: string }
+
+/* ───────────── listening ───────────── */
+
+/** What a tracked keyword stands for; sets its badge and dot colour. */
+export type KeywordKind = 'brand' | 'hashtag' | 'topic' | 'competitor'
+
+/** A term the workspace listens for on every network, on behalf of one brand. */
+export interface Keyword {
+  id: string
+  brandId: string
+  /** "Ember & Oak", "#slowcoffee", "pour over"… */
+  term: string
+  kind: KeywordKind
+  /** Mentions per day in the week before this one, oldest first (the first half of its 14-day line). */
+  history: number[]
+}
+
+/** A public post that matched a tracked keyword. */
+export interface Mention {
+  id: string
+  keywordId: string
+  network: NetworkId
+  author: string
+  /** Without the "@". */
+  handle: string
+  /** Missing for people without a photo: the UI falls back to tinted initials. */
+  avatar?: string
+  text: string
+  at: ISODate
+  sentiment: Sentiment
+  /** Potential reach: the author's audience on that network. */
+  reach: number
+  saved?: boolean
+  hidden?: boolean
+  /** Conversation opened from it with "Reply in inbox". */
+  conversationId?: string
+}
+
+/** A rival account a brand benchmarks against (share of voice, competitors table). */
+export interface Competitor {
+  id: string
+  brandId: string
+  name: string
+  handle: string
+  followers: number
+  /** Follower growth over the last 30 days, as a fraction. */
+  growth: number
+  engagementRate: number
+  postsPerWeek: number
+  /** Mentions of them this week from sources beyond our own keywords. */
+  mentions: number
+}
 
 export interface AnalyticsHistory {
   series: Record<NetworkId, NetworkSeries>
@@ -254,6 +309,9 @@ export interface Workspace {
    */
   bestTimes: number[][]
   conversations: Conversation[]
+  keywords: Keyword[]
+  mentions: Mention[]
+  competitors: Competitor[]
   savedReplies: SavedReply[]
   media: MediaAsset[]
   todos: TodoItem[]

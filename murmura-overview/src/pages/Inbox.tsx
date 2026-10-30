@@ -14,19 +14,9 @@ import { useI18n } from '../i18n'
 import type { Messages } from '../i18n'
 import type { Conversation, Message, Sentiment } from '../data/types'
 import { cn } from '../components/ui'
+import { useMediaQuery } from '../components/useMediaQuery'
 
 const EMPTY_DRAFT: Draft = { text: '', note: false }
-
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
-  useEffect(() => {
-    const mql = window.matchMedia(query)
-    const on = () => setMatches(mql.matches)
-    mql.addEventListener('change', on)
-    return () => mql.removeEventListener('change', on)
-  }, [query])
-  return matches
-}
 
 const go = (id?: string) => {
   window.location.hash = id ? `#/inbox/${id}` : '#/inbox'

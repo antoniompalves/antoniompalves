@@ -164,7 +164,7 @@ const PROFILES: Record<string, DemoProfile> = {
 }
 
 /** Deterministic pseudo-random numbers (mulberry32) so demo traffic is the same on every load. */
-function rng(seed: string) {
+export function rng(seed: string) {
   let a = [...seed].reduce((h, ch) => Math.imul(h ^ ch.charCodeAt(0), 16777619), 2166136261) >>> 0
   return () => {
     a = (a + 0x6d2b79f5) >>> 0
