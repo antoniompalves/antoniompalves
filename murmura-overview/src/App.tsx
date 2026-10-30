@@ -2,10 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { LucideProvider } from 'lucide-react'
 import { AppFrame, Dock, Mesh, MobileNav, TopBar } from './components/AppShell'
 import { Card } from './components/ui'
+import { ToastProvider } from './components/Toast'
 import { workspace } from './data/mock'
 import { matchRoute, tabRoutes } from './data/routes'
 import { selectOverview } from './data/selectors'
+import { WorkspaceProvider, useWorkspace } from './data/store'
 import type { NavItem } from './data/types'
+import { Calendar } from './pages/Calendar'
 import { Overview } from './pages/Overview'
 
 type Theme = 'light' | 'dark'
@@ -51,12 +54,25 @@ function useMockNow(start: string) {
 }
 
 export default function App() {
+  return (
+    <WorkspaceProvider initial={workspace}>
+      <ToastProvider>
+        <LucideProvider size={20} strokeWidth={1.7}>
+          <Shell />
+        </LucideProvider>
+      </ToastProvider>
+    </WorkspaceProvider>
+  )
+}
+
+function Shell() {
+  const { ws } = useWorkspace()
   const hash = useHash()
   const [theme, toggleTheme] = useTheme()
-  const now = useMockNow(workspace.now)
+  const now = useMockNow(ws.now)
   const minuteKey = Math.floor(now.getTime() / 60_000)
-  // Recompute once a minute: countdowns and "x min ago" only change that often.
-  const model = useMemo(() => selectOverview(workspace, new Date(minuteKey * 60_000)), [minuteKey])
+  // Recompute once a minute (or when the data changes): countdowns and "x min ago" only change that often.
+  const model = useMemo(() => selectOverview(ws, new Date(minuteKey * 60_000)), [ws, minuteKey])
 
   const route = matchRoute(hash)
   const routeId = route.path.slice(2)
@@ -73,17 +89,20 @@ export default function App() {
   }))
 
   return (
-    <LucideProvider size={20} strokeWidth={1.7}>
+    <>
       <Mesh />
       <AppFrame>
         <TopBar tabs={tabs} activeTab={routeId} user={model.user} unreadNotifications={model.badges.notifications} />
         <main id="main" className="relative">
           {routeId === 'overview' ? (
             <Overview model={model} now={now} />
+          ) : routeId === 'calendar' ? (
+            <Calendar now={now} />
           ) : (
             <Card title={route.title} className="max-w-3xl">
               <p className="text-sm text-muted">
-                Only <code className="font-semibold text-text">#/overview</code> is recreated. This route exists in the
+                Only <code className="font-semibold text-text">#/overview</code> and{' '}
+                <code className="font-semibold text-text">#/calendar</code> are recreated. This route exists in the
                 reference with the sections below.
               </p>
               <ul className="mt-4 flex flex-wrap gap-2">
@@ -99,6 +118,6 @@ export default function App() {
       </AppFrame>
       <Dock route={routeId} theme={theme} onToggleTheme={toggleTheme} channelsNeedAttention={model.badges.channelsNeedAttention} />
       <MobileNav route={routeId} theme={theme} onToggleTheme={toggleTheme} />
-    </LucideProvider>
+    </>
   )
 }

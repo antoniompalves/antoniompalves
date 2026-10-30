@@ -26,6 +26,18 @@ export interface Brand {
   name: string
   initials: string
   tone: Tone
+  /** Account handle used in post previews, e.g. "emberandoak". */
+  handle: string
+}
+
+/** A dated marketing push for one brand, drawn as a ribbon across the calendar. */
+export interface Campaign {
+  id: string
+  brandId: string
+  name: string
+  /** Inclusive day range, YYYY-MM-DD. */
+  start: string
+  end: string
 }
 
 export interface TeamMember {
@@ -55,7 +67,9 @@ export type PostStatus =
   | 'failed'
 
 export interface PostMetrics {
+  impressions: number
   reach: number
+  engagements: number
   engagementRate: number
   saves: number
   /** Reach relative to the brand's median post, e.g. 8.9 → "8.9× usual reach". */
@@ -67,10 +81,11 @@ export interface Post {
   brandId: string
   authorId: string
   text: string
-  /** Square media; first item is the cover. */
-  media: string[]
+  /** Photo seed (see assets.ts); posts without media render their brand mark. */
+  image?: string
   networks: NetworkId[]
   status: PostStatus
+  /** Publish time; for drafts, the time they are pencilled in for. */
   scheduledAt: ISODate
   metrics?: PostMetrics
   failure?: { network: NetworkId; reason: string }
@@ -126,10 +141,16 @@ export interface Workspace {
   timeZone: string
   currentUserId: string
   brands: Brand[]
+  campaigns: Campaign[]
   team: TeamMember[]
   channels: Channel[]
   posts: Post[]
   networkStats: NetworkStat[]
+  /**
+   * Relative engagement per weekday (Mon…Sun) and hour (6 AM…11 PM), 0–1.
+   * Shades the calendar's "Best times" overlay.
+   */
+  bestTimes: number[][]
   /** New followers per day across all channels, oldest first (90 days). */
   followerGrowth: DailyPoint[]
   engagementRate30d: number

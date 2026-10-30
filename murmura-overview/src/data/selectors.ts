@@ -135,13 +135,13 @@ export function selectOverview(ws: Workspace, now: Date) {
   }
 
   const todayStart = new Date(`${dates.key(now)}T00:00:00Z`)
-  const weekEnd = dates.addDays(todayStart, 7)
-  const inWeek = (p: Post) => {
+  // "This week" is the calendar week (Mon–Sun), the same range the calendar opens on.
+  const weekStart = dates.addDays(todayStart, -((todayStart.getUTCDay() + 6) % 7))
+  const weekEnd = dates.addDays(weekStart, 7)
+  const postsThisWeek = ws.posts.filter((p) => {
     const t = Date.parse(p.scheduledAt)
-    return t >= todayStart.getTime() && t < weekEnd.getTime()
-  }
-  const goingOut: PostStatus[] = ['scheduled', 'awaiting_approval', 'failed']
-  const postsThisWeek = ws.posts.filter((p) => inWeek(p) && goingOut.includes(p.status)).length
+    return p.status !== 'draft' && t >= weekStart.getTime() && t < weekEnd.getTime()
+  }).length
 
   // Up next: the queue of posts still to publish, soonest first
   const queue = ws.posts

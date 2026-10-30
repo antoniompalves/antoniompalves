@@ -1,4 +1,4 @@
-# Murmura · `#/overview` — reverse-engineering notes
+# Murmura · `#/overview` + `#/calendar` — reverse-engineering notes
 
 Reference: `https://demo.codeandchill.store/murmura/#/overview`, inspected with the
 Playwright MCP on **2026-10-30 ~14:15 UTC** at a **1440×900** viewport (light theme,
@@ -167,7 +167,7 @@ on the page is **derived** in `src/data/selectors.ts` (nothing is hard-coded in 
 | Audience | Σ `networkStats.followers` | 976,260 → **976.3K** |
 | +x% in 30 days | Σ last 30 `followerGrowth` ÷ (audience − that) | 89,608 → **+10.1%** |
 | Engagement rate | `engagementRate30d` | **10.3%** |
-| Posts going out this week | posts today…+6 d with status scheduled / awaiting / failed | **19** |
+| Posts going out this week | non-draft posts in the calendar week (Mon–Sun) — the same 19 the calendar shows for Oct 26 – Nov 1 | **19** |
 | Up next | soonest scheduled-or-awaiting post after `now`, then the next 6 | Ember & Oak · **18 h 45 min** |
 | Needs you | `todos` (approvals, failed post, channel reconnects), 4 visible | **6** |
 | 90D growth | Σ 90 points | **+238.9K · 32.4%** |
@@ -195,4 +195,88 @@ Known differences:
 - Curve uses monotone-X interpolation; the original's smoothing differs slightly.
 - The demo's live simulation (new inbox messages arriving, count-up stats, mesh
   parallax, magnetic buttons) is not reproduced; the countdown and "x min ago" do tick.
-- Only `#/overview` is recreated; other routes render a placeholder listing their sections.
+- `#/overview` and `#/calendar` are recreated; other routes render a placeholder listing their sections.
+
+## 8. Calendar (`#/calendar`)
+
+Reached from the **Calendar** tab of the top bar (the dock has no calendar link:
+it holds Search, Create, Today's queue, Library, Channels, Team, Settings and
+Theme), and from the "Open calendar" / "Calendar" shortcuts on the overview.
+Inspected the same way (computed styles, the lazily loaded `calendar-*.css`
+chunk, cleaned DOM per pane), plus every post read back from the List view
+while paging Sep 28 → Nov 8.
+
+### Layout
+
+```
+head      "Publishing calendar" + 4 stats; actions wrap to a 2nd row, right-aligned:
+          Week/Month/List segmented · ‹ Today › (42px) · New post
+.cl-bar   chips: All networks · 8 network chips (36px, icon only) | 5 status chips | campaign <select> (210px) · Clear
+.cl-grid  [ calendar card (padding 18) | side 300px (330px ≥ 1500px) ], gap 16
+          ≤ 1279px: one column, side cards 2-up, mini calendar hidden · ≤ 760px: filters scroll sideways
+```
+
+| Week grid (`.cl-wk`) | Value |
+| --- | --- |
+| Scroll box | `max-height: clamp(480px, 100dvh − 200px, 1040px)` (700px at 900px tall), `--solid` bg, r20, line border, opens 3 h above "now" |
+| Columns | `var(--gut) repeat(7, minmax(var(--colw), 1fr))`, gap 6, right padding 8; gut/col 56/100 → 50/86 ≤1100 → 48/74 ≤900 |
+| Hours | 6 AM → 11 PM, **72px** rows, labels 12.5/600 muted offset −9px; sticky left |
+| Day head | sticky top: `MON` 12.5/700 +0.05em, 34px number disc (ink when today), "5 posts" / "Free", coral 6px dot when nothing live is booked |
+| Campaign ribbons | sticky header subgrid rows of 24px (+4px gap), r999 (5px on edges cut by the week), 18px initials badge on `currentColor` 22%, "until Nov 8" hidden under 210px (container query) |
+| Day column | `--glass-2`, r16; past = `--well`; today = sea 8% fill + sea 34% border; 18 dashed hour slots |
+| Tile | `top: row·72 + 2`, height 68, lanes `left: 3px + (100% − 6px)·lane/lanes`, r14, padding 6/6/6/8, tone fill by status, 26px photo top-right; hides photo ≤92px, networks ≤84px, caption ≤58px |
+| Now | 2px coral line across today's column with a pulsing 12px dot, coral "2:15p" pill in the gutter |
+| Hover ghost | dashed glass pill "+ 3:30 PM", half-hour high, floor-snapped to 30 min, not on past days |
+| Best times | lilac overlay per slot at `heat × .52` (.62 dark), staggered `ci·40ms + hi·10ms`, "Peak" pill when heat ≥ 0.9; legend swaps to a quiet → busy gradient |
+
+| Month (`.cl-month`) / List (`.cl-list`) / side panel | Value |
+| --- | --- |
+| Month cell | min-h 134 (112 ≤900), r16, rim border; out-of-month transparent, past `--well`; 28px number button (ink today) + count; ≤3 chips (24px, r8, "9:45a" + caption) then "+N more" in the same 3px-gap grid |
+| Month ribbons | 5px hairlines at top 39px, 3px apart; each cell's header gets `ribs × 8px` margin |
+| List row | grid `76px 52px 1fr auto auto`, gap 14, r18, 4px status bar at left 7px, 52px thumb (brand mark when no photo), status pill, author avatar |
+| Mini calendar | 6-week grid, 36px rows, 30px day discs, shaded visible range per week, 4px sea dot at opacity `.3 + min(3, n)·.23` |
+| Drafts | dashed 1.5px card r16, 30px brand mark, "Nia · pencilled Thu, Nov 5, 10:00 AM", grip handle; draggable onto the grid |
+| By network | rows `auto 84px 1fr 26px`, 28px glyph, 8px meter in the network colour, busiest first |
+| Drawer | `<dialog>` fixed 12px from top/right/bottom, 480px, r28, `--glass-3`, blurred 26% backdrop; status, "Goes out Tomorrow · 9:30 AM · by …", per-network preview (feed / video / text-first), metrics once published, Publish now · Edit · Duplicate · Delete |
+
+### Interactions
+
+- **Drag & drop**: pointer events, a fixed clone follows the pointer with its time
+  updating live; week columns snap the clone's top edge to 30 minutes, month cells
+  keep the time of day. Target box: dashed ink border on butter 42% with a
+  "Sat · 2:30 PM" label; past slots turn coral and are refused. Drop → toast
+  "Moved to Tomorrow · 2:30 PM" + **Undo**, butter ring on the landed tile.
+  Unscheduled drafts drag in from the side panel the same way.
+- **Keyboard**: focused tile + `Alt` + `↑/↓` moves 30 min, `←/→` a day.
+- **Filters** (networks, status groups, campaign) apply to all three views and the
+  header counts; ribbons and month legend chips toggle the campaign filter.
+- **Navigation**: ‹ › step a week (Week/List) or a month; mini calendar jumps;
+  a month day number opens that week.
+
+### Data
+
+The 78 posts on the reference grid (Sep 28 – Nov 8: 50 published, 18 scheduled,
+5 awaiting approval, 2 changes requested, 2 drafts, 1 failed) plus the two drafts
+pencilled further out, 4 campaigns, and the 7×18 "best times" matrix were read
+from the DOM into `src/data/mock.ts`. Derived values match the reference:
+**5** scheduled / **5** awaiting / **9** published this week, **3** empty days in
+the next 7, network load **16 · 8 · 7 · 5 · 5 · 4 · 2 · 2**, mini-calendar counts.
+Calendar and overview share one store (`src/data/store.tsx`), so a post moved on
+the calendar immediately reshuffles the overview's Up next and Week ahead.
+
+### Verification (1440×900, week grid scroll aligned)
+
+| Check | Result |
+| --- | --- |
+| 30 week-view landmarks (head, chips, select, grid, day heads, ribbons, columns, lane tiles, side cards) | identical to the pixel |
+| Month view: 42 cells + 55 chips | identical |
+| List view rows (first, today, last) | identical |
+| Drawer box, title, timing line | identical (`933,12 480×876`) |
+| Peaks with Best times on | same slots per day |
+| Drag Sat 12 PM tile down 2.4 h | same "Sat · 2:30 PM" target and "Moved to Tomorrow · 2:30 PM" toast |
+
+Known differences: post metrics other than the top post are synthetic; the
+preview card's height follows the photo's aspect (the reference photos are
+portrait, the placeholders square); the "Failed" chip groups failed and
+changes-requested posts (the reference's "needs attention" colour); the reference
+persists edits in `localStorage`, this recreation keeps them in memory.

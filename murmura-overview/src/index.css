@@ -57,6 +57,8 @@
   --pill: #16191d;
   --on-pill: #f6f7f5;
   --gutter: clamp(16px, 1.6vw, 28px);
+  /* Strength of the calendar's "Best times" shading. */
+  --heat-k: 0.52;
   --dock-x: 18px;
   --dock-w: 68px;
   color-scheme: light;
@@ -102,6 +104,7 @@
   --on-dock: #eef0ee;
   --pill: #eef0ee;
   --on-pill: #16191d;
+  --heat-k: 0.62;
   color-scheme: dark;
 }
 
@@ -223,6 +226,53 @@
     opacity: 0;
     transform: translateY(0.6em);
   }
+}
+
+@keyframes cl-pulse {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.8);
+  }
+}
+
+/* Butter ring flashed on a post right after it lands in a new slot. */
+@keyframes cl-land {
+  0%,
+  40% {
+    box-shadow: 0 0 0 3px var(--solid), 0 0 0 6px var(--butter);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent, 0 0 0 6px transparent;
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@utility animate-pulse-ring {
+  animation: cl-pulse 2.4s ease-out infinite;
+}
+
+@utility animate-land {
+  animation: cl-land 1.3s var(--ease-soft);
+}
+
+@utility animate-drawer {
+  animation: drawer-in 0.35s var(--ease-soft);
+}
+
+html.cl-dragging,
+html.cl-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
 }
 
 @utility animate-breathe {

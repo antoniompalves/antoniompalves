@@ -31,21 +31,64 @@ const toneDot: Record<Tone, string> = {
 
 interface CardProps extends Omit<ComponentPropsWithoutRef<'section'>, 'title'> {
   title: ReactNode
+  /** Muted line under the title; aligns the header to the top. */
+  sub?: ReactNode
   tools?: ReactNode
+  /** Padding utility; side-panel cards use 18px instead of the default 20px. */
+  pad?: string
 }
 
-export function Card({ title, tools, className, children, ...rest }: CardProps) {
+export function Card({ title, sub, tools, pad = 'p-5', className, children, ...rest }: CardProps) {
   return (
     <section
-      className={cn('relative min-w-0 rounded-card border border-rim bg-glass p-5 shadow-card', className)}
+      className={cn('relative min-w-0 rounded-card border border-rim bg-glass shadow-card', pad, className)}
       {...rest}
     >
-      <header className="mb-3.5 flex min-h-[42px] items-center justify-between gap-3">
-        <h2 className="text-base font-semibold tracking-[-0.005em]">{title}</h2>
+      <header className={cn('mb-3.5 flex min-h-[42px] justify-between gap-3', sub ? 'items-start' : 'items-center')}>
+        {sub ? (
+          <div>
+            <h2 className="text-base font-semibold tracking-[-0.005em]">{title}</h2>
+            <p className="text-2xs text-muted">{sub}</p>
+          </div>
+        ) : (
+          <h2 className="text-base font-semibold tracking-[-0.005em]">{title}</h2>
+        )}
         {tools && <div className="flex items-center gap-2">{tools}</div>}
       </header>
       {children}
     </section>
+  )
+}
+
+/** Pill-shaped segmented control (".seg"): muted options, the pressed one lifted. */
+export function Segmented<T extends string | number>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: { value: T; label: ReactNode }[]
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex shrink-0 rounded-full bg-well p-[3px]">
+      {options.map((o) => (
+        <button
+          key={String(o.value)}
+          type="button"
+          aria-pressed={value === o.value}
+          onClick={() => onChange(o.value)}
+          className={cn(
+            'cursor-pointer whitespace-nowrap rounded-full px-[15px] py-2 text-2xs font-semibold transition-[background-color,color,box-shadow] duration-300 ease-soft',
+            value === o.value ? 'bg-glass-3 text-text shadow-[0_2px_8px_rgb(0_0_0/0.08)] dark:bg-white/14' : 'text-muted',
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -97,17 +140,19 @@ interface IconButtonProps extends ComponentPropsWithoutRef<'button'> {
   icon: LucideIcon
   href?: string
   variant?: 'line' | 'glass' | 'on-dark'
+  size?: 'md' | 'sm'
 }
 
-export function IconButton({ label, icon: Icon, href, variant = 'line', className, ...rest }: IconButtonProps) {
+export function IconButton({ label, icon: Icon, href, variant = 'line', size = 'md', className, ...rest }: IconButtonProps) {
   const cls = cn(
-    'relative inline-grid shrink-0 cursor-pointer place-items-center rounded-full border transition-colors duration-150',
-    variant === 'line' && 'size-[42px] border-line-2 text-text hover:bg-glass-2',
+    'relative inline-grid shrink-0 cursor-pointer place-items-center rounded-full border transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-40',
+    variant === 'line' && 'border-line-2 text-text hover:bg-glass-2',
     variant === 'glass' && 'size-[46px] border-rim bg-glass-2 text-text hover:bg-glass-3',
-    variant === 'on-dark' && 'size-[42px] border-on-ink/28 text-inherit hover:bg-on-ink/12',
+    variant === 'on-dark' && 'border-on-ink/28 text-inherit hover:bg-on-ink/12',
+    variant !== 'glass' && (size === 'sm' ? 'size-[34px]' : 'size-[42px]'),
     className,
   )
-  const icon = <Icon size={20} aria-hidden />
+  const icon = <Icon size={size === 'sm' ? 17 : 20} aria-hidden />
   return href ? (
     <a href={href} className={cls} aria-label={label} title={label}>
       {icon}
@@ -137,11 +182,12 @@ export function Badge({ tone, className, children }: { tone: Tone; className?: s
 }
 
 /** "spill" in the reference: a soft pill with a coloured status dot. */
-export function StatusPill({ tone, className, children }: { tone: Tone; className?: string; children: ReactNode }) {
+export function StatusPill({ tone, size = 'sm', className, children }: { tone: Tone; size?: 'sm' | 'md'; className?: string; children: ReactNode }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-[7px] whitespace-nowrap rounded-full bg-well py-0.5 pl-[7px] pr-[9px] text-[12.5px] font-semibold',
+        'inline-flex items-center gap-[7px] whitespace-nowrap rounded-full bg-well font-semibold',
+        size === 'sm' ? 'py-0.5 pl-[7px] pr-[9px] text-[12.5px]' : 'py-1 pl-[9px] pr-[11px] text-2xs',
         tone === 'coral' && 'text-bad',
         className,
       )}
@@ -152,8 +198,8 @@ export function StatusPill({ tone, className, children }: { tone: Tone; classNam
   )
 }
 
-export const PostStatusPill = ({ status, className }: { status: PostStatus; className?: string }) => (
-  <StatusPill tone={STATUS_META[status].tone} className={className}>
+export const PostStatusPill = ({ status, size, className }: { status: PostStatus; size?: 'sm' | 'md'; className?: string }) => (
+  <StatusPill tone={STATUS_META[status].tone} size={size} className={className}>
     {STATUS_META[status].label}
   </StatusPill>
 )
@@ -165,6 +211,7 @@ export const LegendDot = ({ tone, className }: { tone: Tone | 'faint'; className
 /* ───────────────────────── brand mark & avatar ───────────────────────── */
 
 const markSize = {
+  '2xs': 'size-5 rounded-md text-[9px]',
   xs: 'size-[22px] rounded-[7px] text-[11.5px]',
   sm: 'size-[30px] rounded-[9px] text-[12.5px]',
   md: 'size-[38px] rounded-[11px] text-sm',
@@ -280,7 +327,7 @@ export function NetworkGlyph({ network, className }: { network: NetworkId; class
   )
 }
 
-const netSize = { xs: 'size-[22px]', sm: 'size-7', md: 'size-9', lg: 'size-[46px]' } as const
+const netSize = { '2xs': 'size-5', xs: 'size-[22px]', sm: 'size-7', md: 'size-9', lg: 'size-[46px]' } as const
 
 interface NetIconProps {
   network: NetworkId
