@@ -30,6 +30,21 @@ Changes are saved in the browser (`kataru-workspace`) and survive a reload;
 other open tabs follow along. **Reset demo data** in the account menu puts the
 starting data back, keeping the theme, language and Google Analytics settings.
 
+### Publishing to the networks
+
+Real posting goes through a small service in `server/` (Node 22, no
+dependencies): sign-in with **Meta** (Facebook Pages + Instagram), **Threads**,
+**LinkedIn**, **TikTok** and **YouTube**, tokens kept encrypted and refreshed,
+per-network checks, a scheduler with retries, and public hosting for the media
+networks fetch. `src/data/publisher.ts` is the app's client. Setting up each
+network's developer app, the reviews they require and their limits are in
+[`docs/PUBLISHING.md`](docs/PUBLISHING.md).
+
+```bash
+cp server/.env.example server/.env && npm run publisher   # the service
+npm run test:publisher                                     # its tests (networks mocked)
+```
+
 The app speaks **English** and **European Portuguese**: it follows the browser's
 language, can be switched from the account menu (avatar, top right) or forced with
 `?lang=pt-PT` / `?lang=en`. See [`docs/I18N.md`](docs/I18N.md).
@@ -208,7 +223,25 @@ src/
     store.tsx             shared store (posts, conversations, reports, keywords and mentions, with undo), saved per browser, reset
     persist.ts            saving and loading the workspace: version, seed fingerprint, mock clock
     routes.ts             the SPA's hash routes (their names live in the catalogues)
+    publishing.ts         the app ↔ publishing service contract (shared with server/)
+    publisher.ts          client for the publishing service: connect, accounts, media, publish, jobs
     assets.ts             image URL helpers (swap for real assets here)
+server/                   publishing service (docs/PUBLISHING.md)
+  index.ts                start: config, encrypted store, scheduler, HTTP
+  app.ts                  HTTP API: connect + callback, accounts, media, posts, jobs, TikTok creator info
+  config.ts               environment (server/.env.example)
+  store.ts                connections, jobs and media in one AES-256-GCM sealed file
+  publish.ts              job runner: token refresh, rules, publish, retries; the scheduler
+  rules.ts                what each network would refuse, checked before sending
+  media.ts                uploaded media, served publicly; downloads for connectors that upload bytes
+  providers/
+    meta.ts               Facebook Pages + Instagram (Facebook Login for Business, Graph API)
+    threads.ts            Threads (its own sign-in; 60-day tokens, refreshed)
+    linkedin.ts           LinkedIn Posts/Images/Videos API (member and Company Pages)
+    tiktok.ts             TikTok Content Posting API (direct post, chunked upload, status)
+    youtube.ts            YouTube Data API v3 (PKCE, resumable upload)
+    http.ts               fetch wrapper: one error vocabulary for every network
+  test/                   node:test suites with every network mocked
 ```
 
 Theme follows `html[data-theme]` and is toggled from the dock; the language follows
