@@ -514,6 +514,10 @@ export const en = {
         return `${a.paused ? 'paused' : 'resumed'} posting to ${brand(a.brandId)} on ${network(a.network)}`
       case 'disconnectedChannel':
         return `disconnected ${brand(a.brandId)} on ${network(a.network)}`
+      case 'connectedInbox':
+        return `connected ${a.source === 'whatsapp' ? 'WhatsApp Business' : 'Google Business Profile'} for ${brand(a.brandId)}`
+      case 'disconnectedInbox':
+        return `disconnected ${a.source === 'whatsapp' ? 'WhatsApp Business' : 'Google Business Profile'} from ${brand(a.brandId)}`
       case 'signedIn':
         return 'signed in'
       case 'signedOut':
@@ -738,7 +742,45 @@ export const en = {
     markDone: 'Mark done',
     addTag: 'Add a tag',
     newTag: 'New tag',
+    /** WhatsApp Business, Messenger and Google reviews. */
+    sources: {
+      stars: (n: number) => `${n} out of 5 stars`,
+      rating: 'Rating',
+      phone: 'Phone',
+      location: 'Location',
+      viaPage: 'Via the Facebook Page',
+      review: 'Google review',
+      window: (source: string, left: string) => `${source}: ${left} left to reply freely`,
+      agent: (until: string) => `Past 24 hours: replies go out with Meta’s human agent tag, until ${until}.`,
+      template: (ago: string) => `The 24-hour window closed ${ago}. WhatsApp only takes approved templates now.`,
+      chooseTemplate: 'Choose a template',
+      closed: (source: string) => `${source} stopped taking replies 7 days after their last message. Notes still work.`,
+      offline: (source: string, brand: string) => `${source} isn’t connected for ${brand}. Notes still work.`,
+      connect: 'Connect it',
+      reviewOpen: 'Your reply shows publicly on Google, under the review.',
+      reviewed: 'You’ve replied publicly. Sending again replaces that reply.',
+      reviewPlaceholder: (brand: string) => `Reply publicly as ${brand}…`,
+      blockedPlaceholder: 'Notes only here',
+      publicReply: 'Public reply',
+      humanAgent: 'Human agent',
+      templateLabel: (name: string) => `Template · ${name}`,
+      dialog: {
+        title: 'Send a WhatsApp template',
+        sub: 'Templates approved by Meta are the only messages WhatsApp delivers outside the 24-hour window.',
+        templates: 'Templates',
+        utility: 'Utility',
+        marketing: 'Marketing',
+        marketingHint: 'Only for people who agreed to marketing messages.',
+        part: (n: number) => `Part {{${n}}}`,
+        preview: 'Preview',
+        send: 'Send template',
+        cancel: 'Cancel',
+        missing: 'Fill in every part first',
+      },
+    },
     toast: {
+      replyUpdated: 'Reply updated on Google',
+      templateSent: (first: string) => `Template sent to ${first}`,
       reopened: (first: string, kind: ConversationKind) => `Reopened ${first}’s ${kind}`,
       done: (first: string, kind: ConversationKind) => `Done · ${first}’s ${kind} closed`,
       sentAndClosed: (first: string) => `Sent to ${first} · conversation closed`,
@@ -1642,6 +1684,38 @@ export const en = {
       text: (brand: string, network: string, n: number) => `${brand} stops posting to ${network}.${n ? ` ${n} scheduled ${n > 1 ? 'posts' : 'post'} will skip it.` : ''}`,
       confirm: 'Disconnect',
       cancel: 'Cancel',
+    },
+    inboxCard: {
+      title: 'Messaging & reviews',
+      sub: 'What reaches the inbox beyond the social networks',
+      whatsapp: 'WhatsApp Business',
+      messenger: 'Messenger',
+      google: 'Google Business Profile',
+      whatsappWhat: 'Customer chats · 24-hour window, then templates',
+      messengerWhat: 'Comes with each Facebook Page · human agent tag up to 7 days',
+      googleWhat: 'Reviews and public replies, per location',
+      viaPage: 'via the Facebook Page',
+      notConnected: 'Not connected',
+      connect: (source: string, brand: string) => `Connect ${source} for ${brand}`,
+      disconnect: (source: string, brand: string) => `Disconnect ${source} from ${brand}`,
+      connected: (n: number) => `${n} connected`,
+    },
+    inboxDialog: {
+      title: (source: string) => `Connect ${source}`,
+      whatsappSub: 'Kataru answers on this number through Meta’s WhatsApp Business Platform. The number can’t stay in the WhatsApp app at the same time.',
+      googleSub: 'Reviews from this location come into the inbox, and replies are posted publicly as the business.',
+      brand: 'For brand',
+      phone: 'WhatsApp Business number',
+      phonePlaceholder: '+1 503 555 0100',
+      location: 'Business Profile location',
+      locationPlaceholder: 'Ember & Oak Café · SE Division St, Portland',
+      submit: 'Connect',
+      cancel: 'Cancel',
+      badPhone: 'Enter the number with its country code, like +1 503 555 0100',
+      noLocation: 'Enter the location’s name and address',
+      already: (brand: string, source: string) => `${brand} already has ${source} connected.`,
+      done: (source: string, brand: string) => `${source} connected for ${brand}`,
+      removed: (source: string, brand: string) => `${source} disconnected from ${brand}`,
     },
     connectDialog: {
       title: 'Connect a channel',

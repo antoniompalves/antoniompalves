@@ -6,7 +6,7 @@ import { Avatar, BrandMark, NetIcon, cn } from '../ui'
 import { canOpen, can, roleName } from '../../data/permissions'
 import { routes } from '../../data/routes'
 import { brandsFor } from '../../data/scope'
-import { NETWORK_LABEL, NETWORK_ORDER } from '../../data/selectors'
+import { NETWORK_LABEL, SOURCE_LABEL, NETWORK_ORDER } from '../../data/selectors'
 import { useWorkspace } from '../../data/store'
 import type { NetworkId } from '../../data/types'
 import { useI18n } from '../../i18n'
@@ -95,7 +95,7 @@ export function Finder({ open, onClose, onOpenPost }: { open: boolean; onClose: 
           out.push({
             group: f.groups.conversations,
             label: c.contact.name,
-            meta: `${NETWORK_LABEL[c.network]} · ${(c.messages[c.messages.length - 1]?.text ?? '').slice(0, 48)}`,
+            meta: `${SOURCE_LABEL[c.network]} · ${(c.messages[c.messages.length - 1]?.text ?? '').slice(0, 48)}`,
             href: `#/inbox/${c.id}`,
             lead: <Avatar src={c.contact.avatar} name={c.contact.name} size="fill" />,
           }),

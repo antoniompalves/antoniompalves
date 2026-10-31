@@ -4,6 +4,7 @@ import type {
   Channel,
   Conversation,
   DailyPoint,
+  InboxSource,
   NetworkId,
   Post,
   PostStatus,
@@ -34,6 +35,9 @@ export const NETWORK_LABEL: Record<NetworkId, string> = {
 }
 
 /** Order the reference uses whenever it lists every network. */
+/** Labels for every inbox source: the networks, plus WhatsApp, Messenger and Google. */
+export const SOURCE_LABEL: Record<InboxSource, string> = { ...NETWORK_LABEL, whatsapp: 'WhatsApp', messenger: 'Messenger', google: 'Google' }
+
 export const NETWORK_ORDER: NetworkId[] = ['instagram', 'facebook', 'tiktok', 'threads', 'pinterest', 'youtube', 'x', 'linkedin']
 
 /** Colour of each post status; the words come from `t.status`. */

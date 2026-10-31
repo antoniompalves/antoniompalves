@@ -18,6 +18,12 @@ export type NetworkId =
   | 'x'
   | 'linkedin'
 
+/**
+ * Where an inbox conversation comes from: a social network, WhatsApp Business,
+ * Messenger (a Facebook Page's chats) or Google reviews (Business Profile).
+ */
+export type InboxSource = NetworkId | 'whatsapp' | 'messenger' | 'google'
+
 /** Semantic colour roles used for badges, chips, brand marks and meters. */
 export type Tone = 'butter' | 'pine' | 'coral' | 'sea' | 'lilac' | 'ink' | 'plain'
 
@@ -227,6 +233,10 @@ export interface Message {
   image?: string
   /** Replies only: whether the contact has seen it. */
   read?: boolean
+  /** WhatsApp: sent from this approved template (its name). */
+  template?: string
+  /** Messenger and Instagram: sent after 24 hours with the "human agent" tag. */
+  humanAgent?: boolean
 }
 
 export interface Contact {
@@ -235,13 +245,17 @@ export interface Contact {
   /** Missing for contacts without a photo: the UI falls back to tinted initials. */
   avatar?: string
   followers: number
+  /** WhatsApp contacts: their number. */
+  phone?: string
 }
 
 export interface Conversation {
   id: string
   brandId: string
-  network: NetworkId
+  network: InboxSource
   kind: ConversationKind
+  /** Google reviews: stars, 1–5. */
+  rating?: number
   contact: Contact
   /** Post a comment was left on (comments only). */
   postId?: string
@@ -272,6 +286,27 @@ export interface MediaAsset {
   addedAt: ISODate
   /** Team member id. */
   addedBy: string
+}
+
+/** A WhatsApp Business number or a Google Business Profile location feeding a brand's inbox (Messenger comes with the Facebook Page). */
+export interface InboxAccount {
+  id: string
+  brandId: string
+  source: 'whatsapp' | 'google'
+  /** "+1 503 555 0100", or the location: "Ember & Oak Café · SE Division St, Portland". */
+  label: string
+  connectedById: string
+  connectedAt: ISODate
+}
+
+/** A WhatsApp message template approved by Meta: the only thing that can be sent once the 24-hour window has closed. */
+export interface WhatsAppTemplate {
+  id: string
+  /** As registered with Meta, e.g. "order_update". */
+  name: string
+  category: 'utility' | 'marketing'
+  /** With {{1}}, {{2}}… for the parts filled in when sending. */
+  body: string
 }
 
 /** A caption to start from; `{product}`-style slots are filled in by hand. */
@@ -355,6 +390,8 @@ export type AuditAction =
   | { type: 'pausedChannel'; brandId: string; network: NetworkId; paused: boolean }
   | { type: 'disconnectedChannel'; brandId: string; network: NetworkId }
   | { type: 'signedOut' }
+  | { type: 'connectedInbox'; brandId: string; source: 'whatsapp' | 'google' }
+  | { type: 'disconnectedInbox'; brandId: string; source: 'whatsapp' | 'google' }
   | { type: 'switchedAccount'; to: string }
 
 export interface AuditEvent {
@@ -455,6 +492,9 @@ export interface Workspace {
   mentions: Mention[]
   competitors: Competitor[]
   savedReplies: SavedReply[]
+  /** WhatsApp numbers and Google Business Profile locations connected to brands. */
+  inboxAccounts: InboxAccount[]
+  waTemplates: WhatsAppTemplate[]
   media: MediaAsset[]
   templates: Template[]
   hashtagSets: HashtagSet[]

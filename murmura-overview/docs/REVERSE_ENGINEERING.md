@@ -1110,7 +1110,91 @@ new items).
 
 | Check | Result |
 | --- | --- |
-| 40 composer checks: tabs, video badge, Reel with its own text and preview, main text kept, video + photo (Reel, Facebook, TikTok), Story limits and note, alt text set and in the preview, version reset with toast, carousel arrows, draft saved and reopened with versions and alt text, X's 4-item cap, YouTube Short needing a video, YouTube video with a title in 16:9, PDF refused outside LinkedIn, document needing a title, document preview with pages, scheduled with format and title saved | all pass, no console errors |
-| Earlier composer suite (63 checks) | all pass |
+| 33 composer checks: tabs, video badge, Reel with its own text and preview, main text kept, video + photo (Reel, Facebook, TikTok), Story limits and note, alt text set and in the preview, version reset with toast, carousel arrows, draft saved and reopened with versions and alt text, X's 4-item cap, YouTube Short needing a video, YouTube video with a title in 16:9, PDF refused outside LinkedIn, document needing a title, document preview with pages, scheduled with format and title saved | all pass, no console errors |
+| Earlier composer suite (33 checks) | all pass |
 | Publishing service: 43 tests including the new formats | all pass |
 | Phone and pt-PT composer with a Story | nothing clipped, no sideways scroll |
+
+## 20. WhatsApp Business, Messenger and Google reviews in the inbox (addition)
+
+Not in the reference: Hootsuite, Sprout Social, Agorapulse and Metricool bring
+these into the same inbox as the social networks.
+
+| WhatsApp template | Messenger after 24 h | Google review with a public reply | Messaging & reviews (Channels) | Phone · pt-PT |
+| --- | --- | --- | --- | --- |
+| ![Send a WhatsApp template](screenshots/inbox-whatsapp-template.png) | ![Messenger reply with the human agent tag](screenshots/inbox-messenger-agent.png) | ![Google review answered publicly](screenshots/inbox-google-review.png) | ![Messaging & reviews card](screenshots/channels-messaging.png) | ![WhatsApp conversation on a phone in Portuguese](screenshots/inbox-whatsapp-mobile-pt.png) |
+
+### Sources and rules
+
+A conversation's `network` is now an `InboxSource`: the eight networks plus
+`whatsapp`, `messenger` and `google`, with their own icons and colours
+(WhatsApp green, Messenger blue, Google blue). `src/data/sources.ts` holds the
+platforms' reply rules, shown in a bar above the composer:
+
+| Source | Rule | In the composer |
+| --- | --- | --- |
+| WhatsApp Business | free replies for 24 hours after the customer's last message; after that only templates Meta approved | "WhatsApp: 20 h 54 min left to reply freely"; once closed, "The 24-hour window closed 5 h ago…", replies off ("Notes only here") and **Choose a template** |
+| Messenger, and Instagram/Facebook direct messages | 24 hours free, then up to 7 days with Meta's *human agent* tag, then closed | the time left, then "Past 24 hours: replies go out with Meta's human agent tag, until Tue, Nov 3, 2:25 PM" (the reply is marked *Human agent*), then closed |
+| Google reviews | one public reply per review, which can be edited | "Your reply shows publicly on Google…", "Reply publicly as Ember & Oak…"; replying again replaces the reply ("Reply updated on Google", with Undo); no photos |
+| any of these, not connected for the brand | — | "WhatsApp isn't connected for Ember & Oak. Notes still work." with a link to Channels |
+
+Internal notes always work. Copying or inserting an @handle is hidden where
+there's no public handle (WhatsApp, Messenger, Google).
+
+**Templates.** The *Send a WhatsApp template* dialog lists the workspace's
+approved templates (`follow_up`, `booking_reminder`, `order_update` as
+*Utility*, `back_in_stock` as *Marketing*, with "Only for people who agreed to
+marketing messages."), with a field per `{{n}}` part (the first name, and the
+brand where it reads as one, filled in), a preview as the bubble will look, and
+"Fill in every part first". Sent templates are labelled *Template ·
+booking_reminder* in the thread.
+
+**Rows and the contact panel.** Google reviews show their stars in the list and
+on the review; the contact panel shows the stars and the location, a WhatsApp
+contact's number and the brand's WhatsApp number, and Messenger "via the
+Facebook Page".
+
+### Data
+
+Eight conversations were added, all older than the reference's latest messages
+so the overview and the top of the inbox read as before: WhatsApp (Ember & Oak
+inside the window, Vantage Garage past it, Wildroot), Messenger (Hollow Home;
+Ember & Oak past 24 hours), Google reviews (5★ Ember & Oak, 2★ Vantage Garage
+flagged, 4★ Hollow Home already answered and done). The inbox now holds 30
+conversations (27 open, 17 unread at the start), which changes the inbox count
+and sentiment figures on the overview and the inbox badge (17).
+
+`ws.inboxAccounts` lists the connected WhatsApp numbers (Ember & Oak, Vantage
+Garage, Wildroot) and Google locations (Ember & Oak, Hollow Home, Vantage
+Garage); Messenger comes with a brand's connected Facebook Page. `ws.waTemplates`
+holds the templates.
+
+### Channels: Messaging & reviews
+
+A third card in the Channels side column lists WhatsApp Business, Messenger and
+Google Business Profile, each with how many brands have it and one row per
+brand: the number or location, or "Not connected", with + to connect and an
+unlink button to disconnect (Undo; logged as "connected WhatsApp Business for
+Hollow Home"). Connecting asks for the brand and the number (with its country
+code) or the location; Messenger rows follow the Facebook Pages. People without
+*Connect channels* see the card locked.
+
+### What the live version needs
+
+The inbox still runs on demo data. Wiring these sources means receiving and
+answering through each platform:
+
+| Source | Receive | Answer |
+| --- | --- | --- |
+| WhatsApp Business (Cloud API) | `messages` webhooks on the business number | `POST /{phone-number-id}/messages` with `type: text` inside the window, `type: template` (name, language, parameters) outside it |
+| Messenger (Messenger Platform) | `messages` webhooks on the Page | `POST /me/messages` with `messaging_type: RESPONSE` inside 24 h, `MESSAGE_TAG` + `tag: HUMAN_AGENT` up to 7 days |
+| Google Business Profile | list `accounts/*/locations/*/reviews` (or Pub/Sub notifications) | `PUT …/reviews/{id}/reply` to post or edit, `DELETE` to remove |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| 31 inbox checks: new rows, top of the list unchanged, the three sources in Filters and filtering by one, WhatsApp window bar and reply, phone and number in the contact panel, closed window: bar, placeholder, send blocked, template dialog with defaults, missing part, template sent and labelled, note still allowed; Messenger human agent bar and tag, no @handle; Google stars, bar, placeholder, public reply, reply replaced with toast; disconnecting WhatsApp takes the thread offline; connecting a number (bad number refused) and the activity line | all pass, no console errors |
+| Earlier suites (channels, formats, composer, persistence, shell, approvals, listening) | all pass |
+| pt-PT: four threads, the template dialog and the Channels card at 1440 and 390 px | no English interface text left (messages are what people wrote), nothing clipped |
+| English text of 13 states | only the counts and rows the new conversations add |

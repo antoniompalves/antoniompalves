@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import { AtSign, Check, CheckCheck, Flag, Image as ImageIcon, ListFilter, Mail, MessageCircle, Search, Star, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { Brand, Conversation, ConversationKind, NetworkId, Sentiment, TeamMember } from '../../data/types'
+import type { Brand, Conversation, ConversationKind, Sentiment, TeamMember } from '../../data/types'
 import type { InboxFilters, InboxView, inboxStats } from '../../data/inbox'
 import { VIEWS, filterCount, lastInbound, previewMessage, splitMatches, unreadCount } from '../../data/inbox'
-import { NETWORK_LABEL, NETWORK_ORDER } from '../../data/selectors'
+import { NETWORK_ORDER, SOURCE_LABEL } from '../../data/selectors'
+import { INBOX_SOURCES } from '../../data/sources'
 import { useI18n } from '../../i18n'
 import { Popover } from '../Popover'
-import { Avatar, Button, Initials, NetIcon, NetworkGlyph, cn, toneFill } from '../ui'
+import { Avatar, Button, Initials, NetIcon, NetworkGlyph, Stars, cn, toneFill } from '../ui'
 
 export const KIND_ICON: Record<ConversationKind, LucideIcon> = {
   comment: MessageCircle,
@@ -219,8 +220,9 @@ export function ConversationList(props: ListProps) {
             })}
           </FilterGroup>
           <FilterGroup title={t.inbox.network}>
-            {(['instagram', 'facebook', 'x', 'linkedin', 'tiktok', 'youtube', 'pinterest', 'threads'] as NetworkId[])
-              .filter((n) => NETWORK_ORDER.includes(n))
+            {INBOX_SOURCES
+              // The networks always; WhatsApp, Messenger and Google once something comes from them.
+              .filter((n) => (NETWORK_ORDER as string[]).includes(n) || open.some((c) => c.network === n) || filters.networks.includes(n))
               .map((n) => (
                 <FilterCheck
                   key={n}
@@ -234,7 +236,7 @@ export function ConversationList(props: ListProps) {
                     </span>
                   }
                 >
-                  {NETWORK_LABEL[n]}
+                  {SOURCE_LABEL[n]}
                 </FilterCheck>
               ))}
           </FilterGroup>
@@ -310,7 +312,7 @@ function Row({ c, last, current, stamped, brand, assignee, query, now }: RowProp
         ref={link}
         href={`#/inbox/${c.id}`}
         aria-current={current ? 'true' : undefined}
-        aria-label={t.inbox.row({ name: c.contact.name, kind: t.kinds[c.kind].one, network: NETWORK_LABEL[c.network], brand: brand.name, unread: count, priority: c.priority, assignee: assignee?.name })}
+        aria-label={t.inbox.row({ name: c.contact.name, kind: t.kinds[c.kind].one, network: SOURCE_LABEL[c.network], brand: brand.name, unread: count, priority: c.priority, assignee: assignee?.name })}
         className={cn(
           'relative grid h-[72px] grid-cols-[48px_minmax(0,1fr)] items-center gap-[13px] pl-3.5 pr-3 text-text focus-visible:rounded-md focus-visible:-outline-offset-2 max-mobile:h-[76px] max-mobile:pl-3 max-mobile:pr-2.5',
           current ? 'bg-well' : 'hover:bg-[color-mix(in_srgb,var(--well)_60%,transparent)]',
@@ -332,6 +334,7 @@ function Row({ c, last, current, stamped, brand, assignee, query, now }: RowProp
               <Icon size={15} aria-hidden />
             </span>
             <span className={cn('min-w-0 flex-1 truncate text-xs max-mobile:text-sm', unread ? 'text-text' : 'text-muted')}>
+              {c.rating && msg.from === 'them' && <Stars n={c.rating} size={11} className="mr-1.5 align-[-1px]" />}
               {msg.from === 'us' && <em className="font-semibold not-italic">{msg.note ? t.inbox.previewNote : t.inbox.previewYou}</em>}
               {msg.image && (
                 <>

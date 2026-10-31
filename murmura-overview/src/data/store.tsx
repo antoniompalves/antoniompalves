@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import type { Dispatch, ReactNode } from 'react'
 import { STORAGE_KEY, fingerprint, loadWorkspace, parseSaved, saveWorkspace } from './persist'
 import { scopeView } from './scope'
-import type { AuditEvent, Channel, Conversation, Keyword, Mention, Message, Notice, Post, ScheduledReport, Website, Workspace } from './types'
+import type { AuditEvent, Channel, Conversation, InboxAccount, Keyword, Mention, Message, Notice, Post, ScheduledReport, Website, Workspace } from './types'
 
 /**
  * Single workspace shared by every view, so rescheduling a post on the
@@ -30,6 +30,9 @@ export type WorkspaceAction =
   | { type: 'channel'; id: string; patch: Partial<Channel> }
   /** Add a channel, or replace the one with its id. */
   | { type: 'saveChannel'; channel: Channel }
+  /** A WhatsApp number or Google location for a brand's inbox: add, or remove by id. */
+  | { type: 'saveInboxAccount'; account: InboxAccount }
+  | { type: 'removeInboxAccount'; id: string }
   | { type: 'audit'; event: AuditEvent }
   /** Take an activity entry back out (an undone action). */
   | { type: 'unaudit'; id: string }
@@ -93,6 +96,10 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, websites: action.websites }
     case 'channel':
       return { ...ws, channels: ws.channels.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
+    case 'saveInboxAccount':
+      return { ...ws, inboxAccounts: [...ws.inboxAccounts.filter((a) => a.id !== action.account.id), action.account] }
+    case 'removeInboxAccount':
+      return { ...ws, inboxAccounts: ws.inboxAccounts.filter((a) => a.id !== action.id) }
     case 'saveChannel':
       return ws.channels.some((c) => c.id === action.channel.id)
         ? { ...ws, channels: ws.channels.map((c) => (c.id === action.channel.id ? action.channel : c)) }

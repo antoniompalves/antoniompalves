@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Bell, CheckCheck, Flag, Hash, Inbox as InboxIcon, RotateCcw, Send, Smile } from 'lucide-react'
+import { Bell, CheckCheck, FileText, Flag, Globe, Hash, Inbox as InboxIcon, RotateCcw, Send, Smile } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
 import { PostDrawer } from '../components/calendar/PostDrawer'
 import { ContactInfo } from '../components/inbox/ContactInfo'
 import { ConversationList } from '../components/inbox/ConversationList'
 import { Thread } from '../components/inbox/Thread'
+import { TemplateDialog } from '../components/inbox/TemplateDialog'
+import { replyWindow } from '../data/sources'
 import type { Draft } from '../components/inbox/Thread'
 import type { InboxFilters, InboxView } from '../data/inbox'
 import { NO_INBOX_FILTERS, byActivity, inView, inboxStats, matchesInboxFilters, matchesSearch, tagSuggestions } from '../data/inbox'
@@ -38,6 +40,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   const [infoOpen, setInfoOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
+  const [templating, setTemplating] = useState(false)
   const [stampId, setStampId] = useState<string | null>(null)
   const [openPostId, setOpenPostId] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -106,6 +109,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
 
   const send = (c: Conversation, draft: Draft, close = false) => {
     const before = all.conversations
+    const rule = replyWindow(ws, c, now.getTime())
     const message: Message = {
       id: `${c.id}-m${Date.now()}`,
       from: 'us',
@@ -114,8 +118,15 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
       at: now.toISOString(),
       ...(draft.note && { note: true }),
       ...(draft.image && { image: draft.image }),
+      // Past 24 hours, Messenger and Instagram replies carry the human agent tag.
+      ...(!draft.note && rule.kind === 'agent' && { humanAgent: true }),
     }
     const closing = close && !draft.note
+    // A Google review has one public reply: a new one takes the old one's place.
+    if (!draft.note && c.network === 'google' && rule.kind === 'review' && rule.replied) {
+      patch(c.id, { messages: c.messages.filter((m) => m.from !== 'us' || m.note) })
+      toast({ text: t.inbox.toast.replyUpdated, icon: Globe, undo: undoTo(before, c.id) })
+    }
     dispatch({ type: 'send', id: c.id, message, close: closing })
     setDrafts((d) => ({ ...d, [c.id]: EMPTY_DRAFT }))
     if (closing) {
@@ -264,6 +275,8 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
               toast({ text: t.inbox.toast.copied(current.contact.handle) })
             }}
             onSend={(d, close) => send(current, d, close)}
+            rule={replyWindow(ws, current, now.getTime())}
+            onTemplate={() => setTemplating(true)}
           />
         ) : (
           <Hello />
@@ -292,6 +305,20 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
           />
         )}
       </div>
+
+      {templating && current && brand && (
+        <TemplateDialog
+          templates={ws.waTemplates}
+          first={current.contact.name.split(' ')[0]}
+          brand={brand.name}
+          onClose={() => setTemplating(false)}
+          onSend={(text, name) => {
+            setTemplating(false)
+            dispatch({ type: 'send', id: current.id, message: { id: `${current.id}-m${Date.now()}`, from: 'us', authorId: me.id, text, at: now.toISOString(), template: name } })
+            toast({ text: t.inbox.toast.templateSent(current.contact.name.split(' ')[0]), icon: FileText })
+          }}
+        />
+      )}
 
       <PostDrawer
         post={drawerPost}

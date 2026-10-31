@@ -7,6 +7,10 @@ import {
   AtSign,
   Bell,
   Check,
+  Clock,
+  FileText,
+  Globe,
+  Lock,
   CheckCheck,
   ChevronDown,
   Copy,
@@ -26,11 +30,13 @@ import {
   Zap,
 } from 'lucide-react'
 import type { Brand, Conversation, MediaAsset, Message, Post, SavedReply, Sentiment, TeamMember } from '../../data/types'
-import { NETWORK_LABEL } from '../../data/selectors'
+import { SOURCE_LABEL } from '../../data/selectors'
+import { repliesBlocked } from '../../data/sources'
+import type { ReplyWindow } from '../../data/sources'
 import { useI18n } from '../../i18n'
 import { coverPhoto, photo } from '../../data/assets'
 import { MenuDivider, MenuItem, Popover } from '../Popover'
-import { Avatar, cn } from '../ui'
+import { Avatar, Stars, cn } from '../ui'
 import { Face } from './ConversationList'
 import { TagPopover } from './TagPopover'
 
@@ -80,7 +86,14 @@ interface ThreadProps extends ThreadActions {
   setDraft: (d: Draft) => void
   composerRef: RefObject<HTMLTextAreaElement | null>
   mobileOpen: boolean
+  /** What answering is allowed to look like now (WhatsApp, Messenger and Instagram windows, Google reviews). */
+  rule: ReplyWindow
+  onTemplate: () => void
 }
+
+/** Sources without public @handles to copy or insert. */
+const NO_HANDLE = new Set(['whatsapp', 'messenger', 'google'])
+
 
 /** Assign menu shared by the thread header and the contact panel. */
 export function AssignMenu({ open, onClose, anchor, placement, assignable, current, me, onAssign }: {
@@ -157,7 +170,7 @@ export function Thread(props: ThreadProps) {
           <Face c={c} size="md" />
           <span className="grid min-w-0">
             <b className="truncate text-md font-bold">{c.contact.name}</b>
-            <small className="truncate text-[12.5px] text-muted">{t.inbox.context(c.kind, NETWORK_LABEL[c.network], brand.name)}</small>
+            <small className="truncate text-[12.5px] text-muted">{t.inbox.context(c.kind, SOURCE_LABEL[c.network], brand.name)}</small>
           </span>
         </button>
         <div className="flex shrink-0 items-center gap-0.5">
@@ -238,9 +251,11 @@ export function Thread(props: ThreadProps) {
                 {t.inbox.openThePost}
               </MenuItem>
             )}
-            <MenuItem icon={Copy} onClick={props.onCopyHandle}>
-              {t.inbox.copyHandle(c.contact.handle)}
-            </MenuItem>
+            {!NO_HANDLE.has(c.network) && (
+              <MenuItem icon={Copy} onClick={props.onCopyHandle}>
+                {t.inbox.copyHandle(c.contact.handle)}
+              </MenuItem>
+            )}
             <MenuDivider />
             {SENTIMENT_ITEMS.map((s) => (
               <MenuItem key={s.value} icon={Smile} checked={c.sentiment === s.value} onClick={() => props.onSentiment(s.value)}>
@@ -317,7 +332,7 @@ function MessageLog({ c, team, now }: { c: Conversation; team: Map<string, TeamM
             const prev = d.messages[i - 1]
             const groupStart = !prev || prev.from !== m.from || !!prev.note || !!m.note
             const author = m.authorId ? team.get(m.authorId) : undefined
-            return <Bubble key={m.id} m={m} first={groupStart} author={author} />
+            return <Bubble key={m.id} m={m} first={groupStart} author={author} c={c} />
           })}
         </section>
       ))}
@@ -341,7 +356,7 @@ function RichText({ text }: { text: string }) {
   return parts
 }
 
-function Bubble({ m, first, author }: { m: Message; first: boolean; author?: TeamMember }) {
+function Bubble({ m, first, author, c }: { m: Message; first: boolean; author?: TeamMember; c: Conversation }) {
   const { t } = useI18n()
   const time = <time dateTime={m.at}>{t.dates.time(new Date(m.at))}</time>
   if (m.note) {
@@ -375,12 +390,26 @@ function Bubble({ m, first, author }: { m: Message; first: boolean; author?: Tea
         )}
       >
         {us && first && author && <span className="mb-px block text-[12.5px] font-bold text-ib-acc-text">{author.name.split(' ')[0]}</span>}
+        {us && c.network === 'google' && (
+          <span className="mb-0.5 flex items-center gap-1 text-[12.5px] font-semibold text-muted">
+            <Globe size={13} aria-hidden />
+            {t.inbox.sources.publicReply}
+          </span>
+        )}
+        {m.template && (
+          <span className="mb-0.5 flex items-center gap-1 text-[12.5px] font-semibold text-muted">
+            <FileText size={13} aria-hidden />
+            {t.inbox.sources.templateLabel(m.template)}
+          </span>
+        )}
+        {!us && c.network === 'google' && c.rating && m === c.messages.find((x) => x.from === 'them') && <Stars n={c.rating} className="mb-1 mt-0.5" />}
         {m.image && <img src={photo(m.image, 480)} alt="" className="my-0.5 mb-[5px] block aspect-square w-60 max-w-full rounded-md object-cover" />}
         <span className="block whitespace-pre-wrap">
           <RichText text={m.text} />
           <span aria-hidden className={cn('inline-block h-px', us ? 'w-[84px]' : 'w-[66px]')} />
         </span>
         <span className="absolute bottom-1 right-2 inline-flex items-center gap-[3px] whitespace-nowrap text-[12.5px] leading-none text-muted">
+          {m.humanAgent && <span className="mr-1 rounded bg-well px-1 py-px text-[11px] font-semibold">{t.inbox.sources.humanAgent}</span>}
           {time}
           {us && <CheckCheck size={16} strokeWidth={2} aria-label={m.read ? t.inbox.read : t.inbox.delivered} className={m.read ? 'text-ib-acc-text' : 'text-faint'} />}
         </span>
@@ -390,12 +419,14 @@ function Bubble({ m, first, author }: { m: Message; first: boolean; author?: Tea
 }
 
 function Composer(props: ThreadProps & { first: string }) {
-  const { c, brand, draft, setDraft, composerRef, savedReplies, library, first, onSend } = props
+  const { c, brand, draft, setDraft, composerRef, savedReplies, library, first, onSend, rule } = props
   const { t } = useI18n()
   const attachBtn = useRef<HTMLButtonElement>(null)
   const caretBtn = useRef<HTMLButtonElement>(null)
   const [menu, setMenu] = useState<'attach' | 'saved' | 'library' | 'send' | null>(null)
-  const canSend = draft.text.trim().length > 0 || !!draft.image
+  // Closed windows and offline sources take notes only.
+  const blocked = !draft.note && repliesBlocked(rule)
+  const canSend = !blocked && (draft.text.trim().length > 0 || !!draft.image)
 
   // Grow with the text between one and ~5 lines, like the reference textarea.
   useEffect(() => {
@@ -423,7 +454,48 @@ function Composer(props: ThreadProps & { first: string }) {
     if (e.key === 'Escape') e.currentTarget.blur()
   }
 
+  const src = SOURCE_LABEL[c.network]
+  const s = t.inbox.sources
+  const bar =
+    rule.kind === 'window'
+      ? { tone: 'muted', icon: Clock, text: s.window(src, t.dates.countdown(rule.endsAt - props.now.getTime())) }
+      : rule.kind === 'agent'
+        ? { tone: 'muted', icon: Clock, text: s.agent(t.dates.dayTime(new Date(rule.endsAt))) }
+        : rule.kind === 'template'
+          ? { tone: 'warn', icon: Lock, text: s.template(t.dates.ago(new Date(rule.closedAt).toISOString(), props.now)) }
+          : rule.kind === 'closed'
+            ? { tone: 'warn', icon: Lock, text: s.closed(src) }
+            : rule.kind === 'offline'
+              ? { tone: 'warn', icon: Lock, text: s.offline(src, brand.name) }
+              : rule.kind === 'review'
+                ? { tone: 'muted', icon: Globe, text: rule.replied ? s.reviewed : s.reviewOpen }
+                : null
+
   return (
+    <>
+    {bar && (
+      <p
+        data-reply-rule={rule.kind}
+        className={cn(
+          'relative z-[3] flex shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1 border-t border-line px-3.5 py-2 text-[12.5px] max-mobile:px-3',
+          bar.tone === 'warn' ? 'bg-[color-mix(in_srgb,var(--butter)_22%,var(--ib-bar))] text-text' : 'bg-ib-bar text-muted',
+        )}
+      >
+        <bar.icon size={15} aria-hidden className="shrink-0" />
+        <span className="min-w-0 flex-1">{bar.text}</span>
+        {rule.kind === 'template' && (
+          <button type="button" onClick={props.onTemplate} className="inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-pill px-3 text-[12.5px] font-semibold text-on-pill pointer-coarse:h-10">
+            <FileText size={14} aria-hidden />
+            {s.chooseTemplate}
+          </button>
+        )}
+        {rule.kind === 'offline' && (
+          <a href="#/channels" className="shrink-0 font-semibold text-text underline underline-offset-2">
+            {s.connect}
+          </a>
+        )}
+      </p>
+    )}
     <form
       noValidate
       onSubmit={submit}
@@ -482,13 +554,13 @@ function Composer(props: ThreadProps & { first: string }) {
           value={draft.text}
           onChange={(e) => setDraft({ ...draft, text: e.target.value })}
           onKeyDown={onKeyDown}
-          placeholder={draft.note ? t.inbox.notePlaceholder : t.inbox.replyTo(first)}
+          placeholder={draft.note ? t.inbox.notePlaceholder : blocked ? s.blockedPlaceholder : c.network === 'google' ? s.reviewPlaceholder(brand.name) : t.inbox.replyTo(first)}
           enterKeyHint="send"
           className="block max-h-[121px] min-h-[21px] w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-sm leading-[21px] text-text outline-none placeholder:text-faint max-mobile:min-h-6 max-mobile:text-md max-mobile:leading-6"
         />
       </div>
 
-      {!draft.note && (
+      {!draft.note && !blocked && (
         <button
           ref={caretBtn}
           type="button"
@@ -521,12 +593,16 @@ function Composer(props: ThreadProps & { first: string }) {
           <MenuItem icon={Zap} onClick={() => setMenu('saved')}>
             {t.inbox.savedReplies}
           </MenuItem>
-          <MenuItem icon={Image} onClick={() => setMenu('library')}>
-            {t.inbox.photoFromLibrary}
-          </MenuItem>
-          <MenuItem icon={AtSign} onClick={() => insert(`@${c.contact.handle}`)}>
-            {t.inbox.insertHandle(c.contact.handle)}
-          </MenuItem>
+          {c.network !== 'google' && (
+            <MenuItem icon={Image} onClick={() => setMenu('library')}>
+              {t.inbox.photoFromLibrary}
+            </MenuItem>
+          )}
+          {!NO_HANDLE.has(c.network) && (
+            <MenuItem icon={AtSign} onClick={() => insert(`@${c.contact.handle}`)}>
+              {t.inbox.insertHandle(c.contact.handle)}
+            </MenuItem>
+          )}
         </div>
       </Popover>
 
@@ -601,5 +677,6 @@ function Composer(props: ThreadProps & { first: string }) {
         </div>
       </Popover>
     </form>
+    </>
   )
 }

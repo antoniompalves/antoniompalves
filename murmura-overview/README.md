@@ -112,6 +112,16 @@ The inbox has views, search with highlighting, filters, replies, internal notes,
 saved replies, photos from the brand library, assignment, priority, sentiment,
 tags, J / K / E / R / `/` shortcuts and Undo on every change the original lets you undo.
 
+| WhatsApp template | Google review | Messaging & reviews |
+| --- | --- | --- |
+| ![Send a WhatsApp template](docs/screenshots/inbox-whatsapp-template.png) | ![Google review answered publicly](docs/screenshots/inbox-google-review.png) | ![Messaging & reviews on the Channels page](docs/screenshots/channels-messaging.png) |
+
+WhatsApp Business, Messenger and Google reviews come into the same inbox, with
+each platform's rules shown above the reply box: WhatsApp's 24-hour window and
+approved templates after it, Messenger's human agent tag up to seven days, one
+public reply per Google review (sending again replaces it). Numbers and
+locations are connected per brand on the Channels page.
+
 | Analytics | Expanded card | Phone + More sheet |
 | --- | --- | --- |
 | ![Analytics, light theme](docs/screenshots/analytics-light.png) | ![Best time to post expanded, with the heatmap tooltip](docs/screenshots/analytics-expanded.png) | ![Analytics on a phone and the More sheet](docs/screenshots/analytics-mobile.png) |
@@ -226,6 +236,7 @@ src/
       Sections.tsx        attention banner, brand section, phone fold + rows, empty state
       Side.tsx            audience by network, supported networks
       ConnectDialog.tsx   Connect a channel: network grid + brand
+      InboxSources.tsx    Messaging & reviews: WhatsApp, Messenger, Google per brand; connect dialog
     listening/
       Keywords.tsx        tracked keywords: kind, brand, weekly count, 14-day line, sentiment split
       Stream.tsx          mentions: live toggle, filters, active chips, mention rows, paging
@@ -238,12 +249,14 @@ src/
       Thread.tsx            header tools + menus, pinned post, message log, composer + popovers
       ContactInfo.tsx       contact panel: conversation, assignee, tags, post, activity
       TagPopover.tsx        "Add a tag" field with suggestions
+      TemplateDialog.tsx    Send a WhatsApp template: pick, fill the parts, preview
   data/
     types.ts              Workspace schema (brands, campaigns, team, posts, channels, inbox, audit…)
     mock.ts               mock workspace frozen at Fri 30 Oct 2026, 14:15 UTC (80 posts, 19 channels, 6 websites, 22 conversations, 90 mentions)
     selectors.ts          overview view-model (worded through the active catalogue; Needs you derived from the data)
     calendar.ts           calendar date math, lanes, ribbons, filters, stats
     inbox.ts              inbox views, filters, search, unread counts, time labels, tag rules
+    sources.ts            WhatsApp, Messenger and Google: reply windows, templates, what a brand has connected
     analytics.ts          analytics view-model: ranges, network filter, every figure on #/analytics
     analyticsData.ts      180 days per network, per-account totals and curves, heatmaps (from the reference)
     webAnalytics.ts       website traffic shape (GA4-like), demo generator, websites view model

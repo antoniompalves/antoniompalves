@@ -1,7 +1,8 @@
 import type { ComponentProps, ComponentPropsWithoutRef, MouseEventHandler, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import type { Brand, NetworkId, PostStatus, Tone } from '../data/types'
-import { NETWORK_LABEL, STATUS_TONE } from '../data/selectors'
+import { Star } from 'lucide-react'
+import type { Brand, InboxSource, NetworkId, PostStatus, Tone } from '../data/types'
+import { SOURCE_LABEL, STATUS_TONE } from '../data/selectors'
 import { useI18n } from '../i18n'
 
 export const cn = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(' ')
@@ -291,7 +292,7 @@ export function Thumb({ src, className }: { src?: string; className?: string }) 
 
 /* Lucide ships no brand glyphs, so these are drawn on the same 24px grid
    with round caps/joins to sit naturally next to Lucide icons. */
-const NETWORK_GLYPH: Record<NetworkId, ReactNode> = {
+const NETWORK_GLYPH: Record<InboxSource, ReactNode> = {
   instagram: (
     <>
       <rect x="4" y="4" width="16" height="16" rx="5" />
@@ -331,9 +332,30 @@ const NETWORK_GLYPH: Record<NetworkId, ReactNode> = {
       <path d="M8 10.5v6M8 7.6v.01M11.5 16.5v-6M11.5 13c0-1.7 1-2.6 2.3-2.6s2.2.9 2.2 2.6v3.5" />
     </>
   ),
+  whatsapp: (
+    <>
+      <path d="M4 20l1.2-3.9A8.4 8.4 0 1 1 8.1 19z" />
+      <path d="M9.2 8.6c.2-.5.6-.6 1-.5l1 2.1-.8.9c.6 1.2 1.4 2 2.6 2.6l.9-.8 2.1 1c.1.4 0 .8-.5 1-1.6.9-4.2-.4-5.6-1.8s-2.6-3.6-.7-4.5z" />
+    </>
+  ),
+  messenger: (
+    <>
+      <path d="M12 3.6c-4.7 0-8.4 3.4-8.4 7.9 0 2.4 1.1 4.6 2.9 6v3l2.9-1.6c.8.2 1.7.4 2.6.4 4.7 0 8.4-3.4 8.4-7.8S16.7 3.6 12 3.6z" />
+      <path d="m7.4 13.6 3.2-3.4 2 2 3.6-3.4-3.2 3.4-2-2z" />
+    </>
+  ),
+  google: (
+    <>
+      <path d="M19.6 12.3A7.6 7.6 0 1 1 17.3 6.7" />
+      <path d="M12.3 12.3h7.3" />
+    </>
+  ),
 }
 
-const netColor: Record<NetworkId, string> = {
+const netColor: Record<InboxSource, string> = {
+  whatsapp: 'text-n-whatsapp',
+  messenger: 'text-n-messenger',
+  google: 'text-n-google',
   instagram: 'text-n-instagram',
   facebook: 'text-n-facebook',
   tiktok: 'text-n-tiktok',
@@ -344,7 +366,7 @@ const netColor: Record<NetworkId, string> = {
   linkedin: 'text-n-linkedin',
 }
 
-export function NetworkGlyph({ network, className }: { network: NetworkId; className?: string }) {
+export function NetworkGlyph({ network, className }: { network: InboxSource; className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -359,7 +381,7 @@ export function NetworkGlyph({ network, className }: { network: NetworkId; class
 const netSize = { '3xs': 'size-[18px]', '2xs': 'size-5', xs: 'size-[22px]', sm: 'size-7', md: 'size-9', lg: 'size-[46px]' } as const
 
 interface NetIconProps {
-  network: NetworkId
+  network: InboxSource
   size?: keyof typeof netSize
   /** Surface the badge sits on; tunes background + ring so stacks read cleanly. */
   surface?: 'default' | 'stack' | 'on-ink' | 'on-ink-soft' | 'on-photo' | 'badge' | 'chip' | 'on-pill'
@@ -371,8 +393,8 @@ export function NetIcon({ network, size = 'xs', surface = 'default', className }
   return (
     <span
       role="img"
-      aria-label={NETWORK_LABEL[network]}
-      title={NETWORK_LABEL[network]}
+      aria-label={SOURCE_LABEL[network]}
+      title={SOURCE_LABEL[network]}
       className={cn(
         'inline-grid shrink-0 place-items-center rounded-full border',
         netSize[size],
@@ -410,6 +432,18 @@ export function Meter({ value, className }: { value: number; className?: string 
         className="block h-full w-full origin-left rounded-full bg-sea transition-transform duration-700 ease-soft"
         style={{ transform: `scaleX(${value})` }}
       />
+    </span>
+  )
+}
+
+/** A Google rating: five stars, the first `n` filled. */
+export function Stars({ n, size = 14, className }: { n: number; size?: number; className?: string }) {
+  const { t } = useI18n()
+  return (
+    <span role="img" aria-label={t.inbox.sources.stars(n)} title={t.inbox.sources.stars(n)} className={cn('inline-flex shrink-0 gap-px', className)}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star key={i} size={size} strokeWidth={1.8} aria-hidden className={i <= n ? 'fill-butter text-butter' : 'text-faint'} />
+      ))}
     </span>
   )
 }

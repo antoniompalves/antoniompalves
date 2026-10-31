@@ -225,6 +225,10 @@ interface ConversationSeed {
   tags: string[]
   /** [from, minutes before NOW, text, author?] */
   messages: [Message['from'], number, string, string?][]
+  /** Google reviews. */
+  rating?: number
+  /** WhatsApp. */
+  phone?: string
 }
 
 /* The 22 conversations in the reference inbox (20 open, 2 done), read from its
@@ -276,15 +280,38 @@ const CONVERSATIONS: ConversationSeed[] = [
     messages: [['them', 466, 'What pads do you use for the second stage on soft paint?'], ['us', 444, 'Rupes yellow on a 15mm throw. We’ll do a full video on it.', 'ines']] },
 ]
 
-// Wildroot Botanics' contacts have no profile photo in the reference, so they render as initials.
-const NO_PHOTO = new Set(['c16', 'c17', 'c18', 'c19', 'c20'])
+/* Added beyond the reference: WhatsApp Business, Messenger and Google reviews
+   (see sources.ts). All older than the reference's latest messages, so the
+   overview and the top of the inbox read as before. */
+CONVERSATIONS.push(
+  { id: 'c23', brand: 'eo', network: 'whatsapp', kind: 'message', name: 'Sofia Almeida', handle: 'sofia.almeida', followers: 0, phone: '+1 503 555 0142', post: null, sentiment: 'neutral', unread: true, priority: false, status: 'open', assignee: null, tags: ['#sales'],
+    messages: [['them', 186, 'Hi! Could I pick up two bags of the Huila at the café tomorrow morning? Around 8?']] },
+  { id: 'c28', brand: 'eo', network: 'google', kind: 'review', rating: 5, name: 'Priya Natarajan', handle: 'priya.natarajan', followers: 0, post: null, sentiment: 'positive', unread: true, priority: false, status: 'open', assignee: null, tags: [],
+    messages: [['them', 248, 'Best cortado in Portland. The staff remembered my order on my second visit, which never happens.']] },
+  { id: 'c29', brand: 'vg', network: 'google', kind: 'review', rating: 2, name: 'Daniel Ortiz', handle: 'daniel.ortiz', followers: 0, post: null, sentiment: 'negative', unread: true, priority: true, status: 'open', assignee: 'haruto', tags: ['#support'],
+    messages: [['them', 342, 'The finish on the car is great, but they kept it a day longer than promised and nobody called to say so.']] },
+  { id: 'c25', brand: 'wb', network: 'whatsapp', kind: 'message', name: 'Inês Carvalho', handle: 'ines.carvalho', followers: 0, phone: '+351 912 345 678', post: null, sentiment: 'negative', unread: false, priority: true, status: 'open', assignee: 'ines', tags: ['#support'],
+    messages: [['them', 612, 'Hello! My Spring Ritual set arrived today but the box was open and one bottle is missing.']] },
+  { id: 'c26', brand: 'hh', network: 'messenger', kind: 'message', name: 'Freja Nielsen', handle: 'freja.nielsen', followers: 0, post: null, sentiment: 'neutral', unread: false, priority: false, status: 'open', assignee: null, tags: ['#sales'],
+    messages: [['them', 768, 'Do you deliver to Aarhus? Looking at the Låg sofa in oat.']] },
+  { id: 'c24', brand: 'vg', network: 'whatsapp', kind: 'message', name: 'Marcus Reed', handle: 'marcus.reed', followers: 0, phone: '+1 512 555 0199', post: null, sentiment: 'neutral', unread: false, priority: false, status: 'open', assignee: 'haruto', tags: ['#sales'],
+    messages: [['them', 1745, 'Is the Saturday 10am slot still free for the ceramic package?'], ['us', 1728, 'It is! Want me to pencil you in? Drop-off from 9:30.', 'haruto']] },
+  { id: 'c27', brand: 'eo', network: 'messenger', kind: 'message', name: 'Tom Becker', handle: 'tom.becker', followers: 0, post: null, sentiment: 'neutral', unread: false, priority: false, status: 'open', assignee: null, tags: ['#wholesale'],
+    messages: [['them', 4310, 'Hi, do you do wholesale for offices? We are about 40 people and drink a lot of coffee.']] },
+  { id: 'c30', brand: 'hh', network: 'google', kind: 'review', rating: 4, name: 'Lena Schmidt', handle: 'lena.schmidt', followers: 0, post: null, sentiment: 'positive', unread: false, priority: false, status: 'done', assignee: null, tags: [],
+    messages: [['them', 2920, 'Lovely showroom and the sofa is beautiful. Delivery took six weeks though.'], ['us', 2790, 'Thank you, Lena! Sorry about the wait — our upholsterers are booked up this season. Enjoy the sofa.', 'haruto']] },
+)
+
+// Wildroot Botanics' contacts have no profile photo in the reference, so they render as initials; so do the WhatsApp contacts here.
+const NO_PHOTO = new Set(['c16', 'c17', 'c18', 'c19', 'c20', 'c23', 'c24', 'c25'])
 
 const conversations: Conversation[] = CONVERSATIONS.map((c) => ({
   id: c.id,
   brandId: c.brand,
   network: c.network,
   kind: c.kind,
-  contact: { name: c.name, handle: c.handle, avatar: NO_PHOTO.has(c.id) ? undefined : avatar(c.handle), followers: c.followers },
+  contact: { name: c.name, handle: c.handle, avatar: NO_PHOTO.has(c.id) ? undefined : avatar(c.handle), followers: c.followers, ...(c.phone && { phone: c.phone }) },
+  ...(c.rating && { rating: c.rating }),
   postId: c.post ?? undefined,
   sentiment: c.sentiment,
   unread: c.unread,
@@ -474,6 +501,20 @@ export const workspace: Workspace = {
     { id: 'h2', brandId: 'hh', name: 'Interiors', tags: ['#scandihome', '#interiordesign', '#slowliving', '#boucle', '#danishdesign'] },
     { id: 'h3', brandId: 'vg', name: 'Detailing', tags: ['#ceramiccoating', '#paintcorrection', '#detailing', '#carsofinstagram', '#austincars'] },
     { id: 'h4', brandId: 'wb', name: 'Skin rituals', tags: ['#cleanbeauty', '#botanicalskincare', '#facialoil', '#selfcareritual', '#lisbon'] },
+  ],
+  inboxAccounts: [
+    { id: 'wa-eo', brandId: 'eo', source: 'whatsapp', label: '+1 503 555 0100', connectedById: 'malik', connectedAt: '2026-06-02T00:00:00Z' },
+    { id: 'wa-vg', brandId: 'vg', source: 'whatsapp', label: '+1 512 555 0177', connectedById: 'malik', connectedAt: '2026-07-14T00:00:00Z' },
+    { id: 'wa-wb', brandId: 'wb', source: 'whatsapp', label: '+351 21 555 0123', connectedById: 'camila', connectedAt: '2026-08-21T00:00:00Z' },
+    { id: 'gbp-eo', brandId: 'eo', source: 'google', label: 'Ember & Oak Café · SE Division St, Portland', connectedById: 'camila', connectedAt: '2026-05-18T00:00:00Z' },
+    { id: 'gbp-hh', brandId: 'hh', source: 'google', label: 'Hollow Home Showroom · Bredgade, Copenhagen', connectedById: 'malik', connectedAt: '2026-06-09T00:00:00Z' },
+    { id: 'gbp-vg', brandId: 'vg', source: 'google', label: 'Vantage Garage · E 5th St, Austin', connectedById: 'malik', connectedAt: '2026-07-14T00:00:00Z' },
+  ],
+  waTemplates: [
+    { id: 'wt-follow', name: 'follow_up', category: 'utility', body: 'Hi {{1}}, thanks for your message to {{2}}. Reply here and we’ll pick it up right away.' },
+    { id: 'wt-booking', name: 'booking_reminder', category: 'utility', body: 'Hi {{1}}, a reminder of your booking on {{2}}. Reply YES to confirm or NO to change it.' },
+    { id: 'wt-order', name: 'order_update', category: 'utility', body: 'Hi {{1}}, your order {{2}} is on its way. Track it here: {{3}}' },
+    { id: 'wt-restock', name: 'back_in_stock', category: 'marketing', body: 'Hi {{1}}, {{2}} is back in stock. Reply STOP to stop these messages.' },
   ],
   savedReplies: [
     { id: 'sr1', title: 'Thanks!', text: 'Thank you so much — that means a lot to the whole team 🧡' },

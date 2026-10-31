@@ -502,6 +502,10 @@ export const ptPT: Messages = {
         return `${a.paused ? 'pausou' : 'retomou'} as publicações de ${brand(a.brandId)} no ${network(a.network)}`
       case 'disconnectedChannel':
         return `desligou ${brand(a.brandId)} do ${network(a.network)}`
+      case 'connectedInbox':
+        return `ligou ${a.source === 'whatsapp' ? 'o WhatsApp Business' : 'o Perfil da Empresa no Google'} de ${brand(a.brandId)}`
+      case 'disconnectedInbox':
+        return `desligou ${a.source === 'whatsapp' ? 'o WhatsApp Business' : 'o Perfil da Empresa no Google'} de ${brand(a.brandId)}`
       case 'signedIn':
         return 'iniciou sessão'
       case 'signedOut':
@@ -731,7 +735,44 @@ export const ptPT: Messages = {
     markDone: 'Concluir',
     addTag: 'Adicionar etiqueta',
     newTag: 'Nova etiqueta',
+    sources: {
+      stars: (n: number) => `${n} de 5 estrelas`,
+      rating: 'Classificação',
+      phone: 'Telefone',
+      location: 'Local',
+      viaPage: 'Através da página de Facebook',
+      review: 'Avaliação no Google',
+      window: (source: string, left: string) => `${source}: faltam ${left} para responder livremente`,
+      agent: (until: string) => `Passaram 24 horas: as respostas seguem com a etiqueta de agente humano da Meta, até ${until}.`,
+      template: (ago: string) => `A janela de 24 horas fechou ${ago}. O WhatsApp agora só aceita modelos aprovados.`,
+      chooseTemplate: 'Escolher um modelo',
+      closed: (source: string) => `O ${source} deixou de aceitar respostas 7 dias depois da última mensagem. As notas continuam a funcionar.`,
+      offline: (source: string, brand: string) => `O ${source} não está ligado para ${brand}. As notas continuam a funcionar.`,
+      connect: 'Ligar',
+      reviewOpen: 'A sua resposta aparece publicamente no Google, por baixo da avaliação.',
+      reviewed: 'Já respondeu publicamente. Enviar de novo substitui essa resposta.',
+      reviewPlaceholder: (brand: string) => `Responder publicamente como ${brand}…`,
+      blockedPlaceholder: 'Aqui, só notas',
+      publicReply: 'Resposta pública',
+      humanAgent: 'Agente humano',
+      templateLabel: (name: string) => `Modelo · ${name}`,
+      dialog: {
+        title: 'Enviar um modelo de WhatsApp',
+        sub: 'Os modelos aprovados pela Meta são as únicas mensagens que o WhatsApp entrega fora da janela de 24 horas.',
+        templates: 'Modelos',
+        utility: 'Utilidade',
+        marketing: 'Marketing',
+        marketingHint: 'Só para quem aceitou receber mensagens de marketing.',
+        part: (n: number) => `Parte {{${n}}}`,
+        preview: 'Pré-visualização',
+        send: 'Enviar modelo',
+        cancel: 'Cancelar',
+        missing: 'Preencha todas as partes primeiro',
+      },
+    },
     toast: {
+      replyUpdated: 'Resposta atualizada no Google',
+      templateSent: (first: string) => `Modelo enviado a ${first}`,
       reopened: (first: string, kind: ConversationKind) =>
         `${capitalize(KIND_NOUN[kind].noun)} de ${first} ${agree(kind, 'reaberto', 'reaberta')}`,
       done: (first: string, kind: ConversationKind) => `Feito · ${KIND_NOUN[kind].noun} de ${first} ${agree(kind, 'fechado', 'fechada')}`,
@@ -1629,6 +1670,38 @@ export const ptPT: Messages = {
       text: (brand: string, network: string, n: number) => `${brand} deixa de publicar no ${network}.${n ? ` ${n > 1 ? `${n} publicações agendadas vão ignorá-lo` : '1 publicação agendada vai ignorá-lo'}.` : ''}`,
       confirm: 'Desligar',
       cancel: 'Cancelar',
+    },
+    inboxCard: {
+      title: 'Mensagens e avaliações',
+      sub: 'O que chega às Mensagens além das redes sociais',
+      whatsapp: 'WhatsApp Business',
+      messenger: 'Messenger',
+      google: 'Perfil da Empresa no Google',
+      whatsappWhat: 'Conversas com clientes · janela de 24 horas, depois modelos',
+      messengerWhat: 'Vem com cada página de Facebook · etiqueta de agente humano até 7 dias',
+      googleWhat: 'Avaliações e respostas públicas, por local',
+      viaPage: 'através da página de Facebook',
+      notConnected: 'Não ligado',
+      connect: (source: string, brand: string) => `Ligar ${source} para ${brand}`,
+      disconnect: (source: string, brand: string) => `Desligar ${source} de ${brand}`,
+      connected: (n: number) => (n === 1 ? '1 ligado' : `${n} ligados`),
+    },
+    inboxDialog: {
+      title: (source: string) => `Ligar ${source}`,
+      whatsappSub: 'O Kataru responde neste número através da plataforma WhatsApp Business da Meta. O número não pode ficar ao mesmo tempo na aplicação do WhatsApp.',
+      googleSub: 'As avaliações deste local chegam às Mensagens e as respostas são publicadas como a empresa.',
+      brand: 'Para a marca',
+      phone: 'Número do WhatsApp Business',
+      phonePlaceholder: '+351 21 555 0123',
+      location: 'Local do Perfil da Empresa',
+      locationPlaceholder: 'Wildroot Botanics · Rua da Rosa, Lisboa',
+      submit: 'Ligar',
+      cancel: 'Cancelar',
+      badPhone: 'Escreva o número com o indicativo do país, como +351 21 555 0123',
+      noLocation: 'Escreva o nome e a morada do local',
+      already: (brand: string, source: string) => `${brand} já tem ${source} ligado.`,
+      done: (source: string, brand: string) => `${source} ligado para ${brand}`,
+      removed: (source: string, brand: string) => `${source} desligado de ${brand}`,
     },
     connectDialog: {
       title: 'Ligar um canal',

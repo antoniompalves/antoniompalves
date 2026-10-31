@@ -52,6 +52,9 @@
   --n-youtube: #d61f1f;
   --n-pinterest: #d0021b;
   --n-threads: #16191d;
+  --n-whatsapp: #128c4a;
+  --n-messenger: #0a7cff;
+  --n-google: #1a73e8;
   --dock: #16191d;
   --on-dock: #f6f7f5;
   --pill: #16191d;
@@ -109,6 +112,9 @@
   --n-youtube: #ff6b6b;
   --n-pinterest: #ff6b7d;
   --n-threads: #eef0ee;
+  --n-whatsapp: #4fd68a;
+  --n-messenger: #5eaaff;
+  --n-google: #7fb0f5;
   --dock: #ffffff14;
   --on-dock: #eef0ee;
   --pill: #eef0ee;
@@ -194,6 +200,9 @@
   --color-n-youtube: var(--n-youtube);
   --color-n-pinterest: var(--n-pinterest);
   --color-n-threads: var(--n-threads);
+  --color-n-whatsapp: var(--n-whatsapp);
+  --color-n-messenger: var(--n-messenger);
+  --color-n-google: var(--n-google);
 
   --color-ib-acc-text: var(--ib-acc-text);
   --color-ib-us: var(--ib-us);

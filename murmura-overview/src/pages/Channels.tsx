@@ -12,13 +12,14 @@ import { ChannelCard } from '../components/channels/ChannelCard'
 import { ConnectDialog } from '../components/channels/ConnectDialog'
 import { AttentionBanner, BrandSection, NoChannels, PhoneBrandSection } from '../components/channels/Sections'
 import { AudienceCard, NetworksCard } from '../components/channels/Side'
+import { InboxConnectDialog, InboxSourcesCard } from '../components/channels/InboxSources'
 import { BrandMark, Button, cn } from '../components/ui'
 import { SUPPORTED, attentionList, channelStats, failedPosts, matches, needsAttention, newChannel, waitingPosts } from '../data/channels'
 import type { ChannelTab } from '../data/channels'
 import { can, lockTitle } from '../data/permissions'
 import { NETWORK_LABEL } from '../data/selectors'
 import { useWorkspace } from '../data/store'
-import type { AuditAction, Channel, NetworkId } from '../data/types'
+import type { AuditAction, Channel, InboxAccount, NetworkId } from '../data/types'
 import { useI18n } from '../i18n'
 
 const DAY = 86_400_000
@@ -52,6 +53,7 @@ export function Channels({ now, hash }: { now: Date; hash: string }) {
   const [sheet, setSheet] = useState<string | null>(null)
   const [handshake, setHandshake] = useState<string | null>(null)
   const [postId, setPostId] = useState<string | null>(null)
+  const [inboxConnect, setInboxConnect] = useState<{ source: 'whatsapp' | 'google'; brandId: string } | null>(null)
   const handshakeTimer = useRef(0)
   const { publish, duplicate, remove } = usePostActions(now, () => setPostId(null))
 
@@ -139,6 +141,27 @@ export function Channels({ now, hash }: { now: Date; hash: string }) {
   useEffect(() => () => window.clearTimeout(handshakeTimer.current), [])
 
   const handlers = { onReconnect: reconnect, onPause: pause, onDisconnect: disconnect }
+
+  const brandName = (id: string) => ws.brands.find((b) => b.id === id)?.name ?? ''
+  const connectInbox = (source: 'whatsapp' | 'google', brandId: string, label: string) => {
+    setInboxConnect(null)
+    dispatch({ type: 'saveInboxAccount', account: { id: `${source === 'whatsapp' ? 'wa' : 'gbp'}-${brandId}-${Date.now().toString(36)}`, brandId, source, label, connectedById: me, connectedAt: new Date(nowMs).toISOString() } })
+    audit({ type: 'connectedInbox', brandId, source })
+    toast({ text: c.inboxDialog.done(c.inboxCard[source], brandName(brandId)), icon: Link })
+  }
+  const disconnectInbox = (a: InboxAccount) => {
+    if (!manage) return
+    dispatch({ type: 'removeInboxAccount', id: a.id })
+    const id = audit({ type: 'disconnectedInbox', brandId: a.brandId, source: a.source })
+    toast({
+      text: c.inboxDialog.removed(c.inboxCard[a.source], brandName(a.brandId)),
+      icon: Unlink,
+      undo: () => {
+        dispatch({ type: 'unaudit', id })
+        dispatch({ type: 'saveInboxAccount', account: a })
+      },
+    })
+  }
   const sheetChannel = sheet ? ws.channels.find((x) => x.id === sheet) : undefined
   const sheetBrand = sheetChannel ? ws.brands.find((b) => b.id === sheetChannel.brandId) : undefined
   const post = postId ? (ws.posts.find((p) => p.id === postId) ?? null) : null
@@ -244,6 +267,7 @@ export function Channels({ now, hash }: { now: Date; hash: string }) {
         <aside className="grid min-w-0 content-start gap-4 max-[1281px]:grid-cols-2 max-mobile:grid-cols-1">
           <AudienceCard ws={ws} />
           <NetworksCard ws={ws} me={me} onConnect={(network) => connect({ network })} />
+          <InboxSourcesCard ws={ws} me={me} onConnect={(source, brandId) => (manage ? setInboxConnect({ source, brandId }) : toast({ text: c.toast.cantConnect, icon: Lock }))} onDisconnect={disconnectInbox} />
         </aside>
       </div>
 
@@ -259,6 +283,7 @@ export function Channels({ now, hash }: { now: Date; hash: string }) {
           }}
         />
       )}
+      {inboxConnect && <InboxConnectDialog source={inboxConnect.source} brandId={inboxConnect.brandId} onClose={() => setInboxConnect(null)} onConnect={(brandId, label) => connectInbox(inboxConnect.source, brandId, label)} />}
       <AuthoriseDialog channel={authorise} now={new Date(nowMs)} onClose={() => setAuthorise(null)} onAllowed={allowed} />
       <ConfirmDialog
         open={!!disconnecting}

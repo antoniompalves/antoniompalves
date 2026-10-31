@@ -1,4 +1,4 @@
-import type { Conversation, ConversationKind, Message, NetworkId, Sentiment } from './types'
+import type { Conversation, ConversationKind, InboxSource, Message, Sentiment } from './types'
 
 /**
  * Inbox selectors, reverse-engineered from the reference #/inbox: the list is
@@ -11,7 +11,7 @@ export type InboxView = 'all' | 'unread' | 'mine' | 'unassigned' | 'priority' | 
 
 export interface InboxFilters {
   kinds: ConversationKind[]
-  networks: NetworkId[]
+  networks: InboxSource[]
   sentiments: Sentiment[]
 }
 

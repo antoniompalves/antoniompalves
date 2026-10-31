@@ -3,10 +3,11 @@ import type { ReactNode } from 'react'
 import { Check, ChevronDown, Plus, RotateCcw, UserPlus, X } from 'lucide-react'
 import type { Brand, Conversation, Post, Sentiment, TeamMember } from '../../data/types'
 import { lastMessage } from '../../data/inbox'
-import { NETWORK_LABEL, clip } from '../../data/selectors'
+import { SOURCE_LABEL, clip } from '../../data/selectors'
 import { useI18n } from '../../i18n'
 import { coverPhoto } from '../../data/assets'
-import { Avatar, BrandMark, Button, NetIcon, cn } from '../ui'
+import { Avatar, BrandMark, Button, NetIcon, Stars, cn } from '../ui'
+import { useWorkspace } from '../../data/store'
 import { Face, KIND_ICON } from './ConversationList'
 import { AssignMenu, ibIc } from './Thread'
 import { TagPopover } from './TagPopover'
@@ -58,6 +59,7 @@ interface ContactInfoProps {
 export function ContactInfo(props: ContactInfoProps) {
   const { c, brand, post, team, assignable, me, now, tagSuggestions, tagOpen, setTagOpen, onClose } = props
   const { t } = useI18n()
+  const { all } = useWorkspace()
   const assignBtn = useRef<HTMLButtonElement>(null)
   const tagBtn = useRef<HTMLButtonElement>(null)
   const [assignOpen, setAssignOpen] = useState(false)
@@ -82,10 +84,24 @@ export function ContactInfo(props: ContactInfoProps) {
         <div className="grid justify-items-center gap-[3px] border-b border-line px-[18px] pb-[18px] pt-[22px] text-center">
           <Face c={c} size="xl" />
           <h2 className="text-xl font-bold tracking-[-0.015em]">{c.contact.name}</h2>
-          <p className="text-2xs text-muted">@{c.contact.handle}</p>
-          <p className="mb-2 inline-flex items-center gap-1.5 text-2xs text-muted">
-            <NetIcon network={c.network} />
-            {t.inbox.followers(NETWORK_LABEL[c.network], t.numbers.compact(c.contact.followers))}
+          {c.network === 'whatsapp' ? (
+            <p className="text-2xs text-muted tabular-nums">{c.contact.phone}</p>
+          ) : c.network === 'google' ? (
+            c.rating && <Stars n={c.rating} className="my-0.5" />
+          ) : (
+            c.network !== 'messenger' && <p className="text-2xs text-muted">@{c.contact.handle}</p>
+          )}
+          <p className="mb-2 inline-flex max-w-full items-center gap-1.5 text-2xs text-muted">
+            <NetIcon network={c.network} className="shrink-0" />
+            <span className="min-w-0 truncate">
+              {c.network === 'whatsapp'
+                ? `${SOURCE_LABEL.whatsapp} · ${all.inboxAccounts.find((x) => x.brandId === c.brandId && x.source === 'whatsapp')?.label ?? ''}`
+                : c.network === 'messenger'
+                  ? `${SOURCE_LABEL.messenger} · ${t.inbox.sources.viaPage}`
+                  : c.network === 'google'
+                    ? (all.inboxAccounts.find((x) => x.brandId === c.brandId && x.source === 'google')?.label ?? t.inbox.sources.review)
+                    : t.inbox.followers(SOURCE_LABEL[c.network], t.numbers.compact(c.contact.followers))}
+            </span>
           </p>
           <span className="inline-flex items-center gap-[7px] whitespace-nowrap text-2xs font-semibold">
             <BrandMark brand={brand} size="xs" />
