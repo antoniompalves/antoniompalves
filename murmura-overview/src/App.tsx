@@ -3,6 +3,8 @@ import { LucideProvider } from 'lucide-react'
 import { AppFrame, Dock, Mesh, MobileNav, TopBar } from './components/AppShell'
 import { Card } from './components/ui'
 import { ToastProvider } from './components/Toast'
+import { PostDrawer } from './components/calendar/PostDrawer'
+import { usePostActions } from './components/usePostActions'
 import { I18nProvider, useI18n } from './i18n'
 import { workspace } from './data/mock'
 import { loadSetting, saveSetting } from './storage'
@@ -68,14 +70,17 @@ export default function App() {
 }
 
 function Shell() {
-  const { ws, clock } = useWorkspace()
+  const { ws, all, clock } = useWorkspace()
   const { t } = useI18n()
   const hash = useHash()
   const [theme, toggleTheme] = useTheme()
   const now = useMockNow(clock)
   const minuteKey = Math.floor(now.getTime() / 60_000)
   // Recompute once a minute (or when the data changes): countdowns and "x min ago" only change that often.
-  const model = useMemo(() => selectOverview(ws, new Date(minuteKey * 60_000), t), [ws, minuteKey, t])
+  const model = useMemo(() => selectOverview(ws, new Date(minuteKey * 60_000), t, all.brands), [ws, all.brands, minuteKey, t])
+
+  // Posts opened from the shell (Today's queue, search) show in the same drawer as on the calendar.
+  const [openPost, setOpenPost] = useState<string | null>(null)
 
   const route = matchRoute(hash)
   const routeId = route.id
@@ -98,7 +103,7 @@ function Shell() {
     <>
       <Mesh />
       <AppFrame>
-        <TopBar tabs={tabs} activeTab={routeId} user={model.user} unreadNotifications={model.badges.notifications} />
+        <TopBar tabs={tabs} activeTab={routeId} user={model.user} now={now} />
         <main id="main" className="relative">
           {routeId === 'overview' ? (
             <Overview model={model} now={now} />
@@ -136,14 +141,36 @@ function Shell() {
           )}
         </main>
       </AppFrame>
-      <Dock route={routeId} theme={theme} onToggleTheme={toggleTheme} channelsNeedAttention={model.badges.channelsNeedAttention} />
+      <Dock route={routeId} theme={theme} onToggleTheme={toggleTheme} channelsNeedAttention={model.badges.channelsNeedAttention} now={now} onOpenPost={setOpenPost} />
       <MobileNav
         route={routeId}
         theme={theme}
         onToggleTheme={toggleTheme}
         inboxUnread={model.badges.inbox}
         approvals={model.badges.approvals}
+        now={now}
+        onOpenPost={setOpenPost}
       />
+      <PostDrawerHost id={openPost} now={now} onClose={() => setOpenPost(null)} />
     </>
+  )
+}
+
+/** The post drawer for posts opened outside a page. */
+function PostDrawerHost({ id, now, onClose }: { id: string | null; now: Date; onClose: () => void }) {
+  const { ws } = useWorkspace()
+  const { publish, duplicate, remove } = usePostActions(now, onClose)
+  const post = id ? (ws.posts.find((p) => p.id === id) ?? null) : null
+  return (
+    <PostDrawer
+      post={post}
+      brand={post ? ws.brands.find((b) => b.id === post.brandId) : undefined}
+      author={post ? ws.team.find((m) => m.id === post.authorId) : undefined}
+      now={now}
+      onClose={onClose}
+      onPublish={publish}
+      onDuplicate={duplicate}
+      onDelete={remove}
+    />
   )
 }

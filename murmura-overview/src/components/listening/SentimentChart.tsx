@@ -115,7 +115,7 @@ export function SentimentChart({ days, series }: { days: Date[]; series: Record<
             <g key={tick}>
               <line x1={PAD.left} x2={width - PAD.right} y1={geo.y(tick)} y2={geo.y(tick)} className="stroke-line [stroke-dasharray:3_4]" />
               <text x={PAD.left - 8} y={geo.y(tick) + 4} textAnchor="end">
-                {t.numbers.compact(tick)}
+                {t.numbers.compact(Math.round(tick))}
               </text>
             </g>
           ))}

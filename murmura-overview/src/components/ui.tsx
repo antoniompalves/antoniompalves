@@ -1,4 +1,4 @@
-import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { ComponentProps, ComponentPropsWithoutRef, MouseEventHandler, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import type { Brand, NetworkId, PostStatus, Tone } from '../data/types'
 import { NETWORK_LABEL, STATUS_TONE } from '../data/selectors'
@@ -127,7 +127,7 @@ export function Button({ variant = 'ink', size = 'md', icon: Icon, href, classNa
     </>
   )
   return href ? (
-    <a href={href} className={cls}>
+    <a href={href} className={cls} onClick={rest.onClick as MouseEventHandler | undefined}>
       {inner}
     </a>
   ) : (

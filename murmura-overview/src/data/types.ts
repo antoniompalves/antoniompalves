@@ -421,7 +421,31 @@ export interface Workspace {
   templates: Template[]
   hashtagSets: HashtagSet[]
   audit: AuditEvent[]
-  notifications: { unread: number }
+  notices: Notice[]
+  /** The top bar's brand switcher: one brand, or null for every brand the person sees. */
+  brandScope: string | null
+  /** False after "Sign out": the sign-in screen shows until someone signs in. */
+  signedIn: boolean
+}
+
+/** What a notification says, as data (worded in the current language). */
+export type NoticeEvent =
+  | { type: 'waiting'; count: number }
+  | { type: 'disconnected'; brandId: string; network: NetworkId; failed: number }
+  | { type: 'expiring'; brandId: string; network: NetworkId; days: number }
+  | { type: 'trending'; brandId: string; ratio: number }
+  | { type: 'submitted'; by: string; excerpt: string }
+  | { type: 'approved'; by: string; excerpt: string }
+  | { type: 'changes'; by: string; excerpt: string }
+
+/** A notification in the bell's list; `for` keeps it to one person. */
+export interface Notice {
+  id: string
+  at: ISODate
+  href: string
+  read: boolean
+  for?: string
+  event: NoticeEvent
 }
 
 export interface NavItem {

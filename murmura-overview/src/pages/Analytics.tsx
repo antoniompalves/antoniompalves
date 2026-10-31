@@ -98,7 +98,7 @@ export function Analytics({ now, hash }: { now: Date; hash: string }) {
   }, [expanded])
 
   const netLabel = network ? NETWORK_LABEL[network] : null
-  const scope = a.scope(netLabel)
+  const scope = a.scope(netLabel, ws.brands.length === 1 ? ws.brands[0].name : null)
   const s = model.stats
   const open = openId ? ws.posts.find((p) => p.id === openId) ?? null : null
 
@@ -157,12 +157,12 @@ export function Analytics({ now, hash }: { now: Date; hash: string }) {
             count={chip.accounts}
           />
         ))}
-        <span className="ml-auto text-2xs font-semibold text-muted max-mobile:hidden">{a.note(ws.brands.length, range)}</span>
+        <span className="ml-auto text-2xs font-semibold text-muted max-mobile:hidden">{a.note(ws.brands.length === 1 ? ws.brands[0].name : ws.brands.length, range)}</span>
       </nav>
 
       {expanded && <div aria-hidden onClick={() => setExpanded(null)} className="fixed inset-0 z-[55] animate-fade bg-[rgb(16_18_20/0.28)] dark:bg-black/50" />}
 
-      <div className="an-grid">
+      <div className={cn('an-grid', ws.brands.length > 1 && 'an-grid--brands')}>
         <AnCard {...card('grow')} area="grow" title={a.growth.title}>
           <Figure value={`+${t.numbers.compact(model.growth.gained)}`}>
             <span className="text-2xs text-muted">
@@ -238,22 +238,24 @@ export function Analytics({ now, hash }: { now: Date; hash: string }) {
           <TopPosts model={model} by={topBy} network={netLabel} onOpen={setOpenId} />
         </AnCard>
 
-        <AnCard
-          {...card('brands')}
-          area="brands"
-          title={a.brands.title}
-          wrapTools
-          tools={
-            <Segmented
-              label={a.brands.compareBy}
-              value={brandBy}
-              onChange={setBrandBy}
-              options={(['followers', 'eng', 'impressions'] as const).map((v) => ({ value: v, label: a.brands.options[v] }))}
-            />
-          }
-        >
-          <Brands model={model} by={brandBy} />
-        </AnCard>
+        {ws.brands.length > 1 && (
+          <AnCard
+            {...card('brands')}
+            area="brands"
+            title={a.brands.title}
+            wrapTools
+            tools={
+              <Segmented
+                label={a.brands.compareBy}
+                value={brandBy}
+                onChange={setBrandBy}
+                options={(['followers', 'eng', 'impressions'] as const).map((v) => ({ value: v, label: a.brands.options[v] }))}
+              />
+            }
+          >
+            <Brands model={model} by={brandBy} />
+          </AnCard>
+        )}
       </div>
 
       <Websites range={range} network={network} card={card} />

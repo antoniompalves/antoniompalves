@@ -9,15 +9,11 @@ import { RequestChangesDialog, RuleCard, WhoCard } from '../components/approvals
 import { BrandMark, Button, cn } from '../components/ui'
 import { APPROVAL_TABS, approvalStats, approve, canReview, queue, sendBack, withdraw } from '../data/approvals'
 import type { ApprovalTab } from '../data/approvals'
+import { approvedNotices, changesNotices, excerpt } from '../data/notices'
 import { can, member } from '../data/permissions'
 import { useWorkspace } from '../data/store'
 import type { AuditAction, AuditEvent, Post } from '../data/types'
 import { useI18n } from '../i18n'
-
-const excerpt = (text: string) => {
-  const line = text.split('\n')[0] ?? ''
-  return line.length > 46 ? `${line.slice(0, 44)}…` : line
-}
 
 const TAB_COUNT: Partial<Record<ApprovalTab, string>> = { mine: 'bg-butter text-[#16191d]', changes: 'bg-coral text-on-coral' }
 
@@ -27,7 +23,7 @@ const TAB_COUNT: Partial<Record<ApprovalTab, string>> = { mine: 'bg-butter text-
  * with a note or withdraw, next to the rule in force and who approves each brand.
  */
 export function Approvals({ now }: { now: Date }) {
-  const { ws, dispatch } = useWorkspace()
+  const { ws, all: full, dispatch } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const a = t.approvals
@@ -62,9 +58,10 @@ export function Approvals({ now }: { now: Date }) {
   const firstName = (id: string) => member(ws, id)?.name.split(' ')[0] ?? ''
 
   const approveAll = (posts: Post[]) => {
-    const before = ws.posts
+    const before = full.posts
     const done = posts.map((p) => approve(p, me, nowMs))
     done.forEach((p) => dispatch({ type: 'savePost', post: p }))
+    dispatch({ type: 'notify', notices: done.flatMap((p) => approvedNotices(me, p, nowMs)) })
     setSelected(new Set())
     const undo = () => dispatch({ type: 'restore', posts: before })
     if (done.length === 1) {
@@ -91,12 +88,13 @@ export function Approvals({ now }: { now: Date }) {
   const sendBackWith = (p: Post, note: string) => {
     setAsking(null)
     dispatch({ type: 'savePost', post: sendBack(p, me, note, nowMs) })
+    dispatch({ type: 'notify', notices: changesNotices(me, p, nowMs) })
     audit('approval', { type: 'sentBack', excerpt: excerpt(p.text) })
     toast({ text: a.toast.sentBack(firstName(p.authorId)), icon: Undo2 })
   }
 
   const withdrawOne = (p: Post) => {
-    const before = ws.posts
+    const before = full.posts
     dispatch({ type: 'savePost', post: withdraw(p, me, nowMs, a.toast.withdrawNote) })
     audit('approval', { type: 'withdrew', excerpt: excerpt(p.text) })
     toast({ text: a.toast.withdrawn, icon: Undo2, undo: () => dispatch({ type: 'restore', posts: before }) })
@@ -146,23 +144,25 @@ export function Approvals({ now }: { now: Date }) {
           </div>
         </div>
         <span className="flex-1 max-mobile:hidden" />
-        <div role="group" aria-label={a.brands} className="flex flex-wrap gap-1.5 max-mobile:-mx-3.5 max-mobile:w-[calc(100%+28px)] max-mobile:flex-nowrap max-mobile:overflow-x-auto max-mobile:px-3.5 max-mobile:[scrollbar-width:none]">
-          <button type="button" aria-pressed={!brandId} onClick={() => setBrandId(null)} className={cn(chip, 'px-3.5', !brandId ? 'border-transparent bg-pill text-on-pill' : 'border-rim bg-glass-2 hover:bg-glass-3')}>
-            {a.all}
-          </button>
-          {ws.brands.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              aria-pressed={brandId === b.id}
-              onClick={() => setBrandId(brandId === b.id ? null : b.id)}
-              className={cn(chip, 'pl-1.5 pr-3', brandId === b.id ? 'border-transparent bg-pill text-on-pill' : 'border-rim bg-glass-2 hover:bg-glass-3')}
-            >
-              <BrandMark brand={b} size="xs" className={brandId === b.id ? 'shadow-[0_0_0_2px_var(--on-pill)]' : undefined} />
-              {b.name.split(' ')[0]}
+        {ws.brands.length > 1 && (
+          <div role="group" aria-label={a.brands} className="flex flex-wrap gap-1.5 max-mobile:-mx-3.5 max-mobile:w-[calc(100%+28px)] max-mobile:flex-nowrap max-mobile:overflow-x-auto max-mobile:px-3.5 max-mobile:[scrollbar-width:none]">
+            <button type="button" aria-pressed={!brandId} onClick={() => setBrandId(null)} className={cn(chip, 'px-3.5', !brandId ? 'border-transparent bg-pill text-on-pill' : 'border-rim bg-glass-2 hover:bg-glass-3')}>
+              {a.all}
             </button>
-          ))}
-        </div>
+            {ws.brands.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                aria-pressed={brandId === b.id}
+                onClick={() => setBrandId(brandId === b.id ? null : b.id)}
+                className={cn(chip, 'pl-1.5 pr-3', brandId === b.id ? 'border-transparent bg-pill text-on-pill' : 'border-rim bg-glass-2 hover:bg-glass-3')}
+              >
+                <BrandMark brand={b} size="xs" className={brandId === b.id ? 'shadow-[0_0_0_2px_var(--on-pill)]' : undefined} />
+                {b.name.split(' ')[0]}
+              </button>
+            ))}
+          </div>
+        )}
         <button
           type="button"
           aria-pressed={reviewable.length > 0 && chosen.length === reviewable.length}

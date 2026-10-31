@@ -4,6 +4,7 @@ import { Empty } from '../analytics/parts'
 import { Badge, BrandMark, Button, IconButton, cn } from '../ui'
 import { KIND_TONE } from '../../data/listening'
 import type { KeywordRow } from '../../data/listening'
+import { useWorkspace } from '../../data/store'
 import type { Keyword } from '../../data/types'
 import { useI18n } from '../../i18n'
 
@@ -37,8 +38,11 @@ interface KeywordsProps {
 /** "Tracked keywords": kind, term, brand and weekly count, a 14-day line and the sentiment split of each keyword. */
 export function Keywords({ rows, selected, onSelect, onStop, showAll, onShowAll }: KeywordsProps) {
   const { t } = useI18n()
+  const { ws } = useWorkspace()
   const k = t.listening.keywords
   const pct = t.numbers.pct0
+  // With one brand in view, its mark on every row says nothing.
+  const marks = ws.brands.length > 1
 
   if (!rows.length) return <Empty icon={Ear} title={k.noneTitle} text={k.noneText} />
 
@@ -70,7 +74,7 @@ export function Keywords({ rows, selected, onSelect, onStop, showAll, onShowAll 
                 <span className="min-w-0 leading-[1.2]">
                   <b className="block truncate text-sm font-bold group-hover:underline group-hover:underline-offset-[3px]">{keyword.term}</b>
                   <small className="flex h-[17.8px] items-center gap-[5px] overflow-hidden whitespace-nowrap text-[12.5px] text-muted">
-                    {brand && <BrandMark brand={brand} size="3xs" />}
+                    {marks && brand && <BrandMark brand={brand} size="3xs" />}
                     <span className="num">{count}</span> {k.thisWeek}
                   </small>
                 </span>

@@ -798,3 +798,77 @@ should change.", "Pick at least one recipient.") use the error line.
 
 The rest of the account menu (switch account, keyboard shortcuts, Light / Dark
 / Match system, sign out) comes with the shell's remaining controls.
+
+## 16. Shell: brand switcher, notifications, Today's queue, Create
+
+The top bar and the dock's actions now work as in the reference.
+
+| Brand switcher | Notifications | Today's queue | Create |
+| --- | --- | --- | --- |
+| ![Brand switcher menu](screenshots/shell-brand-menu.png) | ![Notifications](screenshots/shell-notifications.png) | ![Today's queue](screenshots/shell-today.png) | ![Create menu](screenshots/shell-create.png) |
+
+### Brand switcher
+
+A menu (210px, 40px rows, 46px on touch) with *All brands* — *All my brands*
+for someone who sees only some — and one row per brand with its 22px mark. The
+choice applies to **every page**, as in the reference: posts, channels,
+conversations, campaigns, keywords and mentions, competitors, websites and the
+library follow it (`src/data/scope.ts`), as do the brands someone's role lets
+them see. People, roles, settings and the activity log don't. It is saved
+with the workspace and toasts "Showing Ember & Oak" / "Showing every brand".
+The button shows the brand's 38px mark and name.
+
+| With one brand in view | Behaviour (as the reference) |
+| --- | --- |
+| Overview | every figure for that brand (Ember & Oak: 142.7K, +8.5%, 11.5%); empty days in the week ahead show a dashed **Gap** |
+| Calendar | "4 posts · 1 brand"; an upcoming empty day reads **Gap** with its coral dot (past ones *Free*) |
+| Approvals | the brand chips go away |
+| Analytics | "Ember & Oak · last 30 days", no *Brand comparison* (the grid closes up, `.an-grid--brands` only with several brands) |
+| Listening | keyword rows drop the brand mark |
+
+Analytics history is kept per network for all brands, with exact 7/30/90-day
+totals per account. For one brand, each network's daily series is rescaled
+window by window so those totals come out exact (Ember & Oak: +11.1K followers
+in 30 days, 1.57M impressions, the per-network table to the digit); the daily
+curve and "vs the 30 days before" are estimates from the network's shape
+(−6.9% here, −7.6% in the reference). Demo website traffic is generated from
+the whole workspace, so a site's numbers don't change with the switcher.
+
+Two definitions were aligned with the reference on the way: *Posts going out
+this week* counts scheduled and pending posts in the next seven days, and
+*Inbox pulse* lists the three latest open conversations, read or not.
+
+### Notifications
+
+360px panel: "Notifications" and *Mark all read* (disabled when nothing is
+unread), then rows with a 34px icon (44 on touch) chosen by where they lead —
+approvals, channels, analytics, inbox, calendar — a coral dot while unread, the
+text and "20 min ago". Opening one marks it read and goes there; "You're all
+caught up." when empty. The reference's four start the list ("5 posts are
+waiting for your approval", "Vantage Garage · Facebook disconnected — 1 post
+failed", "Hollow Home · YouTube access expires in 3 days", "A Wildroot post is
+trending: 3.1× usual reach"). New ones arrive as in the reference: sending a
+post for approval tells its approvers, approving it or asking for changes tells
+the writer (`src/data/notices.ts`). They are stored as data and worded in the
+current language.
+
+### Today's queue and Create
+
+**Today's queue** (dock clock; *Today* in the phone's More sheet): today's
+posts that aren't drafts, soonest first, with brand mark, the first 42
+characters, time and networks, and status; a row opens the post drawer (now
+available from anywhere). *Open calendar* and *New post* below.
+
+**Create** (dock +, the phone bar's Create): *New post*, *Schedule for tomorrow
+9:00* (the composer at that time), *Connect a channel*, *Invite a teammate* —
+each disabled without the permission it needs.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| Brand menu, notifications, Today's queue, Create at 1440 and 390 px (touch): panel and every row | identical (Today's queue within 1px) |
+| Every page's text with Ember & Oak picked, against the reference | inbox, approvals and listening identical; overview, calendar and analytics identical apart from the estimates above, the countdown's second and the calendar's campaign dates |
+| 21 interaction checks (menu, toast, scoped pages, saved across reloads, notices read one by one and all at once, a notice for the writer of an approved post, Today's queue → drawer, Create → composer at 9:00, phone More → Today) and the approvals, compose, listening and persistence suites | all pass, no console errors |
+| pt-PT: the four panels and the scoped pages at 1440 and 390 px | no English left, nothing clipped |
+| English text of 13 states with every brand | unchanged |

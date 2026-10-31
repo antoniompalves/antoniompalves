@@ -42,7 +42,7 @@ const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x
  * days, nudged with Alt + arrows, and opened in a preview drawer.
  */
 export function Calendar({ now }: { now: Date }) {
-  const { ws, dispatch } = useWorkspace()
+  const { ws, all, dispatch } = useWorkspace()
   const toast = useToast()
   const { t } = useI18n()
   const [view, setView] = useState<CalendarView>('week')
@@ -77,7 +77,7 @@ export function Calendar({ now }: { now: Date }) {
   /* ── mutations (all undoable) ── */
 
   const move = (id: string, when: Date) => {
-    const before = ws.posts
+    const before = all.posts
     dispatch({ type: 'move', id, to: when.toISOString() })
     setLandedId(id)
     window.setTimeout(() => setLandedId((cur) => (cur === id ? null : cur)), 1300)

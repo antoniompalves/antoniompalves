@@ -29,7 +29,7 @@ const go = (id?: string) => {
  * optional contact panel. Shortcuts: J/K move, E done, R reply, / search.
  */
 export function Inbox({ now, hash }: { now: Date; hash: string }) {
-  const { ws, dispatch } = useWorkspace()
+  const { ws, all, dispatch } = useWorkspace()
   const toast = useToast()
   const { t } = useI18n()
   const [view, setView] = useState<InboxView>('all')
@@ -88,7 +88,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   const firstName = (c: Conversation) => c.contact.name.split(' ')[0]
 
   const done = (c: Conversation) => {
-    const before = ws.conversations
+    const before = all.conversations
     if (c.status === 'done') {
       patch(c.id, { status: 'open' })
       toast({ text: t.inbox.toast.reopened(firstName(c), c.kind), icon: RotateCcw, undo: undoTo(before, c.id) })
@@ -105,7 +105,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   }
 
   const send = (c: Conversation, draft: Draft, close = false) => {
-    const before = ws.conversations
+    const before = all.conversations
     const message: Message = {
       id: `${c.id}-m${Date.now()}`,
       from: 'us',
@@ -125,9 +125,9 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   }
 
   const markAllRead = () => {
-    const before = ws.conversations
+    const before = all.conversations
     const n = stats.unread
-    dispatch({ type: 'readAll' })
+    dispatch({ type: 'readAll', ids: ws.conversations.map((c) => c.id) })
     toast({ text: t.inbox.toast.markedRead(n), icon: CheckCheck, undo: undoTo(before) })
   }
 
@@ -135,14 +135,14 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   const assign = (c: Conversation, memberId: string | null) => patch(c.id, { assigneeId: memberId ?? undefined })
 
   const priority = (c: Conversation) => {
-    const before = ws.conversations
+    const before = all.conversations
     patch(c.id, { priority: !c.priority })
     toast({ text: c.priority ? t.inbox.toast.priorityOff : t.inbox.toast.priorityOn, icon: Flag, undo: undoTo(before) })
   }
 
   const sentiment = (c: Conversation, s: Sentiment) => {
     if (c.sentiment === s) return
-    const before = ws.conversations
+    const before = all.conversations
     patch(c.id, { sentiment: s })
     toast({ text: t.inbox.toast.sentiment(s), icon: Smile, undo: undoTo(before) })
   }
@@ -155,7 +155,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   }
 
   const removeTag = (c: Conversation, tag: string) => {
-    const before = ws.conversations
+    const before = all.conversations
     patch(c.id, { tags: c.tags.filter((x) => x !== tag) })
     toast({ text: t.inbox.toast.untagged(tag), icon: Hash, undo: undoTo(before) })
   }

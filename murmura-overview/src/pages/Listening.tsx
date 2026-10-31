@@ -30,7 +30,7 @@ const LIVE_EVERY = 12_000
  * sentiment over time and the competitors (6 columns from 1340px, 1 from 1000px).
  */
 export function Listening({ now }: { now: Date }) {
-  const { ws, dispatch } = useWorkspace()
+  const { ws, all, dispatch } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const l = t.listening
@@ -113,8 +113,8 @@ export function Listening({ now }: { now: Date }) {
   }
 
   const stop = (keyword: Keyword) => {
-    const index = ws.keywords.indexOf(keyword)
-    const mentions = ws.mentions.filter((m) => m.keywordId === keyword.id)
+    const index = all.keywords.findIndex((k) => k.id === keyword.id)
+    const mentions = all.mentions.filter((m) => m.keywordId === keyword.id)
     dispatch({ type: 'untrack', id: keyword.id })
     if (filters.keywordId === keyword.id) filter({ keywordId: null })
     audit('listening', { type: 'untrackedKeyword', term: keyword.term, brandId: keyword.brandId })

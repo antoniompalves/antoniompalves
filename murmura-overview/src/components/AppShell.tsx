@@ -1,11 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Bell,
   CalendarDays,
   ChartNoAxesColumn,
-  ChevronDown,
   Clock,
   Ear,
   House,
@@ -13,7 +11,6 @@ import {
   Inbox,
   Languages,
   LayoutGrid,
-  Layers,
   Link,
   Moon,
   PenLine,
@@ -34,6 +31,7 @@ import { LOCALES, useI18n } from '../i18n'
 import { KataruMark } from './Logo'
 import { ConfirmDialog } from './Modal'
 import { MenuDivider, MenuItem, Popover } from './Popover'
+import { BrandSwitcher, CreateMenu, Notifications, TodayPopover } from './shell/Menus'
 import { useToast } from './Toast'
 import { Avatar, IconButton, cn } from './ui'
 
@@ -66,10 +64,10 @@ interface TopBarProps {
   tabs: NavItem[]
   activeTab: string
   user: TeamMember
-  unreadNotifications: number
+  now: Date
 }
 
-export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarProps) {
+export function TopBar({ tabs, activeTab, user, now }: TopBarProps) {
   const { t } = useI18n()
   const trackRef = useRef<HTMLDivElement>(null)
   const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
@@ -143,35 +141,12 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
           type="button"
           aria-label={t.shell.search}
           title={t.shell.search}
-          className="inline-grid size-[46px] cursor-pointer place-items-center rounded-full border border-rim bg-glass-2 mobile:hidden"
+          className="inline-grid size-[46px] cursor-pointer place-items-center rounded-full border border-rim bg-glass-2 pointer-coarse:size-11 mobile:hidden"
         >
           <Search size={20} aria-hidden />
         </button>
-        <button
-          type="button"
-          aria-label={t.shell.brandSwitcher}
-          aria-haspopup="menu"
-          className="inline-flex h-[46px] max-w-60 cursor-pointer items-center gap-[9px] rounded-full border border-rim bg-glass-2 pl-1.5 pr-3.5 text-sm font-semibold max-mobile:w-[46px] max-mobile:justify-center max-mobile:p-0"
-        >
-          <span className="grid size-[34px] place-items-center rounded-full bg-pill text-on-pill">
-            <Layers size={17} aria-hidden />
-          </span>
-          <span className="truncate max-mobile:hidden">{t.shell.allBrands}</span>
-          <ChevronDown size={16} className="text-muted max-mobile:hidden" aria-hidden />
-        </button>
-
-        <button
-          type="button"
-          aria-label={t.shell.notificationsUnread(unreadNotifications)}
-          title={t.shell.notifications}
-          className="relative inline-grid size-[46px] cursor-pointer place-items-center rounded-full border border-rim bg-glass-2 hover:bg-glass-3"
-        >
-          <Bell size={20} aria-hidden />
-          {unreadNotifications > 0 && (
-            <span className="absolute right-2.5 top-[9px] size-[9px] rounded-full bg-coral shadow-[0_0_0_2px_var(--bg)]" />
-          )}
-        </button>
-
+        <BrandSwitcher />
+        <Notifications now={now} />
         <AccountButton user={user} />
       </div>
     </header>
@@ -270,7 +245,7 @@ interface DockEntry {
   onClick?: () => void
 }
 
-function DockButton({ entry, current }: { entry: DockEntry; current: boolean }) {
+function DockButton({ entry, current, buttonRef, expanded }: { entry: DockEntry; current: boolean; buttonRef?: RefObject<HTMLButtonElement | null>; expanded?: boolean }) {
   const Icon = entry.icon
   const cls = cn(
     'group relative grid size-[52px] place-items-center rounded-full transition-[opacity,background-color] duration-150 [@media(height<=820px)]:size-12',
@@ -295,7 +270,15 @@ function DockButton({ entry, current }: { entry: DockEntry; current: boolean }) 
       {body}
     </a>
   ) : (
-    <button type="button" aria-label={entry.label} onClick={entry.onClick} className={cls}>
+    <button
+      ref={buttonRef}
+      type="button"
+      aria-label={entry.label}
+      aria-haspopup={expanded === undefined ? undefined : entry.id === 'new' ? 'menu' : 'dialog'}
+      aria-expanded={expanded}
+      onClick={entry.onClick}
+      className={cls}
+    >
       {body}
     </button>
   )
@@ -306,14 +289,20 @@ interface DockProps {
   theme: 'light' | 'dark'
   onToggleTheme: () => void
   channelsNeedAttention: boolean
+  now: Date
+  onOpenPost: (id: string) => void
 }
 
-export function Dock({ route, theme, onToggleTheme, channelsNeedAttention }: DockProps) {
+export function Dock({ route, theme, onToggleTheme, channelsNeedAttention, now, onOpenPost }: DockProps) {
   const { t } = useI18n()
+  const [menu, setMenu] = useState<'new' | 'today' | null>(null)
+  const newRef = useRef<HTMLButtonElement>(null)
+  const todayRef = useRef<HTMLButtonElement>(null)
+  const toggle = (id: 'new' | 'today') => setMenu((m) => (m === id ? null : id))
   const top: DockEntry[] = [
     { id: 'search', label: t.shell.search, kbd: '⌘K', icon: Search },
-    { id: 'new', label: t.shell.create, kbd: 'N', icon: Plus, primary: true },
-    { id: 'today', label: t.shell.todaysQueue, icon: Clock },
+    { id: 'new', label: t.shell.create, kbd: 'N', icon: Plus, primary: true, onClick: () => toggle('new') },
+    { id: 'today', label: t.shell.todaysQueue, icon: Clock, onClick: () => toggle('today') },
     { id: 'library', label: t.routes.library.label, icon: Image, href: '#/library' },
   ]
   const bottom: DockEntry[] = [
@@ -334,12 +323,20 @@ export function Dock({ route, theme, onToggleTheme, channelsNeedAttention }: Doc
       className="fixed inset-y-0 left-[var(--dock-x)] z-30 my-auto flex h-fit flex-col gap-1 rounded-full bg-dock p-2 text-on-dock shadow-[0_20px_40px_-18px_rgb(0_0_0/0.45)] max-mobile:hidden dark:border dark:border-line"
     >
       {top.map((e) => (
-        <DockButton key={e.id} entry={e} current={route === e.id} />
+        <DockButton
+          key={e.id}
+          entry={e}
+          current={route === e.id}
+          buttonRef={e.id === 'new' ? newRef : e.id === 'today' ? todayRef : undefined}
+          expanded={e.id === 'new' || e.id === 'today' ? menu === e.id : undefined}
+        />
       ))}
       <span aria-hidden className="mx-2.5 my-1 h-px bg-white/14" />
       {bottom.map((e) => (
         <DockButton key={e.id} entry={e} current={route === e.id} />
       ))}
+      <CreateMenu anchor={newRef} open={menu === 'new'} onClose={() => setMenu(null)} now={now} />
+      <TodayPopover anchor={todayRef} open={menu === 'today'} onClose={() => setMenu(null)} onOpenPost={onOpenPost} now={now} />
     </nav>
   )
 }
@@ -350,6 +347,8 @@ interface MobileNavProps {
   onToggleTheme: () => void
   inboxUnread: number
   approvals: number
+  now: Date
+  onOpenPost: (id: string) => void
 }
 
 /** Pages reached from the "More" sheet on phones, in the reference's order. */
@@ -365,9 +364,12 @@ const MORE_PAGES: { id: RouteId; icon: LucideIcon }[] = [
 ]
 
 /** Below 761px the dock collapses into a bottom bar, as in the reference: four destinations plus "More". */
-export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals }: MobileNavProps) {
+export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals, now, onOpenPost }: MobileNavProps) {
   const { t } = useI18n()
   const [sheet, setSheet] = useState(false)
+  const [menu, setMenu] = useState<'new' | 'today' | null>(null)
+  const newRef = useRef<HTMLButtonElement>(null)
+  const moreRef = useRef<HTMLButtonElement>(null)
   const items: { id: string; label: string; icon: LucideIcon; href: string; count?: number }[] = [
     { id: 'overview', label: t.shell.mobileHome, icon: House, href: '#/overview' },
     { id: 'calendar', label: t.routes.calendar.label, icon: CalendarDays, href: '#/calendar' },
@@ -398,14 +400,22 @@ export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals 
       >
         {link(items[0])}
         {link(items[1])}
-        <button type="button" aria-label={t.shell.create} className={cn(item(false), 'gap-0.5')}>
+        <button
+          ref={newRef}
+          type="button"
+          aria-label={t.shell.create}
+          aria-haspopup="menu"
+          aria-expanded={menu === 'new'}
+          onClick={() => setMenu((m) => (m === 'new' ? null : 'new'))}
+          className={cn(item(false), 'gap-0.5')}
+        >
           <span className="grid h-8 w-11 place-items-center rounded-xl bg-butter text-[#16191d]">
             <Plus size={21} aria-hidden />
           </span>
           {t.shell.create}
         </button>
         {link(items[2])}
-        <button type="button" aria-haspopup="dialog" aria-expanded={sheet} onClick={() => setSheet(true)} className={item(onMore)}>
+        <button ref={moreRef} type="button" aria-haspopup="dialog" aria-expanded={sheet} onClick={() => setSheet(true)} className={item(onMore)}>
           <LayoutGrid size={23} aria-hidden />
           {t.shell.more}
         </button>
@@ -417,7 +427,14 @@ export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals 
         theme={theme}
         onToggleTheme={onToggleTheme}
         approvals={approvals}
+        onToday={() => {
+          setSheet(false)
+          // After the sheet has slid away, as in the reference.
+          window.setTimeout(() => setMenu('today'), 260)
+        }}
       />
+      <CreateMenu anchor={newRef} open={menu === 'new'} onClose={() => setMenu(null)} now={now} />
+      <TodayPopover anchor={moreRef} open={menu === 'today'} onClose={() => setMenu(null)} onOpenPost={onOpenPost} now={now} />
     </>
   )
 }
@@ -481,7 +498,13 @@ function SheetTile({ href, icon: Icon, label, count, current, onClick }: SheetTi
 }
 
 /** Bottom sheet behind "More" (".msheet" in a ".drawer"): every other page, then search, today and the theme. */
-function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals }: { open: boolean; onClose: () => void } & Omit<MobileNavProps, 'inboxUnread' | 'channelsNeedAttention'>) {
+interface MoreSheetProps extends Pick<MobileNavProps, 'route' | 'theme' | 'onToggleTheme' | 'approvals'> {
+  open: boolean
+  onClose: () => void
+  onToday: () => void
+}
+
+function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals, onToday }: MoreSheetProps) {
   const { t } = useI18n()
   const ref = useRef<HTMLDialogElement>(null)
 
@@ -525,7 +548,7 @@ function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals }: { 
             <Search size={18} aria-hidden />
             {t.shell.search}
           </button>
-          <button type="button" className={ghost}>
+          <button type="button" onClick={onToday} className={ghost}>
             <Clock size={18} aria-hidden />
             {t.common.today}
           </button>

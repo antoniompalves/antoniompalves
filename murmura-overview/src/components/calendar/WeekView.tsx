@@ -112,7 +112,7 @@ export function WeekView(props: WeekViewProps) {
                 title={gap ? t.calendar.nothingScheduled : undefined}
               >
                 {gap && <i aria-hidden className="size-1.5 rounded-full bg-coral" />}
-                {count === 0 ? t.calendar.free : t.common.post(count)}
+                {count === 0 ? (gap ? t.calendar.gap : t.calendar.free) : t.common.post(count)}
               </span>
             </div>
           )

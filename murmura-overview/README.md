@@ -161,6 +161,7 @@ src/
     GrowthChart.tsx       SVG area chart: monotone curve, grid, crosshair, tooltip, ←/→ keys
     Toast.tsx             bottom toast with Undo or an action
     AuthoriseDialog.tsx   "Authorise on …": reconnects a channel (overview, channels)
+    shell/Menus.tsx       brand switcher, notifications, Today's queue, Create menu
     Popover.tsx           fixed popover anchored to its trigger (flips, clamps), menu rows
     Modal.tsx             <dialog> form shell (centred; a bottom sheet on phones) and a confirm dialog
     useScrollEdges.ts     edge fades for sideways scrollers on phones
@@ -222,6 +223,8 @@ src/
     ga4Store.tsx          demo ↔ live switch, GA4 settings saved per browser
     store.tsx             shared store (posts, conversations, reports, keywords and mentions, with undo), saved per browser, reset
     persist.ts            saving and loading the workspace: version, seed fingerprint, mock clock
+    scope.ts              what pages show: the person's brands narrowed by the brand switcher
+    notices.ts            notifications: who gets told what when posts move
     routes.ts             the SPA's hash routes (their names live in the catalogues)
     publishing.ts         the app ↔ publishing service contract (shared with server/)
     publisher.ts          client for the publishing service: connect, accounts, media, publish, jobs
@@ -243,6 +246,10 @@ server/                   publishing service (docs/PUBLISHING.md)
     http.ts               fetch wrapper: one error vocabulary for every network
   test/                   node:test suites with every network mocked
 ```
+
+The top bar's brand switcher narrows every page to one brand; the bell lists
+notifications (new ones arrive as posts are sent for approval, approved or sent
+back); the dock's clock shows today's queue and its + creates posts.
 
 Theme follows `html[data-theme]` and is toggled from the dock; the language follows
 `html[lang]` and is picked from the account menu (both persisted per browser).

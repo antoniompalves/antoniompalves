@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { AuditAction, ConversationKind, NetworkId, Permission, PostStatus, Sentiment, SystemRole } from '../data/types'
+import type { AuditAction, ConversationKind, NetworkId, NoticeEvent, Permission, PostStatus, Sentiment, SystemRole } from '../data/types'
 import type { PermissionGroup } from '../data/permissions'
 import type { Messages } from './en'
 import { capitalize, dayDiff, num, splitMinutes, utc } from './format'
@@ -248,8 +248,11 @@ export const ptPT: Messages = {
     documentTitle: (page: string, contact?: string) => (contact ? `${contact} · ${page} · Kataru` : `${page} · Kataru`),
     home: 'Kataru — visão geral',
     mainNav: 'Principal',
-    brandSwitcher: 'Marca: todas as marcas',
+    brandSwitcher: (brand: string | null) => `Marca: ${brand ?? 'todas as marcas'}`,
     allBrands: 'Todas as marcas',
+    allMyBrands: 'Todas as minhas marcas',
+    showingAll: 'A mostrar todas as marcas',
+    showing: (brand: string) => `A mostrar ${brand}`,
     notifications: 'Notificações',
     notificationsUnread: (n: number) => `Notificações, ${n} por ler`,
     account: (name: string, role: string) => `Conta: ${name}, ${role}`,
@@ -282,6 +285,46 @@ export const ptPT: Messages = {
         Só {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]}, {routes[4]}, {routes[5]} e {routes[6]} estão recriadas. Esta secção existe na referência com as partes abaixo.
       </>
     ),
+  },
+
+  notices: {
+    title: 'Notificações',
+    markAll: 'Marcar tudo como lido',
+    empty: 'Está tudo em dia.',
+    text: (e: NoticeEvent, brand: (id: string) => string, network: (id: NetworkId) => string, person: (id: string) => string) => {
+      switch (e.type) {
+        case 'waiting':
+          return e.count === 1 ? '1 publicação aguarda a sua aprovação' : `${e.count} publicações aguardam a sua aprovação`
+        case 'disconnected':
+          return `${brand(e.brandId)} · ${network(e.network)} desligado — ${e.failed === 1 ? '1 publicação falhou' : `${e.failed} publicações falharam`}`
+        case 'expiring':
+          return `${brand(e.brandId)} · o acesso a ${network(e.network)} expira dentro de ${plural(e.days, 'dia', 'dias')}`
+        case 'trending':
+          return `Uma publicação de ${brand(e.brandId).split(' ')[0]} está em destaque: ${num(L, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(e.ratio)}× o alcance habitual`
+        case 'submitted':
+          return `${person(e.by)} enviou “${e.excerpt}” para aprovação`
+        case 'approved':
+          return `${person(e.by)} aprovou “${e.excerpt}”`
+        case 'changes':
+          return `${person(e.by)} pediu alterações a “${e.excerpt}”`
+      }
+    },
+  },
+
+  today: {
+    title: 'Hoje',
+    /** "sexta-feira, 30 out." */
+    date: (d: Date) => `${dt({ weekday: 'long' }).format(d)}, ${monthDay(d)}`,
+    empty: 'Hoje não sai nada.',
+    openCalendar: 'Abrir calendário',
+    newPost: 'Nova publicação',
+  },
+
+  createMenu: {
+    newPost: 'Nova publicação',
+    tomorrow: 'Agendar para amanhã às 09:00',
+    connect: 'Ligar um canal',
+    invite: 'Convidar alguém para a equipa',
   },
 
   overview: {
@@ -432,6 +475,7 @@ export const ptPT: Messages = {
     },
     nothingScheduled: 'Ainda nada agendado',
     free: 'Livre',
+    gap: 'Vazio',
     peak: 'Pico',
     campaigns: 'Campanhas',
     until: (date: string) => `até ${date}`,
@@ -625,7 +669,7 @@ export const ptPT: Messages = {
     scheduleReport: 'Agendar relatório',
     filterByNetwork: 'Filtrar por rede',
     allNetworks: 'Todas as redes',
-    note: (brands: number, days: number) => `${plural(brands, 'marca', 'marcas')} · últimos ${days} dias`,
+    note: (brands: number | string, days: number) => `${typeof brands === 'string' ? brands : plural(brands, 'marca', 'marcas')} · últimos ${days} dias`,
     expand: 'Expandir',
     collapse: 'Recolher',
     thisPeriod: 'Este período',
@@ -718,7 +762,7 @@ export const ptPT: Messages = {
       options: { followers: 'Seguidores', eng: 'Tx. interação', impressions: 'Impressões' },
       meta: (accounts: number, posts: number) => `${plural(accounts, 'conta', 'contas')} · ${plural(posts, 'publicação', 'publicações')}`,
     },
-    scope: (network: string | null) => `Todas as marcas${network ? ` · ${network}` : ''}`,
+    scope: (network: string | null, brand: string | null = null) => `${brand ?? 'Todas as marcas'}${network ? ` · ${network}` : ''}`,
     exported: (days: number) => `Relatório dos últimos ${days} dias exportado`,
     report: {
       title: 'Agendar relatório',

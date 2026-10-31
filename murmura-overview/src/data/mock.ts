@@ -482,5 +482,12 @@ export const workspace: Workspace = {
     { id: 'au6', actorId: 'omar', kind: 'schedule', action: { type: 'scheduled', count: 3, brandId: 'vg' }, at: minutesBefore(11 * 60) },
     { id: 'au7', actorId: 'ines', kind: 'inbox', action: { type: 'closedConversations', count: 14 }, at: minutesBefore(13 * 60) },
   ],
-  notifications: { unread: 4 },
+  notices: [
+    { id: 'n0', at: minutesBefore(20), href: '#/approvals', read: false, event: { type: 'waiting', count: 5 } },
+    { id: 'n1', at: minutesBefore(2 * 60), href: '#/channels', read: false, event: { type: 'disconnected', brandId: 'vg', network: 'facebook', failed: 1 } },
+    { id: 'n2', at: minutesBefore(5 * 60), href: '#/channels', read: false, event: { type: 'expiring', brandId: 'hh', network: 'youtube', days: 3 } },
+    { id: 'n3', at: minutesBefore(26 * 60), href: '#/analytics', read: false, event: { type: 'trending', brandId: 'wb', ratio: 3.1 } },
+  ],
+  brandScope: null,
+  signedIn: true,
 }

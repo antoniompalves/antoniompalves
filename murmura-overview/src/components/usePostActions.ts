@@ -6,12 +6,12 @@ import { useToast } from './Toast'
 
 /** Undoable post actions shared by every place that opens the post drawer. */
 export function usePostActions(now: Date, afterChange: () => void) {
-  const { ws, dispatch } = useWorkspace()
+  const { ws, all, dispatch } = useWorkspace()
   const toast = useToast()
   const { t } = useI18n()
 
   const undoable = (text: string, run: () => void, icon?: typeof Send) => {
-    const before = ws.posts
+    const before = all.posts
     run()
     toast({ text, icon, undo: () => dispatch({ type: 'restore', posts: before }) })
   }

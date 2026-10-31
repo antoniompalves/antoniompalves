@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { AuditAction, ConversationKind, KeywordKind, NetworkId, Permission, PostStatus, Sentiment, SystemRole } from '../data/types'
+import type { AuditAction, ConversationKind, KeywordKind, NetworkId, NoticeEvent, Permission, PostStatus, Sentiment, SystemRole } from '../data/types'
 import type { PermissionGroup } from '../data/permissions'
 import { dayDiff, num, splitMinutes, utc } from './format'
 
@@ -251,8 +251,12 @@ export const en = {
     documentTitle: (page: string, contact?: string) => (contact ? `${contact} · ${page} · Kataru` : `${page} · Kataru`),
     home: 'Kataru — overview',
     mainNav: 'Main',
-    brandSwitcher: 'Brand: all brands',
+    brandSwitcher: (brand: string | null) => `Brand: ${brand ?? 'all brands'}`,
     allBrands: 'All brands',
+    /** The switcher's first row for someone who sees only some brands. */
+    allMyBrands: 'All my brands',
+    showingAll: 'Showing every brand',
+    showing: (brand: string) => `Showing ${brand}`,
     notifications: 'Notifications',
     notificationsUnread: (n: number) => `Notifications, ${n} unread`,
     account: (name: string, role: string) => `Account: ${name}, ${role}`,
@@ -285,6 +289,49 @@ export const en = {
         Only {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]}, {routes[4]}, {routes[5]} and {routes[6]} are recreated. This route exists in the reference with the sections below.
       </>
     ),
+  },
+
+  /** The bell's list. Brand, network and person names are resolved by the caller. */
+  notices: {
+    title: 'Notifications',
+    markAll: 'Mark all read',
+    empty: 'You’re all caught up.',
+    text: (e: NoticeEvent, brand: (id: string) => string, network: (id: NetworkId) => string, person: (id: string) => string) => {
+      switch (e.type) {
+        case 'waiting':
+          return `${plural(e.count, 'post is', 'posts are')} waiting for your approval`
+        case 'disconnected':
+          return `${brand(e.brandId)} · ${network(e.network)} disconnected — ${plural(e.failed, 'post', 'posts')} failed`
+        case 'expiring':
+          return `${brand(e.brandId)} · ${network(e.network)} access expires in ${plural(e.days, 'day', 'days')}`
+        case 'trending':
+          return `A ${brand(e.brandId).split(' ')[0]} post is trending: ${e.ratio.toFixed(1)}× usual reach`
+        case 'submitted':
+          return `${person(e.by)} sent “${e.excerpt}” for approval`
+        case 'approved':
+          return `${person(e.by)} approved “${e.excerpt}”`
+        case 'changes':
+          return `${person(e.by)} asked for changes on “${e.excerpt}”`
+      }
+    },
+  },
+
+  /** Today's queue (dock clock, the More sheet's Today). */
+  today: {
+    title: 'Today',
+    /** "Friday, Oct 30" */
+    date: (d: Date) => dt({ weekday: 'long', month: 'short', day: 'numeric' }).format(d),
+    empty: 'Nothing goes out today.',
+    openCalendar: 'Open calendar',
+    newPost: 'New post',
+  },
+
+  /** The dock's + (and the phone bar's Create). */
+  createMenu: {
+    newPost: 'New post',
+    tomorrow: 'Schedule for tomorrow 9:00',
+    connect: 'Connect a channel',
+    invite: 'Invite a teammate',
   },
 
   overview: {
@@ -436,6 +483,8 @@ export const en = {
     },
     nothingScheduled: 'Nothing scheduled yet',
     free: 'Free',
+    /** An upcoming day with nothing going out. */
+    gap: 'Gap',
     peak: 'Peak',
     campaigns: 'Campaigns',
     until: (date: string) => `until ${date}`,
@@ -622,7 +671,8 @@ export const en = {
     scheduleReport: 'Schedule a report',
     filterByNetwork: 'Filter by network',
     allNetworks: 'All networks',
-    note: (brands: number, days: number) => `${plural(brands, 'brand', 'brands')} · last ${days} days`,
+    /** "5 brands · last 30 days", or the one brand in view. */
+    note: (brands: number | string, days: number) => `${typeof brands === 'string' ? brands : plural(brands, 'brand', 'brands')} · last ${days} days`,
     expand: 'Expand',
     collapse: 'Collapse',
     thisPeriod: 'This period',
@@ -716,7 +766,7 @@ export const en = {
       meta: (accounts: number, posts: number) => `${plural(accounts, 'account', 'accounts')} · ${plural(posts, 'post', 'posts')}`,
     },
     /** What a report covers: "All brands", "All brands · Instagram". */
-    scope: (network: string | null) => `All brands${network ? ` · ${network}` : ''}`,
+    scope: (network: string | null, brand: string | null = null) => `${brand ?? 'All brands'}${network ? ` · ${network}` : ''}`,
     exported: (days: number) => `Report for the last ${days} days exported`,
     report: {
       title: 'Schedule a report',

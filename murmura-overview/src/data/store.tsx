@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { Dispatch, ReactNode } from 'react'
 import { STORAGE_KEY, fingerprint, loadWorkspace, parseSaved, saveWorkspace } from './persist'
-import type { AuditEvent, Channel, Conversation, Keyword, Mention, Message, Post, ScheduledReport, Website, Workspace } from './types'
+import { scopeView } from './scope'
+import type { AuditEvent, Channel, Conversation, Keyword, Mention, Message, Notice, Post, ScheduledReport, Website, Workspace } from './types'
 
 /**
  * Single workspace shared by every view, so rescheduling a post on the
@@ -20,7 +21,8 @@ export type WorkspaceAction =
   | { type: 'savePost'; post: Post }
   | { type: 'conversation'; id: string; patch: Partial<Conversation> }
   | { type: 'send'; id: string; message: Message; close?: boolean }
-  | { type: 'readAll' }
+  /** Marks these open conversations read (the ones on screen). */
+  | { type: 'readAll'; ids: string[] }
   | { type: 'restoreConversations'; conversations: Conversation[] }
   | { type: 'addReport'; report: ScheduledReport }
   | { type: 'restoreReports'; reports: ScheduledReport[] }
@@ -35,6 +37,11 @@ export type WorkspaceAction =
   | { type: 'mentionToInbox'; id: string; conversation: Conversation }
   /** Replace everything: a reset, or a save from another tab. */
   | { type: 'load'; ws: Workspace }
+  | { type: 'scope'; brandId: string | null }
+  | { type: 'notify'; notices: Notice[] }
+  | { type: 'readNotices'; ids: string[] }
+  | { type: 'signIn'; userId: string }
+  | { type: 'signOut' }
 
 function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
   const update = (id: string, patch: (p: Post) => Post) => ({
@@ -71,7 +78,7 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
         ),
       }
     case 'readAll':
-      return { ...ws, conversations: ws.conversations.map((c) => (c.status === 'open' && c.unread ? { ...c, unread: false } : c)) }
+      return { ...ws, conversations: ws.conversations.map((c) => (action.ids.includes(c.id) && c.status === 'open' && c.unread ? { ...c, unread: false } : c)) }
     case 'restoreConversations':
       return { ...ws, conversations: action.conversations }
     case 'addReport':
@@ -103,6 +110,21 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
       }
     case 'load':
       return action.ws
+    case 'scope':
+      return { ...ws, brandScope: action.brandId }
+    case 'notify':
+      // Newest first, and only the latest 40 are kept.
+      return { ...ws, notices: [...action.notices, ...ws.notices].slice(0, 40) }
+    case 'readNotices':
+      return { ...ws, notices: ws.notices.map((n) => (action.ids.includes(n.id) ? { ...n, read: true } : n)) }
+    case 'signIn': {
+      const who = ws.team.find((m) => m.id === action.userId)
+      // A brand they can't see falls back to every brand.
+      const keep = !ws.brandScope || !who || who.brands === 'all' || who.brands.includes(ws.brandScope)
+      return { ...ws, currentUserId: action.userId, signedIn: true, brandScope: keep ? ws.brandScope : null }
+    }
+    case 'signOut':
+      return { ...ws, signedIn: false }
   }
 }
 
@@ -115,7 +137,10 @@ export interface ClockOrigin {
 }
 
 interface WorkspaceContextValue {
+  /** What pages show: the brands the signed-in person sees, narrowed by the brand switcher (scope.ts). */
   ws: Workspace
+  /** Everything, for undo snapshots and settings that span every brand. */
+  all: Workspace
   dispatch: Dispatch<WorkspaceAction>
   clock: ClockOrigin
   /** Back to the starting data, keeping who is signed in. */
@@ -175,7 +200,8 @@ export function WorkspaceProvider({ seed, withSettings = (ws) => ws, children }:
     setClock({ mock: Date.parse(seed.now), real: Date.now() })
   }, [seed, withSettings, me])
 
-  return <WorkspaceContext.Provider value={{ ws, dispatch, clock, reset }}>{children}</WorkspaceContext.Provider>
+  const view = useMemo(() => scopeView(ws), [ws])
+  return <WorkspaceContext.Provider value={{ ws: view, all: ws, dispatch, clock, reset }}>{children}</WorkspaceContext.Provider>
 }
 
 export function useWorkspace() {

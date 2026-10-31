@@ -45,6 +45,7 @@ import { PostDrawer } from '../components/calendar/PostDrawer'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
 import { approve } from '../data/approvals'
+import { approvedNotices, excerpt } from '../data/notices'
 import { coverPhoto } from '../data/assets'
 import { useWorkspace } from '../data/store'
 import type { AuditKind, Channel, Post } from '../data/types'
@@ -195,7 +196,7 @@ const VISIBLE_TODOS = 4
 
 function NeedsYou({ model, now, className }: SectionProps & { now: Date }) {
   const { t } = useI18n()
-  const { ws, dispatch } = useWorkspace()
+  const { ws, all, dispatch } = useWorkspace()
   const toast = useToast()
   const [expanded, setExpanded] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -206,13 +207,13 @@ function NeedsYou({ model, now, className }: SectionProps & { now: Date }) {
   const nowMs = Math.floor(now.getTime() / 60_000) * 60_000
 
   const approveOne = (p: Post) => {
-    const before = ws.posts
+    const before = all.posts
     const done = approve(p, ws.currentUserId, nowMs)
     dispatch({ type: 'savePost', post: done })
-    const line = p.text.split('\n')[0] ?? ''
+    dispatch({ type: 'notify', notices: approvedNotices(ws.currentUserId, p, nowMs) })
     dispatch({
       type: 'audit',
-      event: { id: `au-${Date.now().toString(36)}`, actorId: ws.currentUserId, kind: 'approval', action: { type: 'approved', excerpt: line.length > 46 ? `${line.slice(0, 44)}…` : line, brandId: p.brandId }, at: new Date(nowMs).toISOString() },
+      event: { id: `au-${Date.now().toString(36)}`, actorId: ws.currentUserId, kind: 'approval', action: { type: 'approved', excerpt: excerpt(p.text), brandId: p.brandId }, at: new Date(nowMs).toISOString() },
     })
     toast({ text: t.approvals.toast.approved(t.dates.dayStamp(new Date(done.scheduledAt), now)), icon: Check, undo: () => dispatch({ type: 'restore', posts: before }) })
   }
@@ -463,6 +464,16 @@ function WeekAhead({ model, className }: SectionProps) {
                     <BrandMark brand={p.brand} size="xs" className="shadow-[0_0_0_1.5px_rgb(255_255_255/0.5)]" />
                   </span>
                 ))}
+                {day.posts.length === 0 && (
+                  <span
+                    className={cn(
+                      'flex justify-center rounded-full border border-dashed px-[9px] py-1 text-[12.5px] font-semibold',
+                      day.isToday ? 'border-on-ink/30' : 'border-line-2 text-muted',
+                    )}
+                  >
+                    {t.calendar.gap}
+                  </span>
+                )}
                 {extra > 0 && (
                   <span
                     className={cn(

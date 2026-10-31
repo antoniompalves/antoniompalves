@@ -68,7 +68,8 @@ export interface DayView {
   posts: (Post & { brand: Brand })[]
 }
 
-export function selectOverview(ws: Workspace, now: Date, t: Messages) {
+/** `everyBrand`: the activity log isn't narrowed by the brand switcher, so its lines can name any brand. */
+export function selectOverview(ws: Workspace, now: Date, t: Messages, everyBrand: Brand[] = ws.brands) {
   const brand = (id: string) => ws.brands.find((b) => b.id === id)!
   const member = (id: string) => ws.team.find((m) => m.id === id)!
   const user = member(ws.currentUserId)
@@ -95,12 +96,10 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
   const engagementRate30d =
     recent.reduce((sum, p) => sum + engagements(p.metrics), 0) / Math.max(1, recent.reduce((sum, p) => sum + p.metrics.reach, 0))
 
-  // "This week" is the calendar week (Mon–Sun), the same range the calendar opens on.
-  const weekStart = addDays(today, -((today.getUTCDay() + 6) % 7))
-  const weekEnd = addDays(weekStart, 7)
+  // "Going out this week": scheduled or waiting for approval, in the next seven days.
   const postsThisWeek = ws.posts.filter((p) => {
     const t = Date.parse(p.scheduledAt)
-    return p.status !== 'draft' && t >= weekStart.getTime() && t < weekEnd.getTime()
+    return (p.status === 'scheduled' || p.status === 'awaiting_approval') && t > now.getTime() && t < now.getTime() + 7 * 86_400_000
   }).length
 
   // Up next: the queue of posts still to publish, soonest first
@@ -189,8 +188,8 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
     neutral: open.filter((c) => c.sentiment === 'neutral').length,
     negative: open.filter((c) => c.sentiment === 'negative').length,
   }
-  const latestUnread = open
-    .filter((c) => c.unread)
+  // The three most recent open conversations, read or not (unread ones carry a dot).
+  const latestUnread = [...open]
     .sort(byActivity)
     .slice(0, 3)
     .map((c: Conversation) => ({ ...c, preview: lastMessage(c).text }))
@@ -200,7 +199,7 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
     ...e,
     actor: member(e.actorId),
     actorFirstName: firstName(member(e.actorId)),
-    summary: t.activity(e.action, (id) => brand(id).name, (n) => NETWORK_LABEL[n]),
+    summary: t.activity(e.action, (id) => everyBrand.find((b) => b.id === id)?.name ?? '', (n) => NETWORK_LABEL[n]),
   }))
 
   return {
@@ -214,8 +213,8 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
     },
     badges: {
       inbox: open.filter((c) => c.unread).length,
-      approvals: ws.posts.filter((p) => p.status === 'awaiting_approval').length,
-      notifications: ws.notifications.unread,
+      approvals: approvalQueue(ws, me, 'mine', now.getTime()).length,
+      notifications: ws.notices.filter((n) => !n.read && (!n.for || n.for === me)).length,
       channelsNeedAttention: ws.channels.some((c) => c.status !== 'connected'),
     },
     upNext: { hero: queue[0], comingUp: queue.slice(1, 7) },

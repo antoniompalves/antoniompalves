@@ -34,7 +34,7 @@ const cleanDomain = (raw: string) =>
  * optionally linked to a GA4 property.
  */
 export function Ga4Dialog({ onClose }: { onClose: () => void }) {
-  const { ws } = useWorkspace()
+  const { all: ws } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const ga = useGa4()

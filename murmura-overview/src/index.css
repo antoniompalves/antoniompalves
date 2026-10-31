@@ -356,12 +356,20 @@ html.cl-dragging * {
   animation: fade-in 0.25s ease-out both;
 }
 
-/* Analytics grid (".an-grid--brands" in the reference): 12 columns, 6 from
-   1340px down, then a single column from 1000px. */
+/* Analytics grid: 12 columns, 6 from 1340px down, then a single column from
+   1000px. With more than one brand in view, "Brand comparison" sits next to
+   the top posts (".an-grid--brands"). */
 .an-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "grow grow grow grow grow grow grow imp imp imp imp imp"
+    "best best best best best best best best mix mix mix mix"
+    "net net net net net net net net net net net net"
+    "top top top top top top top top top top top top";
+}
+.an-grid--brands {
   grid-template-areas:
     "grow grow grow grow grow grow grow imp imp imp imp imp"
     "best best best best best best best best mix mix mix mix"
@@ -374,6 +382,14 @@ html.cl-dragging * {
     grid-template-areas:
       "grow grow grow imp imp imp"
       "best best best best best best"
+      "mix mix mix mix mix mix"
+      "net net net net net net"
+      "top top top top top top";
+  }
+  .an-grid--brands {
+    grid-template-areas:
+      "grow grow grow imp imp imp"
+      "best best best best best best"
       "mix mix mix brands brands brands"
       "net net net net net net"
       "top top top top top top";
@@ -382,6 +398,9 @@ html.cl-dragging * {
 @media (width <= 1000px) {
   .an-grid {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "grow" "imp" "best" "mix" "net" "top";
+  }
+  .an-grid--brands {
     grid-template-areas: "grow" "imp" "best" "mix" "brands" "net" "top";
   }
 }

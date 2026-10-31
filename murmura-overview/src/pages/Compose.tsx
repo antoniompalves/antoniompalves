@@ -13,16 +13,11 @@ import type { AssistAction, Draft } from '../data/compose'
 import { approversFor, can, member, needsApproval } from '../data/permissions'
 import { NETWORK_LABEL } from '../data/selectors'
 import { useWorkspace } from '../data/store'
+import { excerpt, submittedNotices } from '../data/notices'
 import type { AuditAction, AuditEvent, NetworkId, Post, PostStatus, Template } from '../data/types'
 import { useI18n } from '../i18n'
 
 const DAY = 86_400_000
-
-/** "Pumpkin spice? Never heard of her. Our autumn…" — how the team activity quotes a post. */
-const excerpt = (text: string) => {
-  const line = text.split('\n')[0] ?? ''
-  return line.length > 46 ? `${line.slice(0, 44)}…` : line
-}
 
 /**
  * Compose (#/compose, #/compose/:postId, #/compose?at=…): write a post once
@@ -32,7 +27,7 @@ const excerpt = (text: string) => {
  * preview | when, the publish bar and your drafts.
  */
 export function Compose({ now, hash }: { now: Date; hash: string }) {
-  const { ws, dispatch } = useWorkspace()
+  const { ws, all, dispatch } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const c = t.compose
@@ -179,6 +174,7 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
     }
     if (mode === 'approval') {
       audit('approval', { type: 'sentForApproval', excerpt: quote, brandId: brand.id })
+      dispatch({ type: 'notify', notices: submittedNotices(ws, me, saved, nowMs) })
       toast({ text: c.toast.sent(approvers.length), icon: Shield, ...(isNew && { action: { label: c.toast.view, run: () => go('#/approvals') } }) })
     } else if (mode === 'now') {
       audit('schedule', { type: 'publishedPost', excerpt: quote, networks: nets.length })
@@ -222,7 +218,7 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   }
 
   const deleteDraft = (p: Post) => {
-    const before = ws.posts
+    const before = all.posts
     dispatch({ type: 'delete', id: p.id })
     toast({ text: c.toast.deleted, icon: Trash2, undo: () => dispatch({ type: 'restore', posts: before }) })
     if (p.id === editId) go('#/compose')

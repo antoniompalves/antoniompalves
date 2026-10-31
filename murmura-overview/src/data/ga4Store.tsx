@@ -61,7 +61,7 @@ interface Ga4Context {
 const Ctx = createContext<Ga4Context | null>(null)
 
 export function Ga4Provider({ children }: { children: ReactNode }) {
-  const { ws, dispatch } = useWorkspace()
+  const { ws, all, dispatch } = useWorkspace()
   const [clientId, setClientId] = useState(() => readSaved().clientId ?? ENV_CLIENT_ID)
   const [status, setStatus] = useState<Ga4Status>('demo')
   const [live, setLive] = useState<Record<string, SiteHistory>>({})
@@ -77,8 +77,8 @@ export function Ga4Provider({ children }: { children: ReactNode }) {
       first.current = false
       return
     }
-    saveSetting('ga4', JSON.stringify({ clientId, websites: ws.websites }))
-  }, [clientId, ws.websites])
+    saveSetting('ga4', JSON.stringify({ clientId, websites: all.websites }))
+  }, [clientId, all.websites])
 
   const sync = useCallback(
     async (t: Ga4Token, sites: Website[]) => {
@@ -145,15 +145,16 @@ export function Ga4Provider({ children }: { children: ReactNode }) {
     [dispatch],
   )
 
-  // Demo traffic is cheap to generate (6 sites × 180 days) and only changes with the workspace.
+  // Demo traffic is cheap to generate (6 sites × 180 days). It comes from the whole workspace, so
+  // a site's numbers don't change with the brand switcher; only which sites show does.
   const demo = useMemo(() => {
     const out: Record<string, SiteHistory> = {}
     for (const site of ws.websites) {
-      const h = site.demo ? demoHistory(ws, site) : null
+      const h = site.demo ? demoHistory(all, site) : null
       if (h) out[site.id] = h
     }
     return out
-  }, [ws])
+  }, [ws.websites, all])
 
   const value = useMemo<Ga4Context>(() => {
     const source = status === 'live' ? live : demo
