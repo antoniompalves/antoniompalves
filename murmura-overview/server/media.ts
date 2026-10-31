@@ -6,7 +6,8 @@ import { ProviderError } from './providers/types.ts'
 import type { Loaded, MediaSource } from './providers/types.ts'
 import type { MediaRecord, Store } from './store.ts'
 
-const ALLOWED = /^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm))$/
+/** Photos, videos, and PDFs for LinkedIn documents. */
+const ALLOWED = /^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm)|application\/pdf)$/
 
 /**
  * Media the app uploads, served back at PUBLISHER_PUBLIC_URL/media/<id>: Meta,

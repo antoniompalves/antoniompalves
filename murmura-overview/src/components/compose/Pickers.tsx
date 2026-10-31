@@ -1,9 +1,10 @@
 import type { RefObject } from 'react'
-import { FileText, Folder, Hash, Image as ImageIcon, Star } from 'lucide-react'
+import { FileText, Folder, Hash, Image as ImageIcon, Play, Star } from 'lucide-react'
 import { Empty } from '../analytics/parts'
 import { Popover } from '../Popover'
 import { Button, cn } from '../ui'
 import { photo } from '../../data/assets'
+import { clock } from '../../data/formats'
 import type { HashtagSet, MediaAsset, Template } from '../../data/types'
 import { useI18n } from '../../i18n'
 
@@ -51,6 +52,12 @@ export function MediaPicker({ open, onClose, anchor, brand, assets, picked, onTo
                   {n > 0 ? n : ''}
                 </span>
                 {a.starred && <Star size={16} aria-hidden className="absolute bottom-[7px] left-[7px] fill-butter text-butter" />}
+                {a.kind && a.kind !== 'image' && (
+                  <span className="absolute bottom-[7px] right-[7px] inline-flex h-5 items-center gap-1 rounded-full bg-[#16191d]/72 px-1.5 text-[11px] font-bold text-[#f6f7f5]">
+                    {a.kind === 'video' ? <Play size={9} aria-hidden className="fill-current" /> : <FileText size={10} aria-hidden />}
+                    {a.kind === 'video' ? clock(a.duration ?? 0) : t.compose.editor.pdf(a.pages ?? 1)}
+                  </span>
+                )}
               </button>
             )
           })}

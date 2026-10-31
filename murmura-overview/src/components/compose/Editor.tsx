@@ -1,14 +1,15 @@
 import { useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Copy, FileText, Hash, Image as ImageIcon, Layers, Lock, Plus, Sparkles, Undo2, X } from 'lucide-react'
+import type { ReactNode, RefObject } from 'react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Copy, FileText, Hash, Image as ImageIcon, Layers, Lock, Play, Plus, RotateCcw, Sparkles, Undo2, X } from 'lucide-react'
 import { MenuDivider, MenuItem, Popover } from '../Popover'
-import { BrandMark, Button, NetIcon, NetworkGlyph, cn } from '../ui'
+import { BrandMark, Button, NetIcon, NetworkGlyph, Segmented, cn } from '../ui'
 import { HashtagPicker, MediaPicker, TemplatePicker } from './Pickers'
 import { ASSIST_ACTIONS, MAX_MEDIA, NETWORK_SPEC, charsLeft } from '../../data/compose'
 import type { AssistAction, Draft, Issue } from '../../data/compose'
+import { ALT_LIMIT, FORMATS, TITLE_LIMIT, clock, formatOn, hasTitle, mediaInfo, showsCaption, textOn } from '../../data/formats'
 import { photo } from '../../data/assets'
 import { NETWORK_LABEL } from '../../data/selectors'
-import type { Brand, Campaign, Channel, HashtagSet, MediaAsset, NetworkId, Template } from '../../data/types'
+import type { Brand, Campaign, Channel, HashtagSet, MediaAsset, NetworkId, PostFormat, Template } from '../../data/types'
 import { useI18n } from '../../i18n'
 import type { Messages } from '../../i18n'
 
@@ -72,6 +73,10 @@ export function issueText(t: Messages, issue: Issue) {
       return i.needsVideo(NETWORK_LABEL[issue.network])
     case 'expires':
       return i.expires(NETWORK_LABEL[issue.network], issue.days)
+    case 'format': {
+      const what = t.compose.formats.on(NETWORK_LABEL[issue.network], issue.format)
+      return issue.problem === 'max' ? i.format.max(what, issue.max) : i.format[issue.problem](what)
+    }
     case 'ready':
       return i.ready(issue.networks)
   }
@@ -135,14 +140,66 @@ interface EditorProps {
   onRemovePhoto: (seed: string) => void
   onCopyLink: () => void
   onInsertLink: () => void
+  /** The text box edits the main text ('all') or one network's own version. */
+  tab: NetworkId | 'all'
+  onTab: (tab: NetworkId | 'all') => void
+  /** What the text box shows: the main text, or the active network's. */
+  text: string
+  onText: (text: string) => void
+  onResetVersion: (n: NetworkId) => void
+}
+
+/** "Alt text · photo 2": a short description kept with the post for screen readers. */
+function AltPopover({ open, anchor, n, value, onChange, onClose }: { open: boolean; anchor: RefObject<HTMLButtonElement | null>; n: number; value: string; onChange: (v: string) => void; onClose: () => void }) {
+  const { t } = useI18n()
+  const a = t.compose.editor.alt
+  return (
+    <Popover open={open} onClose={onClose} anchor={anchor} label={a.title(n)} className="w-[min(340px,calc(100vw-24px))] p-3">
+      <label className="grid gap-2">
+        <span className="text-sm font-semibold">{a.title(n)}</span>
+        <textarea
+          rows={3}
+          autoFocus
+          maxLength={ALT_LIMIT}
+          value={value}
+          onChange={(ev) => onChange(ev.target.value)}
+          placeholder={a.placeholder}
+          className="w-full resize-y rounded-[14px] border border-line-2 bg-glass-2 px-3 py-2.5 text-sm text-text outline-none focus-visible:border-text"
+        />
+      </label>
+      <p className="mt-1.5 flex justify-between gap-3 text-[12.5px] text-muted">
+        <span>{a.hint}</span>
+        <span className="shrink-0 tabular-nums">
+          {value.length}/{ALT_LIMIT}
+        </span>
+      </p>
+      <div className="mt-2.5 flex justify-end gap-2">
+        {value && (
+          <Button variant="ghost" size="sm" onClick={() => (onChange(''), onClose())}>
+            {a.remove}
+          </Button>
+        )}
+        <Button size="sm" onClick={onClose}>
+          {a.done}
+        </Button>
+      </div>
+    </Popover>
+  )
 }
 
 /** "New post" / "Edit post": brand, channels, the text box with photos and tools, character dials, issues and extra options. */
 export function Editor(props: EditorProps) {
-  const { draft, onChange, readOnly, brand, channels, nets } = props
+  const { draft, onChange, readOnly, brand, channels, nets, tab } = props
   const { t } = useI18n()
   const e = t.compose.editor
   const [menu, setMenu] = useState<'brand' | 'media' | 'tags' | 'template' | 'assist' | null>(null)
+  const [altFor, setAltFor] = useState<string | null>(null)
+  const altBtn = useRef<HTMLButtonElement | null>(null)
+  const items = mediaInfo(props.media, draft.media)
+  const formatFor = (n: NetworkId) => formatOn(n, draft.formats, items)
+  const net = tab === 'all' ? null : tab
+  const format = net ? formatFor(net) : null
+  const own = net ? draft.versions[net] !== undefined : false
   const [extras, setExtras] = useState(false)
   const brandBtn = useRef<HTMLButtonElement>(null)
   const mediaBtn = useRef<HTMLButtonElement>(null)
@@ -285,29 +342,133 @@ export function Editor(props: EditorProps) {
         </div>
 
         <div className={cn('relative rounded-[22px] border border-line-2 bg-glass-2 focus-within:border-text', props.shake > 0 && 'animate-shake')} key={props.shake}>
+          {nets.length > 0 && (
+            <div role="tablist" aria-label={e.versions.label} className="flex gap-0.5 overflow-x-auto border-b border-line px-2.5 pt-1.5 [scrollbar-width:none]">
+              {(['all', ...nets] as const).map((k) => {
+                const on = tab === k
+                const f = k === 'all' ? null : formatFor(k)
+                const custom = k !== 'all' && draft.versions[k] !== undefined
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    aria-controls="cm-text"
+                    onClick={() => props.onTab(k)}
+                    className={cn(
+                      'relative inline-flex h-10 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap px-2.5 text-2xs font-semibold after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full pointer-coarse:h-11',
+                      on ? 'text-text after:bg-text' : 'text-muted hover:text-text',
+                    )}
+                  >
+                    {k === 'all' ? (
+                      e.versions.all
+                    ) : (
+                      <>
+                        <span style={{ color: `var(--n-${k})` }}>
+                          <NetworkGlyph network={k} className="size-4 stroke-2" />
+                        </span>
+                        {NETWORK_LABEL[k]}
+                        {f && FORMATS[k].length > 1 && f !== FORMATS[k][0] && !(k === 'tiktok' && f === 'photos') && (
+                          <span className="rounded-full bg-well px-1.5 text-[11.5px] font-bold text-text">{t.compose.formats.label[f]}</span>
+                        )}
+                        {custom && <i title={e.versions.custom} aria-label={e.versions.custom} className="size-1.5 rounded-full bg-lilac" />}
+                      </>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {net && format && (
+            <div className="grid gap-2 px-5 pt-3 max-mobile:px-[15px]">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                {FORMATS[net].length > 1 && (
+                  <Segmented
+                    label={e.format(NETWORK_LABEL[net])}
+                    value={format}
+                    onChange={(f: PostFormat) => onChange({ formats: { ...draft.formats, [net]: f } })}
+                    options={FORMATS[net].map((f) => ({ value: f, label: t.compose.formats.label[f] }))}
+                  />
+                )}
+                <p className="min-w-[200px] flex-1 text-[12.5px] text-muted">{t.compose.formats.hint(net, format)}</p>
+              </div>
+              {hasTitle(net, format) && (
+                <label className="grid gap-1">
+                  <span className="sr-only">{e.title[net as 'youtube' | 'pinterest' | 'linkedin']}</span>
+                  <input
+                    value={draft.titles[net] ?? ''}
+                    maxLength={TITLE_LIMIT[net as keyof typeof TITLE_LIMIT]}
+                    onChange={(ev) => onChange({ titles: { ...draft.titles, [net]: ev.target.value } })}
+                    placeholder={e.title[net as 'youtube' | 'pinterest' | 'linkedin']}
+                    className="h-11 w-full rounded-[14px] border border-line-2 bg-glass px-3 text-sm font-semibold text-text outline-none placeholder:font-medium placeholder:text-faint focus-visible:border-text"
+                  />
+                  <small className="text-[12.5px] text-muted">{e.titleHint[net as 'youtube' | 'pinterest' | 'linkedin']}</small>
+                </label>
+              )}
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted">
+                {!showsCaption(format) ? e.versions.story : own ? e.versions.own(NETWORK_LABEL[net]) : e.versions.same(NETWORK_LABEL[net])}
+                {own && !readOnly && (
+                  <button type="button" onClick={() => props.onResetVersion(net)} className="inline-flex cursor-pointer items-center gap-1 font-semibold text-text underline underline-offset-2 pointer-coarse:min-h-11">
+                    <RotateCcw size={13} aria-hidden />
+                    {e.versions.reset}
+                  </button>
+                )}
+              </p>
+            </div>
+          )}
           <label htmlFor="cm-text" className="sr-only">
             {e.text}
           </label>
           <textarea
             id="cm-text"
-            value={draft.text}
-            onChange={(ev) => onChange({ text: ev.target.value })}
+            value={props.text}
+            onChange={(ev) => props.onText(ev.target.value)}
             placeholder={e.placeholder(brand.name)}
             readOnly={readOnly}
             className="block max-h-[62vh] min-h-[220px] w-full resize-none border-0 bg-transparent px-5 pb-2.5 pt-[18px] text-lg leading-[1.55] text-text outline-none [field-sizing:content] placeholder:text-faint max-mobile:min-h-[168px] max-mobile:px-[15px] max-mobile:pb-2 max-mobile:pt-3.5 max-mobile:text-base"
           />
           {draft.media.length > 0 && (
             <ol aria-label={e.photos} className="flex gap-2.5 overflow-x-auto px-3.5 pb-3.5 pt-1 [scrollbar-width:thin]">
-              {draft.media.map((seed, i) => (
+              {items.map(({ seed, kind, duration, pages }, i) => (
                 <li key={seed} className="group relative size-[104px] flex-none overflow-hidden rounded-2xl bg-well max-mobile:size-[88px]">
-                  <img src={photo(seed, 240)} alt="" className="size-full object-cover" />
+                  <img src={photo(seed, 240)} alt={draft.alt[seed] ?? ''} className="size-full object-cover" />
                   <span className="absolute left-[7px] top-[7px] grid h-[22px] min-w-[22px] place-items-center rounded-full bg-pill px-1.5 text-[12px] font-bold text-on-pill">{i + 1}</span>
+                  {kind === 'image' ? (
+                    readOnly ? (
+                      draft.alt[seed] && <span className="absolute bottom-1.5 left-1.5 rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-[#16191d]">{e.alt.short}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        aria-label={draft.alt[seed] ? e.alt.edit(i + 1) : e.alt.add(i + 1)}
+                        title={draft.alt[seed] || e.alt.add(i + 1)}
+                        aria-haspopup="dialog"
+                        aria-expanded={altFor === seed}
+                        onClick={(ev) => {
+                          altBtn.current = ev.currentTarget
+                          setAltFor(altFor === seed ? null : seed)
+                        }}
+                        className={cn(
+                          'absolute bottom-1.5 left-1.5 z-[1] inline-flex h-[22px] cursor-pointer items-center gap-0.5 rounded-full px-2 text-[11px] font-bold tracking-[0.03em] pointer-coarse:h-7',
+                          draft.alt[seed] ? 'bg-white text-[#16191d]' : 'bg-[#16191d]/66 text-[#f6f7f5]',
+                        )}
+                      >
+                        {draft.alt[seed] && <Check size={11} strokeWidth={3} aria-hidden />}
+                        {e.alt.short}
+                      </button>
+                    )
+                  ) : (
+                    <span className="absolute bottom-1.5 left-1.5 inline-flex h-[22px] items-center gap-1 rounded-full bg-[#16191d]/72 px-2 text-[11px] font-bold text-[#f6f7f5]">
+                      {kind === 'video' ? <Play size={10} aria-hidden className="fill-current" /> : <FileText size={11} aria-hidden />}
+                      {kind === 'video' ? clock(duration ?? 0) : e.pdf(pages ?? 1)}
+                    </span>
+                  )}
                   {!readOnly && (
                     <span className="pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100">
                       {[
                         { label: e.removePhoto(i + 1), icon: X, cls: 'right-1.5 top-1.5', run: () => props.onRemovePhoto(seed), show: true },
-                        { label: e.moveEarlier(i + 1), icon: ArrowLeft, cls: 'bottom-1.5 left-1.5', run: () => move(i, -1), show: i > 0 },
-                        { label: e.moveLater(i + 1), icon: ArrowRight, cls: 'bottom-1.5 right-1.5', run: () => move(i, 1), show: i < draft.media.length - 1 },
+                        { label: e.moveEarlier(i + 1), icon: ArrowLeft, cls: 'left-1.5 top-1/2 -translate-y-1/2', run: () => move(i, -1), show: i > 0 },
+                        { label: e.moveLater(i + 1), icon: ArrowRight, cls: 'right-1.5 top-1/2 -translate-y-1/2', run: () => move(i, 1), show: i < draft.media.length - 1 },
                       ]
                         .filter((b) => b.show)
                         .map(({ label: l, icon: Icon, cls, run }) => (
@@ -368,14 +529,26 @@ export function Editor(props: EditorProps) {
             <span className="flex-1 max-mobile:h-0 max-mobile:basis-full" />
             {nets.length > 0 && (
               <ul className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 pr-1 max-mobile:ml-0 max-mobile:justify-start max-mobile:gap-x-2.5 max-mobile:px-1.5 max-mobile:pb-0.5 max-mobile:pt-1">
-                {nets.map((n) => (
-                  <Ring key={n} network={n} text={draft.text} />
-                ))}
+                {nets
+                  .filter((n) => showsCaption(formatFor(n)))
+                  .map((n) => (
+                    <Ring key={n} network={n} text={textOn(draft.text, draft.versions, n)} />
+                  ))}
               </ul>
             )}
           </div>
         </div>
 
+        {altFor && draft.media.includes(altFor) && (
+          <AltPopover
+            open
+            anchor={altBtn}
+            n={draft.media.indexOf(altFor) + 1}
+            value={draft.alt[altFor] ?? ''}
+            onChange={(v) => onChange({ alt: { ...draft.alt, [altFor]: v } })}
+            onClose={() => setAltFor(null)}
+          />
+        )}
         <MediaPicker open={menu === 'media'} onClose={close} anchor={mediaBtn} brand={brand.name} assets={props.media} picked={draft.media} onToggle={togglePhoto} />
         <HashtagPicker
           open={menu === 'tags'}

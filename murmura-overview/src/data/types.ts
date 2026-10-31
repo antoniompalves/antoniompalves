@@ -163,12 +163,22 @@ export interface Review {
   note?: string
 }
 
+/** What a library item is: a photo, a video or a PDF document. */
+export type MediaKind = 'image' | 'video' | 'document'
+
+/**
+ * How a post goes out on one network (formats.ts lists which network takes
+ * which): a feed post (a carousel with several items), a Reel, a Story, a
+ * LinkedIn document, a YouTube video or Short, a TikTok video or photo post.
+ */
+export type PostFormat = 'post' | 'reel' | 'story' | 'document' | 'video' | 'short' | 'photos'
+
 export interface Post {
   id: string
   brandId: string
   authorId: string
   text: string
-  /** Photo seeds in order (see assets.ts), up to 10; posts without media render their brand mark. */
+  /** Library seeds in order (see assets.ts), up to 20; posts without media render their brand mark. */
   media: string[]
   networks: NetworkId[]
   status: PostStatus
@@ -184,6 +194,14 @@ export interface Post {
   metrics?: PostMetrics
   /** Why publishing failed; the UI words it per language. */
   failure?: { network: NetworkId; code: 'disconnected' }
+  /** The format on each network, where it isn't the network's usual one. */
+  formats?: Partial<Record<NetworkId, PostFormat>>
+  /** Text written for one network instead of the main text. */
+  versions?: Partial<Record<NetworkId, string>>
+  /** YouTube video titles, LinkedIn document titles, Pinterest pin titles. */
+  titles?: Partial<Record<NetworkId, string>>
+  /** Alt text for screen readers, per photo seed. */
+  alt?: Record<string, string>
 }
 
 export interface DailyPoint {
@@ -241,6 +259,12 @@ export interface MediaAsset {
   seed: string
   brandId: string
   title: string
+  /** Photos when missing. */
+  kind?: MediaKind
+  /** Videos: length in seconds. */
+  duration?: number
+  /** Documents: number of pages. */
+  pages?: number
   tags: string[]
   starred?: boolean
   width: number

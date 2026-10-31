@@ -11,6 +11,8 @@ import {
 import type { Brand, NetworkId, Post, TeamMember } from '../../data/types'
 import { NETWORK_LABEL, clip } from '../../data/selectors'
 import { engagementRate, engagements } from '../../data/analytics'
+import { FORMATS, viewOn } from '../../data/formats'
+import { useWorkspace } from '../../data/store'
 import { useI18n } from '../../i18n'
 import { PostPreview } from '../PostPreview'
 import { BrandMark, Button, IconButton, NetStack, PostStatusPill, Segmented } from '../ui'
@@ -32,6 +34,7 @@ interface PostDrawerProps {
  */
 export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDuplicate, onDelete }: PostDrawerProps) {
   const { t } = useI18n()
+  const { all } = useWorkspace()
   const ref = useRef<HTMLDialogElement>(null)
   const [network, setNetwork] = useState<NetworkId | null>(null)
 
@@ -88,13 +91,17 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
                 label={t.drawer.previewNetwork}
                 value={network}
                 onChange={setNetwork}
-                options={post.networks.map((n) => ({ value: n, label: NETWORK_LABEL[n] }))}
+                options={post.networks.map((n) => {
+                  // Formats picked on purpose show next to the network ("Instagram · Reel").
+                  const f = post.formats?.[n]
+                  return { value: n, label: f && f !== FORMATS[n][0] ? `${NETWORK_LABEL[n]} · ${t.compose.formats.label[f]}` : NETWORK_LABEL[n] }
+                })}
               />
             </div>
           )}
 
           <div key={network} className="grid animate-rise justify-items-center rounded-[22px] bg-well p-[18px]">
-            <PostPreview post={post} brand={brand} network={network ?? post.networks[0]} stamp={stamp} />
+            <PostPreview view={viewOn(post, network ?? post.networks[0], all.media)} brand={brand} network={network ?? post.networks[0]} stamp={stamp} />
           </div>
 
           {m && (

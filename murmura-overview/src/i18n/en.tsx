@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { AuditAction, ConversationKind, KeywordKind, NetworkId, NoticeEvent, Permission, PostStatus, Sentiment, SystemRole } from '../data/types'
+import type { AuditAction, ConversationKind, KeywordKind, NetworkId, NoticeEvent, Permission, PostFormat, PostStatus, Sentiment, SystemRole } from '../data/types'
 import type { PermissionGroup } from '../data/permissions'
 import { dayDiff, num, splitMinutes, utc } from './format'
 
@@ -74,6 +74,16 @@ const PERMISSION_GROUPS: Record<PermissionGroup, string> = {
   insights: 'Insights',
   content: 'Content',
   admin: 'Admin',
+}
+
+const FORMAT_LABEL: Record<PostFormat, string> = {
+  post: 'Post',
+  reel: 'Reel',
+  story: 'Story',
+  document: 'Document',
+  video: 'Video',
+  short: 'Short',
+  photos: 'Photos',
 }
 
 const role = (id: string) => ROLES[id as SystemRole] ?? id
@@ -613,6 +623,15 @@ export const en = {
     repost: 'Repost',
     noMedia: 'No media',
     likes: (n: string) => `${n} likes`,
+    reels: 'Reels',
+    shorts: 'Shorts',
+    subscribe: 'Subscribe',
+    message: 'Send message',
+    pages: (n: number) => plural(n, 'page', 'pages'),
+    slide: (i: number, n: number) => `${i} of ${n}`,
+    previous: 'Previous',
+    next: 'Next',
+    views: (n: string) => `${n} views`,
   },
 
   inbox: {
@@ -1150,6 +1169,30 @@ export const en = {
       moveEarlier: (n: number) => `Move photo ${n} earlier`,
       moveLater: (n: number) => `Move photo ${n} later`,
       addMedia: 'Add more media',
+      video: (length: string) => `Video · ${length}`,
+      pdf: (pages: number) => `PDF · ${plural(pages, 'page', 'pages')}`,
+      versions: {
+        label: 'Text and format for each network',
+        all: 'All networks',
+        own: (network: string) => `Written for ${network} only — the main text stays as it is.`,
+        same: (network: string) => `${network} gets the main text. Type here to give it its own.`,
+        reset: 'Use the main text',
+        custom: 'Own text',
+        story: 'Stories don’t show a caption, so this text isn’t posted.',
+      },
+      format: (network: string) => `${network} format`,
+      title: { youtube: 'Video title', pinterest: 'Pin title', linkedin: 'Document title' } as Record<'youtube' | 'pinterest' | 'linkedin', string>,
+      titleHint: { youtube: 'Leave it empty to use the first line.', pinterest: 'Shown above the description.', linkedin: 'Shown on the document.' } as Record<'youtube' | 'pinterest' | 'linkedin', string>,
+      alt: {
+        short: 'ALT',
+        add: (n: number) => `Add alt text to photo ${n}`,
+        edit: (n: number) => `Edit alt text of photo ${n}`,
+        title: (n: number) => `Alt text · photo ${n}`,
+        hint: 'Describe the photo for people who use screen readers. Sent to Instagram, Facebook, X, LinkedIn, Threads and Pinterest.',
+        placeholder: 'A barista pours steamed milk into a latte, drawing a leaf.',
+        remove: 'Remove',
+        done: 'Done',
+      },
       more: 'More options',
       moreSub: 'First comment, link, campaign',
       firstComment: 'First comment',
@@ -1175,6 +1218,40 @@ export const en = {
       needsVideo: (network: string) => `${network} needs a video or photo carousel`,
       expires: (network: string, days: number) => `${network} access expires in ${plural(days, 'day', 'days')}`,
       ready: (n: number) => `Ready for ${plural(n, 'network', 'networks')}`,
+      /** `what` is the network, or the network and format ("Instagram Reel"). */
+      format: {
+        video: (what: string) => `${what} needs one video`,
+        single: (what: string) => `${what} takes one photo or video`,
+        pdf: (what: string) => `${what} needs one PDF`,
+        title: (what: string) => `${what} needs a title`,
+        noPdf: (what: string) => `${what} can’t post a PDF — pick Document on LinkedIn`,
+        mixed: (what: string) => `${what} takes one video on its own, or photos`,
+        photosOnly: (what: string) => `${what} photo posts can’t include a video`,
+        max: (what: string, n: number) => `${what} takes up to ${n} items`,
+      },
+    },
+    formats: {
+      label: FORMAT_LABEL,
+      pin: 'Pin',
+      carousel: (n: number) => `Carousel · ${n}`,
+      /** "Instagram Reel", "LinkedIn document"; just the network for its usual format. */
+      on: (network: string, format: PostFormat) =>
+        format === 'reel' || format === 'story' || format === 'short' ? `${network} ${FORMAT_LABEL[format]}` : format === 'document' ? `${network} document` : network,
+      hint: (network: NetworkId, format: PostFormat) =>
+        ({
+          post:
+            network === 'pinterest'
+              ? 'One photo or video, or a carousel of up to 5 photos.'
+              : network === 'x'
+                ? 'Up to 4 photos, or one video.'
+                : 'Photos or a video in the feed; several swipe as a carousel.',
+          reel: 'One vertical video, full screen, with the caption over it.',
+          story: 'One photo or video, up for 24 hours.',
+          document: 'A PDF people swipe through page by page, under a title.',
+          video: network === 'youtube' ? 'A video on the channel, with a title and a description.' : 'One vertical video, with the caption over it.',
+          short: 'One vertical video, up to 3 minutes.',
+          photos: 'Up to 35 photos people swipe through; TikTok adds the music.',
+        })[format],
     },
     preview: {
       title: 'Preview',
@@ -1306,7 +1383,8 @@ export const en = {
       view: 'View',
       deleted: 'Draft deleted',
       photoRemoved: 'Photo removed',
-      maxMedia: 'Up to 10 photos in one post',
+      maxMedia: 'Up to 20 items in one post',
+      versionReset: (network: string) => `${network} uses the main text again`,
       linkCopied: 'Link copied',
       linkAdded: 'Link added to the post',
       tagsAdded: (name: string) => `Added “${name}”`,

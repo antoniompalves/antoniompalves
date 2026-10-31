@@ -4,8 +4,9 @@ import { Calendar, Check, ChevronDown, Copy, Eye, FileText, Globe, Lock, Plus, S
 import { Empty } from '../analytics/parts'
 import { PostPreview } from '../PostPreview'
 import { Avatar, BrandMark, IconButton, NetStack, NetworkGlyph, cn, toneFill } from '../ui'
-import type { Draft } from '../../data/compose'
 import { postTitle } from '../../data/compose'
+import { FORMATS } from '../../data/formats'
+import type { PostView } from '../../data/formats'
 import { NETWORK_LABEL, STATUS_TONE } from '../../data/selectors'
 import type { Brand, NetworkId, Post, TeamMember } from '../../data/types'
 import { useI18n } from '../../i18n'
@@ -22,7 +23,7 @@ export function PreviewCard({
   nets,
   network,
   onNetwork,
-  draft,
+  view,
   stamp,
   empty,
 }: {
@@ -30,7 +31,8 @@ export function PreviewCard({
   nets: NetworkId[]
   network: NetworkId | null
   onNetwork: (n: NetworkId) => void
-  draft: Draft
+  /** The post as it goes out on `network`. */
+  view: PostView | null
   stamp: string
   empty?: string
 }) {
@@ -82,8 +84,8 @@ export function PreviewCard({
       </header>
       <div id="cm-pv-body" className={cn(!open && 'max-mobile:hidden')}>
         <div className="grid min-h-[380px] content-start justify-items-center rounded-[22px] bg-well px-3.5 py-[22px] max-mobile:min-h-0 max-mobile:px-2.5 max-mobile:py-4 [&>article]:shadow-[0_24px_50px_-28px_rgb(20_24_28/0.45)]">
-          {network ? (
-            <PostPreview post={{ text: draft.text, media: draft.media }} brand={brand} network={network} stamp={stamp} empty={empty} />
+          {network && view ? (
+            <PostPreview key={`${network}:${view.format}:${view.media.length}`} view={view} brand={brand} network={network} stamp={stamp} empty={empty} />
           ) : (
             <div className="self-center pt-20">
               <Empty icon={Eye} title={p.noneTitle} text={p.noneText} />
@@ -93,7 +95,7 @@ export function PreviewCard({
         {network && (
           <p className="mt-3 flex items-start gap-2 text-2xs text-muted">
             <Zap size={16} aria-hidden className="mt-px shrink-0 text-lilac" />
-            {p.tips[network]}
+            {view && view.format !== FORMATS[network][0] && !(network === 'tiktok' && view.format === 'photos') ? t.compose.formats.hint(network, view.format) : p.tips[network]}
           </p>
         )}
       </div>

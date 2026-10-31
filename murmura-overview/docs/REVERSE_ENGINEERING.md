@@ -1022,3 +1022,95 @@ do this" — the reference's wording.
 | 61 interaction checks (counts, banner order, Pinterest without inbox, tabs, search, empty states, pause + Undo + Paused tab, menu, disconnect + Undo, reconnect from the banner, connect: refusal, new YouTube channel, figures, network +, `?connect`, activity sentences, an Editor's locked page; phones: folds, Show more, unfold, sheet, pause from the sheet, row label, all networks) and the earlier suites | all pass, no console errors |
 | pt-PT: page, menu, paused, disconnect, connect with an error, no match (1440), page and sheet (390) | no English interface text left (brands' industries are data), nothing clipped, no sideways scroll |
 | English text of 13 states | unchanged |
+
+## 19. Post formats, versions per network and alt text (addition)
+
+Not in the reference: added to match what other social tools offer (Buffer,
+Hootsuite, Sprout Social, Later, Metricool all publish Stories, Reels, Shorts,
+carousels and LinkedIn documents, and let each network have its own caption).
+
+| Reel with its own Instagram text | Story preview | LinkedIn document | Phone · pt-PT |
+| --- | --- | --- | --- |
+| ![Composer with an Instagram Reel](screenshots/compose-reel.png) | ![Instagram Story preview](screenshots/compose-story.png) | ![LinkedIn document with a title](screenshots/compose-document.png) | ![Formats on a phone in Portuguese](screenshots/compose-formats-mobile-pt.png) |
+
+### Formats
+
+`src/data/formats.ts` holds the rules the composer, the previews and the
+publishing contract share. Each network's usual format comes first, so posts
+without a choice behave exactly as before.
+
+| Network | Formats | Feed post items |
+| --- | --- | --- |
+| Instagram | Post · Reel · Story | 20 (photos and videos) |
+| Facebook | Post · Reel · Story | 10 photos, or one video |
+| X | Post | 4 photos, or one video |
+| LinkedIn | Post · Document | 20 photos, or one video |
+| TikTok | Video · Photos (picked from the media when not chosen) | 35 photos |
+| YouTube | Short · Video | one video |
+| Pinterest | Pin | 1–5 photos, or one video |
+| Threads | Post | 20 |
+
+What each format needs, worded as issues under the text box: a **Reel**,
+**Short** or YouTube/TikTok **Video** needs exactly one video ("Instagram Reel
+needs one video"); a **Story** takes one photo or video and has no caption (the
+text isn't posted, its character dial disappears); a LinkedIn **Document** takes
+one PDF and a title; a PDF anywhere else is refused ("Instagram can't post a
+PDF — pick Document on LinkedIn"); Facebook, LinkedIn, X and Pinterest take a
+video on its own, or photos; too many items for a network says its cap. YouTube
+needs a title only when the post has no text (the first line is used).
+
+### Versions per network
+
+A tab bar sits on top of the text box: *All networks*, then each network picked.
+On a network's tab: its format (a segmented control when it has more than one),
+a hint, a title field (YouTube, Pinterest, LinkedIn documents), and the text box
+edits that network's own text. Until something is typed there, it shows the
+main text ("LinkedIn gets the main text. Type here to give it its own."); after,
+the tab carries a lilac dot and *Use the main text* puts it back (with Undo).
+Character dials, Assist, hashtags, templates and *Insert* link work on the tab
+being edited; the preview follows the network tab and shows that network's text
+and format. Saving keeps only what applies: versions that differ from the main
+text, formats that aren't the usual one, titles, and alt text for photos still
+in the post.
+
+### Media and alt text
+
+The brand libraries gained videos (with their length) and PDFs (with their page
+count): Pour-over start to finish 0:24 and Roast day 0:46 (Ember & Oak), Studio
+tour 1:12 and the Autumn lookbook PDF (Hollow Home), Ceramic coating 0:38 and
+Walkaround 2:31 (Vantage Garage), Evening ritual 0:31 (Wildroot), a case-study
+PDF and a showreel (Northlight Studio). They show "▶ 0:24" or "PDF · 8 pages" in
+the picker and on the composer's thumbnails; the inbox still attaches photos
+only. A post now takes up to 20 items. Each photo has an **ALT** button that
+opens a 1,000-character field; set ones turn white with a tick, and the text
+becomes the `alt` of the preview's image and is sent to the networks that take
+it. On touch screens the thumbnail controls stay visible; the reorder arrows
+moved to the middle of each side to make room.
+
+### Previews
+
+| Format | Preview |
+| --- | --- |
+| Story | 9:16, progress bar, avatar and time, "Send message" bar, no caption |
+| Reel, Short, TikTok | 9:16 with "Reels"/"Shorts", like/comment/share rail, @handle and caption; Shorts get a Subscribe chip and the title; TikTok photo posts swipe |
+| YouTube video | 16:9 with the length, title (or the first line), channel and time |
+| LinkedIn document | the post with a document block: title, page count, pages with arrows and "1 of 8" |
+| Carousel | arrows, dots and "1 of 3" on Instagram, Facebook and Pinterest cards; X and LinkedIn lay several photos in a grid, Threads in a row |
+
+The post drawer uses the same previews and names a chosen format next to the
+network ("Instagram · Reel").
+
+### Popovers
+
+Popovers that don't fit above or below their trigger now take the roomier side
+and scroll inside it (the media picker on a phone grew past the screen with the
+new items).
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| 40 composer checks: tabs, video badge, Reel with its own text and preview, main text kept, video + photo (Reel, Facebook, TikTok), Story limits and note, alt text set and in the preview, version reset with toast, carousel arrows, draft saved and reopened with versions and alt text, X's 4-item cap, YouTube Short needing a video, YouTube video with a title in 16:9, PDF refused outside LinkedIn, document needing a title, document preview with pages, scheduled with format and title saved | all pass, no console errors |
+| Earlier composer suite (63 checks) | all pass |
+| Publishing service: 43 tests including the new formats | all pass |
+| Phone and pt-PT composer with a Story | nothing clipped, no sideways scroll |

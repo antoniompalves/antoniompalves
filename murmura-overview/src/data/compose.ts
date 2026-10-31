@@ -1,6 +1,8 @@
 import { HEAT } from './analyticsData'
 import { expiresIn } from './channels'
-import type { Channel, NetworkId, Post, Workspace } from './types'
+import { formatOn, formatProblems, mediaInfo, showsCaption, textOn } from './formats'
+import type { FormatProblem } from './formats'
+import type { Channel, MediaAsset, NetworkId, Post, PostFormat, Workspace } from './types'
 
 /**
  * Rules behind #/compose, as the reference applies them: each network's
@@ -27,8 +29,8 @@ export const NETWORK_SPEC: Record<NetworkId, { limit: number; media: MediaNeed }
   threads: { limit: 500, media: 'optional' },
 }
 
-/** Up to this many photos in one post. */
-export const MAX_MEDIA = 10
+/** Up to this many items in one post (Instagram, LinkedIn and Threads carousels); each network's own cap is checked per format. */
+export const MAX_MEDIA = 20
 
 /** The post being written (or edited) in the composer. */
 export interface Draft {
@@ -44,6 +46,13 @@ export interface Draft {
   campaignId: string
   /** Publish time, ms. */
   at: number
+  /** Formats picked per network (missing: the network's usual one). */
+  formats: Partial<Record<NetworkId, PostFormat>>
+  /** Text written for one network instead of the main text. */
+  versions: Partial<Record<NetworkId, string>>
+  titles: Partial<Record<NetworkId, string>>
+  /** Alt text per photo seed. */
+  alt: Record<string, string>
 }
 
 /** Characters left on a network; X counts every link as 23. */
@@ -64,23 +73,33 @@ export type Issue =
   | { key: string; kind: 'over'; network: NetworkId; by: number }
   | { key: string; kind: 'needsPhoto' | 'needsVideo'; network: NetworkId }
   | { key: string; kind: 'expires'; network: NetworkId; days: number }
+  | ({ key: string; kind: 'format'; network: NetworkId; format: PostFormat } & FormatProblem)
   | { key: string; kind: 'ready'; networks: number }
 
 /** Blocking issues stop scheduling ("past" doesn't stop "Publish now"); "expires" is a warning, "ready" the all-clear. */
 export const isBlocking = (i: Issue) => i.kind !== 'expires' && i.kind !== 'ready'
 
-export function issuesOf(d: Draft, channels: Channel[], now: number): Issue[] {
+export function issuesOf(d: Draft, channels: Channel[], now: number, library: MediaAsset[] = []): Issue[] {
   const nets = networksOf(channels, d.channels)
+  const media = mediaInfo(library, d.media)
   const out: Issue[] = []
   if (!d.channels.length) out.push({ key: 'nochan', kind: 'noChannel' })
-  if (!d.text.trim() && !d.media.length) out.push({ key: 'empty', kind: 'empty' })
+  const anyText = d.text.trim() || nets.some((n) => d.versions[n]?.trim())
+  if (!anyText && !d.media.length) out.push({ key: 'empty', kind: 'empty' })
   else
     for (const network of nets) {
-      const left = charsLeft(network, d.text)
-      if (left < 0) out.push({ key: `${network}:over`, kind: 'over', network, by: -left })
+      const format = formatOn(network, d.formats, media)
+      const text = textOn(d.text, d.versions, network)
+      if (showsCaption(format)) {
+        const left = charsLeft(network, text)
+        if (left < 0) out.push({ key: `${network}:over`, kind: 'over', network, by: -left })
+      }
+      const problems = formatProblems(network, format, media, d.titles[network] ?? '', text)
+      for (const p of problems) out.push({ key: `${network}:${p.problem}`, kind: 'format', network, format, ...p })
+      if (problems.length || media.length) continue
       const need = NETWORK_SPEC[network].media
-      if (!d.media.length && need === 'required') out.push({ key: `${network}:photo`, kind: 'needsPhoto', network })
-      if (!d.media.length && need === 'video') out.push({ key: `${network}:video`, kind: 'needsVideo', network })
+      if (need === 'required') out.push({ key: `${network}:photo`, kind: 'needsPhoto', network })
+      if (need === 'video') out.push({ key: `${network}:video`, kind: 'needsVideo', network })
     }
   if (d.at < now + MINUTE) out.push({ key: 'past', kind: 'past' })
   if (d.link.trim() && !parseLink(d.link)) out.push({ key: 'link', kind: 'link' })

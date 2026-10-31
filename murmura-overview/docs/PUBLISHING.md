@@ -71,7 +71,7 @@ HTTPS. The service refuses to start without the API key and the secret.
 | `POST /api/connect/:provider` | `{ url }` to open in a popup; the callback page posts `{ type: 'kataru:publisher', ok, accounts }` back to the app |
 | `GET /api/accounts` | Pages, profiles and channels that can be posted to, with their sign-in status (never tokens) |
 | `DELETE /api/connections/:id` | Forget a sign-in; its scheduled posts are cancelled |
-| `POST /api/media` | Raw body (JPEG, PNG, WebP, GIF, MP4, MOV, WebM) → `{ id, url }` |
+| `POST /api/media` | Raw body (JPEG, PNG, WebP, GIF, MP4, MOV, WebM, PDF) → `{ id, url }` |
 | `POST /api/posts` | `{ accountIds, post, publishAt?, ref? }` → `202 { batchId, jobs }`, or `422` with what each network would refuse |
 | `GET /api/posts/:batchId`, `GET /api/jobs?status=&ref=` | Job status: `scheduled → publishing → (processing) → published \| failed \| canceled`, with the post's link or the error |
 | `DELETE /api/jobs/:id` | Cancel a scheduled job |
@@ -79,6 +79,26 @@ HTTPS. The service refuses to start without the API key and the secret.
 
 Request and response types: `src/data/publishing.ts` (shared by the app and
 the service).
+
+### Formats
+
+A post carries a `format` (missing means the network's usual one) and, for
+LinkedIn documents and YouTube, a `title`; media items say whether they are an
+`image`, a `video` or a `document` (PDF), with optional `alt` text.
+
+| Format | Networks | Media | How it goes out |
+| --- | --- | --- | --- |
+| `post` | all but TikTok and YouTube | photos (a carousel past one) or one video | as before; Instagram videos become Reels shared to the feed |
+| `reel` | Instagram, Facebook | one video | Instagram `media_type=REELS`; Facebook `/{page}/video_reels` start → hosted upload (`file_url`) → finish `PUBLISHED` |
+| `story` | Instagram, Facebook | one photo or video; no caption, no first comment | Instagram `media_type=STORIES`; Facebook photo uploaded unpublished then `/{page}/photo_stories`, video through `/{page}/video_stories` |
+| `document` | LinkedIn | one PDF + a title (400 characters) | `/rest/documents?action=initializeUpload` → PUT → wait for `AVAILABLE` → post with `content.media { id, title }` |
+| `short`, `video` | YouTube | one video | the same upload; YouTube files vertical videos up to 3 minutes as Shorts |
+| `video`, `photos` | TikTok | one video, or photos | as before; without a format TikTok follows the media |
+
+In the app, `toPublishPost(post, network, mediaUrl, library)` builds this for one
+network: its own text (or the main text), its format and title, alt text per
+photo, and media kinds from the brand library. Stories drop the caption; the
+first comment only follows Instagram posts and Reels.
 
 ### What happens to a post
 
@@ -246,14 +266,13 @@ The app still runs on demo data; turning it on is the next step:
 3. **Calendar and overview**: job status and links from `GET /api/jobs?ref=<post id>`; failures land in *Needs you* with the network's message.
 4. **Library**: uploads go to `POST /api/media` so networks can fetch them.
 
-Not covered yet: X and Pinterest; Facebook Reels and Stories endpoints;
-Instagram Stories and Instagram Login without a Facebook Page; LinkedIn
-documents and polls; YouTube thumbnails and playlists; TikTok's "send to
+Not covered yet: X and Pinterest; Instagram Login without a Facebook Page;
+LinkedIn polls; YouTube thumbnails and playlists; TikTok's "send to
 drafts" mode and status webhooks; running more than one instance.
 
 ## Verification
 
-`npm run test:publisher` runs 37 tests with every network mocked: request URLs,
+`npm run test:publisher` runs 43 tests with every network mocked: request URLs,
 headers and bodies are checked against the documented flows.
 
 | Area | Checked |
@@ -263,6 +282,7 @@ headers and bodies are checked against the documented flows.
 | LinkedIn | little-text escaping; member + Company Pages; image upload → post; multi-image; video byte ranges + ETags + finalize + processing wait; link card; no refresh token → reconnect |
 | TikTok | chunk maths; sign-in; video upload with ranges and status polling; pulled video left processing; photo post; audience not allowed → refused before upload; unaudited error inside a 200 |
 | YouTube | PKCE + offline sign-in; resumable upload with metadata; "kept private" explained; refresh keeps the refresh token |
+| Formats | rules per format (Story items, Reel video, PDF only in LinkedIn documents, document title, unknown format refused, TikTok and YouTube defaults); Instagram Story container without caption or first comment; Facebook Reel upload session with the hosted file; Facebook photo Story; LinkedIn document upload, processing wait and post |
 | Service | sealed store (no plaintext tokens, wrong secret refused); rules; retries with backoff then failure; auth errors expire the connection; refresh before publishing; processing → check; HTTP: key, CORS, one-time state, popup message, media upload and serving, 422, publish now, schedule and cancel |
 
 Nothing here has posted to a real account yet: that needs the apps above and

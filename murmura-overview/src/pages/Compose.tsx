@@ -8,8 +8,9 @@ import { PostDrawer } from '../components/calendar/PostDrawer'
 import { Editor, issueText } from '../components/compose/Editor'
 import { DraftsCard, PreviewCard, PublishBar, WhenCard } from '../components/compose/Panels'
 import { Avatar, Button, PostStatusPill, cn, toneFill } from '../components/ui'
-import { NETWORK_SPEC, assist, bestTimes, defaultTime, editableLink, finalLink, isBlocking, issuesOf, myDrafts, networksOf, nextFreeSlot, sameDay, withHashtags } from '../data/compose'
+import { assist, bestTimes, defaultTime, editableLink, finalLink, isBlocking, issuesOf, myDrafts, networksOf, nextFreeSlot, sameDay, withHashtags } from '../data/compose'
 import type { AssistAction, Draft } from '../data/compose'
+import { tidyExtras, viewOn } from '../data/formats'
 import { approversFor, can, member, needsApproval } from '../data/permissions'
 import { NETWORK_LABEL } from '../data/selectors'
 import { useWorkspace } from '../data/store'
@@ -53,6 +54,10 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
       utm: ws.settings.utm,
       campaignId: '',
       at: at && at > nowMs ? at : defaultTime(ws, brandId, nets, nowMs),
+      formats: {},
+      versions: {},
+      titles: {},
+      alt: {},
     }
   }
 
@@ -69,6 +74,10 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
       utm,
       campaignId: p.campaignId ?? '',
       at: Date.parse(p.scheduledAt),
+      formats: { ...p.formats },
+      versions: { ...p.versions },
+      titles: { ...p.titles },
+      alt: { ...p.alt },
     }
   }
 
@@ -92,7 +101,9 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   const dirty = JSON.stringify(draft) !== pristine
   const setDraft = (patch: Partial<Draft>) => setState((s) => ({ ...s, pristine: s.pristine || JSON.stringify(s.draft), draft: { ...s.draft, ...patch } }))
 
-  const [history, setHistory] = useState<{ label: string; text: string }[]>([])
+  const [history, setHistory] = useState<{ label: string; text: string; tab: NetworkId | 'all' }[]>([])
+  // The text box edits the main text, or one network's own version.
+  const [tabPick, setTab] = useState<NetworkId | 'all'>('all')
   const [shake, setShake] = useState(0)
   const [previewNet, setPreviewNet] = useState<NetworkId | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -105,7 +116,10 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   const channels = ws.channels.filter((ch) => ch.brandId === brand.id)
   const nets = networksOf(ws.channels, draft.channels)
   const network = nets.includes(previewNet as NetworkId) ? previewNet : (nets[0] ?? null)
-  const issues = useMemo(() => issuesOf(draft, ws.channels, nowMs), [draft, ws.channels, nowMs])
+  const tab: NetworkId | 'all' = tabPick !== 'all' && nets.includes(tabPick) ? tabPick : 'all'
+  const text = tab === 'all' ? draft.text : (draft.versions[tab] ?? draft.text)
+  const setText = (next: string, on: NetworkId | 'all' = tab) => setDraft(on === 'all' ? { text: next } : { versions: { ...draft.versions, [on]: next } })
+  const issues = useMemo(() => issuesOf(draft, ws.channels, nowMs, ws.media), [draft, ws.channels, nowMs, ws.media])
   const blocking = issues.filter(isBlocking)
   const blockingNow = blocking.filter((i) => i.kind !== 'past')
   const approval = needsApproval(ws, me)
@@ -161,6 +175,8 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
       ...(link && { link }),
       ...(status === 'published' && { metrics: { impressions: 0, reach: 0, likes: 0, comments: 0, shares: 0, saves: 0, clicks: 0, views: 0 } }),
     }
+    // Formats, versions, titles and alt text, for the networks and photos still in the post.
+    for (const [k, v] of Object.entries(tidyExtras(nets, draft.media, draft, draft.text))) if (v) (saved as unknown as Record<string, unknown>)[k] = v
     dispatch({ type: 'savePost', post: saved })
     const quote = excerpt(saved.text) || c.untitled
     const isNew = !post
@@ -213,7 +229,7 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   }
 
   const duplicateIntoNew = () => {
-    restart({ ...blank(brand.id, draft.channels), text: draft.text, media: [...draft.media] })
+    restart({ ...blank(brand.id, draft.channels), text: draft.text, media: [...draft.media], formats: { ...draft.formats }, versions: { ...draft.versions }, titles: { ...draft.titles }, alt: { ...draft.alt } })
     toast({ text: c.toast.duplicated, icon: Copy })
   }
 
@@ -228,13 +244,13 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
 
   const runAssist = (action: AssistAction) => {
     const a = c.assist[action]
-    if (!draft.text.trim()) {
+    if (!text.trim()) {
       bump()
       return toast({ text: c.assist.writeFirst, icon: Sparkles })
     }
     const set = ws.hashtagSets.find((h) => h.brandId === brand.id)
-    const next = assist(action, draft.text, {
-      nets,
+    const next = assist(action, text, {
+      nets: tab === 'all' ? nets : [tab],
       tags: set?.tags ?? [`#${brand.handle}`, '#socialmediamarketing', '#contentstrategy', '#agencylife'],
       cta: c.assist.ctaLine(brand.id),
       link,
@@ -242,30 +258,31 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
       hello: c.assist.hello,
       emoji: { eo: '☕', hh: '🛋️', vg: '✨', wb: '🌿', ns: '👋' }[brand.id],
     })
-    if (next === draft.text) return toast({ text: a.same, icon: Sparkles })
-    const before = draft.text
-    setHistory((h) => [...h, { label: a.label, text: before }])
-    setDraft({ text: next })
-    toast({ text: a.done, icon: Sparkles, undo: () => setDraft({ text: before }) })
+    if (next === text) return toast({ text: a.same, icon: Sparkles })
+    const before = text
+    const on = tab
+    setHistory((h) => [...h, { label: a.label, text: before, tab: on }])
+    setText(next)
+    toast({ text: a.done, icon: Sparkles, undo: () => setText(before, on) })
   }
 
   const undoAssist = () => {
     const last = history[history.length - 1]
     if (!last) return
     setHistory((h) => h.slice(0, -1))
-    setDraft({ text: last.text })
+    setText(last.text, last.tab)
     toast({ text: c.assist.undone(last.label), icon: Sparkles })
   }
 
   const addTags = (name: string, tags: string[]) => {
-    const next = withHashtags(draft.text, tags)
+    const next = withHashtags(text, tags)
     if (!next) return toast({ text: c.assist.tags.same })
-    setDraft({ text: next })
+    setText(next)
     toast({ text: c.toast.tagsAdded(name) })
   }
 
   const insertTemplate = (tpl: Template) => {
-    setDraft({ text: draft.text.trim() ? `${draft.text.trimEnd()}\n\n${tpl.text}` : tpl.text })
+    setText(text.trim() ? `${text.trimEnd()}\n\n${tpl.text}` : tpl.text)
     toast({ text: c.toast.templateInserted(tpl.name), icon: FileText })
   }
 
@@ -275,18 +292,26 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
     toast({ text: c.toast.photoRemoved, undo: () => setDraft({ media: before }) })
   }
 
+  const resetVersion = (n: NetworkId) => {
+    const before = draft.versions
+    const rest = { ...draft.versions }
+    delete rest[n]
+    setDraft({ versions: rest })
+    toast({ text: c.toast.versionReset(NETWORK_LABEL[n]), icon: FileText, undo: () => setDraft({ versions: before }) })
+  }
+
   const copyLink = () => {
     navigator.clipboard?.writeText(link).catch(() => {})
     toast({ text: c.toast.linkCopied, icon: LinkIcon })
   }
   const insertLink = () => {
-    if (!link || draft.text.includes(link)) return
-    setDraft({ text: `${draft.text.trimEnd()}${draft.text.trim() ? '\n\n' : ''}${link}` })
+    if (!link || text.includes(link)) return
+    setText(`${text.trimEnd()}${text.trim() ? '\n\n' : ''}${link}`)
     toast({ text: c.toast.linkAdded, icon: LinkIcon })
   }
 
   const changeBrand = (id: string) => {
-    setDraft({ brandId: id, channels: liveChannels(id).map((ch) => ch.id), media: [], campaignId: '' })
+    setDraft({ brandId: id, channels: liveChannels(id).map((ch) => ch.id), media: [], campaignId: '', alt: {} })
   }
 
   /* ───── notes over the editor ───── */
@@ -376,8 +401,10 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   const caption = readOnly ? c.when.wentOut(t.dates.ago(post!.scheduledAt, now)) : draft.at < nowMs ? c.when.passed : c.when.goesOut(t.dates.fromNow(when, now))
   const mainLabel = approval ? (post?.status === 'awaiting_approval' ? c.bar.resend : c.bar.send) : post?.status === 'scheduled' ? c.bar.update : c.bar.schedule
   const why = blocking.length ? c.bar.fix(blocking.length) : approval ? c.bar.notify : c.bar.goesOut(t.dates.fromNow(when, now))
-  const need = network ? NETWORK_SPEC[network].media : 'optional'
-  const empty = network && need !== 'optional' ? (need === 'video' ? c.issues.needsVideo(NETWORK_LABEL[network]) : c.issues.needsPhoto(NETWORK_LABEL[network])) : undefined
+  const view = network ? viewOn(draft, network, ws.media) : null
+  // With no media, the preview says what this network still needs.
+  const need = network ? issues.find((i) => 'network' in i && i.network === network && (i.kind === 'needsPhoto' || i.kind === 'needsVideo' || (i.kind === 'format' && i.problem !== 'title' && i.problem !== 'max'))) : undefined
+  const empty = need ? issueText(t, need) : undefined
 
   const s = {
     drafts: toFinish.length,
@@ -432,8 +459,17 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
           onRemovePhoto={removePhoto}
           onCopyLink={copyLink}
           onInsertLink={insertLink}
+          tab={tab}
+          onTab={(k) => {
+            setTab(k)
+            // The preview follows the network being written for.
+            if (k !== 'all') setPreviewNet(k)
+          }}
+          text={text}
+          onText={(v) => setText(v)}
+          onResetVersion={resetVersion}
         />
-        <PreviewCard brand={brand} nets={nets} network={network} onNetwork={setPreviewNet} draft={draft} stamp={t.dates.dayStamp(when, now)} empty={empty} />
+        <PreviewCard brand={brand} nets={nets} network={network} onNetwork={setPreviewNet} view={view} stamp={t.dates.dayStamp(when, now)} empty={empty} />
         <WhenCard
           at={draft.at}
           now={new Date(nowMs)}

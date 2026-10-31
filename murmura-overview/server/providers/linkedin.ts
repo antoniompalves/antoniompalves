@@ -106,13 +106,30 @@ export function linkedinProvider(c: Config['linkedin'], opts: { pollMs?: number 
     return video
   }
 
+  /** Documents (PDF carousels): initialise, PUT the file, wait until LinkedIn has processed it. */
+  const uploadDocument = async (ctx: PublishContext, author: string, url: string) => {
+    const token = ctx.connection.tokens.accessToken
+    const init = await call('linkedin', `${REST}/documents`, { ...rest(token), query: { action: 'initializeUpload' }, json: { initializeUploadRequest: { owner: author } } })
+    const { uploadUrl, document } = init.data.value as { uploadUrl: string; document: string }
+    const file = await ctx.media.load(url)
+    await put(uploadUrl, token, file.bytes, file.mime || 'application/pdf')
+    const status = await poll(
+      () => call('linkedin', `${REST}/documents/${encodeURIComponent(document)}`, rest(token)).then((r) => r.data.status as string).catch(() => 'PROCESSING'),
+      (s) => s === 'AVAILABLE' || s === 'PROCESSING_FAILED',
+      { attempts: 20, intervalMs: pollMs },
+    )
+    if (status === 'PROCESSING_FAILED') throw new ProviderError('media', "linkedin: LinkedIn couldn't process the document", { provider: 'linkedin' })
+    return document
+  }
+
   const publish = async (ctx: PublishContext): Promise<PublishResult> => {
     const { account, post } = ctx
     const author = account.meta?.author ?? `urn:li:person:${account.remoteId}`
     const photos = post.media.filter((m) => m.kind === 'image')
     const clip = post.media.find((m) => m.kind === 'video')
     let content: Record<string, unknown> | undefined
-    if (clip) content = { media: { id: await uploadVideo(ctx, author, clip.url) } }
+    if (post.format === 'document') content = { media: { id: await uploadDocument(ctx, author, post.media[0].url), title: post.title } }
+    else if (clip) content = { media: { id: await uploadVideo(ctx, author, clip.url) } }
     else if (photos.length === 1) content = { media: { id: await uploadImage(ctx, author, photos[0].url), altText: photos[0].alt } }
     else if (photos.length > 1) {
       const images = []

@@ -96,9 +96,38 @@ export function metaProvider(c: Config['meta'], opts: { pollMs?: number } = {}):
     }
   }
 
+  /** Resumable "hosted file" upload: Meta fetches the file from its URL itself. */
+  const hostedUpload = (uploadUrl: string, token: string, fileUrl: string) =>
+    call('meta', uploadUrl, { method: 'POST', headers: { authorization: `OAuth ${token}`, file_url: fileUrl }, timeoutMs: 300_000 })
+
+  /** Page Reels: start an upload session, hand Meta the file, then publish it with its description. */
+  const facebookReel = async (page: string, token: string, url: string, description: string): Promise<PublishResult> => {
+    const start = await call('meta', `${graph}/${page}/video_reels`, { bearer: token, form: { upload_phase: 'start' } })
+    const id: string = start.data.video_id
+    await hostedUpload(start.data.upload_url ?? `https://rupload.facebook.com/video-upload/${c.version}/${id}`, token, url)
+    await call('meta', `${graph}/${page}/video_reels`, { bearer: token, form: { upload_phase: 'finish', video_id: id, video_state: 'PUBLISHED', description } })
+    return { remoteId: id, url: `https://www.facebook.com/reel/${id}`, status: 'published' }
+  }
+
+  /** Page Stories: a photo goes up unpublished and is posted as a story; a video goes through an upload session. */
+  const facebookStory = async (page: string, token: string, m: { url: string; kind: string }): Promise<PublishResult> => {
+    if (m.kind === 'video') {
+      const start = await call('meta', `${graph}/${page}/video_stories`, { bearer: token, form: { upload_phase: 'start' } })
+      const id: string = start.data.video_id
+      await hostedUpload(start.data.upload_url ?? `https://rupload.facebook.com/video-upload/${c.version}/${id}`, token, m.url)
+      const r = await call('meta', `${graph}/${page}/video_stories`, { bearer: token, form: { upload_phase: 'finish', video_id: id } })
+      return { remoteId: r.data.post_id ?? id, status: 'published' }
+    }
+    const photo = await call('meta', `${graph}/${page}/photos`, { bearer: token, form: { url: m.url, published: false } })
+    const r = await call('meta', `${graph}/${page}/photo_stories`, { bearer: token, form: { photo_id: photo.data.id } })
+    return { remoteId: r.data.post_id ?? photo.data.id, status: 'published' }
+  }
+
   const publishFacebook = async ({ account, post }: PublishContext): Promise<PublishResult> => {
     const page = account.remoteId
     const token = account.token!
+    if (post.format === 'reel') return facebookReel(page, token, post.media[0].url, post.text)
+    if (post.format === 'story') return facebookStory(page, token, post.media[0])
     const photos = post.media.filter((m) => m.kind === 'image')
     const clip = post.media.find((m) => m.kind === 'video')
     let id: string
@@ -152,7 +181,12 @@ export function metaProvider(c: Config['meta'], opts: { pollMs?: number } = {}):
       throw new ProviderError('rate_limit', `meta: this Instagram account has used its ${q.config.quota_total} API posts for the last 24 hours`, { provider: 'meta' })
 
     let creation: string
-    if (post.media.length === 1) {
+    if (post.format === 'story') {
+      // Stories carry no caption (and no first comment).
+      const m = post.media[0]
+      creation = await container(ig, token, m.kind === 'video' ? { media_type: 'STORIES', video_url: m.url } : { media_type: 'STORIES', image_url: m.url })
+      await ready(creation, token)
+    } else if (post.media.length === 1) {
       const m = post.media[0]
       creation = await container(
         ig,
@@ -180,7 +214,7 @@ export function metaProvider(c: Config['meta'], opts: { pollMs?: number } = {}):
       return { remoteId: creation, status: 'published', note: 'Published; Instagram did not return the post id.' }
     }
     let note: string | undefined
-    if (post.firstComment?.trim()) {
+    if (post.firstComment?.trim() && post.format !== 'story') {
       try {
         await call('meta', `${graph}/${mediaId}/comments`, { bearer: token, form: { message: post.firstComment.trim() } })
       } catch (e) {

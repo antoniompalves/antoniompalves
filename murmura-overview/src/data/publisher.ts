@@ -10,7 +10,8 @@ import type {
   PublisherHealth,
   TikTokPrivacy,
 } from './publishing'
-import type { Post } from './types'
+import { showsCaption, viewOn } from './formats'
+import type { MediaAsset, NetworkId, Post } from './types'
 
 /**
  * Browser client for Kataru's publishing service (server/, docs/PUBLISHING.md).
@@ -128,18 +129,22 @@ export function createPublisher({ url, key }: PublisherSettings) {
 
 export type Publisher = ReturnType<typeof createPublisher>
 
-const VIDEO = /\.(mp4|mov|webm)($|\?)/i
-
-/** A Kataru post as the service expects it; `mediaUrl` turns the post's media references into public URLs. */
-export function toPublishPost(post: Post, mediaUrl: (ref: string) => string, options?: PublishPost['options']): PublishPost {
+/**
+ * A Kataru post as the service expects it on one network: that network's
+ * text (its own version or the main one), format, title and alt text, and the
+ * media as public URLs (`mediaUrl`) with their kinds from the library.
+ * Stories carry no caption; the first comment only follows Instagram feed
+ * posts and Reels.
+ */
+export function toPublishPost(post: Post, network: NetworkId, mediaUrl: (ref: string) => string, library: MediaAsset[] = [], options?: PublishPost['options']): PublishPost {
+  const view = viewOn(post, network, library)
   return {
-    text: post.text,
-    media: post.media.map((ref) => {
-      const url = mediaUrl(ref)
-      return { url, kind: VIDEO.test(url) ? 'video' : 'image' }
-    }),
-    ...(post.link && { link: post.link }),
-    ...(post.firstComment && { firstComment: post.firstComment }),
+    text: showsCaption(view.format) ? view.text : '',
+    media: view.media.map((m) => ({ url: mediaUrl(m.seed), kind: m.kind, ...(view.alt[m.seed] && { alt: view.alt[m.seed] }) })),
+    format: view.format,
+    ...(view.title?.trim() && { title: view.title.trim() }),
+    ...(post.link && view.format !== 'story' && { link: post.link }),
+    ...(post.firstComment && network === 'instagram' && (view.format === 'post' || view.format === 'reel') && { firstComment: post.firstComment }),
     ...(options && { options }),
   }
 }

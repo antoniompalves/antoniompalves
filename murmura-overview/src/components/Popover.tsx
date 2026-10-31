@@ -33,14 +33,19 @@ export function Popover({ open, onClose, anchor, placement = 'bottom-start', lab
     const { clientWidth, clientHeight } = document.documentElement
     const gap = 8
     const edge = 12
-    // Prefer the requested side, flip when it has no room for the panel.
+    // Prefer the requested side, flip when it has no room for the panel; when neither side
+    // fits, take the roomier one and let the panel scroll within it.
+    const roomBelow = clientHeight - edge - (r.bottom + gap)
+    const roomAbove = r.top - gap - edge
     let below = placement.startsWith('bottom')
-    if (below && r.bottom + gap + h > clientHeight - edge && r.top - gap - h >= edge) below = false
-    else if (!below && r.top - gap - h < edge && r.bottom + gap + h <= clientHeight - edge) below = true
+    if (below && h > roomBelow) below = h <= roomAbove ? false : roomBelow >= roomAbove
+    else if (!below && h > roomAbove) below = h <= roomBelow ? true : roomBelow >= roomAbove
+    const room = below ? roomBelow : roomAbove
     const left = placement.endsWith('start') ? r.left : r.right - w
     setPos({
       ...(below ? { top: r.bottom + gap } : { bottom: clientHeight - r.top + gap }),
       left: Math.max(edge, Math.min(left, clientWidth - edge - w)),
+      ...(h > room && { maxHeight: Math.max(160, room) }),
     })
   }, [open, anchor, placement])
 

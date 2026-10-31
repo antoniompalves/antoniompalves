@@ -73,6 +73,17 @@ crowd the brand's other posts. It schedules, publishes now, sends for approval
 (depending on the role and the workspace rule) or saves a draft; posts sent back
 with a note, waiting for approval, scheduled or published open with that context.
 
+| Reel with its own text | LinkedIn document | Phone · pt-PT |
+| --- | --- | --- |
+| ![Composer with an Instagram Reel](docs/screenshots/compose-reel.png) | ![LinkedIn document with a title](docs/screenshots/compose-document.png) | ![Formats on a phone in Portuguese](docs/screenshots/compose-formats-mobile-pt.png) |
+
+Each network can go out in its own format — Instagram and Facebook posts,
+Reels and Stories, LinkedIn posts and documents (PDF), YouTube Shorts and
+videos, TikTok videos and photo posts, carousels everywhere they're allowed —
+with its own text and title, and alt text on every photo. The composer checks
+what each format needs (one video for a Reel, one item for a Story, a PDF and a
+title for a document) and previews it the way the network shows it.
+
 | Approvals | Request changes | Phone |
 | --- | --- | --- |
 | ![Approvals, waiting for me](docs/screenshots/approvals-light.png) | ![Sending a post back with a note](docs/screenshots/approvals-request-changes.png) | ![Approvals on a phone](docs/screenshots/approvals-mobile.png) |
@@ -237,6 +248,7 @@ src/
     analyticsData.ts      180 days per network, per-account totals and curves, heatmaps (from the reference)
     webAnalytics.ts       website traffic shape (GA4-like), demo generator, websites view model
     compose.ts            composer rules: network limits, issues, best times, free slot, links, Assist
+    formats.ts            post formats per network, media kinds, per-network text and titles, format rules, previews' view
     approvals.ts          approval queues, header figures, approve / send back / withdraw
     channels.ts           channel rules: token days and tone, attention, filters, growth, who can post, new channels
     permissions.ts        roles, permissions, who approves and whose posts need approval

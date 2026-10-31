@@ -23,16 +23,38 @@ export const PROVIDER_OF: Record<PublishNetwork, PublishProvider> = {
 /** TikTok asks every post for an audience the creator's account allows (no default, by TikTok's rules). */
 export type TikTokPrivacy = 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'FOLLOWER_OF_CREATOR' | 'SELF_ONLY'
 
+/**
+ * How the post goes out (the app's PostFormat): a feed post (several items
+ * make a carousel), an Instagram or Facebook Reel or Story, a LinkedIn
+ * document, a YouTube Short or video, a TikTok video or photo post.
+ */
+export type PublishFormat = 'post' | 'reel' | 'story' | 'document' | 'video' | 'short' | 'photos'
+
+/** Which formats each network takes, its usual one first (mirrors src/data/formats.ts). */
+export const PUBLISH_FORMATS: Record<PublishNetwork, PublishFormat[]> = {
+  facebook: ['post', 'reel', 'story'],
+  instagram: ['post', 'reel', 'story'],
+  threads: ['post'],
+  linkedin: ['post', 'document'],
+  tiktok: ['video', 'photos'],
+  youtube: ['short', 'video'],
+}
+
 export interface PublishMedia {
   /** A public HTTPS URL (Meta and Threads fetch it themselves), or one returned by `POST /api/media`. */
   url: string
-  kind: 'image' | 'video'
+  /** 'document': a PDF, for LinkedIn documents. */
+  kind: 'image' | 'video' | 'document'
   alt?: string
 }
 
 export interface PublishPost {
   text: string
   media: PublishMedia[]
+  /** Missing: the network's usual format (a feed post; for TikTok, what the media make). */
+  format?: PublishFormat
+  /** LinkedIn documents (required); YouTube, when `options.youtube.title` isn't set. */
+  title?: string
   /** Shared as a link card where the network has one (Facebook, LinkedIn, Threads). */
   link?: string
   /** Instagram: posted as the first comment once the post is live. */

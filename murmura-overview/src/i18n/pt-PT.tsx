@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { AuditAction, ConversationKind, NetworkId, NoticeEvent, Permission, PostStatus, Sentiment, SystemRole } from '../data/types'
+import type { AuditAction, ConversationKind, NetworkId, NoticeEvent, Permission, PostFormat, PostStatus, Sentiment, SystemRole } from '../data/types'
 import type { PermissionGroup } from '../data/permissions'
 import type { Messages } from './en'
 import { capitalize, dayDiff, num, splitMinutes, utc } from './format'
@@ -84,6 +84,16 @@ const PERMISSION_GROUPS: Record<PermissionGroup, string> = {
   insights: 'Análise',
   content: 'Conteúdo',
   admin: 'Administração',
+}
+
+const FORMAT_LABEL: Record<PostFormat, string> = {
+  post: 'Publicação',
+  reel: 'Reel',
+  story: 'Story',
+  document: 'Documento',
+  video: 'Vídeo',
+  short: 'Short',
+  photos: 'Fotografias',
 }
 
 const role = (id: string) => ROLES[id as SystemRole] ?? id
@@ -600,6 +610,15 @@ export const ptPT: Messages = {
     repost: 'Partilhar',
     noMedia: 'Sem multimédia',
     likes: (n: string) => `${n} gostos`,
+    reels: 'Reels',
+    shorts: 'Shorts',
+    subscribe: 'Subscrever',
+    message: 'Enviar mensagem',
+    pages: (n: number) => plural(n, 'página', 'páginas'),
+    slide: (i: number, n: number) => `${i} de ${n}`,
+    previous: 'Anterior',
+    next: 'Seguinte',
+    views: (n: string) => `${n} visualizações`,
   },
 
   inbox: {
@@ -1141,6 +1160,30 @@ export const ptPT: Messages = {
       moveEarlier: (n: number) => `Passar a fotografia ${n} para antes`,
       moveLater: (n: number) => `Passar a fotografia ${n} para depois`,
       addMedia: 'Juntar mais media',
+      video: (length: string) => `Vídeo · ${length}`,
+      pdf: (pages: number) => `PDF · ${plural(pages, 'página', 'páginas')}`,
+      versions: {
+        label: 'Texto e formato para cada rede',
+        all: 'Todas as redes',
+        own: (network: string) => `Escrito só para o ${network} — o texto principal fica como está.`,
+        same: (network: string) => `O ${network} usa o texto principal. Escreva aqui para lhe dar um texto próprio.`,
+        reset: 'Usar o texto principal',
+        custom: 'Texto próprio',
+        story: 'As stories não mostram legenda, por isso este texto não é publicado.',
+      },
+      format: (network: string) => `Formato no ${network}`,
+      title: { youtube: 'Título do vídeo', pinterest: 'Título do pin', linkedin: 'Título do documento' } as Record<'youtube' | 'pinterest' | 'linkedin', string>,
+      titleHint: { youtube: 'Deixe vazio para usar a primeira linha.', pinterest: 'Aparece por cima da descrição.', linkedin: 'Aparece no documento.' } as Record<'youtube' | 'pinterest' | 'linkedin', string>,
+      alt: {
+        short: 'ALT',
+        add: (n: number) => `Juntar texto alternativo à fotografia ${n}`,
+        edit: (n: number) => `Editar o texto alternativo da fotografia ${n}`,
+        title: (n: number) => `Texto alternativo · fotografia ${n}`,
+        hint: 'Descreva a fotografia para quem usa leitores de ecrã. Segue para o Instagram, Facebook, X, LinkedIn, Threads e Pinterest.',
+        placeholder: 'Uma barista verte leite vaporizado num latte e desenha uma folha.',
+        remove: 'Remover',
+        done: 'Concluir',
+      },
       more: 'Mais opções',
       moreSub: 'Primeiro comentário, link, campanha',
       firstComment: 'Primeiro comentário',
@@ -1166,6 +1209,45 @@ export const ptPT: Messages = {
       needsVideo: (network: string) => `O ${network} precisa de um vídeo ou de um carrossel de fotografias`,
       expires: (network: string, days: number) => `O acesso ao ${network} expira daqui a ${plural(days, 'dia', 'dias')}`,
       ready: (n: number) => `Pronta para ${plural(n, 'rede', 'redes')}`,
+      format: {
+        video: (what: string) => `${what} precisa de um vídeo`,
+        single: (what: string) => `${what} leva uma fotografia ou um vídeo`,
+        pdf: (what: string) => `${what} precisa de um PDF`,
+        title: (what: string) => `${what} precisa de um título`,
+        noPdf: (what: string) => `${what} não publica PDF — escolha Documento no LinkedIn`,
+        mixed: (what: string) => `${what} aceita um vídeo sozinho, ou fotografias`,
+        photosOnly: (what: string) => `${what} não aceita vídeos em publicações de fotografias`,
+        max: (what: string, n: number) => `${what} aceita até ${n} itens`,
+      },
+    },
+    formats: {
+      label: FORMAT_LABEL,
+      pin: 'Pin',
+      carousel: (n: number) => `Carrossel · ${n}`,
+      /** Starts a sentence: "O Reel do Instagram", "A Story do Facebook", "O Instagram". */
+      on: (network: string, format: PostFormat) =>
+        format === 'story'
+          ? `A Story do ${network}`
+          : format === 'reel' || format === 'short'
+            ? `O ${FORMAT_LABEL[format]} do ${network}`
+            : format === 'document'
+              ? `O documento do ${network}`
+              : `O ${network}`,
+      hint: (network: NetworkId, format: PostFormat) =>
+        ({
+          post:
+            network === 'pinterest'
+              ? 'Uma fotografia ou um vídeo, ou um carrossel até 5 fotografias.'
+              : network === 'x'
+                ? 'Até 4 fotografias, ou um vídeo.'
+                : 'Fotografias ou um vídeo no feed; várias passam como carrossel.',
+          reel: 'Um vídeo vertical, em ecrã inteiro, com a legenda por cima.',
+          story: 'Uma fotografia ou um vídeo, visível durante 24 horas.',
+          document: 'Um PDF que se folheia página a página, com um título.',
+          video: network === 'youtube' ? 'Um vídeo no canal, com título e descrição.' : 'Um vídeo vertical, com a legenda por cima.',
+          short: 'Um vídeo vertical, até 3 minutos.',
+          photos: 'Até 35 fotografias para deslizar; o TikTok junta a música.',
+        })[format],
     },
     preview: {
       title: 'Pré-visualização',
@@ -1297,7 +1379,8 @@ export const ptPT: Messages = {
       view: 'Ver',
       deleted: 'Rascunho apagado',
       photoRemoved: 'Fotografia retirada',
-      maxMedia: 'Até 10 fotografias por publicação',
+      maxMedia: 'Até 20 itens por publicação',
+      versionReset: (network: string) => `O ${network} volta a usar o texto principal`,
       linkCopied: 'Link copiado',
       linkAdded: 'Link juntado à publicação',
       tagsAdded: (name: string) => `“${name}” juntado`,

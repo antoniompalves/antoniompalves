@@ -198,7 +198,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
 
   const brand = current ? brands.get(current.brandId)! : undefined
   const post = current?.postId ? ws.posts.find((p) => p.id === current.postId) : undefined
-  const library = current ? ws.media.filter((m) => m.brandId === current.brandId) : []
+  const library = current ? ws.media.filter((m) => m.brandId === current.brandId && (m.kind ?? 'image') === 'image') : []
   const drawerPost = openPostId ? ws.posts.find((p) => p.id === openPostId) ?? null : null
   const showInfo = infoOpen && !!current
 
