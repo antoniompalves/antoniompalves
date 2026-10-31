@@ -147,6 +147,25 @@ export const en = {
     },
     /** "Mon, Nov 2, 9:00 AM" */
     dayTime: (d: Date) => `${dayLong(d)}, ${time(d)}`,
+    /** Suggested times within the week: "Tomorrow 6:00 PM", "Sun 12:00 PM". */
+    slot: (d: Date, now: Date) => {
+      const diff = dayDiff(now, d)
+      return `${diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : weekday(d)} ${time(d)}`
+    },
+    /** "Today · 9:30 AM", "Yesterday · 8:15 AM", "Nov 3 · 12:00 PM" */
+    dayStamp: (d: Date, now: Date) => {
+      const diff = dayDiff(now, d)
+      return `${diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : diff === -1 ? 'Yesterday' : monthDay(d)} · ${time(d)}`
+    },
+    /** "in 45 min", "in 22 h", "in 3 d" (rounded like `ago`), then the date. */
+    fromNow: (d: Date, now: Date) => {
+      const ms = Math.max(0, d.getTime() - now.getTime())
+      if (ms < 60_000) return 'now'
+      const mins = Math.round(ms / 60_000)
+      const hours = Math.round(ms / 3_600_000)
+      const days = Math.round(ms / 86_400_000)
+      return mins < 60 ? `in ${mins} min` : hours < 24 ? `in ${hours} h` : days < 7 ? `in ${days} d` : `on ${monthDay(d)}`
+    },
     /** "Oct 30 · 4:49 PM" */
     stamp: (iso: string) => `${monthDay(new Date(iso))} · ${time(new Date(iso))}`,
     /** Conversation list: today → "4:49 PM", then "Yesterday", the weekday within a week, else "Oct 3". */
@@ -255,7 +274,7 @@ export const en = {
     light: 'Light',
     notRecreated: (routes: ReactNode[]) => (
       <>
-        Only {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]} and {routes[4]} are recreated. This route exists in the reference with the sections below.
+        Only {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]}, {routes[4]} and {routes[5]} are recreated. This route exists in the reference with the sections below.
       </>
     ),
   },
@@ -339,6 +358,14 @@ export const en = {
         return `stopped tracking “${a.term}” for ${brand(a.brandId)}`
       case 'openedMention':
         return `opened a conversation from ${/^[aeiox]/i.test(network(a.network)) ? 'an' : 'a'} ${network(a.network)} mention of “${a.term}”`
+      case 'savedDraft':
+        return `saved a draft for ${brand(a.brandId)}`
+      case 'sentForApproval':
+        return `sent “${a.excerpt}” for approval (${brand(a.brandId)})`
+      case 'publishedPost':
+        return `published “${a.excerpt}” to ${plural(a.networks, 'network', 'networks')}`
+      case 'scheduledPost':
+        return `scheduled “${a.excerpt}” for ${monthDay(new Date(a.at))} · ${time(new Date(a.at))}`
     }
   },
 
@@ -940,6 +967,207 @@ export const en = {
       unsaved: 'Removed from saved',
       moved: (brand: string) => `Moved to the inbox · ${brand}`,
       noChannel: (brand: string) => `${brand} has no connected channel to reply from`,
+    },
+  },
+
+  compose: {
+    title: 'Compose',
+    stats: { drafts: 'Your drafts & changes', waiting: 'Waiting for approval', scheduled: 'Scheduled, next 7 days' },
+    newPost: 'New post',
+    untitled: 'Untitled post',
+    editor: {
+      newTitle: 'New post',
+      editTitle: 'Edit post',
+      viewTitle: 'View post',
+      brand: 'Brand',
+      pickBrand: 'Pick a brand',
+      postTo: 'Post to',
+      picked: (n: number, total: number) => `${n} of ${total}`,
+      channel: (network: string, on: boolean) => `${on ? 'Remove' : 'Add'} ${network}`,
+      expiring: (network: string) => `${network} access expires soon`,
+      disconnected: (network: string) => `${network} is disconnected`,
+      fix: 'Fix',
+      askAdmin: 'Ask an admin',
+      noChannels: 'This brand has no connected channel yet.',
+      noChannelsLink: 'Connect one',
+      text: 'Post text',
+      placeholder: (brand: string) => `What’s new at ${brand}? Write once — Kataru fits it to every network.`,
+      media: 'Media',
+      hashtags: 'Hashtags',
+      template: 'Template',
+      assist: 'Assist',
+      left: (network: string, n: string, limit: string) => `${network}: ${n} of ${limit} characters left`,
+      over: (network: string, n: string) => `${network}: ${n} over the limit`,
+      photos: 'Photos',
+      removePhoto: (n: number) => `Remove photo ${n}`,
+      moveEarlier: (n: number) => `Move photo ${n} earlier`,
+      moveLater: (n: number) => `Move photo ${n} later`,
+      addMedia: 'Add more media',
+      more: 'More options',
+      moreSub: 'First comment, link, campaign',
+      firstComment: 'First comment',
+      firstCommentHint: 'Goes up as the first comment, right after the post.',
+      firstCommentPlaceholder: 'Hashtags or a link, posted as the first comment',
+      firstCommentNeedsIg: 'Pick an Instagram channel to add a first comment.',
+      link: 'Link',
+      utm: 'Tag for web analytics',
+      utmHint: 'Tag every link so web analytics knows it came from social.',
+      copyLink: 'Copy link',
+      insertLink: 'Insert',
+      campaign: 'Campaign',
+      noCampaign: 'No campaign',
+      noCampaigns: 'No campaigns for this brand',
+    },
+    issues: {
+      noChannel: 'Pick at least one channel',
+      empty: 'Write something or add a photo',
+      past: 'Pick a time in the future',
+      link: 'That link looks incomplete',
+      over: (n: string, network: string) => `${n} characters over ${network}’s limit`,
+      needsPhoto: (network: string) => `${network} needs a photo`,
+      needsVideo: (network: string) => `${network} needs a video or photo carousel`,
+      expires: (network: string, days: number) => `${network} access expires in ${plural(days, 'day', 'days')}`,
+      ready: (n: number) => `Ready for ${plural(n, 'network', 'networks')}`,
+    },
+    preview: {
+      title: 'Preview',
+      network: 'Preview network',
+      sub: (network: string, handle: string) => `${network} · @${handle}`,
+      show: 'Show preview',
+      hide: 'Hide preview',
+      noneTitle: 'Nothing to preview',
+      noneText: 'Pick a channel and the post shows up here, laid out the way that network shows it.',
+      tips: {
+        instagram: 'The first 125 characters show before “more”. Photos crop to a square.',
+        facebook: 'Long posts fold after about 240 characters.',
+        x: 'Links count as 23 characters, however long they are.',
+        linkedin: 'About 210 characters show before “see more”.',
+        tiktok: 'Vertical 9:16 — the caption sits over the video.',
+        youtube: 'Shorts are vertical; the caption sits over the video.',
+        pinterest: 'The first sentence becomes the pin’s title.',
+        threads: '500 characters. Links unfurl into a card.',
+      } satisfies Record<NetworkId, string>,
+    },
+    when: {
+      title: 'When',
+      date: 'Date',
+      time: 'Time',
+      goesOut: (rel: string) => `Goes out ${rel}`,
+      setFor: (rel: string) => `Set for ${rel}`,
+      wentOut: (rel: string) => `Went out ${rel}`,
+      passed: 'That time has passed — pick another',
+      best: 'Best times',
+      bestFor: 'Best times for',
+      nextFree: 'Next free slot',
+      nextFreeToast: (when: string) => `Next free slot: ${when}`,
+      day: 'That day',
+      close: (n: number, brand: string) => `${plural(n, 'other post', 'other posts')} from ${brand} within an hour of this one`,
+      sameDay: (n: number, brand: string) => `${plural(n, 'other post', 'other posts')} from ${brand} that day, none close to this one`,
+      nothing: (brand: string) => `Nothing else from ${brand} that day`,
+      ticks: ['12a', '6a', '12p', '6p', '12a'],
+      tz: (zone: string) => `Times are in the workspace time zone, ${zone}.`,
+    },
+    bar: {
+      direct: 'You can publish directly',
+      approval: 'Goes through approval',
+      approvers: (names: string[]) =>
+        names.length === 1 ? `${names[0]} can approve` : names.length === 2 ? `${names[0]} or ${names[1]} can approve` : `${names.slice(0, 2).join(', ')} +${names.length - 2} can approve`,
+      noApprovers: 'No one can approve this brand yet',
+      channels: (n: number): string => (n === 1 ? 'channel' : 'channels'),
+      schedule: 'Schedule',
+      update: 'Update schedule',
+      send: 'Send for approval',
+      resend: 'Resend for approval',
+      now: 'Publish now',
+      draft: 'Save draft',
+      ruleAll: 'Workspace rule: every post goes through approval',
+      fix: (n: number) => `${plural(n, 'thing', 'things')} to fix before it can go`,
+      notify: 'You’ll get a notification when it’s approved.',
+      goesOut: (rel: string) => `Goes out ${rel}.`,
+      published: 'Published',
+      readOnly: 'Read only',
+      open: 'Open post',
+      duplicate: 'Duplicate',
+    },
+    drafts: {
+      title: 'Your drafts',
+      toFinish: 'To finish',
+      waiting: 'Waiting for approval',
+      started: (status: string, rel: string) => `${status} · started ${rel}`,
+      sent: (status: string, rel: string) => `${status} · sent ${rel}`,
+      remove: 'Delete draft',
+      noneTitle: 'No drafts waiting',
+      noneText: 'Save a post as a draft and it waits here. Posts sent back to you with changes land here too.',
+    },
+    notes: {
+      changes: (name: string) => `${name} asked for changes`,
+      noNote: 'No note left.',
+      fixIt: (rel: string) => `${rel} · fix it here, then send it again`,
+      waiting: (names: string) => `Waiting on ${names}`,
+      anApprover: 'an approver',
+      sentBy: (who: string, rel: string) => `${who} sent it ${rel}. Saving changes sends the new version for approval.`,
+      you: 'You',
+      scheduled: (when: string) => `Scheduled for ${when}`,
+      keeps: 'Saving keeps it scheduled, at the time you set below.',
+      backForApproval: 'Your changes go back for approval before it goes out.',
+      published: (when: string) => `Published ${when}`,
+      publishedText: 'Published posts can’t be edited. Open it to see how it’s doing, or start a new post from it.',
+      failed: 'This post didn’t go out',
+    },
+    pickers: {
+      library: (brand: string) => `${brand} library`,
+      selected: (n: number) => `${n} selected`,
+      openLibrary: 'Open library',
+      done: 'Done',
+      noMedia: (brand: string) => `${brand} has no media yet`,
+      noMediaText: 'Photos uploaded to the Library show up here.',
+      hashtags: 'Hashtag sets',
+      suggested: 'Suggested',
+      noSets: 'No hashtag sets for this brand',
+      noSetsText: 'Save sets in the Library. Assist → Add hashtags still suggests a few.',
+      templates: 'Templates',
+      everyBrand: 'Every brand',
+      noTemplates: 'No templates yet',
+      noTemplatesText: 'Templates saved in the Library show up here.',
+      templateHint: 'Replace the {braces} before posting.',
+    },
+    assist: {
+      shorter: { label: 'Shorter', done: 'Trimmed it down', same: 'Already short and sweet' },
+      friendlier: { label: 'Friendlier', done: 'Warmed it up', same: 'Already friendly' },
+      tags: { label: 'Add hashtags', done: 'Added the brand’s hashtags', same: 'Those hashtags are already in' },
+      cta: { label: 'Add a call to action', done: 'Added a call to action', same: 'It already has a call to action' },
+      tidy: { label: 'Fix spacing', done: 'Spacing and capitals fixed', same: 'Spacing already looks right' },
+      undo: (label: string) => `Undo “${label}”`,
+      undone: (label: string) => `Undid “${label}”`,
+      writeFirst: 'Write something first — Assist rewrites your text',
+      greeting: /^(?:hey|hi|hello|morning|good morning|friends)\b/i,
+      hello: 'Hey friends!',
+      ctaLine: (brandId: string) =>
+        ({
+          eo: 'Grab a bag before Thursday — link in bio.',
+          hh: 'Shop the collection — link in bio.',
+          vg: 'Book your slot — link in bio.',
+          wb: 'Find your ritual — link in bio.',
+          ns: 'Want this for your brand? Send us a message.',
+        })[brandId] ?? 'Tap the link to find out more.',
+    },
+    toast: {
+      draftSaved: 'Draft saved',
+      sent: (n: number) => `Sent for approval · ${n} can approve`,
+      published: (networks: string[]) => `Published to ${networks.join(', ')}`,
+      scheduled: (when: string) => `Scheduled for ${when}`,
+      view: 'View',
+      deleted: 'Draft deleted',
+      photoRemoved: 'Photo removed',
+      maxMedia: 'Up to 10 photos in one post',
+      linkCopied: 'Link copied',
+      linkAdded: 'Link added to the post',
+      tagsAdded: (name: string) => `Added “${name}”`,
+      templateInserted: (name: string) => `“${name}” inserted`,
+      writeBeforeDraft: 'Write something before saving a draft',
+      fixFirst: 'Fix the post first',
+      gone: 'That post isn’t here any more',
+      duplicated: 'Duplicated as a new post',
     },
   },
 }

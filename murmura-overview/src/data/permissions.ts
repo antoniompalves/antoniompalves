@@ -63,8 +63,7 @@ export function can(ws: Workspace, memberId: string, perm: Permission) {
 export const seesBrand = (m: TeamMember, brandId: string) => m.brands === 'all' || m.brands.includes(brandId)
 
 /** Active people who can approve posts for a brand. */
-export const approversFor = (ws: Workspace, brandId: string) =>
-  ws.team.filter((m) => m.status === 'active' && seesBrand(m, brandId) && can(ws, m.id, 'post.approve'))
+export const approversFor = (ws: Workspace, brandId: string) => ws.team.filter((m) => m.status === 'active' && seesBrand(m, brandId) && can(ws, m.id, 'post.approve'))
 
 /** Whether this person's posts go through approval under the workspace's rule. */
 export function needsApproval(ws: Workspace, memberId: string) {
@@ -76,5 +75,5 @@ export function needsApproval(ws: Workspace, memberId: string) {
 
 /** A role's name in the interface language (added roles keep the name they were given). */
 export function roleName(t: Messages, ws: Workspace, roleId: string) {
-  return isSystemRole(roleId) ? t.roles[roleId] : ws.roles.find((r) => r.id === roleId)?.name ?? roleId
+  return isSystemRole(roleId) ? t.roles[roleId] : (ws.roles.find((r) => r.id === roleId)?.name ?? roleId)
 }

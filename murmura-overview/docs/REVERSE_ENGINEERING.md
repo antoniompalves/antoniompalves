@@ -1,4 +1,4 @@
-# Murmura · `#/overview`, `#/calendar`, `#/inbox`, `#/analytics` + `#/listening` — reverse-engineering notes
+# Murmura · `#/overview`, `#/compose`, `#/calendar`, `#/inbox`, `#/analytics` + `#/listening` — reverse-engineering notes
 
 Reference: `https://demo.codeandchill.store/murmura/#/overview`, inspected with the
 Playwright MCP on **2026-10-30 ~14:15 UTC** at a **1440×900** viewport (light theme,
@@ -205,7 +205,7 @@ Known differences:
 - Curve uses monotone-X interpolation; the original's smoothing differs slightly.
 - The demo's live simulation (new inbox messages arriving, count-up stats, mesh
   parallax, magnetic buttons) is not reproduced; the countdown and "x min ago" do tick.
-- `#/overview`, `#/calendar`, `#/inbox`, `#/analytics` and `#/listening` are recreated; other routes render a placeholder listing their sections.
+- `#/overview`, `#/compose`, `#/calendar`, `#/inbox`, `#/analytics` and `#/listening` are recreated; other routes render a placeholder listing their sections.
 
 ## 8. Calendar (`#/calendar`)
 
@@ -595,4 +595,79 @@ manage listening") are not modelled because the mock user is the owner. The
 relative times ("2 h ago") now round like the reference everywhere (they used to
 round down), which changed no text on the other pages. The overview's team
 activity shows the seven latest events, so listening events push older ones out.
+
+## 13. Compose (`#/compose`)
+
+Reached from the **Compose** tab, "New post" on the overview and calendar, a
+calendar slot or a month day (`#/compose?at=…`), "Plan" on the best-time slots,
+and "Edit" in the post drawer (`#/compose/:postId`). Inspected like the others:
+computed styles at 1440 / 1280 / 960 / 390 px, the page's `compose-*` CSS and JS
+(read for behaviour and wording only) and the reference's own state, which also
+supplied the data the next pages need (see "Data" below).
+
+| Compose · 1440 | Assist | Changes requested | pt-PT |
+| --- | --- | --- | --- |
+| ![Compose with photos and hashtags](screenshots/compose-light.png) | ![Assist menu](screenshots/compose-assist.png) | ![A post sent back with a note](screenshots/compose-changes.png) | ![Waiting for approval, in Portuguese](screenshots/compose-pt.png) |
+
+### Layout
+
+```
+header   title · 3 stats (your drafts & changes, waiting for approval, scheduled next 7 days) · New post (ghost)
+.cm-grid editor 1.62fr | preview 1fr (sticky) | when / publish bar / your drafts 0.9fr, gap 16
+         ≤ 1279px: editor | preview, then when | bar + drafts · ≤ 1000px: editor, preview | when + bar, drafts
+         ≤ 760px: one column; the preview folds behind a toggle and the publish bar sticks above the bottom bar
+```
+
+| Part | Value |
+| --- | --- |
+| Brand picker | 50px pill (46 on phones), 38px brand mark, "Brand" 12.5px + name 15/700, chevron |
+| Channel chips | 42px pills, 28px network disc on `--float`, name 700 + handle muted; on = ink with a 20px butter tick; expiring = butter dot; disconnected = dashed with a lock and a coral **Fix** (admins) |
+| Text box | r22, `--line-2` border (text on focus), 18px / 1.55 text, min 220px, grows to 62vh; photos as 104px tiles numbered in order with remove / move buttons; tools row: Media (count), Hashtags, Template, **Assist** (lilac); 32px dials per network (butter from 80%, coral over) |
+| Issues | 34px chips: coral blockers ("Instagram needs a photo", "N characters over X's limit", "Pick a time in the future", "That link looks incomplete"), butter warnings (access expiring), or pine "Ready for 4 networks" |
+| More options | first comment (Instagram only), link (+ utm_source / medium / campaign, copy / insert), campaign |
+| Preview | segmented network icons, r22 stage on `--well` (min 380px), the network's own layout ("Instagram needs a photo" placeholder), a tip per network |
+| When | 30px "Sat, Oct 31 · 12:00 PM" + "Goes out in 22 h", date and time fields (47px), best times + Next free slot chips, a 36px day bar with the brand's other posts and a marker, the time-zone line |
+| Publish bar | ink card: "You can publish directly" / "Goes through approval" (+ who can approve), "4 channels · Tomorrow 12:00 PM", 54px butter **Schedule** / Send for approval, Publish now, Save draft, "1 thing to fix before it can go" |
+| Your drafts | your changes requested, failed and drafts ("To finish"), then waiting for approval; 3px status stripe, delete; empty state |
+
+### Rules (`src/data/compose.ts`)
+
+| Rule | Behaviour |
+| --- | --- |
+| Limits | Instagram 2,200 · Facebook 63,206 · X 280 (links count 23) · LinkedIn 3,000 · TikTok 2,200 · YouTube 5,000 · Pinterest 500 · Threads 500; Instagram and Pinterest need a photo, TikTok and YouTube a video or photo carousel |
+| Best times | the selected networks' engagement heatmaps (the analytics ones) averaged per weekday × hour from 7 AM to 10 PM; the highest cells mapped onto the coming week, more than an hour away and four hours apart; earliest first |
+| Default time | the earliest of the five best times not within an hour of the brand's other posts, else the next free slot (from an hour away, on the half hour, in 30-minute steps) — Sat, Oct 31 · 12:00 PM for Ember & Oak, with Tomorrow 6 PM, Sun 12 PM and Sun 6 PM suggested, as in the reference |
+| Who publishes | the workspace rule (`perm`: roles without "Publish without approval" send posts to approvers; `all`: everyone but owners and admins) |
+| Assist | rule-based rewrites: shorter (fillers, wordy phrases, contractions, two sentences, under 240), friendlier (warmer words + a greeting + the brand's emoji), the brand's hashtag set, a call to action in the brand's voice (with the link when there is one), spacing and capitals; each one undoable |
+
+Saving adds the post (draft, scheduled, published, or waiting for approval with a
+"submitted" review), logs it in the team activity ("scheduled “…” for Nov 1 ·
+12:00 PM") and toasts with **View** for new posts. Editing a post shows why it's
+there: who asked for changes and their note, who it waits on, when it's
+scheduled, or that a published post is read-only (Open post, Duplicate).
+
+### Data
+
+From the reference state: each post's photos (up to 2 in the mock), campaign,
+creation time and review trail (40 submissions, 33 approvals, 2 sent back with a
+note); the nine posts scheduled for Nov 9–12; the 12 team members (an analyst, two
+clients and a pending invite join the eight) and the seven roles with their 15
+permissions; workspace settings; caption templates, hashtag sets and photo tags,
+stars and sizes. The inbox still offers only people who can reply, and report
+recipients are those who can see analytics, so those lists are unchanged.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| 27 landmarks (header, five cards, brand, chips, text box, tools, Assist, dials, issues, more options, preview stage and card, when figure, best time chip, day bar, publish buttons) at **1440**, **1280**, **960** and **390** px (touch) | identical to the pixel |
+| Default time, suggested times, "14 scheduled, next 7 days", the day-bar note | identical |
+| 33 interaction checks (issues, photos and their order, Assist + undo, hashtag set, best time, link tagging, draft → edit → schedule, notes on changes-requested / pending / scheduled / published posts, unknown post, `?at=`, heatmap plan link, brand switch, activity feed) | all pass, no console errors |
+| pt-PT, 7 states at 1440 and 390 px | no English left, nothing clipped |
+| English text of the other pages | unchanged apart from the placeholder's route list |
+
+Known differences: the reference also keeps an unsaved post per person and offers
+to restore it, lets photos be dragged to reorder (here: move buttons) and animates
+the dials and the day marker; role locks for other people are modelled (who
+publishes directly, who approves) but the mock user is the owner.
 

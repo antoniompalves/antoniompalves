@@ -13,6 +13,8 @@ export type WorkspaceAction =
   | { type: 'publish'; id: string; at: string }
   | { type: 'duplicate'; id: string; newId: string; at: string }
   | { type: 'delete'; id: string }
+  /** Insert a post, or replace the one with its id (the composer's saves). */
+  | { type: 'savePost'; post: Post }
   | { type: 'conversation'; id: string; patch: Partial<Conversation> }
   | { type: 'send'; id: string; message: Message; close?: boolean }
   | { type: 'readAll' }
@@ -47,6 +49,10 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
     }
     case 'delete':
       return { ...ws, posts: ws.posts.filter((p) => p.id !== action.id) }
+    case 'savePost': {
+      const exists = ws.posts.some((p) => p.id === action.post.id)
+      return { ...ws, posts: exists ? ws.posts.map((p) => (p.id === action.post.id ? action.post : p)) : [...ws.posts, action.post] }
+    }
     case 'conversation':
       return { ...ws, conversations: ws.conversations.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
     case 'send':

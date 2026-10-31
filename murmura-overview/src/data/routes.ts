@@ -32,6 +32,6 @@ export const tabRoutes = routes.filter((r) => r.entry === 'tabs')
 
 /** Resolve the top-level route for a hash such as "#/inbox/c1". */
 export function matchRoute(hash: string): RouteDef {
-  const top = hash.replace(/^#\/?/, '').split('/')[0] || 'overview'
+  const top = hash.replace(/^#\/?/, '').split(/[/?]/)[0] || 'overview'
   return routes.find((r) => r.id === top) ?? routes[0]
 }

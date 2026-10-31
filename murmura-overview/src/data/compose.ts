@@ -83,8 +83,7 @@ export function issuesOf(d: Draft, channels: Channel[], now: number): Issue[] {
     }
   if (d.at < now + MINUTE) out.push({ key: 'past', kind: 'past' })
   if (d.link.trim() && !parseLink(d.link)) out.push({ key: 'link', kind: 'link' })
-  for (const c of channels)
-    if (d.channels.includes(c.id) && c.status === 'expiring') out.push({ key: `exp:${c.id}`, kind: 'expires', network: c.network, days: c.expiresInDays ?? 0 })
+  for (const c of channels) if (d.channels.includes(c.id) && c.status === 'expiring') out.push({ key: `exp:${c.id}`, kind: 'expires', network: c.network, days: c.expiresInDays ?? 0 })
   if (!out.some(isBlocking)) out.unshift({ key: 'ok', kind: 'ready', networks: nets.length })
   return out
 }
@@ -108,9 +107,7 @@ export function bestTimes(nets: NetworkId[], now: number, count = 3) {
   const maps = (nets.length ? nets : (['all'] as const)).map((n) => HEAT[n])
   const cells: { day: number; hour: number; value: number }[] = []
   // `day` is getUTCDay (0 = Sunday); the heatmaps run Monday first.
-  for (let day = 0; day < 7; day++)
-    for (let hour = 7; hour < 23; hour++)
-      cells.push({ day, hour, value: maps.reduce((sum, m) => sum + m[((day + 6) % 7) * 24 + hour], 0) / maps.length })
+  for (let day = 0; day < 7; day++) for (let hour = 7; hour < 23; hour++) cells.push({ day, hour, value: maps.reduce((sum, m) => sum + m[((day + 6) % 7) * 24 + hour], 0) / maps.length })
   cells.sort((a, b) => b.value - a.value)
   const picked: number[] = []
   for (const cell of cells) {
@@ -145,9 +142,7 @@ export function defaultTime(ws: Workspace, brandId: string, nets: NetworkId[], n
 /** The brand's other posts on the same day, and how many sit within an hour of `at`. */
 export function sameDay(ws: Workspace, brandId: string, at: number, exceptId: string | null) {
   const day = startOfDay(at)
-  const posts = ws.posts
-    .filter((p) => p.brandId === brandId && p.id !== exceptId && p.status !== 'draft')
-    .filter((p) => Date.parse(p.scheduledAt) >= day && Date.parse(p.scheduledAt) < day + DAY)
+  const posts = ws.posts.filter((p) => p.brandId === brandId && p.id !== exceptId && p.status !== 'draft').filter((p) => Date.parse(p.scheduledAt) >= day && Date.parse(p.scheduledAt) < day + DAY)
   return { day, posts, close: posts.filter((p) => Math.abs(Date.parse(p.scheduledAt) - at) < HOUR).length }
 }
 
@@ -211,8 +206,7 @@ const joinTags = (body: string, tags: string) => (tags ? (body ? `${body}\n\n${t
 
 type Rule = [RegExp, string]
 /** Keep a capital where the replaced words started with one. */
-const applyRules = (text: string, rules: Rule[]) =>
-  rules.reduce((s, [re, to]) => s.replace(re, (m) => (m[0] !== m[0].toLowerCase() ? to.charAt(0).toUpperCase() + to.slice(1) : to)), text)
+const applyRules = (text: string, rules: Rule[]) => rules.reduce((s, [re, to]) => s.replace(re, (m) => (m[0] !== m[0].toLowerCase() ? to.charAt(0).toUpperCase() + to.slice(1) : to)), text)
 
 const CONTRACTIONS: Rule[] = [
   [/\bwe are\b/gi, 'we’re'],
@@ -328,9 +322,7 @@ export function withHashtags(text: string, add: string[]) {
 /** "My drafts": what the current person still has to finish, then what's waiting on someone else. */
 export function myDrafts(ws: Workspace, me: string) {
   const order: Partial<Record<Post['status'], number>> = { changes_requested: 0, failed: 1, draft: 2, awaiting_approval: 3 }
-  const mine = ws.posts
-    .filter((p) => p.authorId === me && order[p.status] !== undefined)
-    .sort((a, b) => order[a.status]! - order[b.status]! || Date.parse(b.createdAt) - Date.parse(a.createdAt))
+  const mine = ws.posts.filter((p) => p.authorId === me && order[p.status] !== undefined).sort((a, b) => order[a.status]! - order[b.status]! || Date.parse(b.createdAt) - Date.parse(a.createdAt))
   return { toFinish: mine.filter((p) => p.status !== 'awaiting_approval'), waiting: mine.filter((p) => p.status === 'awaiting_approval') }
 }
 

@@ -16,6 +16,8 @@ interface HeatmapProps {
   networks: NetworkId[]
   onNetwork: (n: NetworkId | null) => void
   timeZone: string
+  /** Where "Plan a post" goes for a slot: the composer at its next occurrence. */
+  planHref: (day: number, hour: number) => string
 }
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
@@ -25,7 +27,7 @@ const HOURS = Array.from({ length: 24 }, (_, h) => h)
  * with the three best slots ringed and listed, each one a shortcut to plan a
  * post. Hover a cell, or focus the grid and use the arrow keys, to read it.
  */
-export function Heatmap({ cells, best, network, networks, onNetwork, timeZone }: HeatmapProps) {
+export function Heatmap({ cells, best, network, networks, onNetwork, timeZone, planHref }: HeatmapProps) {
   const { t } = useI18n()
   const a = t.analytics.best
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -177,7 +179,7 @@ export function Heatmap({ cells, best, network, networks, onNetwork, timeZone }:
                   <b className="block whitespace-nowrap text-xs font-bold">{a.slotShort(s.day, s.hour)}</b>
                   <small className="block text-[12.5px] text-muted">{a.index(Math.round(s.value * 100))}</small>
                 </span>
-                <IconButton label={label} icon={CalendarPlus} size="sm" href="#/compose" />
+                <IconButton label={label} icon={CalendarPlus} size="sm" href={planHref(s.day, s.hour)} />
               </li>
             )
           })}

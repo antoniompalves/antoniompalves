@@ -32,6 +32,17 @@ import type { ChannelStatus, NetworkId, Tone } from '../data/types'
 import { useI18n } from '../i18n'
 
 type Metric = 'impressions' | 'engagements' | 'clicks'
+
+/** The next time it is this weekday (0 = Monday) and hour, at least an hour from now. */
+function nextSlot(now: Date, day: number, hour: number) {
+  const start = new Date(now)
+  start.setUTCHours(hour, 0, 0, 0)
+  for (let d = 0; d < 8; d++) {
+    const at = start.getTime() + d * 86_400_000
+    if ((new Date(at).getUTCDay() + 6) % 7 === day && at > now.getTime() + 3_600_000) return at
+  }
+  return start.getTime() + 7 * 86_400_000
+}
 type SortKey = 'name' | 'accounts' | 'followers' | 'growth' | 'impressions' | 'eng' | 'posts'
 type CardId = 'grow' | 'imp' | 'best' | 'mix' | 'net' | 'top' | 'brands' | 'web' | 'src' | 'pages'
 
@@ -193,7 +204,7 @@ export function Analytics({ now, hash }: { now: Date; hash: string }) {
         </AnCard>
 
         <AnCard {...card('best')} area="best" title={a.best.title}>
-          <Heatmap cells={heat.cells} best={heat.best} network={heatNet} networks={activeNetworks(ws)} onNetwork={setHeatNet} timeZone={ws.timeZone} />
+          <Heatmap cells={heat.cells} best={heat.best} network={heatNet} networks={activeNetworks(ws)} onNetwork={setHeatNet} timeZone={ws.timeZone} planHref={(day, hour) => `#/compose?at=${nextSlot(now, day, hour)}`} />
         </AnCard>
 
         <AnCard {...card('mix')} area="mix" title={a.mix.title}>

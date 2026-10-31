@@ -1,17 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Bookmark,
   Clock,
   Copy,
-  Ellipsis,
-  Heart,
-  ImageOff,
-  MessageCircle,
   PenLine,
-  Play,
-  Repeat2,
   Send,
-  ThumbsUp,
   Trash2,
   TriangleAlert,
   X,
@@ -20,8 +12,8 @@ import type { Brand, NetworkId, Post, TeamMember } from '../../data/types'
 import { NETWORK_LABEL, clip } from '../../data/selectors'
 import { engagementRate, engagements } from '../../data/analytics'
 import { useI18n } from '../../i18n'
-import { coverPhoto } from '../../data/assets'
-import { BrandMark, Button, IconButton, NetStack, PostStatusPill, Segmented, cn, toneFill } from '../ui'
+import { PostPreview } from '../PostPreview'
+import { BrandMark, Button, IconButton, NetStack, PostStatusPill, Segmented } from '../ui'
 
 interface PostDrawerProps {
   post: Post | null
@@ -102,7 +94,7 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
           )}
 
           <div key={network} className="grid animate-rise justify-items-center rounded-[22px] bg-well p-[18px]">
-            <Preview post={post} brand={brand} network={network ?? post.networks[0]} stamp={stamp} />
+            <PostPreview post={post} brand={brand} network={network ?? post.networks[0]} stamp={stamp} />
           </div>
 
           {m && (
@@ -144,115 +136,5 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
         </div>
       )}
     </dialog>
-  )
-}
-
-/* ───────────────────────── network previews (".pv") ───────────────────────── */
-
-const VIDEO: NetworkId[] = ['tiktok', 'youtube']
-const TEXT_FIRST: NetworkId[] = ['x', 'threads', 'linkedin']
-
-function Media({ post, className }: { post: Post; className?: string }) {
-  const { t } = useI18n()
-  return post.media.length ? (
-    <img src={coverPhoto(post, 760)} alt="" className={cn('size-full object-cover', className)} />
-  ) : (
-    <span
-      className={cn(
-        'grid size-full place-content-center place-items-center gap-2 bg-[repeating-linear-gradient(45deg,var(--well)_0_10px,transparent_10px_20px)] text-2xs font-semibold text-muted',
-        className,
-      )}
-    >
-      <ImageOff size={28} aria-hidden />
-      {t.drawer.noMedia}
-    </span>
-  )
-}
-
-function Preview({ post, brand, network, stamp }: { post: Post; brand: Brand; network: NetworkId; stamp: string }) {
-  const { t } = useI18n()
-  const likes = t.numbers.compact(post.metrics?.likes ?? 0)
-  const avatar = (
-    <span className={cn('grid size-[34px] shrink-0 place-items-center rounded-full text-[12.5px] font-bold', toneFill[brand.tone])}>{brand.initials}</span>
-  )
-
-  if (VIDEO.includes(network)) {
-    return (
-      <article aria-label={t.drawer.preview(NETWORK_LABEL[network])} className="w-full max-w-[260px] overflow-hidden rounded-[20px] bg-[#0e1012] text-white shadow-[0_18px_40px_-26px_rgb(0_0_0/0.35)]">
-        <div className="relative aspect-[9/16] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:top-[40%] after:bg-gradient-to-b after:from-transparent after:to-black/72">
-          <Media post={post} className="text-white/70" />
-          <span className="absolute inset-0 m-auto grid size-[54px] place-items-center rounded-full bg-black/35">
-            <Play size={24} className="fill-white stroke-none" aria-hidden />
-          </span>
-          <div className="absolute inset-x-0 bottom-0 z-[1] grid gap-1 p-3.5 text-[13px] leading-[1.4]">
-            <b>@{brand.handle}</b>
-            <p className="line-clamp-3">{post.text}</p>
-          </div>
-        </div>
-      </article>
-    )
-  }
-
-  if (TEXT_FIRST.includes(network)) {
-    return (
-      <article aria-label={t.drawer.preview(NETWORK_LABEL[network])} className="w-full max-w-[380px] overflow-hidden rounded-[20px] border border-line bg-float text-[14px] leading-[1.42] shadow-[0_18px_40px_-26px_rgb(0_0_0/0.35)]">
-        <div className="flex gap-[11px] p-3.5">
-          {avatar}
-          <div className="grid min-w-0 flex-1 gap-0.5">
-            <p className="flex flex-wrap items-baseline gap-1.5">
-              <b>{brand.name}</b>
-              <span className="text-[13px] text-muted">@{brand.handle} · {stamp}</span>
-            </p>
-            <p className="whitespace-normal py-1 [overflow-wrap:anywhere]">{post.text}</p>
-            {post.media.length > 0 && (
-              <div className="mb-1 aspect-[16/10] overflow-hidden rounded-2xl bg-well">
-                <Media post={post} />
-              </div>
-            )}
-            <div className="flex max-w-[320px] justify-between gap-1.5 pt-1.5 text-[13px] text-muted">
-              {network === 'linkedin' ? (
-                <>
-                  <span className="inline-flex items-center gap-1.5"><ThumbsUp size={17} /> {t.drawer.like}</span>
-                  <span className="inline-flex items-center gap-1.5"><MessageCircle size={17} /> {t.drawer.comment}</span>
-                  <span className="inline-flex items-center gap-1.5"><Repeat2 size={17} /> {t.drawer.repost}</span>
-                </>
-              ) : (
-                <>
-                  <MessageCircle size={17} />
-                  <Repeat2 size={17} />
-                  <Heart size={17} />
-                  <Bookmark size={17} />
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </article>
-    )
-  }
-
-  return (
-    <article aria-label={t.drawer.preview(NETWORK_LABEL[network])} className="w-full max-w-[380px] overflow-hidden rounded-[20px] border border-line bg-float text-[14px] leading-[1.42] shadow-[0_18px_40px_-26px_rgb(0_0_0/0.35)]">
-      <header className="flex items-center gap-2.5 px-3.5 py-3">
-        {avatar}
-        <b className="text-[14px] font-bold">{network === 'facebook' || network === 'pinterest' ? brand.name : brand.handle}</b>
-        <Ellipsis size={20} className="ml-auto text-muted" aria-hidden />
-      </header>
-      <div className="relative aspect-square bg-well">
-        <Media post={post} />
-      </div>
-      <div className="flex items-center gap-3.5 px-3.5 py-2.5">
-        <Heart size={20} />
-        <MessageCircle size={20} />
-        <Send size={20} />
-        <span className="flex-1" />
-        <Bookmark size={20} />
-      </div>
-      <p className="px-3.5 pb-1 font-bold">{t.drawer.likes(likes)}</p>
-      <p className="whitespace-normal px-3.5 pb-3 [overflow-wrap:anywhere]">
-        <b>{brand.handle}</b> {post.text}
-      </p>
-      <p className="px-3.5 pb-3.5 text-[12px] uppercase tracking-[0.04em] text-faint">{stamp}</p>
-    </article>
   )
 }

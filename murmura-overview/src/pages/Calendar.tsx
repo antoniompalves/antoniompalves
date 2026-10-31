@@ -96,7 +96,11 @@ export function Calendar({ now }: { now: Date }) {
 
   const { publish, duplicate, remove } = usePostActions(now, () => setOpenId(null))
 
-  const createAt = () => (window.location.hash = '#/compose')
+  // A slot opens the composer at that time; a month day (midnight) at noon.
+  const createAt = (when: Date) => {
+    const at = when.getTime() % 86_400_000 === 0 ? when.getTime() + 12 * 3_600_000 : when.getTime()
+    window.location.hash = `#/compose?at=${at}`
+  }
   const toggleCampaign = (id: string) => setFilters((f) => ({ ...f, campaignId: f.campaignId === id ? null : id }))
   const goWeek = (d: Date) => {
     setAnchor(d)

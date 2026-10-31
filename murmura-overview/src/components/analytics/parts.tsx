@@ -100,7 +100,19 @@ export function Legend({ tone, label, previous }: { tone: ChartTone; label: stri
   )
 }
 
-export function Empty({ icon: Icon, title, text }: { icon: LucideIcon; title: string; text: string }) {
+/**
+ * Icon, title and a line of help (".an-empty"). `compact` is the plain ".empty"
+ * other pages use inside lists: a bare 30px icon, a 16px title, 14px help.
+ */
+export function Empty({ icon: Icon, title, text, compact }: { icon: LucideIcon; title: string; text: string; compact?: boolean }) {
+  if (compact)
+    return (
+      <div className="grid justify-items-center gap-1.5 px-2 pb-2.5 pt-[18px] text-center">
+        <Icon size={30} strokeWidth={1.5} aria-hidden className="text-muted" />
+        <p className="text-md font-semibold">{title}</p>
+        <p className="max-w-[320px] text-xs text-muted">{text}</p>
+      </div>
+    )
   return (
     <div className="grid justify-items-center gap-1.5 px-2 py-[26px] text-center">
       <span className="mb-1 grid size-12 place-items-center rounded-full bg-well text-muted">

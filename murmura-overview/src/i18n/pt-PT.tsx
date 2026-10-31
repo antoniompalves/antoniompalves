@@ -152,6 +152,25 @@ export const ptPT: Messages = {
     },
     /** "seg., 2 nov., 09:00" */
     dayTime: (d: Date) => `${dayLong(d)}, ${time(d)}`,
+    /** "Amanhã 18:00", "dom. 12:00" */
+    slot: (d: Date, now: Date) => {
+      const diff = dayDiff(now, d)
+      return `${diff === 0 ? 'Hoje' : diff === 1 ? 'Amanhã' : weekday(d)} ${time(d)}`
+    },
+    /** "Hoje · 09:30", "Ontem · 08:15", "3 nov. · 12:00" */
+    dayStamp: (d: Date, now: Date) => {
+      const diff = dayDiff(now, d)
+      return `${diff === 0 ? 'Hoje' : diff === 1 ? 'Amanhã' : diff === -1 ? 'Ontem' : monthDay(d)} · ${time(d)}`
+    },
+    /** "daqui a 45 min", "daqui a 22 h", "daqui a 3 d" */
+    fromNow: (d: Date, now: Date) => {
+      const ms = Math.max(0, d.getTime() - now.getTime())
+      if (ms < 60_000) return 'agora'
+      const mins = Math.round(ms / 60_000)
+      const hours = Math.round(ms / 3_600_000)
+      const days = Math.round(ms / 86_400_000)
+      return mins < 60 ? `daqui a ${mins} min` : hours < 24 ? `daqui a ${hours} h` : days < 7 ? `daqui a ${days} d` : `a ${monthDay(d)}`
+    },
     stamp: (iso: string) => `${monthDay(new Date(iso))} · ${time(new Date(iso))}`,
     listTime: (iso: string, now: Date) => {
       const diff = dayDiff(iso, now)
@@ -252,7 +271,7 @@ export const ptPT: Messages = {
     light: 'Claro',
     notRecreated: (routes: ReactNode[]) => (
       <>
-        Só {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]} e {routes[4]} estão recriadas. Esta secção existe na referência com as partes abaixo.
+        Só {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]}, {routes[4]} e {routes[5]} estão recriadas. Esta secção existe na referência com as partes abaixo.
       </>
     ),
   },
@@ -335,6 +354,14 @@ export const ptPT: Messages = {
         return `deixou de seguir “${a.term}” para ${brand(a.brandId)}`
       case 'openedMention':
         return `abriu uma conversa a partir de uma menção de “${a.term}” no ${network(a.network)}`
+      case 'savedDraft':
+        return `guardou um rascunho para ${brand(a.brandId)}`
+      case 'sentForApproval':
+        return `enviou “${a.excerpt}” para aprovação (${brand(a.brandId)})`
+      case 'publishedPost':
+        return `publicou “${a.excerpt}” em ${plural(a.networks, 'rede', 'redes')}`
+      case 'scheduledPost':
+        return `agendou “${a.excerpt}” para ${monthDay(new Date(a.at))} · ${time(new Date(a.at))}`
     }
   },
 
@@ -941,6 +968,207 @@ export const ptPT: Messages = {
       unsaved: 'Removida das guardadas',
       moved: (brand: string) => `Movida para Mensagens · ${brand}`,
       noChannel: (brand: string) => `${brand} não tem nenhum canal ligado para responder`,
+    },
+  },
+
+  compose: {
+    title: 'Criar',
+    stats: { drafts: 'Os seus rascunhos e alterações', waiting: 'À espera de aprovação', scheduled: 'Agendadas, próximos 7 dias' },
+    newPost: 'Nova publicação',
+    untitled: 'Publicação sem título',
+    editor: {
+      newTitle: 'Nova publicação',
+      editTitle: 'Editar publicação',
+      viewTitle: 'Ver publicação',
+      brand: 'Marca',
+      pickBrand: 'Escolher a marca',
+      postTo: 'Publicar em',
+      picked: (n: number, total: number) => `${n} de ${total}`,
+      channel: (network: string, on: boolean) => `${on ? 'Retirar' : 'Juntar'} ${network}`,
+      expiring: (network: string) => `O acesso ao ${network} expira em breve`,
+      disconnected: (network: string) => `O ${network} está desligado`,
+      fix: 'Corrigir',
+      askAdmin: 'Peça a um administrador',
+      noChannels: 'Esta marca ainda não tem nenhum canal ligado.',
+      noChannelsLink: 'Ligar um',
+      text: 'Texto da publicação',
+      placeholder: (brand: string) => `O que há de novo na ${brand}? Escreva uma vez — o Kataru adapta-o a cada rede.`,
+      media: 'Media',
+      hashtags: 'Hashtags',
+      template: 'Modelo',
+      assist: 'Assistente',
+      left: (network: string, n: string, limit: string) => `${network}: faltam ${n} de ${limit} carateres`,
+      over: (network: string, n: string) => `${network}: ${n} acima do limite`,
+      photos: 'Fotografias',
+      removePhoto: (n: number) => `Retirar a fotografia ${n}`,
+      moveEarlier: (n: number) => `Passar a fotografia ${n} para antes`,
+      moveLater: (n: number) => `Passar a fotografia ${n} para depois`,
+      addMedia: 'Juntar mais media',
+      more: 'Mais opções',
+      moreSub: 'Primeiro comentário, link, campanha',
+      firstComment: 'Primeiro comentário',
+      firstCommentHint: 'Sai como primeiro comentário, logo a seguir à publicação.',
+      firstCommentPlaceholder: 'Hashtags ou um link, publicados como primeiro comentário',
+      firstCommentNeedsIg: 'Escolha um canal do Instagram para juntar um primeiro comentário.',
+      link: 'Link',
+      utm: 'Marcar para análise web',
+      utmHint: 'Marque todos os links para a análise web saber que vieram das redes sociais.',
+      copyLink: 'Copiar o link',
+      insertLink: 'Inserir',
+      campaign: 'Campanha',
+      noCampaign: 'Sem campanha',
+      noCampaigns: 'Sem campanhas para esta marca',
+    },
+    issues: {
+      noChannel: 'Escolha pelo menos um canal',
+      empty: 'Escreva algo ou junte uma fotografia',
+      past: 'Escolha uma hora no futuro',
+      link: 'Esse link parece incompleto',
+      over: (n: string, network: string) => `${n} carateres acima do limite do ${network}`,
+      needsPhoto: (network: string) => `O ${network} precisa de uma fotografia`,
+      needsVideo: (network: string) => `O ${network} precisa de um vídeo ou de um carrossel de fotografias`,
+      expires: (network: string, days: number) => `O acesso ao ${network} expira daqui a ${plural(days, 'dia', 'dias')}`,
+      ready: (n: number) => `Pronta para ${plural(n, 'rede', 'redes')}`,
+    },
+    preview: {
+      title: 'Pré-visualização',
+      network: 'Rede da pré-visualização',
+      sub: (network: string, handle: string) => `${network} · @${handle}`,
+      show: 'Mostrar a pré-visualização',
+      hide: 'Esconder a pré-visualização',
+      noneTitle: 'Nada para pré-visualizar',
+      noneText: 'Escolha um canal e a publicação aparece aqui, tal como essa rede a mostra.',
+      tips: {
+        instagram: 'Os primeiros 125 carateres aparecem antes de “mais”. As fotografias são cortadas em quadrado.',
+        facebook: 'As publicações longas dobram por volta dos 240 carateres.',
+        x: 'Cada link conta como 23 carateres, seja qual for o tamanho.',
+        linkedin: 'Cerca de 210 carateres aparecem antes de “ver mais”.',
+        tiktok: 'Vertical 9:16 — a legenda fica por cima do vídeo.',
+        youtube: 'Os Shorts são verticais; a legenda fica por cima do vídeo.',
+        pinterest: 'A primeira frase passa a ser o título do pin.',
+        threads: '500 carateres. Os links abrem num cartão.',
+      } satisfies Record<NetworkId, string>,
+    },
+    when: {
+      title: 'Quando',
+      date: 'Data',
+      time: 'Hora',
+      goesOut: (rel: string) => `Sai ${rel}`,
+      setFor: (rel: string) => `Marcada para ${rel}`,
+      wentOut: (rel: string) => `Saiu ${rel}`,
+      passed: 'Essa hora já passou — escolha outra',
+      best: 'Melhores horas',
+      bestFor: 'Melhores horas para',
+      nextFree: 'Próxima hora livre',
+      nextFreeToast: (when: string) => `Próxima hora livre: ${when}`,
+      day: 'Nesse dia',
+      close: (n: number, brand: string) => `${plural(n, 'outra publicação', 'outras publicações')} da ${brand} a menos de uma hora desta`,
+      sameDay: (n: number, brand: string) => `${plural(n, 'outra publicação', 'outras publicações')} da ${brand} nesse dia, nenhuma perto desta`,
+      nothing: (brand: string) => `Nada mais da ${brand} nesse dia`,
+      ticks: ['0h', '6h', '12h', '18h', '24h'],
+      tz: (zone: string) => `As horas estão no fuso horário do workspace, ${zone}.`,
+    },
+    bar: {
+      direct: 'Pode publicar diretamente',
+      approval: 'Passa por aprovação',
+      approvers: (names: string[]) =>
+        names.length === 1 ? `${names[0]} pode aprovar` : names.length === 2 ? `${names[0]} ou ${names[1]} podem aprovar` : `${names.slice(0, 2).join(', ')} +${names.length - 2} podem aprovar`,
+      noApprovers: 'Ainda ninguém pode aprovar esta marca',
+      channels: (n: number) => (n === 1 ? 'canal' : 'canais'),
+      schedule: 'Agendar',
+      update: 'Atualizar agendamento',
+      send: 'Enviar para aprovação',
+      resend: 'Reenviar para aprovação',
+      now: 'Publicar agora',
+      draft: 'Guardar rascunho',
+      ruleAll: 'Regra do workspace: todas as publicações passam por aprovação',
+      fix: (n: number) => `${plural(n, 'coisa', 'coisas')} a corrigir antes de poder sair`,
+      notify: 'Recebe uma notificação quando for aprovada.',
+      goesOut: (rel: string) => `Sai ${rel}.`,
+      published: 'Publicada',
+      readOnly: 'Só de leitura',
+      open: 'Abrir a publicação',
+      duplicate: 'Duplicar',
+    },
+    drafts: {
+      title: 'Os seus rascunhos',
+      toFinish: 'Por acabar',
+      waiting: 'À espera de aprovação',
+      started: (status: string, rel: string) => `${status} · começada ${rel}`,
+      sent: (status: string, rel: string) => `${status} · enviada ${rel}`,
+      remove: 'Apagar o rascunho',
+      noneTitle: 'Sem rascunhos à espera',
+      noneText: 'Guarde uma publicação como rascunho e ela fica aqui. As que lhe devolverem com alterações também.',
+    },
+    notes: {
+      changes: (name: string) => `${name} pediu alterações`,
+      noNote: 'Sem nota.',
+      fixIt: (rel: string) => `${rel} · corrija aqui e volte a enviar`,
+      waiting: (names: string) => `À espera de ${names}`,
+      anApprover: 'quem aprova',
+      sentBy: (who: string, rel: string) => `${who} enviou-a ${rel}. Guardar alterações envia a nova versão para aprovação.`,
+      you: 'Você',
+      scheduled: (when: string) => `Agendada para ${when}`,
+      keeps: 'Guardar mantém-na agendada, à hora definida abaixo.',
+      backForApproval: 'As suas alterações voltam a aprovação antes de sair.',
+      published: (when: string) => `Publicada ${when}`,
+      publishedText: 'As publicações já publicadas não podem ser editadas. Abra-a para ver como está a correr, ou comece uma nova a partir dela.',
+      failed: 'Esta publicação não saiu',
+    },
+    pickers: {
+      library: (brand: string) => `Biblioteca da ${brand}`,
+      selected: (n: number) => `${plural(n, 'escolhida', 'escolhidas')}`,
+      openLibrary: 'Abrir a biblioteca',
+      done: 'Concluído',
+      noMedia: (brand: string) => `A ${brand} ainda não tem media`,
+      noMediaText: 'As fotografias carregadas na Biblioteca aparecem aqui.',
+      hashtags: 'Conjuntos de hashtags',
+      suggested: 'Sugeridas',
+      noSets: 'Sem conjuntos de hashtags para esta marca',
+      noSetsText: 'Guarde conjuntos na Biblioteca. Assistente → Juntar hashtags continua a sugerir algumas.',
+      templates: 'Modelos',
+      everyBrand: 'Todas as marcas',
+      noTemplates: 'Ainda sem modelos',
+      noTemplatesText: 'Os modelos guardados na Biblioteca aparecem aqui.',
+      templateHint: 'Substitua as {chavetas} antes de publicar.',
+    },
+    assist: {
+      shorter: { label: 'Mais curto', done: 'Encurtado', same: 'Já está curto' },
+      friendlier: { label: 'Mais próximo', done: 'Ficou mais caloroso', same: 'Já está caloroso' },
+      tags: { label: 'Juntar hashtags', done: 'Hashtags da marca juntadas', same: 'Essas hashtags já lá estão' },
+      cta: { label: 'Juntar um apelo à ação', done: 'Apelo à ação juntado', same: 'Já tem um apelo à ação' },
+      tidy: { label: 'Corrigir espaços', done: 'Espaços e maiúsculas corrigidos', same: 'Os espaços já estão certos' },
+      undo: (label: string) => `Anular “${label}”`,
+      undone: (label: string) => `“${label}” anulado`,
+      writeFirst: 'Escreva algo primeiro — o Assistente reescreve o seu texto',
+      greeting: /^(?:olá|ola|bom dia|boa tarde|amigos|hey|hi|hello)\b/i,
+      hello: 'Olá a todos!',
+      ctaLine: (brandId: string) =>
+        ({
+          eo: 'Garanta o seu saco antes de quinta — link na bio.',
+          hh: 'Veja a coleção — link na bio.',
+          vg: 'Marque a sua vez — link na bio.',
+          wb: 'Encontre o seu ritual — link na bio.',
+          ns: 'Quer isto para a sua marca? Envie-nos uma mensagem.',
+        })[brandId] ?? 'Toque no link para saber mais.',
+    },
+    toast: {
+      draftSaved: 'Rascunho guardado',
+      sent: (n: number) => `Enviada para aprovação · ${n} ${n === 1 ? 'pode' : 'podem'} aprovar`,
+      published: (networks: string[]) => `Publicada em ${networks.join(', ')}`,
+      scheduled: (when: string) => `Agendada para ${when}`,
+      view: 'Ver',
+      deleted: 'Rascunho apagado',
+      photoRemoved: 'Fotografia retirada',
+      maxMedia: 'Até 10 fotografias por publicação',
+      linkCopied: 'Link copiado',
+      linkAdded: 'Link juntado à publicação',
+      tagsAdded: (name: string) => `“${name}” juntado`,
+      templateInserted: (name: string) => `“${name}” inserido`,
+      writeBeforeDraft: 'Escreva algo antes de guardar um rascunho',
+      fixFirst: 'Corrija a publicação primeiro',
+      gone: 'Essa publicação já não existe',
+      duplicated: 'Duplicada como nova publicação',
     },
   },
 }

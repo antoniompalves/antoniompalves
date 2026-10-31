@@ -452,6 +452,64 @@ html.cl-dragging * {
   animation: beat 1.6s ease-in-out infinite;
 }
 
+/* A refused action: the box shakes no-no. */
+@keyframes shake {
+  20% {
+    transform: translateX(-9px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@utility animate-shake {
+  animation: shake 0.45s ease-out;
+}
+
+/* Compose grid (".cm-grid"): editor 1.62 | preview 1 | when, publish bar and drafts 0.9;
+   two columns from 1279px, then preview beside "when" from 1000px, one column on phones. */
+.cm-grid {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  grid-template:
+    "ed pv when"
+    "ed pv bar"
+    "ed pv drafts"
+    "ed pv ." 1fr / minmax(0, 1.62fr) minmax(0, 1fr) minmax(0, 0.9fr);
+}
+@media (width <= 1279px) {
+  .cm-grid {
+    grid-template:
+      "ed pv"
+      "when bar"
+      "when drafts" 1fr / minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+}
+@media (width <= 1000px) {
+  .cm-grid {
+    grid-template:
+      "ed ed"
+      "pv when"
+      "pv bar"
+      "pv ." 1fr
+      "drafts drafts" / minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@media (width <= 760px) {
+  .cm-grid {
+    grid-template-rows: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "ed" "pv" "when" "bar" "drafts";
+  }
+}
+
 @utility animate-rise {
   animation: rise 0.7s var(--ease-soft) both;
 }

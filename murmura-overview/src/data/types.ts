@@ -309,6 +309,10 @@ export type AuditAction =
   | { type: 'trackedKeyword'; term: string; brandId: string }
   | { type: 'untrackedKeyword'; term: string; brandId: string }
   | { type: 'openedMention'; network: NetworkId; term: string }
+  | { type: 'savedDraft'; brandId: string }
+  | { type: 'sentForApproval'; excerpt: string; brandId: string }
+  | { type: 'publishedPost'; excerpt: string; networks: number }
+  | { type: 'scheduledPost'; excerpt: string; at: ISODate }
 
 export interface AuditEvent {
   id: string

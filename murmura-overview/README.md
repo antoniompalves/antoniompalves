@@ -1,7 +1,8 @@
-# Kataru — overview, calendar, inbox, analytics & listening (React + Tailwind)
+# Kataru — overview, compose, calendar, inbox, analytics & listening (React + Tailwind)
 
 **Kataru** (語る, *to narrate, to tell a story*) is a social-media workspace for
-brands and their teams. It is a pixel-matched recreation of the `#/overview` dashboard, the `#/calendar`
+brands and their teams. It is a pixel-matched recreation of the `#/overview` dashboard, the
+`#/compose` composer, the `#/calendar`
 publishing calendar, the `#/inbox` messaging view, the `#/analytics` reports and the
 `#/listening` social listening page of the Murmura social-media workspace demo, rebuilt from scratch with **React 19, TypeScript, Tailwind CSS v4
 and Lucide icons**. Design tokens, layout metrics, routes and the data model were
@@ -31,13 +32,27 @@ language, can be switched from the account menu (avatar, top right) or forced wi
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/#/overview  ·  #/calendar  ·  #/inbox  ·  #/analytics  ·  #/listening  (add ?lang=pt-PT before the #)
+npm run dev        # http://localhost:5173/#/overview  ·  #/compose  ·  #/calendar  ·  #/inbox  ·  #/analytics  ·  #/listening  (add ?lang=pt-PT before the #)
 npm run build      # type-check + production build
 ```
 
 | Light | Dark |
 | --- | --- |
 | ![Overview, light theme](docs/screenshots/overview-light.png) | ![Overview, dark theme](docs/screenshots/overview-dark.png) |
+
+| Compose | Changes requested | Phone |
+| --- | --- | --- |
+| ![Compose with photos and hashtags](docs/screenshots/compose-light.png) | ![Editing a post sent back with a note](docs/screenshots/compose-changes.png) | ![Compose on a phone](docs/screenshots/compose-mobile.png) |
+
+Compose writes a post once for a brand's channels: photos from the brand library
+(numbered, reorderable), hashtag sets, templates and rule-based Assist rewrites
+(shorter, friendlier, hashtags, call to action, spacing; undoable), character
+dials per network, what still blocks it, first comment, a tagged link and a
+campaign. The preview shows it the way each network lays it out; "When" suggests
+the week's best times from the engagement heatmaps and the next slot that doesn't
+crowd the brand's other posts. It schedules, publishes now, sends for approval
+(depending on the role and the workspace rule) or saves a draft; posts sent back
+with a note, waiting for approval, scheduled or published open with that context.
 
 | Calendar · Week | Month | List |
 | --- | --- | --- |
@@ -103,6 +118,7 @@ src/
     index.tsx             I18nProvider, useI18n(), locale detection and persistence
   pages/
     Overview.tsx          #/overview: header + 8 cards on a 12-col grid
+    Compose.tsx           #/compose/:id: draft state, route, notes, schedule / publish / approval / draft
     Calendar.tsx          #/calendar: stats, filters, views, side panel, drawer wiring
     Inbox.tsx             #/inbox/:id: selection, actions + toasts, shortcuts, responsive panes
     Analytics.tsx         #/analytics/:network: stats, chips, expandable cards, table, top posts, brands, websites
@@ -134,6 +150,11 @@ src/
       Sparkline.tsx       96×28 follower trend for table rows
       ReportControls.tsx  Schedule a report: form, report menu, stop with confirmation
       exportCsv.ts        CSV report in the reader's language
+    compose/
+      Editor.tsx          brand, channels, text box, photos, tools, Assist, dials, issues, more options
+      Panels.tsx          preview, when (best times, day bar), publish bar, your drafts
+      Pickers.tsx         library photos, hashtag sets, templates
+    PostPreview.tsx       a post as each network lays it out (composer and post drawer)
     listening/
       Keywords.tsx        tracked keywords: kind, brand, weekly count, 14-day line, sentiment split
       Stream.tsx          mentions: live toggle, filters, active chips, mention rows, paging
@@ -155,6 +176,9 @@ src/
     analytics.ts          analytics view-model: ranges, network filter, every figure on #/analytics
     analyticsData.ts      180 days per network, per-account totals and curves, heatmaps (from the reference)
     webAnalytics.ts       website traffic shape (GA4-like), demo generator, websites view model
+    compose.ts            composer rules: network limits, issues, best times, free slot, links, Assist
+    permissions.ts        roles, permissions, who approves and whose posts need approval
+    postsData.ts          extra photos, campaigns, review trails per post (from the reference)
     listening.ts          listening view-model: stream filters, share of voice, cloud, sentiment, new mentions
     listeningData.ts      14 keywords, 90 mentions and 9 competitors (from the reference)
     ga4.ts                GA4 Data API from the browser: Google sign-in token, batchRunReports, mapping
