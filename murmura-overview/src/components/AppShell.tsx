@@ -18,6 +18,7 @@ import {
   Moon,
   PenLine,
   Plus,
+  RefreshCw,
   Search,
   Settings,
   ShieldCheck,
@@ -31,7 +32,9 @@ import { useWorkspace } from '../data/store'
 import type { NavItem, TeamMember } from '../data/types'
 import { LOCALES, useI18n } from '../i18n'
 import { KataruMark } from './Logo'
-import { MenuItem, Popover } from './Popover'
+import { ConfirmDialog } from './Modal'
+import { MenuDivider, MenuItem, Popover } from './Popover'
+import { useToast } from './Toast'
 import { Avatar, IconButton, cn } from './ui'
 
 /* ───────────────────────── background ───────────────────────── */
@@ -175,13 +178,16 @@ export function TopBar({ tabs, activeTab, user, unreadNotifications }: TopBarPro
   )
 }
 
-/** Avatar button; its menu holds the account's preferences, starting with the interface language. */
+/** Avatar button; its menu holds the account's preferences (the interface language) and resetting the demo. */
 function AccountButton({ user }: { user: TeamMember }) {
   const { t, locale, setLocale } = useI18n()
   const [open, setOpen] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const ref = useRef<HTMLButtonElement>(null)
-  const { ws } = useWorkspace()
+  const { ws, reset } = useWorkspace()
+  const toast = useToast()
   const role = roleName(t, ws, user.role)
+  const r = t.shell.reset
   return (
     <>
       <button
@@ -203,23 +209,48 @@ function AccountButton({ user }: { user: TeamMember }) {
         <p className="px-3 pb-1 pt-2 text-[12.5px] font-bold uppercase tracking-[0.06em] text-muted" id="account-language">
           {t.shell.language}
         </p>
-        <div role="menu" aria-labelledby="account-language">
-          {LOCALES.map((l) => (
-            <MenuItem
-              key={l.id}
-              icon={Languages}
-              lang={l.id}
-              checked={locale === l.id}
-              onClick={() => {
-                setLocale(l.id)
-                setOpen(false)
-              }}
-            >
-              {l.name}
-            </MenuItem>
-          ))}
+        <div role="menu" aria-label={t.shell.accountMenu}>
+          <div role="group" aria-labelledby="account-language">
+            {LOCALES.map((l) => (
+              <MenuItem
+                key={l.id}
+                icon={Languages}
+                lang={l.id}
+                checked={locale === l.id}
+                onClick={() => {
+                  setLocale(l.id)
+                  setOpen(false)
+                }}
+              >
+                {l.name}
+              </MenuItem>
+            ))}
+          </div>
+          <MenuDivider />
+          <MenuItem
+            icon={RefreshCw}
+            onClick={() => {
+              setOpen(false)
+              setResetting(true)
+            }}
+          >
+            {r.item}
+          </MenuItem>
         </div>
       </Popover>
+      <ConfirmDialog
+        open={resetting}
+        title={r.title}
+        text={r.text}
+        confirm={r.confirm}
+        cancel={r.cancel}
+        onClose={() => setResetting(false)}
+        onConfirm={() => {
+          setResetting(false)
+          reset()
+          toast({ text: r.done, icon: RefreshCw })
+        }}
+      />
     </>
   )
 }

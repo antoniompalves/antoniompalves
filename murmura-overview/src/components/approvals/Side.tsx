@@ -144,12 +144,13 @@ export function RequestChangesDialog({ author, onSend, onClose }: { author: stri
       title={d.title}
       sub={d.sub(author)}
       onSubmit={() => (note.trim() ? onSend(note.trim()) : setError(true))}
+      error={error && d.required}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
             {d.cancel}
           </Button>
-          <Button type="submit" icon={Undo2}>
+          <Button type="submit">
             {d.submit}
           </Button>
         </>
@@ -157,7 +158,7 @@ export function RequestChangesDialog({ author, onSend, onClose }: { author: stri
     >
       <div role="group" aria-label={d.quick} className="flex flex-wrap gap-1.5">
         {d.chips.map((chip) => (
-          <button key={chip} type="button" onClick={() => add(chip)} className="inline-flex h-[34px] cursor-pointer items-center rounded-full border border-rim bg-glass-2 px-[13px] text-2xs font-semibold hover:bg-glass-3 pointer-coarse:h-11">
+          <button key={chip} type="button" onClick={() => add(chip)} className="inline-flex h-[34px] cursor-pointer items-center rounded-full border border-line bg-glass-2 px-[13px] text-2xs font-semibold hover:bg-glass-3 pointer-coarse:h-11 pointer-coarse:px-3.5">
             {chip}
           </button>
         ))}
@@ -174,13 +175,8 @@ export function RequestChangesDialog({ author, onSend, onClose }: { author: stri
           }}
           placeholder={d.placeholder}
           aria-invalid={error}
-          className={cn('w-full resize-y rounded-[14px] border bg-glass-2 px-3 py-2.5 text-sm text-text outline-none focus-visible:border-text', error ? 'border-coral' : 'border-line-2')}
+          className={cn('w-full resize-y rounded-[14px] border bg-glass-2 px-3.5 py-2.5 text-[16px] leading-[1.45] text-text outline-none focus-visible:border-text', error ? 'border-coral' : 'border-line-2')}
         />
-        {error && (
-          <small role="alert" className="text-[12.5px] font-semibold text-bad">
-            {d.required}
-          </small>
-        )}
       </label>
     </Modal>
   )

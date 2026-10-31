@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Ear } from 'lucide-react'
 import { Modal } from '../Modal'
 import { Button, cn } from '../ui'
 import { KEYWORD_KINDS } from '../../data/listening'
@@ -32,7 +31,7 @@ export function TrackDialog({ brandId, onTrack, onClose }: { brandId: string; on
     onTrack({ term: clean, kind, brandId: brand })
   }
 
-  const field = 'h-11 w-full min-w-0 rounded-[14px] border bg-glass-2 px-3 text-sm text-text outline-none focus-visible:border-text'
+  const field = 'h-[46px] w-full min-w-0 rounded-[14px] border bg-glass-2 px-3 text-sm text-text outline-none focus-visible:border-text'
   const label = 'mb-1.5 block px-0.5 text-2xs font-semibold text-muted'
 
   return (
@@ -42,12 +41,13 @@ export function TrackDialog({ brandId, onTrack, onClose }: { brandId: string; on
       title={d.title}
       sub={d.sub}
       onSubmit={submit}
+      error={error}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
             {d.cancel}
           </Button>
-          <Button type="submit" icon={Ear}>
+          <Button type="submit">
             {d.submit}
           </Button>
         </>
@@ -68,14 +68,8 @@ export function TrackDialog({ brandId, onTrack, onClose }: { brandId: string; on
             spellCheck={false}
             autoComplete="off"
             aria-invalid={!!error}
-            aria-describedby={error ? 'ls-term-error' : undefined}
             className={cn(field, error ? 'border-coral' : 'border-line-2')}
           />
-          {error && (
-            <small id="ls-term-error" role="alert" className="mt-1 block text-[12.5px] font-semibold text-bad">
-              {error}
-            </small>
-          )}
         </label>
         <label>
           <span className={label}>{d.kind}</span>

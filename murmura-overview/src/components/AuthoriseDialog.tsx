@@ -34,35 +34,36 @@ export function AuthoriseDialog({ channel, now, onClose }: { channel: Channel | 
       open
       onClose={onClose}
       title={a.title(net)}
-      sub={a.sub(channel.handle.startsWith('@') ? channel.handle : `@${brand.handle}`)}
+      sub={a.sub(brand.handle)}
       onSubmit={allow}
-      className="w-[min(460px,calc(100vw-24px))]"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
             {a.cancel}
           </Button>
-          <Button type="submit" icon={Check}>
+          <Button type="submit">
             {a.allow}
           </Button>
         </>
       }
     >
-      <div className="flex items-center justify-center gap-4 py-1" aria-hidden>
-        <NetIcon network={channel.network} size="lg" />
-        <ArrowLeftRight size={20} className="text-muted" />
-        <span className="grid size-[46px] place-items-center rounded-[14px] bg-pill text-on-pill">
-          <KataruMark size={26} />
-        </span>
+      <div>
+        <div className="flex items-center justify-center gap-4 pb-1 pt-2.5" aria-hidden>
+          <NetIcon network={channel.network} size="lg" />
+          <ArrowLeftRight size={20} className="text-muted" />
+          <span className="grid size-[46px] place-items-center rounded-[14px] bg-pill text-on-pill">
+            <KataruMark size={26} />
+          </span>
+        </div>
+        <ul className="mt-3.5 grid gap-2 text-xs leading-[1.45]">
+          {a.scopes(brand.name).map((s) => (
+            <li key={s} className="flex items-center gap-2.5">
+              <Check size={18} aria-hidden className="shrink-0 text-good" />
+              {s}
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className="grid gap-2 text-sm">
-        {a.scopes(brand.name).map((s) => (
-          <li key={s} className="flex items-center gap-2.5">
-            <Check size={18} aria-hidden className="text-good" />
-            {s}
-          </li>
-        ))}
-      </ul>
     </Modal>
   )
 }

@@ -158,6 +158,7 @@ function ScheduleForm({ scope, onClose, onSchedule }: { scope: string; onClose: 
       title={r.title}
       sub={r.sub(scope)}
       onSubmit={submit}
+      error={error && r.pickOne}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
@@ -179,8 +180,8 @@ function ScheduleForm({ scope, onClose, onSchedule }: { scope: string; onClose: 
             <option value="monthly">{r.frequencies.monthly}</option>
           </select>
         </label>
-        <fieldset className="grid min-w-0 gap-2" aria-describedby={error ? 'report-error' : undefined}>
-          <legend className={label}>{r.recipients}</legend>
+        <fieldset className="grid min-w-0" aria-invalid={error || undefined}>
+          <legend className="block px-0.5 text-2xs font-semibold text-muted">{r.recipients}</legend>
           <div className="grid max-h-60 grid-cols-[repeat(auto-fill,minmax(min(220px,100%),1fr))] gap-1.5 overflow-auto p-0.5">
             {ws.team.filter((m) => can(ws, m.id, 'analytics.view')).map((m) => {
               const on = recipients.includes(m.id)
@@ -188,7 +189,7 @@ function ScheduleForm({ scope, onClose, onSchedule }: { scope: string; onClose: 
                 <label
                   key={m.id}
                   className={cn(
-                    'flex min-h-12 min-w-0 cursor-pointer items-center gap-2.5 rounded-[14px] border bg-glass-2 px-2.5 py-2',
+                    'flex min-w-0 cursor-pointer items-center gap-2.5 rounded-[14px] border bg-glass-2 px-2.5 py-2',
                     on ? 'border-text' : 'border-line',
                   )}
                 >
@@ -219,11 +220,6 @@ function ScheduleForm({ scope, onClose, onSchedule }: { scope: string; onClose: 
               )
             })}
           </div>
-          {error && (
-            <p id="report-error" role="alert" className="text-2xs font-semibold text-bad">
-              {r.pickOne}
-            </p>
-          )}
         </fieldset>
       </div>
     </Modal>

@@ -743,3 +743,58 @@ opens an "Authorise on YouTube" dialog that brings the channel back.
 
 Known differences: the reference animates the card leaving the grid; here it
 leaves after the stamp without a reflow animation.
+
+## 15. Saved state, Reset demo data and dialogs
+
+The reference keeps its whole workspace in one `localStorage` entry, written
+after every change and trusted only when its version and seed match; the
+account menu's **Reset demo data** asks first ("Every change you made here goes
+back to the starting data. Your theme stays."), resets in place without a
+reload, keeps whoever is signed in and says "Demo data reset". Kataru does the
+same with its own code (`src/data/persist.ts`, `src/data/store.tsx`):
+
+| | Behaviour |
+| --- | --- |
+| Key | `kataru-workspace`: `{ version, seed, clock, workspace }`; nothing is written until something changes |
+| When | 250 ms after the last change, and on `pagehide` |
+| Which saves count | the same `version` and the same starting data: `seed` is an FNV-1a fingerprint of the mock, so a build with different mock data starts fresh instead of reading fields that aren't there; unreadable JSON is ignored |
+| Clock | the mock clock is saved with the data and resumes from there, so a post approved "5 min ago" doesn't move into the future after a reload; the clock counts whole seconds |
+| Other tabs | a save from another tab replaces this tab's data (`storage` event) without being written back |
+| Reset | back to the mock, keeping the signed-in person; theme, language and the GA4 settings stay (they are per-browser settings); written at once so other tabs follow; toast "Demo data reset" |
+| No storage | private windows or blocked storage: everything works, changes last for the visit |
+
+| Account menu | Reset demo data? | A dialog on a phone |
+| --- | --- | --- |
+| ![Account menu with Reset demo data](screenshots/account-reset-menu.png) | ![Reset demo data confirmation](screenshots/reset-confirm.png) | ![Request changes as a bottom sheet](screenshots/dialog-sheet-mobile.png) |
+
+Measuring the reset confirmation showed that every dialog shares one frame in
+the reference (`.modal` + `.mform`), and that ours had drifted from it. All
+dialogs now use the same frame (`src/components/Modal.tsx`):
+
+| Part | Desktop (from 761px) | Phone (≤ 760px) |
+| --- | --- | --- |
+| Box | 580px (`min(580px, 100% − 38px)`), r28 | bottom sheet: full width, 28px top corners, no bottom border, up to 92dvh, 40×4 handle 8px from the top |
+| Header | title 21px / 1.45, −0.015em; sub 14px / 1.45, 4px above; 42px close; 18px below | fixed: 20 / 18 / 14px padding, a line below |
+| Fields | 14px apart; text fields 46px | scroll between header and buttons, 16 / 18 / 4px padding |
+| Error line | always 18px tall, 10px above the buttons, so the dialog doesn't jump when an error appears | shown only when there is one |
+| Buttons | right-aligned, 10px apart, 8px below the error line | fixed: a line above, 12 / 18 / 14px (+ safe area) padding, buttons share the width |
+
+The dialogs themselves were brought in line at the same time: the report's
+recipient rows are 50px with the legend right above them, *Track a keyword*
+has 46px fields, *Request changes* a 16px / 1.45 note box and 14px chips on
+touch screens, *Authorise on …* is 580px wide with 14px scopes, and their main
+buttons have no icon, as in the reference. Validation messages ("Say what
+should change.", "Pick at least one recipient.") use the error line.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| Reset, Schedule a report, Track a keyword, Request changes and Authorise: every header, field, error line, footer and button at **1440** and **390** px | identical, apart from text widths where the reference says "Murmura" |
+| 22 persistence checks: nothing saved until a change, saved after one, reload keeps it, clock saved and resumed ("sent 20 min ago" → "sent 50 min ago" with a save from 14:45), a second tab follows, menu items, confirm text, Cancel keeps data, Reset restores it (theme kept, toast, other tab too), saves from another seed or broken JSON ignored, works with storage blocked, pt-PT wording | all pass, no console errors |
+| Approvals, Compose and Listening interaction suites | all pass |
+| pt-PT: account menu, reset, request changes, track, report and authorise (with their errors) at 1440 and 390 px | no English left, nothing clipped |
+| English text of 13 states | unchanged |
+
+The rest of the account menu (switch account, keyboard shortcuts, Light / Dark
+/ Match system, sign out) comes with the shell's remaining controls.

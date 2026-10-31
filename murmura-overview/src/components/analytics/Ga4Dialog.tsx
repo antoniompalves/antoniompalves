@@ -88,7 +88,7 @@ export function Ga4Dialog({ onClose }: { onClose: () => void }) {
       title={d.title}
       sub={d.sub}
       onSubmit={() => save(true)}
-      className="w-[min(680px,calc(100vw-24px))]"
+      size="lg"
       footer={
         <>
           {ga.status === 'live' && (

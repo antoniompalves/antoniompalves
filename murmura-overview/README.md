@@ -26,6 +26,10 @@ reverse-engineering notes keep the reference's name, Murmura, where they describ
 it. On wide screens the brand keeps the reference's 165px so the centred tab bar
 stays exactly where it was measured.
 
+Changes are saved in the browser (`kataru-workspace`) and survive a reload;
+other open tabs follow along. **Reset demo data** in the account menu puts the
+starting data back, keeping the theme, language and Google Analytics settings.
+
 The app speaks **English** and **European Portuguese**: it follows the browser's
 language, can be switched from the account menu (avatar, top right) or forced with
 `?lang=pt-PT` / `?lang=en`. See [`docs/I18N.md`](docs/I18N.md).
@@ -143,7 +147,7 @@ src/
     Toast.tsx             bottom toast with Undo or an action
     AuthoriseDialog.tsx   "Authorise on …": reconnects a channel (overview, channels)
     Popover.tsx           fixed popover anchored to its trigger (flips, clamps), menu rows
-    Modal.tsx             centred <dialog> form shell and a confirm dialog
+    Modal.tsx             <dialog> form shell (centred; a bottom sheet on phones) and a confirm dialog
     useScrollEdges.ts     edge fades for sideways scrollers on phones
     useMediaQuery.ts      live media-query match (phone layouts)
     usePostActions.ts     publish / duplicate / delete with Undo, shared by calendar and inbox
@@ -201,7 +205,8 @@ src/
     listeningData.ts      14 keywords, 90 mentions and 9 competitors (from the reference)
     ga4.ts                GA4 Data API from the browser: Google sign-in token, batchRunReports, mapping
     ga4Store.tsx          demo ↔ live switch, GA4 settings saved per browser
-    store.tsx             shared in-memory store (posts, conversations, reports, keywords and mentions, with undo)
+    store.tsx             shared store (posts, conversations, reports, keywords and mentions, with undo), saved per browser, reset
+    persist.ts            saving and loading the workspace: version, seed fingerprint, mock clock
     routes.ts             the SPA's hash routes (their names live in the catalogues)
     assets.ts             image URL helpers (swap for real assets here)
 ```

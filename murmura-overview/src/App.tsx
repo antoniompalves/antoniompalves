@@ -9,6 +9,7 @@ import { loadSetting, saveSetting } from './storage'
 import { matchRoute, tabRoutes } from './data/routes'
 import { selectOverview } from './data/selectors'
 import { WorkspaceProvider, useWorkspace } from './data/store'
+import type { ClockOrigin } from './data/store'
 import { Ga4Provider, withSavedWebsites } from './data/ga4Store'
 import type { NavItem } from './data/types'
 import { Analytics } from './pages/Analytics'
@@ -40,21 +41,20 @@ function useTheme() {
   return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))] as const
 }
 
-/** Mock "now" that keeps ticking from the frozen workspace timestamp. */
-function useMockNow(start: string) {
-  const [mountedAt] = useState(() => Date.now())
+/** Mock "now": the workspace clock, ticking along with real time in whole seconds. */
+function useMockNow(origin: ClockOrigin) {
   const [, tick] = useState(0)
   useEffect(() => {
     const id = setInterval(() => tick((n) => n + 1), 15_000)
     return () => clearInterval(id)
   }, [])
-  return new Date(Date.parse(start) + (Date.now() - mountedAt))
+  return new Date(origin.mock + Math.floor((Date.now() - origin.real) / 1000) * 1000)
 }
 
 export default function App() {
   return (
     <I18nProvider>
-      <WorkspaceProvider initial={withSavedWebsites(workspace)}>
+      <WorkspaceProvider seed={workspace} withSettings={withSavedWebsites}>
         <Ga4Provider>
           <ToastProvider>
             <LucideProvider size={20} strokeWidth={1.7}>
@@ -68,11 +68,11 @@ export default function App() {
 }
 
 function Shell() {
-  const { ws } = useWorkspace()
+  const { ws, clock } = useWorkspace()
   const { t } = useI18n()
   const hash = useHash()
   const [theme, toggleTheme] = useTheme()
-  const now = useMockNow(ws.now)
+  const now = useMockNow(clock)
   const minuteKey = Math.floor(now.getTime() / 60_000)
   // Recompute once a minute (or when the data changes): countdowns and "x min ago" only change that often.
   const model = useMemo(() => selectOverview(ws, new Date(minuteKey * 60_000), t), [ws, minuteKey, t])
