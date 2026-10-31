@@ -3,6 +3,7 @@ import { KataruMark } from './Logo'
 import { Modal } from './Modal'
 import { useToast } from './Toast'
 import { Button, NetIcon } from './ui'
+import { newChannel } from '../data/channels'
 import { NETWORK_LABEL } from '../data/selectors'
 import { useWorkspace } from '../data/store'
 import type { Channel } from '../data/types'
@@ -10,23 +11,27 @@ import { useI18n } from '../i18n'
 
 /**
  * "Authorise on Facebook": the network's sign-in, as the demo plays it. Allowing
- * access reconnects the channel (a fresh 60-day token), logs it and says so.
+ * access connects the channel — a new one, or an existing one again — with a
+ * fresh 60-day token, logs it and says so.
  */
-export function AuthoriseDialog({ channel, now, onClose }: { channel: Channel | null; now: Date; onClose: () => void }) {
-  const { ws, dispatch } = useWorkspace()
+export function AuthoriseDialog({ channel, now, onClose, onAllowed }: { channel: Channel | null; now: Date; onClose: () => void; onAllowed?: (c: Channel) => void }) {
+  const { ws, all, dispatch } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const a = t.authorise
   if (!channel) return null
-  const brand = ws.brands.find((b) => b.id === channel.brandId)!
+  const brand = all.brands.find((b) => b.id === channel.brandId)!
   const net = NETWORK_LABEL[channel.network]
+  const again = all.channels.some((c) => c.id === channel.id)
   const allow = () => {
-    dispatch({ type: 'channel', id: channel.id, patch: { status: 'connected', expiresInDays: undefined } })
+    const fresh = newChannel(all, channel.brandId, channel.network, ws.currentUserId, now.getTime())
+    dispatch({ type: 'saveChannel', channel: again ? { ...channel, status: 'connected', paused: channel.paused, tokenExpiresAt: fresh.tokenExpiresAt, lastSyncAt: fresh.lastSyncAt, connectedById: ws.currentUserId } : channel })
     dispatch({
       type: 'audit',
-      event: { id: `au-${Date.now().toString(36)}`, actorId: ws.currentUserId, kind: 'channel', action: { type: 'connectedChannel', brandId: brand.id, network: channel.network, again: true }, at: now.toISOString() },
+      event: { id: `au-${Date.now().toString(36)}`, actorId: ws.currentUserId, kind: 'channel', action: { type: 'connectedChannel', brandId: brand.id, network: channel.network, again }, at: now.toISOString() },
     })
     onClose()
+    onAllowed?.(channel)
     toast({ text: a.connected(brand.name, net), icon: Link })
   }
   return (

@@ -79,6 +79,10 @@ export function roleName(t: Messages, ws: Workspace, roleId: string) {
   return isSystemRole(roleId) ? t.roles[roleId] : (ws.roles.find((r) => r.id === roleId)?.name ?? roleId)
 }
 
+/** The tooltip on a control the current role can't use ("Your role (Editor) can’t do this"), or undefined when it can. */
+export const lockTitle = (t: Messages, ws: Workspace, memberId: string, perm: Permission) =>
+  can(ws, memberId, perm) ? undefined : t.common.roleCant(roleName(t, ws, member(ws, memberId)?.role ?? ''))
+
 /** Pages that need one of these permissions; every other page is open to everyone (as in the reference). */
 export const ROUTE_NEEDS: Partial<Record<RouteId, Permission[]>> = {
   compose: ['post.create'],

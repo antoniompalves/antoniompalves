@@ -22,6 +22,7 @@ import type { NavItem } from './data/types'
 import { Analytics } from './pages/Analytics'
 import { Approvals } from './pages/Approvals'
 import { Calendar } from './pages/Calendar'
+import { Channels } from './pages/Channels'
 import { Compose } from './pages/Compose'
 import { Inbox } from './pages/Inbox'
 import { Listening } from './pages/Listening'
@@ -178,11 +179,13 @@ function Shell() {
             <Compose now={now} hash={hash} />
           ) : routeId === 'listening' ? (
             <Listening now={now} />
+          ) : routeId === 'channels' ? (
+            <Channels now={now} hash={hash} />
           ) : (
             <Card title={page.title} className="max-w-3xl">
               <p className="text-sm text-muted">
                 {t.shell.notRecreated(
-                  ['#/overview', '#/compose', '#/calendar', '#/inbox', '#/approvals', '#/analytics', '#/listening'].map((r) => (
+                  ['#/overview', '#/compose', '#/calendar', '#/inbox', '#/approvals', '#/analytics', '#/listening', '#/channels'].map((r) => (
                     <code key={r} className="font-semibold text-text">
                       {r}
                     </code>

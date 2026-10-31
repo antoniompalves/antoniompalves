@@ -223,6 +223,8 @@ export const en = {
     newPost: 'New post',
     calendar: 'Calendar',
     post: (n: number) => plural(n, 'post', 'posts'),
+    /** Tooltip on a control the current role can't use. */
+    roleCant: (role: string) => `Your role (${role}) can’t do this`,
   },
 
   status: STATUS,
@@ -498,6 +500,10 @@ export const en = {
         return `approved ${a.count} posts at once`
       case 'connectedChannel':
         return `${a.again ? 'reconnected' : 'connected'} ${brand(a.brandId)} on ${network(a.network)}`
+      case 'pausedChannel':
+        return `${a.paused ? 'paused' : 'resumed'} posting to ${brand(a.brandId)} on ${network(a.network)}`
+      case 'disconnectedChannel':
+        return `disconnected ${brand(a.brandId)} on ${network(a.network)}`
       case 'signedIn':
         return 'signed in'
       case 'signedOut':
@@ -1416,6 +1422,157 @@ export const en = {
       submitted: { title: 'You have nothing in review', text: 'Write a post — if it needs sign-off it comes here, and you’ll see every note on it.' },
       approved: { title: 'Nothing approved lately', text: 'Posts approved in the last 14 days are listed here with when they go out.' },
       write: 'Write a post',
+    },
+  },
+
+  /** Channels (#/channels): every connected account per brand, its token and audience. */
+  channels: {
+    title: 'Channels',
+    stats: {
+      connected: 'Connected accounts',
+      attention: 'Need attention',
+      fixNow: 'Fix now',
+      allGood: 'All good',
+      audience: 'Total audience',
+      networks: (total: number) => `of ${total} networks in use`,
+    },
+    connect: 'Connect a channel',
+    banner: {
+      title: (n: number) => `${n} ${n === 1 ? 'channel needs' : 'channels need'} attention`,
+      text: (failed: number) => `${failed ? `${plural(failed, 'post', 'posts')} failed to publish. ` : ''}Reconnect so nothing else misses its slot.`,
+      openFailed: 'Open the failed post',
+      item: (brand: string, network: string) => `${brand} · ${network}`,
+      disconnected: (ago: string) => `Disconnected ${ago}`,
+      expires: (when: string) => `Access expires ${when}`,
+    },
+    reconnect: 'Reconnect',
+    lockNote: 'Only admins can connect, reconnect or pause channels. You can see how each one is doing.',
+    show: 'Show',
+    tabs: { all: 'All channels', attention: 'Needs attention', paused: 'Paused' },
+    searchPlaceholder: 'Search handles and networks',
+    searchLabel: 'Search channels',
+    /** "4 channels · 142.7K audience", figures in bold. */
+    summary: (count: number, n: ReactNode, audience: ReactNode) => (
+      <>
+        {n} {count === 1 ? 'channel' : 'channels'}
+        <span>·</span>
+        {audience} audience
+      </>
+    ),
+    /** The same on a phone's folded brand. */
+    summaryText: (count: number, audience: string) => `${plural(count, 'channel', 'channels')} · ${audience} audience`,
+    toFix: (n: number) => `${n} to fix`,
+    who: {
+      people: (n: number) => (n ? `${plural(n, 'person', 'people')} can post here` : 'Nobody can post here yet'),
+      direct: (roles: string[]) => `${roles.join(', ')} publish directly`,
+      reviewed: (roles: string[]) => `${roles.join(', ')} ${roles.length > 1 ? 'need' : 'needs'} approval`,
+      manage: 'Manage access',
+    },
+    status: { connected: 'Connected', expires: (d: number) => `Expires in ${d} d`, paused: 'Paused', disconnected: 'Disconnected' },
+    /** The short status on a phone's channel row. */
+    mini: { live: 'Live', left: (d: number) => `${d} d left`, paused: 'Paused', offline: 'Offline' },
+    /** "followers · +8.2% in 30 d" */
+    growth: (pct: ReactNode) => <>followers · {pct} in&nbsp;30&nbsp;d</>,
+    token: 'Access token',
+    tokenLeft: (d: number, total: number) => `${d} of ${total} days left`,
+    revoked: 'Access revoked',
+    tokenLabel: (text: string) => `Access token: ${text}`,
+    lastSync: 'Last sync',
+    stopped: (ago: string) => `Stopped ${ago}`,
+    connectedBy: 'Connected by',
+    analytics: 'Analytics',
+    posting: 'Posting',
+    postingTo: (network: string, brand: string) => `Posting to ${network} for ${brand}`,
+    reconnectFirst: 'Reconnect first',
+    roleCant: (role: string) => `Your role (${role}) can’t pause channels`,
+    options: (network: string) => `Options for ${network}`,
+    menu: {
+      refresh: 'Refresh access',
+      reconnect: 'Reconnect',
+      signInAgain: 'Sign in to the network again',
+      adminsOnly: 'Only admins can do this',
+      pause: 'Pause posting',
+      resume: 'Resume posting',
+      analytics: 'View analytics',
+      disconnect: 'Disconnect',
+    },
+    sheet: {
+      label: (network: string, brand: string) => `${network} · ${brand}`,
+      on: 'Scheduled posts go out',
+      paused: 'Paused — scheduled posts wait',
+      off: 'Reconnect to post again',
+      alreadyDisconnected: 'Already disconnected',
+    },
+    row: {
+      label: (handle: string, network: string, state: string) => `${handle} on ${network}: ${state}. Details`,
+      states: { connected: 'connected', paused: 'paused', expiring: 'expiring', disconnected: 'disconnected' },
+      followers: (network: string, n: ReactNode) => (
+        <>
+          {network} · {n} followers
+        </>
+      ),
+    },
+    more: (n: number) => `Show ${n} more`,
+    add: { title: 'Connect a channel', to: (brand: string) => `to ${brand}` },
+    empty: {
+      query: (q: string) => `No channel matches “${q}”`,
+      queryText: 'Try a handle, a network or a brand.',
+      attention: 'Every channel is healthy',
+      attentionText: 'All tokens are valid and syncing. Nice.',
+      paused: 'Nothing is paused',
+      pausedText: 'Every connected channel is posting.',
+      clear: 'Show every channel',
+    },
+    audience: {
+      title: 'Audience by network',
+      sub: (total: string, accounts: number) => `${total} followers across ${plural(accounts, 'account', 'accounts')}`,
+      emptyTitle: 'No audience yet',
+      emptyText: 'Connect a channel to start counting.',
+    },
+    networks: {
+      title: 'Supported networks',
+      sub: (used: number, total: number) => `${used} of ${total} in use`,
+      connected: (n: number) => `${n} connected`,
+      none: 'Not connected',
+      connect: (network: string) => `Connect ${network}`,
+      what: {
+        instagram: 'Posts, Reels and Stories · first comment',
+        facebook: 'Page posts, comments, messages and reviews',
+        x: 'Posts and threads · mentions and DMs',
+        linkedin: 'Company page posts and comments',
+        tiktok: 'Videos · comments',
+        youtube: 'Videos and Shorts · comments',
+        pinterest: 'Pins and boards',
+        threads: 'Posts and replies',
+      } as Record<NetworkId, string>,
+      caps: { publish: 'Publish', inbox: 'Inbox', analytics: 'Analytics' },
+      capTitle: (cap: string, on: boolean) => `${cap}: ${on ? 'yes' : 'not on this network'}`,
+      showAll: (n: number) => `Show all ${n} networks`,
+    },
+    reconnected: 'Reconnected',
+    toast: {
+      paused: (network: string, n: number) => `${network} paused · ${n} scheduled ${n === 1 ? 'post waits' : 'posts wait'}`,
+      resumed: (network: string) => `Posting to ${network} resumed`,
+      cantPause: 'Only admins can pause channels',
+      reconnectFirst: 'Reconnect this channel first',
+      cantConnect: 'Only admins can connect channels',
+      cantReconnect: 'Ask an admin to reconnect this channel',
+      disconnected: (network: string) => `${network} disconnected`,
+    },
+    disconnect: {
+      title: (network: string) => `Disconnect ${network}?`,
+      text: (brand: string, network: string, n: number) => `${brand} stops posting to ${network}.${n ? ` ${n} scheduled ${n > 1 ? 'posts' : 'post'} will skip it.` : ''}`,
+      confirm: 'Disconnect',
+      cancel: 'Cancel',
+    },
+    connectDialog: {
+      title: 'Connect a channel',
+      sub: 'You’ll sign in to the network and choose which account Kataru may post to.',
+      network: 'Network',
+      brand: 'For brand',
+      submit: 'Continue',
+      cancel: 'Cancel',
+      already: (brand: string, network: string) => `${brand} is already connected on ${network}.`,
     },
   },
 

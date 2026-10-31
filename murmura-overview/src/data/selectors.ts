@@ -15,6 +15,7 @@ import { addDays, dayKey, startOfDay } from './calendar'
 import { byActivity, lastMessage } from './inbox'
 import { activeNetworks, daily, engagementRate, engagements, networkRows, publishedIn } from './analytics'
 import { queue as approvalQueue } from './approvals'
+import { expiresIn } from './channels'
 import { can } from './permissions'
 import type { Messages } from '../i18n'
 
@@ -136,7 +137,7 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages, everyBrand
     const net = NETWORK_LABEL[channel.network]
     todos.push(
       channel.status === 'expiring'
-        ? { id: `cn-${channel.id}`, kind: 'channel', channel, title: t.overview.todo.expiring(b.name, net, channel.expiresInDays ?? 0), detail: t.overview.todo.expiringDetail }
+        ? { id: `cn-${channel.id}`, kind: 'channel', channel, title: t.overview.todo.expiring(b.name, net, expiresIn(channel, now.getTime())), detail: t.overview.todo.expiringDetail }
         : { id: `cn-${channel.id}`, kind: 'channel', channel, title: t.overview.todo.disconnected(b.name, net), detail: t.overview.todo.disconnectedDetail },
     )
   }

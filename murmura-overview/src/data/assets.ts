@@ -10,6 +10,9 @@ const SEED = 'murmura'
 export const photo = (seed: string, size = 720) =>
   `https://picsum.photos/seed/${SEED}-${seed}/${size}/${size}`
 
+/** A wide 3:2 photo (brand covers on the channels page). */
+export const widePhoto = (seed: string, width = 900) => `https://picsum.photos/seed/${SEED}-${seed}/${width}/${Math.round((width * 2) / 3)}`
+
 /** A post's first photo at `size`, or undefined for text-only posts. */
 export const coverPhoto = (post: { media: string[] }, size?: number) => (post.media[0] ? photo(post.media[0], size) : undefined)
 

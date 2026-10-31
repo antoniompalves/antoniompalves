@@ -220,6 +220,8 @@ export const ptPT: Messages = {
     newPost: 'Nova publicação',
     calendar: 'Calendário',
     post: (n: number) => plural(n, 'publicação', 'publicações'),
+
+    roleCant: (role: string) => `O seu papel (${role}) não permite fazer isto`,
   },
 
   status: STATUS,
@@ -486,6 +488,10 @@ export const ptPT: Messages = {
         return `aprovou ${a.count} publicações de uma vez`
       case 'connectedChannel':
         return `${a.again ? 'voltou a ligar' : 'ligou'} ${brand(a.brandId)} ao ${network(a.network)}`
+      case 'pausedChannel':
+        return `${a.paused ? 'pausou' : 'retomou'} as publicações de ${brand(a.brandId)} no ${network(a.network)}`
+      case 'disconnectedChannel':
+        return `desligou ${brand(a.brandId)} do ${network(a.network)}`
       case 'signedIn':
         return 'iniciou sessão'
       case 'signedOut':
@@ -1403,6 +1409,152 @@ export const ptPT: Messages = {
       submitted: { title: 'Não tem nada em revisão', text: 'Escreva uma publicação — se precisar de aprovação vem para aqui, e vê todas as notas.' },
       approved: { title: 'Nada aprovado recentemente', text: 'As publicações aprovadas nos últimos 14 dias aparecem aqui com a hora a que saem.' },
       write: 'Escrever uma publicação',
+    },
+  },
+
+  channels: {
+    title: 'Canais',
+    stats: {
+      connected: 'Contas ligadas',
+      attention: 'Precisam de atenção',
+      fixNow: 'Resolver já',
+      allGood: 'Tudo bem',
+      audience: 'Audiência total',
+      networks: (total: number) => `de ${total} redes em uso`,
+    },
+    connect: 'Ligar um canal',
+    banner: {
+      title: (n: number) => (n === 1 ? '1 canal precisa de atenção' : `${n} canais precisam de atenção`),
+      text: (failed: number) => `${failed ? `${failed === 1 ? '1 publicação falhou' : `${failed} publicações falharam`}. ` : ''}Volte a ligar para que mais nada falhe a hora marcada.`,
+      openFailed: 'Abrir a publicação que falhou',
+      item: (brand: string, network: string) => `${brand} · ${network}`,
+      disconnected: (ago: string) => `Desligado ${ago}`,
+      expires: (when: string) => `O acesso expira ${when}`,
+    },
+    reconnect: 'Voltar a ligar',
+    lockNote: 'Só os administradores podem ligar, voltar a ligar ou pausar canais. Pode ver como está cada um.',
+    show: 'Mostrar',
+    tabs: { all: 'Todos os canais', attention: 'Precisam de atenção', paused: 'Em pausa' },
+    searchPlaceholder: 'Pesquisar contas e redes',
+    searchLabel: 'Pesquisar canais',
+    summary: (count: number, n: ReactNode, audience: ReactNode) => (
+      <>
+        {n} {count === 1 ? 'canal' : 'canais'}
+        <span>·</span>
+        {audience} de audiência
+      </>
+    ),
+    summaryText: (count: number, audience: string) => `${plural(count, 'canal', 'canais')} · ${audience} de audiência`,
+    toFix: (n: number) => `${n} por resolver`,
+    who: {
+      people: (n: number) => (n ? `${n === 1 ? '1 pessoa pode' : `${n} pessoas podem`} publicar aqui` : 'Ainda ninguém pode publicar aqui'),
+      direct: (roles: string[]) => `${roles.join(', ')} ${roles.length > 1 ? 'publicam' : 'publica'} diretamente`,
+      reviewed: (roles: string[]) => `${roles.join(', ')} ${roles.length > 1 ? 'precisam' : 'precisa'} de aprovação`,
+      manage: 'Gerir acessos',
+    },
+    status: { connected: 'Ligado', expires: (d: number) => `Expira em ${d} d`, paused: 'Em pausa', disconnected: 'Desligado' },
+    mini: { live: 'Ativo', left: (d: number) => `${d} d restantes`, paused: 'Em pausa', offline: 'Desligado' },
+    growth: (pct: ReactNode) => <>seguidores · {pct} em&nbsp;30&nbsp;d</>,
+    token: 'Token de acesso',
+    tokenLeft: (d: number, total: number) => `${d} de ${total} dias restantes`,
+    revoked: 'Acesso revogado',
+    tokenLabel: (text: string) => `Token de acesso: ${text}`,
+    lastSync: 'Última sincronização',
+    stopped: (ago: string) => `Parou ${ago}`,
+    connectedBy: 'Ligado por',
+    analytics: 'Análises',
+    posting: 'Publicar',
+    postingTo: (network: string, brand: string) => `Publicar no ${network} para ${brand}`,
+    reconnectFirst: 'Volte a ligar primeiro',
+    roleCant: (role: string) => `O seu papel (${role}) não pode pausar canais`,
+    options: (network: string) => `Opções do ${network}`,
+    menu: {
+      refresh: 'Renovar o acesso',
+      reconnect: 'Voltar a ligar',
+      signInAgain: 'Iniciar sessão na rede de novo',
+      adminsOnly: 'Só os administradores o podem fazer',
+      pause: 'Pausar as publicações',
+      resume: 'Retomar as publicações',
+      analytics: 'Ver análises',
+      disconnect: 'Desligar',
+    },
+    sheet: {
+      label: (network: string, brand: string) => `${network} · ${brand}`,
+      on: 'As publicações agendadas saem',
+      paused: 'Em pausa — as publicações agendadas esperam',
+      off: 'Volte a ligar para publicar de novo',
+      alreadyDisconnected: 'Já está desligado',
+    },
+    row: {
+      label: (handle: string, network: string, state: string) => `${handle} no ${network}: ${state}. Detalhes`,
+      states: { connected: 'ligado', paused: 'em pausa', expiring: 'a expirar', disconnected: 'desligado' },
+      followers: (network: string, n: ReactNode) => (
+        <>
+          {network} · {n} seguidores
+        </>
+      ),
+    },
+    more: (n: number) => `Mostrar mais ${n}`,
+    add: { title: 'Ligar um canal', to: (brand: string) => `para ${brand}` },
+    empty: {
+      query: (q: string) => `Nenhum canal corresponde a “${q}”`,
+      queryText: 'Experimente uma conta, uma rede ou uma marca.',
+      attention: 'Todos os canais estão bem',
+      attentionText: 'Todos os tokens são válidos e estão a sincronizar. Ótimo.',
+      paused: 'Nada está em pausa',
+      pausedText: 'Todos os canais ligados estão a publicar.',
+      clear: 'Mostrar todos os canais',
+    },
+    audience: {
+      title: 'Audiência por rede',
+      sub: (total: string, accounts: number) => `${total} seguidores em ${plural(accounts, 'conta', 'contas')}`,
+      emptyTitle: 'Ainda sem audiência',
+      emptyText: 'Ligue um canal para começar a contar.',
+    },
+    networks: {
+      title: 'Redes suportadas',
+      sub: (used: number, total: number) => `${used} de ${total} em uso`,
+      connected: (n: number) => (n === 1 ? '1 ligado' : `${n} ligados`),
+      none: 'Não ligado',
+      connect: (network: string) => `Ligar o ${network}`,
+      what: {
+        instagram: 'Publicações, Reels e Stories · primeiro comentário',
+        facebook: 'Publicações da página, comentários, mensagens e avaliações',
+        x: 'Publicações e fios · menções e mensagens diretas',
+        linkedin: 'Publicações e comentários da página da empresa',
+        tiktok: 'Vídeos · comentários',
+        youtube: 'Vídeos e Shorts · comentários',
+        pinterest: 'Pins e painéis',
+        threads: 'Publicações e respostas',
+      } as Record<NetworkId, string>,
+      caps: { publish: 'Publicar', inbox: 'Mensagens', analytics: 'Análises' },
+      capTitle: (cap: string, on: boolean) => `${cap}: ${on ? 'sim' : 'não existe nesta rede'}`,
+      showAll: (n: number) => `Mostrar as ${n} redes`,
+    },
+    reconnected: 'Ligado de novo',
+    toast: {
+      paused: (network: string, n: number) => `${network} em pausa · ${n === 1 ? '1 publicação agendada espera' : `${n} publicações agendadas esperam`}`,
+      resumed: (network: string) => `As publicações no ${network} foram retomadas`,
+      cantPause: 'Só os administradores podem pausar canais',
+      reconnectFirst: 'Volte a ligar este canal primeiro',
+      cantConnect: 'Só os administradores podem ligar canais',
+      cantReconnect: 'Peça a um administrador para voltar a ligar este canal',
+      disconnected: (network: string) => `${network} desligado`,
+    },
+    disconnect: {
+      title: (network: string) => `Desligar o ${network}?`,
+      text: (brand: string, network: string, n: number) => `${brand} deixa de publicar no ${network}.${n ? ` ${n > 1 ? `${n} publicações agendadas vão ignorá-lo` : '1 publicação agendada vai ignorá-lo'}.` : ''}`,
+      confirm: 'Desligar',
+      cancel: 'Cancelar',
+    },
+    connectDialog: {
+      title: 'Ligar um canal',
+      sub: 'Vai iniciar sessão na rede e escolher em que conta o Kataru pode publicar.',
+      network: 'Rede',
+      brand: 'Para a marca',
+      submit: 'Continuar',
+      cancel: 'Cancelar',
+      already: (brand: string, network: string) => `A marca ${brand} já está ligada ao ${network}.`,
     },
   },
 

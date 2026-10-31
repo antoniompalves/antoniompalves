@@ -137,7 +137,7 @@ export function Button({ variant = 'ink', size = 'md', icon: Icon, href, classNa
   )
 }
 
-interface IconButtonProps extends ComponentPropsWithoutRef<'button'> {
+interface IconButtonProps extends ComponentProps<'button'> {
   label: string
   icon: LucideIcon
   href?: string
@@ -172,12 +172,12 @@ export function IconButton({ label, icon: Icon, href, variant = 'line', size = '
 
 /* ───────────────────────── badges & pills ───────────────────────── */
 
-export function Badge({ tone, size = 'md', className, children }: { tone: Tone; size?: 'md' | 'sm'; className?: string; children: ReactNode }) {
+export function Badge({ tone, size = 'md', className, children }: { tone: Tone; size?: 'md' | 'tight' | 'sm'; className?: string; children: ReactNode }) {
   return (
     <span
       className={cn(
         'inline-flex items-center whitespace-nowrap rounded-full font-bold tracking-[0.01em]',
-        size === 'md' ? 'px-2.5 py-[3px] text-[12.5px]' : 'h-[21px] px-2 text-[11.5px]',
+        size === 'md' ? 'px-2.5 py-[3px] text-[12.5px]' : size === 'tight' ? 'px-2 py-0.5 text-[12.5px]' : 'h-[21px] px-2 text-[11.5px]',
         tone === 'plain' ? 'border border-line bg-glass-2 text-text' : toneFill[tone],
         className,
       )}

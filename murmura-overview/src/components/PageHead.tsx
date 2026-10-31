@@ -42,7 +42,7 @@ export function Stat({ icon: Icon, value, badge, badgeTone = 'pine', label }: { 
       </span>
       <div className="flex flex-col-reverse">
         <dt className="max-w-[170px] text-2xs leading-[1.3] text-muted max-mobile:text-[12.5px]">{label}</dt>
-        <dd className="flex items-center gap-2.5 text-[23px] font-semibold tracking-[-0.01em] max-mobile:text-lg max-mobile:font-bold">
+        <dd className="flex items-center gap-2.5 text-[23px] font-semibold tracking-[-0.01em] max-mobile:flex-wrap max-mobile:gap-x-2 max-mobile:gap-y-1 max-mobile:text-lg max-mobile:font-bold">
           <b className="num">{value}</b>
           {badge && <Badge tone={badgeTone}>{badge}</Badge>}
         </dd>

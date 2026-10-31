@@ -1,10 +1,10 @@
-# Kataru — overview, compose, calendar, inbox, approvals, analytics & listening (React + Tailwind)
+# Kataru — overview, compose, calendar, inbox, approvals, analytics, listening & channels (React + Tailwind)
 
 **Kataru** (語る, *to narrate, to tell a story*) is a social-media workspace for
 brands and their teams. It is a pixel-matched recreation of the `#/overview` dashboard, the
 `#/compose` composer, the `#/calendar`
-publishing calendar, the `#/inbox` messaging view, the `#/approvals` queue, the `#/analytics` reports and the
-`#/listening` social listening page of the Murmura social-media workspace demo, rebuilt from scratch with **React 19, TypeScript, Tailwind CSS v4
+publishing calendar, the `#/inbox` messaging view, the `#/approvals` queue, the `#/analytics` reports, the
+`#/listening` social listening page and the `#/channels` connected accounts of the Murmura social-media workspace demo, rebuilt from scratch with **React 19, TypeScript, Tailwind CSS v4
 and Lucide icons**. Design tokens, layout metrics, routes and the data model were
 reverse-engineered with Playwright; see [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md).
 
@@ -51,7 +51,7 @@ language, can be switched from the account menu (avatar, top right) or forced wi
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/#/overview  ·  #/compose  ·  #/calendar  ·  #/inbox  ·  #/approvals  ·  #/analytics  ·  #/listening  (add ?lang=pt-PT before the #)
+npm run dev        # http://localhost:5173/#/overview  ·  #/compose  ·  #/calendar  ·  #/inbox  ·  #/approvals  ·  #/analytics  ·  #/listening  ·  #/channels  (add ?lang=pt-PT before the #)
 npm run build      # type-check + production build
 ```
 
@@ -132,6 +132,19 @@ mention into a conversation. Share of voice and the competitors table follow the
 picked brand; sentiment over 14 days and a trending-terms cloud complete it. New
 keywords backfill a few days of mentions; stopping or tracking one can be undone.
 
+| Channels | Connect a channel | Phone |
+| --- | --- | --- |
+| ![Channels, light theme](docs/screenshots/channels-light.png) | ![Connect a channel dialog](docs/screenshots/channels-connect.png) | ![Channels on a phone](docs/screenshots/channels-mobile.png) |
+
+Channels shows every connected account brand by brand: audience and its 30-day
+curve, how long the access token lasts (coral when gone, butter in the last two
+weeks), when it last synced and who connected it, plus who can post to each
+brand. What needs fixing sits in a banner on top with *Reconnect* and the post
+that failed. Admins connect new accounts (network + brand, then the network's
+sign-in), refresh or reconnect, pause posting (scheduled posts wait) and
+disconnect, each with Undo where the original has it; everyone else sees the page
+read-only. On phones each brand folds to a line and a channel opens in a sheet.
+
 | Português (Portugal) · Visão geral | Calendário | Mensagens |
 | --- | --- | --- |
 | ![Overview in European Portuguese](docs/screenshots/overview-pt.png) | ![Calendar in European Portuguese](docs/screenshots/calendar-pt.png) | ![Inbox in European Portuguese with the language menu](docs/screenshots/inbox-pt.png) |
@@ -155,12 +168,13 @@ src/
     Inbox.tsx             #/inbox/:id: selection, actions + toasts, shortcuts, responsive panes
     Analytics.tsx         #/analytics/:network: stats, chips, expandable cards, table, top posts, brands, websites
     Listening.tsx         #/listening: stats, keywords, live stream, share of voice, cloud, sentiment, competitors
+    Channels.tsx          #/channels: stats, attention banner, tabs + search, brands, side cards, connect / pause / disconnect
   components/
     AppShell.tsx          mesh background, top bar (sliding tab pill), dock, mobile nav + More sheet
     PageHead.tsx          letter-by-letter page title, header stat
     GrowthChart.tsx       SVG area chart: monotone curve, grid, crosshair, tooltip, ←/→ keys
     Toast.tsx             bottom toast with Undo or an action
-    AuthoriseDialog.tsx   "Authorise on …": reconnects a channel (overview, channels)
+    AuthoriseDialog.tsx   "Authorise on …": connects or reconnects a channel (overview, channels)
     shell/Menus.tsx       brand switcher, notifications, Today's queue, Create menu
     shell/Finder.tsx      ⌘K search: pages, posts, conversations, people, brands, networks
     shell/Account.tsx     account menu: switch account, shortcuts, theme, language, reset, sign out
@@ -196,6 +210,11 @@ src/
     approvals/
       ApprovalCard.tsx    photo, badge, people, review history, actions, approved stamp
       Side.tsx            the rule in force, who approves, request-changes dialog
+    channels/
+      ChannelCard.tsx     a channel: status, audience + curve, token meter, sync, switch, … menu, handshake
+      Sections.tsx        attention banner, brand section, phone fold + rows, empty state
+      Side.tsx            audience by network, supported networks
+      ConnectDialog.tsx   Connect a channel: network grid + brand
     listening/
       Keywords.tsx        tracked keywords: kind, brand, weekly count, 14-day line, sentiment split
       Stream.tsx          mentions: live toggle, filters, active chips, mention rows, paging
@@ -219,6 +238,7 @@ src/
     webAnalytics.ts       website traffic shape (GA4-like), demo generator, websites view model
     compose.ts            composer rules: network limits, issues, best times, free slot, links, Assist
     approvals.ts          approval queues, header figures, approve / send back / withdraw
+    channels.ts           channel rules: token days and tone, attention, filters, growth, who can post, new channels
     permissions.ts        roles, permissions, who approves and whose posts need approval
     postsData.ts          extra photos, campaigns, review trails per post (from the reference)
     listening.ts          listening view-model: stream filters, share of voice, cloud, sentiment, new mentions

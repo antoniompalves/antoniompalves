@@ -940,3 +940,85 @@ colour), so it's white here too.
 | 37 interaction checks (⌘K both ways, `/`, groups and marks, arrows + Enter → drawer, brand result, empty state, `G I`, the inbox's own `/`, typing ignored, `N`, `?`, Dark, Match system following the device, switch account → toast, label, brands, activity; sign out → stays signed out, no keys, three errors, one person per role, sign in as a client; the phone's search) and the earlier suites | all pass, no console errors |
 | pt-PT: search, account menu, switch account, shortcuts, sign-in with an error, 1440 and 390 px | no English interface text left (job titles are team data), nothing clipped |
 | English text of 13 states | unchanged |
+
+## 18. Channels (`#/channels`)
+
+| Desktop | Options menu | Connect a channel |
+| --- | --- | --- |
+| ![Channels, light theme](screenshots/channels-light.png) | ![A channel's options menu](screenshots/channels-menu.png) | ![Connect a channel dialog](screenshots/channels-connect.png) |
+
+| Phone | Phone · channel sheet | pt-PT · dark |
+| --- | --- | --- |
+| ![Channels on a phone](screenshots/channels-mobile.png) | ![A channel opened in a sheet](screenshots/channels-mobile-sheet.png) | ![Channels in Portuguese, dark theme](screenshots/channels-pt-dark.png) |
+
+Every social account, brand by brand, with what needs fixing up top. Built from
+the reference's behaviour, wording and measured CSS values only (its code is
+licensed, not copied); the brand covers are seeded placeholders like every other
+photo here.
+
+### Data
+
+Each channel now carries what the page shows: `tokenExpiresAt` (for a
+disconnected channel, when it stopped), `connectedById`, `connectedAt`,
+`lastSyncAt` and `paused`. The 19 channels' values are the reference's state on
+the frozen date (Hollow Home · YouTube expires on Nov 2; Vantage Garage ·
+Facebook stopped on Oct 28). Brands gained a `cover`. `src/data/channels.ts`
+holds the rules:
+
+| Rule | Value |
+| --- | --- |
+| Token length (the meter's full width) | 60 days |
+| Days left | whole days rounded **up** ("33 of 60 days left", "Expires in 3 d"); 0 when disconnected |
+| Meter colour | coral at 0, butter up to 14 days, pine above |
+| Needs attention | anything not `connected` (expiring or disconnected), disconnected first in the banner |
+| Banner times | relative and rounded ("Disconnected 3 d ago", "Access expires in 2 d"), as the reference |
+| Growth | the account's followers gained in 30 days over its audience 30 days ago, from the analytics history (the reference draws a separate random series, so its cards read +8.2% where its analytics say +8.5%; here both agree) |
+| Who can post | active members who see the brand and can write or publish; roles split into "publish directly" and "need(s) approval" by the workspace rule |
+| Pause | counts the brand's *scheduled* posts on that network ("6 scheduled posts wait") |
+| Disconnect | counts scheduled **and** awaiting-approval posts ("8 scheduled posts will skip it") |
+| New channel | handle = brand name on LinkedIn, YouTube and Facebook, `@handle` elsewhere; a fixed audience per brand and network; a fresh 60-day token |
+| Capabilities | Publish, Inbox and Analytics on every network except Pinterest, which has no inbox |
+
+### Layout (measured)
+
+| Part | Desktop | ≤1280 | ≤1100 | ≤760 (phones) |
+| --- | --- | --- | --- | --- |
+| Page | main 1fr \| aside 360px, 16px gaps | one column, the two side cards side by side | — | side cards stacked |
+| Banner | coral tile, 2 columns (1fr \| 1.25fr), 20/22px padding, 50px icon tile, 22px title | — | one column | 16px padding, 42px icon, 19px title |
+| Tools | glass segmented control (14px, 9/16px), search 240–380px pushed right | — | — | control full width with equal thirds, search full width |
+| Brand | card, 112px cover bleeding 10px each side with a dark fade, 62px mark ringed 4px, 22px name, summary pill, who-can-post well | — | — | folds to a 64px row (mark, name, "4 channels · 142.7K audience", "1 to fix", chevron) |
+| Cards | auto-fill min(100%, 300px), 12px gaps; 16px padding, 14px rows; 46px network disc, status pill, 30px figure, 150×40 curve, 8px token meter, sync and owner, footer | — | — | 64px rows: 36px disc, handle, "Instagram · **48.2K** followers", short status (Live / N d left / Paused / Offline), 3px meter along the bottom |
+
+Phones open the first brand and any brand with something to fix; the others
+start folded. Each brand lists four rows, then "Show N more". Tapping a row opens
+the card in a bottom sheet with the brand on top, the switch explained ("Scheduled
+posts go out" / "Paused — scheduled posts wait" / "Reconnect to post again"),
+*Reconnect* or *Refresh access* next to *Analytics*, and *Disconnect*. "Supported
+networks" shows four networks, then "Show all 8 networks".
+
+### Actions
+
+| Action | What happens |
+| --- | --- |
+| Tabs / search | All channels, Needs attention, Paused; search matches handle, network and brand. With a tab or a search the add tiles go and brands without a match hide; nothing left shows "No channel matches “…”", "Every channel is healthy" or "Nothing is paused", with *Show every channel* |
+| Posting switch | pauses or resumes the channel (logged "paused posting to Ember & Oak on Instagram"); toast with Undo, which also takes the log entry back. Off-limits for roles without *Connect channels* ("Your role (Editor) can’t pause channels") and for disconnected channels ("Reconnect first") |
+| … menu | Refresh access (or Reconnect) · Pause / Resume posting · View analytics · Disconnect, locked items swap their icon for a lock |
+| Disconnect | confirmation, then the channel stops (token ends now, banner and figures update), toast with Undo (connected again with 40 days left) |
+| Reconnect / Refresh | the "Authorise on …" step, then a fresh 60-day token, sync now, connected by you; the network and Kataru shake hands over the card for 1.6 s ("Reconnected", skipped with reduced motion) |
+| Connect a channel | header button, the dashed tile in each brand (pre-picks the brand), the + on a network (pre-picks it), the Create menu and ⌘K (`#/channels?connect`). Network grid (4 × 2, 2 columns under 481px) and brand; a brand already connected there is refused ("Ember & Oak is already connected on Instagram."), one that dropped off is signed in again; a new channel appears in its brand and scrolls into view |
+| Open the failed post | the post drawer, as on the calendar |
+| Manage access | to `#/team/members`, only for people who manage the team |
+
+Without *Connect channels* the page says so above the tools ("Only admins can
+connect, reconnect or pause channels. You can see how each one is doing."), and
+every control that would change a channel is disabled with "Your role (…) can’t
+do this" — the reference's wording.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| 42 landmarks at 1440 px and 26 at 390 px (stats, banner, tools, brand header, who line, first card's every row, add tile, both side cards); the boundaries 1281/1280 and 1101/1100; 960 px; the connect dialog at 1440 and 390 px | identical, apart from one network figure 1px narrower in the audience bars |
+| 61 interaction checks (counts, banner order, Pinterest without inbox, tabs, search, empty states, pause + Undo + Paused tab, menu, disconnect + Undo, reconnect from the banner, connect: refusal, new YouTube channel, figures, network +, `?connect`, activity sentences, an Editor's locked page; phones: folds, Show more, unfold, sheet, pause from the sheet, row label, all networks) and the earlier suites | all pass, no console errors |
+| pt-PT: page, menu, paused, disconnect, connect with an error, no match (1440), page and sheet (390) | no English interface text left (brands' industries are data), nothing clipped, no sideways scroll |
+| English text of 13 states | unchanged |

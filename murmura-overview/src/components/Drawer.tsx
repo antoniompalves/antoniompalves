@@ -8,7 +8,7 @@ import { IconButton } from './ui'
  * Side drawer (".drawer" in the reference): a native <dialog> 480px wide on
  * the right, 12px from the edges; on phones a bottom sheet with a handle.
  */
-export function Drawer({ open, onClose, label, title, children }: { open: boolean; onClose: () => void; label: string; title: string; children: ReactNode }) {
+export function Drawer({ open, onClose, label, title, children }: { open: boolean; onClose: () => void; label: string; title?: string; children: ReactNode }) {
   const { t } = useI18n()
   const ref = useRef<HTMLDialogElement>(null)
 
@@ -33,7 +33,7 @@ export function Drawer({ open, onClose, label, title, children }: { open: boolea
           <span className="absolute right-[18px] top-[18px] max-mobile:top-4">
             <IconButton label={t.common.close} icon={X} onClick={onClose} />
           </span>
-          <h2 className="pr-[52px] text-[23px] font-bold leading-[1.45] tracking-[-0.02em]">{title}</h2>
+          {title && <h2 className="pr-[52px] text-[23px] font-bold leading-[1.45] tracking-[-0.02em]">{title}</h2>}
           {children}
         </div>
       )}

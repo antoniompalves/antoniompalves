@@ -28,7 +28,11 @@ export type WorkspaceAction =
   | { type: 'restoreReports'; reports: ScheduledReport[] }
   | { type: 'setWebsites'; websites: Website[] }
   | { type: 'channel'; id: string; patch: Partial<Channel> }
+  /** Add a channel, or replace the one with its id. */
+  | { type: 'saveChannel'; channel: Channel }
   | { type: 'audit'; event: AuditEvent }
+  /** Take an activity entry back out (an undone action). */
+  | { type: 'unaudit'; id: string }
   /** `index` puts a keyword back where it was (undoing "Stop tracking"). */
   | { type: 'track'; keyword: Keyword; mentions: Mention[]; index?: number }
   | { type: 'untrack'; id: string }
@@ -89,8 +93,14 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, websites: action.websites }
     case 'channel':
       return { ...ws, channels: ws.channels.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
+    case 'saveChannel':
+      return ws.channels.some((c) => c.id === action.channel.id)
+        ? { ...ws, channels: ws.channels.map((c) => (c.id === action.channel.id ? action.channel : c)) }
+        : { ...ws, channels: [...ws.channels, action.channel] }
     case 'audit':
       return { ...ws, audit: [action.event, ...ws.audit] }
+    case 'unaudit':
+      return { ...ws, audit: ws.audit.filter((e) => e.id !== action.id) }
     case 'track': {
       const keywords = [...ws.keywords]
       keywords.splice(action.index ?? keywords.length, 0, action.keyword)

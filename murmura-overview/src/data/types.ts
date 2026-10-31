@@ -62,6 +62,8 @@ export interface Brand {
   handle: string
   /** "Coffee roasters · Portland" (workspace content, not translated). */
   industry: string
+  /** Photo seed for the brand's cover on the channels page. */
+  cover: string
 }
 
 /** A dated marketing push for one brand, drawn as a ribbon across the calendar. */
@@ -106,8 +108,13 @@ export interface Channel {
   handle: string
   followers: number
   status: ChannelStatus
-  /** Days until the token expires, when status === 'expiring'. */
-  expiresInDays?: number
+  /** When the access token lapses; for a disconnected channel, when it stopped. */
+  tokenExpiresAt: ISODate
+  connectedById: string
+  connectedAt: ISODate
+  lastSyncAt: ISODate
+  /** Posting paused: the channel stays connected, scheduled posts wait. */
+  paused?: boolean
 }
 
 /**
@@ -321,6 +328,8 @@ export type AuditAction =
   | { type: 'approvedMany'; count: number }
   | { type: 'connectedChannel'; brandId: string; network: NetworkId; again: boolean }
   | { type: 'signedIn' }
+  | { type: 'pausedChannel'; brandId: string; network: NetworkId; paused: boolean }
+  | { type: 'disconnectedChannel'; brandId: string; network: NetworkId }
   | { type: 'signedOut' }
   | { type: 'switchedAccount'; to: string }
 

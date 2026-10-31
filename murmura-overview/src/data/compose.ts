@@ -1,4 +1,5 @@
 import { HEAT } from './analyticsData'
+import { expiresIn } from './channels'
 import type { Channel, NetworkId, Post, Workspace } from './types'
 
 /**
@@ -83,7 +84,7 @@ export function issuesOf(d: Draft, channels: Channel[], now: number): Issue[] {
     }
   if (d.at < now + MINUTE) out.push({ key: 'past', kind: 'past' })
   if (d.link.trim() && !parseLink(d.link)) out.push({ key: 'link', kind: 'link' })
-  for (const c of channels) if (d.channels.includes(c.id) && c.status === 'expiring') out.push({ key: `exp:${c.id}`, kind: 'expires', network: c.network, days: c.expiresInDays ?? 0 })
+  for (const c of channels) if (d.channels.includes(c.id) && c.status === 'expiring') out.push({ key: `exp:${c.id}`, kind: 'expires', network: c.network, days: expiresIn(c, now) })
   if (!out.some(isBlocking)) out.unshift({ key: 'ok', kind: 'ready', networks: nets.length })
   return out
 }

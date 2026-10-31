@@ -529,6 +529,92 @@ html.cl-dragging * {
   }
 }
 
+/* "Reconnected": the network and Kataru meet over a channel card, then the overlay fades. */
+@keyframes hs-overlay {
+  0% {
+    opacity: 0;
+  }
+  6%,
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes hs-a {
+  0% {
+    opacity: 0;
+    transform: translateX(-90px) rotate(-12deg);
+  }
+  38% {
+    opacity: 1;
+    transform: none;
+  }
+  44% {
+    transform: translateX(7px);
+  }
+  52% {
+    transform: none;
+  }
+}
+@keyframes hs-b {
+  0% {
+    opacity: 0;
+    transform: translateX(90px) rotate(12deg);
+  }
+  38% {
+    opacity: 1;
+    transform: none;
+  }
+  44% {
+    transform: translateX(-7px);
+  }
+  52% {
+    transform: none;
+  }
+}
+@keyframes hs-link {
+  0%,
+  32% {
+    opacity: 0;
+    transform: scale(0) rotate(-60deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  58% {
+    transform: none;
+  }
+}
+@keyframes hs-text {
+  0%,
+  37% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@utility animate-handshake {
+  animation: hs-overlay 1.6s linear both;
+}
+@utility animate-handshake-a {
+  animation: hs-a 1.6s var(--ease-soft) both;
+}
+@utility animate-handshake-b {
+  animation: hs-b 1.6s var(--ease-soft) both;
+}
+@utility animate-handshake-link {
+  animation: hs-link 1.6s var(--ease-soft) both;
+}
+@utility animate-handshake-text {
+  animation: hs-text 1.6s var(--ease-soft) both;
+}
+
 @utility animate-rise {
   animation: rise 0.7s var(--ease-soft) both;
 }
