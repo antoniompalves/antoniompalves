@@ -43,6 +43,7 @@ export type Permission =
   | 'analytics.export'
   | 'listening.manage'
   | 'library.manage'
+  | 'creators.manage'
   | 'channels.manage'
   | 'team.manage'
   | 'billing.manage'
@@ -342,6 +343,8 @@ export interface WorkspaceSettings {
   utm: boolean
   utmSource: string
   notify: { approvals: boolean; mentions: boolean; failures: boolean; digest: boolean }
+  /** Money on the Creators page (fees, budgets, revenue). */
+  currency: 'USD' | 'EUR' | 'GBP'
   plan: 'starter' | 'growth' | 'agency'
   seats: number
   requireMfa: boolean
@@ -353,7 +356,7 @@ export interface SavedReply {
   text: string
 }
 
-export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox' | 'listening' | 'auth'
+export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox' | 'listening' | 'auth' | 'creator'
 
 
 /** An analytics report emailed on a schedule. */
@@ -391,6 +394,9 @@ export type AuditAction =
   | { type: 'disconnectedChannel'; brandId: string; network: NetworkId }
   | { type: 'signedOut' }
   | { type: 'connectedInbox'; brandId: string; source: 'whatsapp' | 'google' }
+  | { type: 'addedCreator'; name: string }
+  | { type: 'createdCreatorCampaign'; name: string; brandId: string }
+  | { type: 'loggedResults'; creator: string; network: NetworkId }
   | { type: 'disconnectedInbox'; brandId: string; source: 'whatsapp' | 'google' }
   | { type: 'switchedAccount'; to: string }
 
@@ -400,6 +406,83 @@ export interface AuditEvent {
   kind: AuditKind
   action: AuditAction
   at: ISODate
+}
+
+/* ───────────── creators ───────────── */
+
+export type CreatorStatus = 'prospect' | 'active' | 'past'
+
+/** A creator the team works with, tracked by hand: their profiles, rate and notes. */
+export interface Creator {
+  id: string
+  name: string
+  /** Photo seed (see assets.ts); missing: initials. */
+  photo?: string
+  /** Their main profiles and audiences, as noted when they were added. */
+  profiles: { network: NetworkId; handle: string; followers: number }[]
+  email?: string
+  location?: string
+  /** "coffee", "interiors"… */
+  tags: string[]
+  /** Usual fee per deliverable, in the workspace currency. */
+  rate?: number
+  status: CreatorStatus
+  notes?: string
+  addedAt: ISODate
+}
+
+export type CampaignGoal = 'awareness' | 'engagement' | 'sales'
+
+/** A creator campaign for one brand: dates, budget and goal; its deliverables hang off it. */
+export interface CreatorCampaign {
+  id: string
+  brandId: string
+  name: string
+  /** Inclusive day range, YYYY-MM-DD. */
+  start: string
+  end: string
+  budget: number
+  goal: CampaignGoal
+  /** The brand's calendar campaign it's part of, if any. */
+  campaignId?: string
+  notes?: string
+}
+
+export type DeliverableStatus = 'briefed' | 'in_review' | 'approved' | 'live'
+
+/** What a live deliverable did, copied from the creator's insights by hand. */
+export interface DeliverableResults {
+  reach?: number
+  views?: number
+  likes?: number
+  comments?: number
+  shares?: number
+  saves?: number
+  /** Link or code clicks. */
+  clicks?: number
+  conversions?: number
+  revenue?: number
+}
+
+/** One piece of content a creator owes a campaign: where, in what format, by when, for how much. */
+export interface Deliverable {
+  id: string
+  campaignId: string
+  creatorId: string
+  network: NetworkId
+  format: PostFormat
+  dueAt: ISODate
+  status: DeliverableStatus
+  fee: number
+  paid: boolean
+  /** The live post. */
+  url?: string
+  postedAt?: ISODate
+  /** Discount or tracking code the creator shares. */
+  code?: string
+  results?: DeliverableResults
+  /** When the results were last logged. */
+  resultsAt?: ISODate
 }
 
 /* ───────────── listening ───────────── */
@@ -495,6 +578,9 @@ export interface Workspace {
   /** WhatsApp numbers and Google Business Profile locations connected to brands. */
   inboxAccounts: InboxAccount[]
   waTemplates: WhatsAppTemplate[]
+  creators: Creator[]
+  creatorCampaigns: CreatorCampaign[]
+  deliverables: Deliverable[]
   media: MediaAsset[]
   templates: Template[]
   hashtagSets: HashtagSet[]

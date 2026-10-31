@@ -4,7 +4,7 @@
  * section names live in the message catalogues (`t.routes[id]`).
  */
 
-export type RouteId = 'overview' | 'compose' | 'calendar' | 'inbox' | 'approvals' | 'analytics' | 'listening' | 'library' | 'channels' | 'team' | 'settings'
+export type RouteId = 'overview' | 'compose' | 'calendar' | 'inbox' | 'approvals' | 'analytics' | 'listening' | 'library' | 'creators' | 'channels' | 'team' | 'settings'
 
 export interface RouteDef {
   id: RouteId
@@ -22,6 +22,8 @@ export const routes: RouteDef[] = [
   { id: 'analytics', path: '#/analytics', entry: 'tabs' },
   { id: 'listening', path: '#/listening', entry: 'tabs' },
   { id: 'library', path: '#/library', entry: 'dock' },
+  // Not in the reference: creator campaigns, tracked by hand.
+  { id: 'creators', path: '#/creators', entry: 'dock' },
   { id: 'channels', path: '#/channels', entry: 'dock' },
   { id: 'team', path: '#/team', entry: 'dock' },
   { id: 'settings', path: '#/settings', entry: 'dock' },

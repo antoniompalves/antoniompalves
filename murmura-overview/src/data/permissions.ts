@@ -21,6 +21,7 @@ export const PERMISSIONS: Permission[] = [
   'analytics.export',
   'listening.manage',
   'library.manage',
+  'creators.manage',
   'channels.manage',
   'team.manage',
   'billing.manage',
@@ -41,6 +42,7 @@ export const PERMISSION_GROUP: Record<Permission, PermissionGroup> = {
   'analytics.export': 'insights',
   'listening.manage': 'insights',
   'library.manage': 'content',
+  'creators.manage': 'content',
   'channels.manage': 'admin',
   'team.manage': 'admin',
   'billing.manage': 'admin',
@@ -90,6 +92,7 @@ export const ROUTE_NEEDS: Partial<Record<RouteId, Permission[]>> = {
   approvals: ['post.approve', 'post.create'],
   analytics: ['analytics.view'],
   listening: ['analytics.view', 'listening.manage'],
+  creators: ['creators.manage', 'analytics.view'],
 }
 
 export const canOpen = (ws: Workspace, memberId: string, route: RouteId) => !ROUTE_NEEDS[route] || ROUTE_NEEDS[route]!.some((p) => can(ws, memberId, p))

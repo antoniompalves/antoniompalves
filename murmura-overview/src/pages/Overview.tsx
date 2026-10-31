@@ -9,6 +9,7 @@ import {
   Ear,
   Heart,
   History,
+  Handshake,
   Inbox,
   KeyRound,
   Link,
@@ -608,6 +609,7 @@ const AUDIT_ICON: Record<AuditKind, LucideIcon> = {
   inbox: Inbox,
   listening: Ear,
   auth: UserRound,
+  creator: Handshake,
 }
 
 function TeamActivity({ model, now, className }: SectionProps & { now: Date }) {

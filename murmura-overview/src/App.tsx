@@ -24,6 +24,7 @@ import { Approvals } from './pages/Approvals'
 import { Calendar } from './pages/Calendar'
 import { Channels } from './pages/Channels'
 import { Compose } from './pages/Compose'
+import { Creators } from './pages/Creators'
 import { Inbox } from './pages/Inbox'
 import { Listening } from './pages/Listening'
 import { Overview } from './pages/Overview'
@@ -181,11 +182,13 @@ function Shell() {
             <Listening now={now} />
           ) : routeId === 'channels' ? (
             <Channels now={now} hash={hash} />
+          ) : routeId === 'creators' ? (
+            <Creators now={now} />
           ) : (
             <Card title={page.title} className="max-w-3xl">
               <p className="text-sm text-muted">
                 {t.shell.notRecreated(
-                  ['#/overview', '#/compose', '#/calendar', '#/inbox', '#/approvals', '#/analytics', '#/listening', '#/channels'].map((r) => (
+                  ['#/overview', '#/compose', '#/calendar', '#/inbox', '#/approvals', '#/analytics', '#/listening', '#/channels', '#/creators'].map((r) => (
                     <code key={r} className="font-semibold text-text">
                       {r}
                     </code>

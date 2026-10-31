@@ -1198,3 +1198,77 @@ answering through each platform:
 | Earlier suites (channels, formats, composer, persistence, shell, approvals, listening) | all pass |
 | pt-PT: four threads, the template dialog and the Channels card at 1440 and 390 px | no English interface text left (messages are what people wrote), nothing clipped |
 | English text of 13 states | only the counts and rows the new conversations add |
+
+## 21. Creators (`#/creators`, addition)
+
+Not in the reference. Later and Sprout Social run creator programmes with
+discovery and application pages; this is the manual part of that: campaigns,
+deliverables and results kept by hand, with nothing read from the creators'
+accounts.
+
+| Campaigns | Logging results | Creators | Phone · pt-PT |
+| --- | --- | --- | --- |
+| ![Creator campaigns](screenshots/creators-campaigns.png) | ![Logging a deliverable's results](screenshots/creators-results.png) | ![The creator list](screenshots/creators-roster.png) | ![Creators on a phone in Portuguese](screenshots/creators-mobile-pt.png) |
+
+### Data
+
+| Entity | Fields |
+| --- | --- |
+| `Creator` | name, photo, profiles (network, handle, followers), email, location, tags, usual fee per post, status (active, prospect, past), notes |
+| `CreatorCampaign` | brand, name, start and end, budget, goal (awareness, engagement, sales), the brand's calendar campaign it belongs to, notes |
+| `Deliverable` | campaign, creator, network and format (the composer's formats: Reel, Story, Video…), due date, status (briefed → in review → approved → live), fee, paid, link, posted date, discount code, results (reach, views, likes, comments, shares, saves, clicks, conversions, revenue) |
+
+Six creators, four campaigns (Ember & Oak, Vantage Garage, Wildroot running;
+Hollow Home ended) and eleven deliverables to start with. Money uses the
+workspace currency (`settings.currency`, USD here), formatted per language
+("$2,880", "2880 US$").
+
+`src/data/creators.ts` works out the figures. Engagements are likes + comments
++ shares + saves (as in analytics); the engagement rate is over reach, or views
+when there's no reach; cost per engagement, cost per thousand and return on
+fees only count deliverables with results, so a half-posted campaign isn't
+misread. A deliverable is overdue when its due date passed and it isn't live.
+
+### Page
+
+- **Header**: active creators, deliverables live (of all), paid to creators
+  (of what's agreed), cost per engagement; *New campaign* and *Add creator*.
+- **Campaigns** (running first, then upcoming, then ended): brand, dates, the
+  calendar campaign it's part of, state and goal; four figures — budget
+  (agreed of budget with a meter, paid, or how far over), deliverables (live of
+  total with a bar by status, overdue count), reach and engagement rate, cost
+  per engagement and return on fees (or conversions). Then every deliverable:
+  creator and handle, network and format with the code, due date (coral
+  *Overdue*), a status menu, the fee with a paid toggle, results (reach · rate,
+  conversions · revenue) or *Log results*, and a menu (log or edit results, open
+  the post, edit, delete). Below 1100px the results column goes; below 900px
+  rows become small cards.
+- **Creators**: All / Active / Prospects / Past and a search over names,
+  handles, tags and places; a card per creator with profiles and audiences,
+  tags, usual fee, deliverables, fees and average engagement, notes, and a
+  menu (edit, add to a campaign, remove).
+- **Dialogs**: creator (name required, at least one profile with a handle;
+  tags split on commas; followers accept "27,400"), campaign (end not before
+  start; linking a calendar campaign of the same brand), deliverable (the
+  creator's own networks first, their usual fee filled in, formats per
+  network), results (link check, posted date, nine numbers, a live line with
+  engagements, rate and cost per engagement). Setting a deliverable *Live*
+  opens the results form.
+- **Undo** on status, paid, results, deleted deliverables, campaigns and
+  creators; activity lines for added creators, new campaigns and logged results.
+- **Export results (CSV)** per campaign, in the reader's language (comma or
+  semicolon, translated headers and statuses).
+- **Access**: a new permission, *Manage creators* (Owner, Admin, Manager).
+  Anyone who can view analytics can open the page read-only, with a note and
+  every control locked. The brand switcher narrows campaigns and deliverables.
+- **Navigation**: a *Creators* button in the dock (after Library), in the
+  phone's More sheet and in ⌘K.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| 35 checks: dock link, header figures, campaign order and figures, overdue, status to Live opening results, live summary, results saved and figures updated, paid toggle and Undo, deliverable needing a creator and taking the creator's fee, code saved, CSV name and rows, campaign dates check, create, delete and Undo, roster filters and search, creator validation, add and remove, activity lines, brand scope, an Editor's read-only page, the phone's More sheet | all pass, no console errors |
+| Earlier suites (inbox sources, channels, formats, composer, persistence, shell, approvals, listening) | all pass |
+| pt-PT: campaigns, status and row menus, the four dialogs, the roster, 1440 and 390 px | no English interface text left (campaign and creator names are data), nothing clipped |
+| English text of 13 states | only the dock's new *Creators* button |

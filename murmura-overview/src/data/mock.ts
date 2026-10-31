@@ -393,9 +393,9 @@ export const workspace: Workspace = {
     { id: 'sara', name: 'Sara Whitfield', role: 'editor', title: 'Freelance designer', brands: ['eo'], email: 'sara@northlight.studio', status: 'invited', mfa: true, joinedAt: '2026-09-04T00:00:00Z' },
   ],
   roles: [
-    { id: 'owner', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage', 'channels.manage', 'team.manage', 'billing.manage', 'settings.manage'], tone: 'ink', system: true },
-    { id: 'admin', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage', 'channels.manage', 'team.manage', 'settings.manage'], tone: 'sea', system: true },
-    { id: 'manager', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage'], tone: 'pine', system: true },
+    { id: 'owner', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage', 'creators.manage', 'channels.manage', 'team.manage', 'billing.manage', 'settings.manage'], tone: 'ink', system: true },
+    { id: 'admin', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage', 'creators.manage', 'channels.manage', 'team.manage', 'settings.manage'], tone: 'sea', system: true },
+    { id: 'manager', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage', 'creators.manage'], tone: 'pine', system: true },
     { id: 'editor', perms: ['post.create', 'calendar.edit', 'inbox.reply', 'analytics.view', 'library.manage'], tone: 'butter', system: true },
     { id: 'community', perms: ['inbox.reply', 'inbox.assign', 'analytics.view'], tone: 'lilac', system: true },
     { id: 'analyst', perms: ['analytics.view', 'analytics.export', 'listening.manage'], tone: 'plain', system: true },
@@ -412,6 +412,7 @@ export const workspace: Workspace = {
     plan: 'agency',
     seats: 15,
     requireMfa: false,
+    currency: 'USD',
   },
   /* The 19 connected accounts, in the order the reference lists them. */
   channels: [
@@ -515,6 +516,34 @@ export const workspace: Workspace = {
     { id: 'wt-booking', name: 'booking_reminder', category: 'utility', body: 'Hi {{1}}, a reminder of your booking on {{2}}. Reply YES to confirm or NO to change it.' },
     { id: 'wt-order', name: 'order_update', category: 'utility', body: 'Hi {{1}}, your order {{2}} is on its way. Track it here: {{3}}' },
     { id: 'wt-restock', name: 'back_in_stock', category: 'marketing', body: 'Hi {{1}}, {{2}} is back in stock. Reply STOP to stop these messages.' },
+  ],
+  /* Creator campaigns, tracked by hand (not in the reference). */
+  creators: [
+    { id: 'cr-mira', name: 'Mira Okafor', photo: 'mira.okafor', profiles: [{ network: 'instagram', handle: '@mirabrews', followers: 84200 }, { network: 'tiktok', handle: '@mirabrews', followers: 152000 }], email: 'mira@mirabrews.co', location: 'Portland, OR', tags: ['coffee', 'lifestyle'], rate: 650, status: 'active', notes: 'Prefers briefs a week ahead. Films at home in natural light.', addedAt: '2026-08-12T00:00:00Z' },
+    { id: 'cr-jonas', name: 'Jonas Lund', photo: 'jonas.lund', profiles: [{ network: 'instagram', handle: '@lund.living', followers: 41500 }, { network: 'pinterest', handle: '@lundliving', followers: 23900 }], email: 'jonas@lundliving.dk', location: 'Copenhagen', tags: ['interiors', 'design'], rate: 480, status: 'active', addedAt: '2026-07-30T00:00:00Z' },
+    { id: 'cr-dee', name: 'Dee Castillo', photo: 'dee.castillo', profiles: [{ network: 'tiktok', handle: '@deedetails', followers: 221000 }, { network: 'youtube', handle: 'Dee Details', followers: 61300 }], email: 'bookings@deedetails.com', location: 'Austin, TX', tags: ['cars', 'detailing'], rate: 900, status: 'active', notes: 'Shoots at the shop on Tuesdays; needs the car the day before.', addedAt: '2026-09-02T00:00:00Z' },
+    { id: 'cr-ana', name: 'Ana Sousa', photo: 'ana.sousa', profiles: [{ network: 'instagram', handle: '@ana.botanica', followers: 37800 }, { network: 'tiktok', handle: '@anabotanica', followers: 52300 }], email: 'ana@anabotanica.pt', location: 'Lisbon', tags: ['skincare', 'wellness'], rate: 420, status: 'active', addedAt: '2026-09-21T00:00:00Z' },
+    { id: 'cr-lucia', name: 'Lucía Romero', photo: 'lucia.romero', profiles: [{ network: 'instagram', handle: '@luciaromero.home', followers: 66100 }], email: 'hola@luciaromero.es', location: 'Madrid', tags: ['interiors'], rate: 550, status: 'past', notes: 'Great results on the Låg launch; booked up until spring.', addedAt: '2026-06-15T00:00:00Z' },
+    { id: 'cr-theo', name: 'Theo Grant', photo: 'theo.grant', profiles: [{ network: 'youtube', handle: 'Theo Grinds', followers: 18400 }, { network: 'instagram', handle: '@theo.grind', followers: 12100 }], location: 'Seattle, WA', tags: ['coffee', 'gear'], rate: 300, status: 'prospect', notes: 'Reviews grinders and roasters. Asked for samples first.', addedAt: '2026-10-22T00:00:00Z' },
+  ],
+  creatorCampaigns: [
+    { id: 'cc-eo', brandId: 'eo', name: 'Autumn harvest creators', start: '2026-10-05', end: '2026-11-15', budget: 4000, goal: 'sales', campaignId: 'cp1' },
+    { id: 'cc-vg', brandId: 'vg', name: 'Ceramic coat season', start: '2026-10-19', end: '2026-11-30', budget: 5000, goal: 'sales', campaignId: 'cp3' },
+    { id: 'cc-wb', brandId: 'wb', name: 'Winter ritual', start: '2026-10-26', end: '2026-12-20', budget: 3000, goal: 'awareness' },
+    { id: 'cc-hh', brandId: 'hh', name: 'Låg sofa launch', start: '2026-09-14', end: '2026-10-12', budget: 2500, goal: 'engagement' },
+  ],
+  deliverables: [
+    { id: 'dl1', campaignId: 'cc-eo', creatorId: 'cr-mira', network: 'instagram', format: 'reel', dueAt: '2026-10-09T16:00:00Z', status: 'live', fee: 650, paid: true, url: 'https://www.instagram.com/reel/mirabrews-harvest/', postedAt: '2026-10-09T17:12:00Z', code: 'MIRA10', results: { reach: 61400, views: 98200, likes: 5320, comments: 212, shares: 380, saves: 940, clicks: 610, conversions: 48, revenue: 1152 }, resultsAt: '2026-10-16T10:00:00Z' },
+    { id: 'dl2', campaignId: 'cc-eo', creatorId: 'cr-mira', network: 'tiktok', format: 'video', dueAt: '2026-10-16T16:00:00Z', status: 'live', fee: 650, paid: false, url: 'https://www.tiktok.com/@mirabrews/video/harvest', postedAt: '2026-10-17T18:40:00Z', code: 'MIRA10', results: { reach: 88000, views: 143500, likes: 9800, comments: 410, shares: 1250, saves: 600, clicks: 220, conversions: 21, revenue: 504 }, resultsAt: '2026-10-24T10:00:00Z' },
+    { id: 'dl3', campaignId: 'cc-eo', creatorId: 'cr-mira', network: 'instagram', format: 'story', dueAt: '2026-11-03T15:00:00Z', status: 'approved', fee: 250, paid: false, code: 'MIRA10' },
+    { id: 'dl7', campaignId: 'cc-vg', creatorId: 'cr-dee', network: 'tiktok', format: 'video', dueAt: '2026-10-24T16:00:00Z', status: 'live', fee: 900, paid: true, url: 'https://www.tiktok.com/@deedetails/video/ceramic', postedAt: '2026-10-24T19:00:00Z', code: 'DEE15', results: { reach: 140000, views: 265000, likes: 18200, comments: 960, shares: 2100, saves: 3050, clicks: 1480, conversions: 35, revenue: 8750 }, resultsAt: '2026-10-29T10:00:00Z' },
+    { id: 'dl8', campaignId: 'cc-vg', creatorId: 'cr-dee', network: 'youtube', format: 'video', dueAt: '2026-11-06T16:00:00Z', status: 'in_review', fee: 1400, paid: false, code: 'DEE15' },
+    { id: 'dl9', campaignId: 'cc-wb', creatorId: 'cr-ana', network: 'instagram', format: 'story', dueAt: '2026-10-28T12:00:00Z', status: 'in_review', fee: 180, paid: false },
+    { id: 'dl10', campaignId: 'cc-wb', creatorId: 'cr-ana', network: 'instagram', format: 'reel', dueAt: '2026-11-05T12:00:00Z', status: 'briefed', fee: 420, paid: false },
+    { id: 'dl11', campaignId: 'cc-wb', creatorId: 'cr-ana', network: 'tiktok', format: 'video', dueAt: '2026-11-12T12:00:00Z', status: 'briefed', fee: 420, paid: false },
+    { id: 'dl4', campaignId: 'cc-hh', creatorId: 'cr-jonas', network: 'instagram', format: 'post', dueAt: '2026-09-18T15:00:00Z', status: 'live', fee: 480, paid: true, url: 'https://www.instagram.com/p/lund-lag/', postedAt: '2026-09-18T16:05:00Z', results: { reach: 29800, likes: 2410, comments: 133, shares: 96, saves: 1020, clicks: 340 }, resultsAt: '2026-09-25T10:00:00Z' },
+    { id: 'dl5', campaignId: 'cc-hh', creatorId: 'cr-jonas', network: 'pinterest', format: 'post', dueAt: '2026-09-25T15:00:00Z', status: 'live', fee: 300, paid: true, url: 'https://www.pinterest.com/pin/lundliving-lag/', postedAt: '2026-09-25T15:30:00Z', results: { reach: 41200, saves: 1890, clicks: 610 }, resultsAt: '2026-10-02T10:00:00Z' },
+    { id: 'dl6', campaignId: 'cc-hh', creatorId: 'cr-lucia', network: 'instagram', format: 'reel', dueAt: '2026-10-02T15:00:00Z', status: 'live', fee: 550, paid: true, url: 'https://www.instagram.com/reel/luciaromero-lag/', postedAt: '2026-10-02T17:20:00Z', results: { reach: 52000, views: 87000, likes: 4100, comments: 190, shares: 260, saves: 1300, clicks: 280 }, resultsAt: '2026-10-09T10:00:00Z' },
   ],
   savedReplies: [
     { id: 'sr1', title: 'Thanks!', text: 'Thank you so much — that means a lot to the whole team 🧡' },

@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import type { Dispatch, ReactNode } from 'react'
 import { STORAGE_KEY, fingerprint, loadWorkspace, parseSaved, saveWorkspace } from './persist'
 import { scopeView } from './scope'
-import type { AuditEvent, Channel, Conversation, InboxAccount, Keyword, Mention, Message, Notice, Post, ScheduledReport, Website, Workspace } from './types'
+import type { AuditEvent, Channel, Conversation, Creator, CreatorCampaign, Deliverable, InboxAccount, Keyword, Mention, Message, Notice, Post, ScheduledReport, Website, Workspace } from './types'
 
 /**
  * Single workspace shared by every view, so rescheduling a post on the
@@ -33,6 +33,14 @@ export type WorkspaceAction =
   /** A WhatsApp number or Google location for a brand's inbox: add, or remove by id. */
   | { type: 'saveInboxAccount'; account: InboxAccount }
   | { type: 'removeInboxAccount'; id: string }
+  /** Creators page: add or replace by id; deleting a campaign or a creator takes their deliverables along. */
+  | { type: 'saveCreator'; creator: Creator }
+  | { type: 'saveCreatorCampaign'; campaign: CreatorCampaign }
+  | { type: 'saveDeliverable'; deliverable: Deliverable }
+  | { type: 'deleteDeliverable'; id: string }
+  | { type: 'deleteCreatorCampaign'; id: string }
+  | { type: 'deleteCreator'; id: string }
+  | { type: 'restoreCreators'; creators: Creator[]; creatorCampaigns: CreatorCampaign[]; deliverables: Deliverable[] }
   | { type: 'audit'; event: AuditEvent }
   /** Take an activity entry back out (an undone action). */
   | { type: 'unaudit'; id: string }
@@ -49,6 +57,9 @@ export type WorkspaceAction =
   | { type: 'readNotices'; ids: string[] }
   | { type: 'signIn'; userId: string }
   | { type: 'signOut' }
+
+/** Replace the item with the same id, or add it at the end. */
+const upsert = <T extends { id: string }>(list: T[], item: T) => (list.some((x) => x.id === item.id) ? list.map((x) => (x.id === item.id ? item : x)) : [...list, item])
 
 function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
   const update = (id: string, patch: (p: Post) => Post) => ({
@@ -96,6 +107,20 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, websites: action.websites }
     case 'channel':
       return { ...ws, channels: ws.channels.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
+    case 'saveCreator':
+      return { ...ws, creators: upsert(ws.creators, action.creator) }
+    case 'saveCreatorCampaign':
+      return { ...ws, creatorCampaigns: upsert(ws.creatorCampaigns, action.campaign) }
+    case 'saveDeliverable':
+      return { ...ws, deliverables: upsert(ws.deliverables, action.deliverable) }
+    case 'deleteDeliverable':
+      return { ...ws, deliverables: ws.deliverables.filter((d) => d.id !== action.id) }
+    case 'deleteCreatorCampaign':
+      return { ...ws, creatorCampaigns: ws.creatorCampaigns.filter((c) => c.id !== action.id), deliverables: ws.deliverables.filter((d) => d.campaignId !== action.id) }
+    case 'deleteCreator':
+      return { ...ws, creators: ws.creators.filter((c) => c.id !== action.id), deliverables: ws.deliverables.filter((d) => d.creatorId !== action.id) }
+    case 'restoreCreators':
+      return { ...ws, creators: action.creators, creatorCampaigns: action.creatorCampaigns, deliverables: action.deliverables }
     case 'saveInboxAccount':
       return { ...ws, inboxAccounts: [...ws.inboxAccounts.filter((a) => a.id !== action.account.id), action.account] }
     case 'removeInboxAccount':

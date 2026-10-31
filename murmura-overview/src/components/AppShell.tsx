@@ -7,6 +7,7 @@ import {
   Clock,
   Ear,
   House,
+  Handshake,
   Image,
   Inbox,
   LayoutGrid,
@@ -228,6 +229,7 @@ export function Dock({ route, theme, onToggleTheme, channelsNeedAttention, now, 
     { id: 'new', label: t.shell.create, kbd: 'N', icon: Plus, primary: true, onClick: () => toggle('new') },
     { id: 'today', label: t.shell.todaysQueue, icon: Clock, onClick: () => toggle('today') },
     { id: 'library', label: t.routes.library.label, icon: Image, href: '#/library' },
+    { id: 'creators', label: t.routes.creators.label, icon: Handshake, href: '#/creators' },
   ]
   const bottom: DockEntry[] = [
     { id: 'channels', label: t.routes.channels.label, icon: Link, href: '#/channels', dot: channelsNeedAttention },
@@ -283,6 +285,7 @@ const MORE_PAGES: { id: RouteId; icon: LucideIcon }[] = [
   { id: 'analytics', icon: ChartNoAxesColumn },
   { id: 'listening', icon: Ear },
   { id: 'library', icon: Image },
+  { id: 'creators', icon: Handshake },
   { id: 'channels', icon: Link },
   { id: 'team', icon: Users },
   { id: 'settings', icon: Settings },

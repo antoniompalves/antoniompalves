@@ -74,6 +74,8 @@ export function scopeView(ws: Workspace): Workspace {
     posts: ws.posts.filter((p) => shown(p.brandId)),
     conversations: ws.conversations.filter((c) => shown(c.brandId)),
     inboxAccounts: ws.inboxAccounts.filter((a) => shown(a.brandId)),
+    creatorCampaigns: ws.creatorCampaigns.filter((c) => shown(c.brandId)),
+    deliverables: ws.deliverables.filter((d) => shown(ws.creatorCampaigns.find((c) => c.id === d.campaignId)?.brandId ?? '')),
     keywords,
     mentions: ws.mentions.filter((m) => kept.has(m.keywordId)),
     competitors: ws.competitors.filter((c) => shown(c.brandId)),

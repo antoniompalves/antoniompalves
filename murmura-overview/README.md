@@ -1,4 +1,4 @@
-# Kataru — overview, compose, calendar, inbox, approvals, analytics, listening & channels (React + Tailwind)
+# Kataru — overview, compose, calendar, inbox, approvals, analytics, listening, channels & creators (React + Tailwind)
 
 **Kataru** (語る, *to narrate, to tell a story*) is a social-media workspace for
 brands and their teams. It is a pixel-matched recreation of the `#/overview` dashboard, the
@@ -51,7 +51,7 @@ language, can be switched from the account menu (avatar, top right) or forced wi
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/#/overview  ·  #/compose  ·  #/calendar  ·  #/inbox  ·  #/approvals  ·  #/analytics  ·  #/listening  ·  #/channels  (add ?lang=pt-PT before the #)
+npm run dev        # http://localhost:5173/#/overview  ·  #/compose  ·  #/calendar  ·  #/inbox  ·  #/approvals  ·  #/analytics  ·  #/listening  ·  #/channels  ·  #/creators  (add ?lang=pt-PT before the #)
 npm run build      # type-check + production build
 ```
 
@@ -142,6 +142,18 @@ once you connect an OAuth client; see [`docs/GOOGLE_ANALYTICS.md`](docs/GOOGLE_A
 | --- | --- |
 | ![Websites section](docs/screenshots/analytics-websites.png) | ![GA4 connection dialog](docs/screenshots/analytics-ga4-dialog.png) |
 
+| Creator campaigns | Logging results | Creators |
+| --- | --- | --- |
+| ![Creator campaigns](docs/screenshots/creators-campaigns.png) | ![Logging a deliverable's results](docs/screenshots/creators-results.png) | ![The creator list](docs/screenshots/creators-roster.png) |
+
+**Creators** (`#/creators`) tracks creator campaigns by hand: each campaign has
+a brand, dates, a budget and a goal; each deliverable a creator, a network and
+format, a due date, a fee and whether it's paid; results are copied from the
+creator's insights. The page works out reach, engagement rate, cost per
+engagement and return on fees, flags overdue deliverables and exports a
+campaign's results as CSV. Managing it takes the new *Manage creators*
+permission; everyone else who sees analytics can read it.
+
 | Listening | Keyword + term filters | Phone |
 | --- | --- | --- |
 | ![Listening, light theme](docs/screenshots/listening-light.png) | ![Mentions filtered by a keyword and a trending term](docs/screenshots/listening-filtered.png) | ![Listening on a phone](docs/screenshots/listening-mobile.png) |
@@ -190,6 +202,7 @@ src/
     Analytics.tsx         #/analytics/:network: stats, chips, expandable cards, table, top posts, brands, websites
     Listening.tsx         #/listening: stats, keywords, live stream, share of voice, cloud, sentiment, competitors
     Channels.tsx          #/channels: stats, attention banner, tabs + search, brands, side cards, connect / pause / disconnect
+    Creators.tsx          #/creators: figures, campaigns with deliverables, creator list, dialogs, CSV export
   components/
     AppShell.tsx          mesh background, top bar (sliding tab pill), dock, mobile nav + More sheet
     PageHead.tsx          letter-by-letter page title, header stat
@@ -231,6 +244,9 @@ src/
     approvals/
       ApprovalCard.tsx    photo, badge, people, review history, actions, approved stamp
       Side.tsx            the rule in force, who approves, request-changes dialog
+    creators/
+      Cards.tsx           campaign card (figures, deliverable rows, status and paid controls), creator card
+      Dialogs.tsx         creator, campaign, deliverable and results forms
     channels/
       ChannelCard.tsx     a channel: status, audience + curve, token meter, sync, switch, … menu, handshake
       Sections.tsx        attention banner, brand section, phone fold + rows, empty state
@@ -263,6 +279,7 @@ src/
     compose.ts            composer rules: network limits, issues, best times, free slot, links, Assist
     formats.ts            post formats per network, media kinds, per-network text and titles, format rules, previews' view
     approvals.ts          approval queues, header figures, approve / send back / withdraw
+    creators.ts           creator campaigns: totals, engagement rate, cost per engagement, return on fees, overdue, CSV rows
     channels.ts           channel rules: token days and tone, attention, filters, growth, who can post, new channels
     permissions.ts        roles, permissions, who approves and whose posts need approval
     postsData.ts          extra photos, campaigns, review trails per post (from the reference)
