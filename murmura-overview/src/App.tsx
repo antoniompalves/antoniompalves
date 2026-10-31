@@ -12,6 +12,7 @@ import { WorkspaceProvider, useWorkspace } from './data/store'
 import { Ga4Provider, withSavedWebsites } from './data/ga4Store'
 import type { NavItem } from './data/types'
 import { Analytics } from './pages/Analytics'
+import { Approvals } from './pages/Approvals'
 import { Calendar } from './pages/Calendar'
 import { Compose } from './pages/Compose'
 import { Inbox } from './pages/Inbox'
@@ -107,6 +108,8 @@ function Shell() {
             <Inbox now={now} hash={hash} />
           ) : routeId === 'analytics' ? (
             <Analytics now={now} hash={hash} />
+          ) : routeId === 'approvals' ? (
+            <Approvals now={now} />
           ) : routeId === 'compose' ? (
             <Compose now={now} hash={hash} />
           ) : routeId === 'listening' ? (
@@ -115,7 +118,7 @@ function Shell() {
             <Card title={page.title} className="max-w-3xl">
               <p className="text-sm text-muted">
                 {t.shell.notRecreated(
-                  ['#/overview', '#/compose', '#/calendar', '#/inbox', '#/analytics', '#/listening'].map((r) => (
+                  ['#/overview', '#/compose', '#/calendar', '#/inbox', '#/approvals', '#/analytics', '#/listening'].map((r) => (
                     <code key={r} className="font-semibold text-text">
                       {r}
                     </code>

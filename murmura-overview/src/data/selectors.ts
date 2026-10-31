@@ -14,6 +14,8 @@ import type {
 import { addDays, dayKey, startOfDay } from './calendar'
 import { byActivity, lastMessage } from './inbox'
 import { activeNetworks, daily, engagementRate, engagements, networkRows, publishedIn } from './analytics'
+import { queue as approvalQueue } from './approvals'
+import { can } from './permissions'
 import type { Messages } from '../i18n'
 
 /* ───────────────────────── labels ───────────────────────── */
@@ -52,11 +54,12 @@ export type GrowthRange = 30 | 90
 
 export interface TodoView {
   id: string
-  kind: 'approval' | 'failed_post' | 'channel'
+  kind: 'approval' | 'changes' | 'failed_post' | 'channel' | 'unhappy' | 'myPending'
   title: string
   detail: string
   post?: Post
   channel?: Channel
+  conversation?: Conversation
 }
 
 export interface DayView {
@@ -68,7 +71,6 @@ export interface DayView {
 export function selectOverview(ws: Workspace, now: Date, t: Messages) {
   const brand = (id: string) => ws.brands.find((b) => b.id === id)!
   const member = (id: string) => ws.team.find((m) => m.id === id)!
-  const post = (id: string) => ws.posts.find((p) => p.id === id)!
   const user = member(ws.currentUserId)
   const firstName = (m: TeamMember) => m.name.split(' ')[0]
 
@@ -107,31 +109,43 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages) {
     .sort((a, b) => Date.parse(a.scheduledAt) - Date.parse(b.scheduledAt))
     .map((p) => ({ ...p, brand: brand(p.brandId) }))
 
-  // Needs you
-  const todos: TodoView[] = ws.todos.map((todo) => {
-    if (todo.kind === 'channel') {
-      const channel = ws.channels.find((c) => c.id === todo.channelId)!
-      const b = brand(channel.brandId)
-      const net = NETWORK_LABEL[channel.network]
-      return channel.status === 'expiring'
-        ? { id: todo.id, kind: todo.kind, channel, title: t.overview.todo.expiring(b.name, net, channel.expiresInDays ?? 0), detail: t.overview.todo.expiringDetail }
-        : { id: todo.id, kind: todo.kind, channel, title: t.overview.todo.disconnected(b.name, net), detail: t.overview.todo.disconnectedDetail }
+  // Needs you: what's waiting on the signed-in person, worked out from the data like the reference does.
+  const me = ws.currentUserId
+  const todos: TodoView[] = []
+  if (can(ws, me, 'post.approve'))
+    for (const p of approvalQueue(ws, me, 'mine', now.getTime()).slice(0, 3)) {
+      const when = new Date(p.scheduledAt)
+      todos.push({
+        id: `ap-${p.id}`,
+        kind: 'approval',
+        post: p,
+        title: clip(p.text, 51),
+        detail: t.overview.todo.approval(firstName(member(p.authorId)), brand(p.brandId).name, `${t.dates.relativeDay(when, now)} ${t.dates.time(when)}`),
+      })
     }
-    const p = post(todo.postId)
+  for (const p of ws.posts.filter((x) => x.status === 'changes_requested' && x.authorId === me)) {
+    const ask = [...p.reviews].reverse().find((r) => r.decision === 'changes')
+    todos.push({ id: `ch-${p.id}`, kind: 'changes', post: p, title: t.overview.todo.changes(ask ? firstName(member(ask.by)) : ''), detail: ask?.note ? `“${ask.note}”` : clip(p.text, 64) })
+  }
+  for (const p of ws.posts.filter((x) => x.status === 'failed')) {
     const b = brand(p.brandId)
-    if (todo.kind === 'failed_post') {
-      const detail = p.failure ? t.failure(NETWORK_LABEL[p.failure.network], b.name) : t.overview.todo.failedDetail
-      return { id: todo.id, kind: todo.kind, post: p, title: t.overview.todo.failed(b.name), detail }
-    }
-    const when = new Date(p.scheduledAt)
-    return {
-      id: todo.id,
-      kind: todo.kind,
-      post: p,
-      title: clip(p.text, 51),
-      detail: t.overview.todo.approval(firstName(member(p.authorId)), b.name, `${t.dates.relativeDay(when, now)} ${t.dates.time(when)}`),
-    }
-  })
+    const detail = p.failure ? t.failure(NETWORK_LABEL[p.failure.network], b.name) : t.overview.todo.failedDetail
+    todos.push({ id: `fl-${p.id}`, kind: 'failed_post', post: p, title: t.overview.todo.failed(b.name), detail })
+  }
+  for (const channel of ws.channels.filter((c) => c.status !== 'connected')) {
+    const b = brand(channel.brandId)
+    const net = NETWORK_LABEL[channel.network]
+    todos.push(
+      channel.status === 'expiring'
+        ? { id: `cn-${channel.id}`, kind: 'channel', channel, title: t.overview.todo.expiring(b.name, net, channel.expiresInDays ?? 0), detail: t.overview.todo.expiringDetail }
+        : { id: `cn-${channel.id}`, kind: 'channel', channel, title: t.overview.todo.disconnected(b.name, net), detail: t.overview.todo.disconnectedDetail },
+    )
+  }
+  if (can(ws, me, 'inbox.reply'))
+    for (const c of ws.conversations.filter((x) => x.status === 'open' && x.sentiment === 'negative' && (!x.assigneeId || x.assigneeId === me)).slice(0, 2))
+      todos.push({ id: `cv-${c.id}`, kind: 'unhappy', conversation: c, title: t.overview.todo.unhappy(c.contact.name), detail: `“${clip(lastMessage(c).text, 70)}”` })
+  const mineWaiting = ws.posts.filter((x) => x.status === 'awaiting_approval' && x.authorId === me).length
+  if (mineWaiting) todos.push({ id: 'my-pending', kind: 'myPending', title: t.overview.todo.myPending(mineWaiting), detail: t.overview.todo.myPendingDetail })
 
   // Top post this month, with its reach against the median post of the last 30 days
   const monthKey = dayKey(now).slice(0, 7)

@@ -271,7 +271,7 @@ export const ptPT: Messages = {
     light: 'Claro',
     notRecreated: (routes: ReactNode[]) => (
       <>
-        Só {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]}, {routes[4]} e {routes[5]} estão recriadas. Esta secção existe na referência com as partes abaixo.
+        Só {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]}, {routes[4]}, {routes[5]} e {routes[6]} estão recriadas. Esta secção existe na referência com as partes abaixo.
       </>
     ),
   },
@@ -303,6 +303,13 @@ export const ptPT: Messages = {
       failed: (brand: string) => `Falhou uma publicação de ${brand}`,
       failedDetail: 'A publicação falhou.',
       approval: (author: string, brand: string, when: string) => `${author} pede aprovação · ${brand} · ${when}`,
+      changes: (name: string) => `${name} pediu alterações`,
+      unhappy: (name: string) => `${name} está insatisfeito/a`,
+      myPending: (n: number) => (n === 1 ? '1 publicação sua está à espera de aprovação' : `${n} publicações suas estão à espera de aprovação`),
+      myPendingDetail: 'Recebe uma notificação assim que alguém a rever.',
+      edit: 'Editar',
+      reply: 'Responder',
+      view: 'Ver',
     },
     audienceGrowth: 'Crescimento da audiência',
     growthRange: 'Intervalo do crescimento',
@@ -362,6 +369,14 @@ export const ptPT: Messages = {
         return `publicou “${a.excerpt}” em ${plural(a.networks, 'rede', 'redes')}`
       case 'scheduledPost':
         return `agendou “${a.excerpt}” para ${monthDay(new Date(a.at))} · ${time(new Date(a.at))}`
+      case 'sentBack':
+        return `pediu alterações a “${a.excerpt}”`
+      case 'withdrew':
+        return `retirou “${a.excerpt}” da aprovação`
+      case 'approvedMany':
+        return `aprovou ${a.count} publicações de uma vez`
+      case 'connectedChannel':
+        return `${a.again ? 'voltou a ligar' : 'ligou'} ${brand(a.brandId)} ao ${network(a.network)}`
     }
   },
 
@@ -1170,5 +1185,117 @@ export const ptPT: Messages = {
       gone: 'Essa publicação já não existe',
       duplicated: 'Duplicada como nova publicação',
     },
+  },
+
+  approvals: {
+    title: 'Aprovações',
+    stats: {
+      waiting: 'À sua espera',
+      yours: 'As suas publicações em revisão',
+      oldest: (rel: string) => `a mais antiga ${rel}`,
+      changes: 'Alterações pedidas',
+      week: 'Aprovadas esta semana',
+      average: 'Tempo médio de aprovação',
+    },
+    duration: (min: number) => (min < 60 ? `${Math.round(min)} min` : `${num(L, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(min / 60)} h`),
+    queue: 'Fila de aprovação',
+    tabs: { mine: 'À minha espera', pending: 'Todas pendentes', changes: 'Alterações pedidas', submitted: 'As minhas', approved: 'Aprovadas há pouco' },
+    brands: 'Filtrar por marca',
+    all: 'Todas',
+    selectAll: 'Selecionar todas',
+    more: (n: number) => `Mostrar mais ${n}`,
+    select: (title: string) => `Selecionar “${title}”`,
+    posts: 'Publicações',
+    textOnly: 'Só texto',
+    photo: (n: number) => `Fotografia ${n}`,
+    when: { goesOut: 'Sai', dueSoon: 'Falta pouco · sai', wasDue: 'Devia ter saído', wentOut: 'Saiu' },
+    slot: (d: Date, now: Date) => {
+      const diff = dayDiff(now, d)
+      return `${diff === 0 ? 'Hoje' : diff === 1 ? 'Amanhã' : diff > 1 && diff < 7 ? weekday(d) : monthDay(d)} ${time(d)}`
+    },
+    sent: (rel: string) => `enviada ${rel}`,
+    writtenBy: 'Escrita por',
+    canApprove: 'Pode aprovar',
+    approvers: 'Aprovação',
+    you: 'Você',
+    reviewers: (names: string[], total: number) => (total === 1 ? names[0] : total === 2 ? `${names[0]} ou ${names[1]}` : `${names[0]}, ${names[1]} +${total - 2}`),
+    noOne: 'Ninguém pode aprovar esta marca',
+    history: 'Histórico da revisão',
+    earlier: (n: number) => (n === 1 ? '1 passo anterior' : `${n} passos anteriores`),
+    did: { submitted: 'enviou-a para aprovação', approved: 'aprovou-a', changes: 'pediu alterações', comment: 'deixou uma nota' },
+    approve: 'Aprovar',
+    requestChanges: 'Pedir alterações',
+    fix: 'Corrigir e reenviar',
+    withdraw: 'Retirar para rascunhos',
+    edit: 'Editar',
+    open: 'Abrir a publicação',
+    ownPost: 'Foi você que a escreveu — outra pessoa tem de a aprovar',
+    stamp: 'Aprovada',
+    sentBackTo: (name: string) => `Devolvida a ${name}`,
+    justNow: 'agora mesmo',
+    rule: {
+      title: 'A regra em vigor',
+      perm: { title: 'Aprovação quando é precisa', text: 'Quem não tem “Publicar sem aprovação” envia as suas publicações primeiro para aqui.' },
+      all: { title: 'Todas as publicações são aprovadas', text: 'Até a publicação de um gestor precisa de um segundo olhar antes de sair.' },
+      off: { title: 'Aprovações desligadas', text: 'As publicações vão diretas para o calendário. Ligue a regra para rever antes de algo sair.' },
+      path: 'O caminho de uma publicação',
+      steps: { draft: 'Rascunho', approval: 'Aprovação', scheduled: 'Agendada', published: 'Publicada' },
+      loop: 'As alterações pedidas voltam a quem escreveu',
+      needs: 'Precisa de aprovação',
+      can: 'Pode aprovar',
+      noOne: 'Ninguém',
+      direct: 'As suas publicações vão diretas para o calendário.',
+      reviewed: 'As suas publicações passam primeiro por aqui.',
+      reviewer: 'Não escreve publicações — revê-as.',
+      change: 'Mudar a regra',
+    },
+    who: {
+      title: 'Quem aprova',
+      hint: 'toque numa marca para filtrar',
+      count: (n: number, waiting: number) => `${n} ${n === 1 ? 'pode' : 'podem'} aprovar${waiting ? ` · ${waiting} à espera` : ''}`,
+      noOne: 'Ninguém pode aprovar',
+    },
+    bulk: { region: 'Publicações selecionadas', selected: 'selecionadas', approve: 'Aprovar selecionadas', clear: 'Limpar' },
+    dialog: {
+      title: 'Pedir alterações',
+      sub: (name: string) => `${name} vai ver esta nota na publicação.`,
+      quick: 'Notas rápidas',
+      chips: ['Trocar a fotografia', 'Encurtar a legenda', 'Confirmar o preço', 'Juntar o link', 'Corrigir as hashtags', 'Mudar a hora'],
+      label: 'O que deve mudar?',
+      placeholder: 'Comece pelo preço e troque a fotografia pelo grande plano.',
+      required: 'Diga o que deve mudar.',
+      submit: 'Devolver',
+      cancel: 'Cancelar',
+    },
+    toast: {
+      approved: (when: string) => `Aprovada · sai ${when.charAt(0).toLowerCase()}${when.slice(1)}`,
+      approvedMany: (n: number) => `${plural(n, 'publicação aprovada', 'publicações aprovadas')} · saem à hora marcada`,
+      sentBack: (name: string) => `Devolvida a ${name}`,
+      withdrawn: 'Retirada para rascunhos',
+      withdrawNote: 'Retirei-a para continuar a editar.',
+      reconnectFirst: 'Volte a ligar o canal primeiro',
+      channels: 'Canais',
+    },
+    empty: {
+      brandTitle: 'Nada desta marca aqui',
+      brandText: (brand: string, n: number) => `Sem publicações da ${brand} neste separador — ${n} de outras marcas.`,
+      everyBrand: 'Mostrar todas as marcas',
+      mine: { title: 'Nada por aprovar', text: 'Nada está à sua espera. As novas publicações chegam aqui assim que alguém as envia.' },
+      notReviewer: { title: 'Aprovar não faz parte do seu perfil', text: 'As suas publicações vão para um gestor ou para o cliente. Acompanhe-as em As minhas.' },
+      pending: { title: 'Nada pendente', text: 'Todas as publicações que precisavam de aprovação já a tiveram. Os rascunhos enviados para aprovação aparecem aqui.' },
+      changes: { title: 'Nenhuma publicação devolvida', text: 'Quando alguém pede alterações, a publicação e a nota ficam aqui à espera de quem escreveu.' },
+      submitted: { title: 'Não tem nada em revisão', text: 'Escreva uma publicação — se precisar de aprovação vem para aqui, e vê todas as notas.' },
+      approved: { title: 'Nada aprovado recentemente', text: 'As publicações aprovadas nos últimos 14 dias aparecem aqui com a hora a que saem.' },
+      write: 'Escrever uma publicação',
+    },
+  },
+
+  authorise: {
+    title: (network: string) => `Autorizar no ${network}`,
+    sub: (handle: string) => `Sessão iniciada como ${handle}. O Kataru pede para:`,
+    scopes: (brand: string) => ['Publicar publicações e stories', 'Ler comentários e mensagens', `Responder como ${brand}`, 'Ler as estatísticas da página'],
+    allow: 'Permitir o acesso',
+    cancel: 'Cancelar',
+    connected: (brand: string, network: string) => `${brand} · ${network} ligado`,
   },
 }

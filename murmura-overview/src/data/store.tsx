@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer } from 'react'
 import type { Dispatch, ReactNode } from 'react'
-import type { AuditEvent, Conversation, Keyword, Mention, Message, Post, ScheduledReport, Website, Workspace } from './types'
+import type { AuditEvent, Channel, Conversation, Keyword, Mention, Message, Post, ScheduledReport, Website, Workspace } from './types'
 
 /**
  * Single in-memory workspace shared by every view, so rescheduling a post on
@@ -22,6 +22,7 @@ export type WorkspaceAction =
   | { type: 'addReport'; report: ScheduledReport }
   | { type: 'restoreReports'; reports: ScheduledReport[] }
   | { type: 'setWebsites'; websites: Website[] }
+  | { type: 'channel'; id: string; patch: Partial<Channel> }
   | { type: 'audit'; event: AuditEvent }
   /** `index` puts a keyword back where it was (undoing "Stop tracking"). */
   | { type: 'track'; keyword: Keyword; mentions: Mention[]; index?: number }
@@ -74,6 +75,8 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, reports: action.reports }
     case 'setWebsites':
       return { ...ws, websites: action.websites }
+    case 'channel':
+      return { ...ws, channels: ws.channels.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
     case 'audit':
       return { ...ws, audit: [action.event, ...ws.audit] }
     case 'track': {

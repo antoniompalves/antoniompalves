@@ -274,7 +274,7 @@ export const en = {
     light: 'Light',
     notRecreated: (routes: ReactNode[]) => (
       <>
-        Only {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]}, {routes[4]} and {routes[5]} are recreated. This route exists in the reference with the sections below.
+        Only {routes[0]}, {routes[1]}, {routes[2]}, {routes[3]}, {routes[4]}, {routes[5]} and {routes[6]} are recreated. This route exists in the reference with the sections below.
       </>
     ),
   },
@@ -306,6 +306,13 @@ export const en = {
       failed: (brand: string) => `A ${brand} post failed`,
       failedDetail: 'Publishing failed.',
       approval: (author: string, brand: string, when: string) => `${author} wants approval · ${brand} · ${when}`,
+      changes: (name: string) => `${name} asked for changes`,
+      unhappy: (name: string) => `${name} is unhappy`,
+      myPending: (n: number) => `${n} of your ${n === 1 ? 'post is' : 'posts are'} waiting for approval`,
+      myPendingDetail: 'You’ll get a notification the moment someone reviews it.',
+      edit: 'Edit',
+      reply: 'Reply',
+      view: 'View',
     },
     audienceGrowth: 'Audience growth',
     growthRange: 'Growth range',
@@ -366,6 +373,14 @@ export const en = {
         return `published “${a.excerpt}” to ${plural(a.networks, 'network', 'networks')}`
       case 'scheduledPost':
         return `scheduled “${a.excerpt}” for ${monthDay(new Date(a.at))} · ${time(new Date(a.at))}`
+      case 'sentBack':
+        return `requested changes on “${a.excerpt}”`
+      case 'withdrew':
+        return `withdrew “${a.excerpt}” from approval`
+      case 'approvedMany':
+        return `approved ${a.count} posts at once`
+      case 'connectedChannel':
+        return `${a.again ? 'reconnected' : 'connected'} ${brand(a.brandId)} on ${network(a.network)}`
     }
   },
 
@@ -1169,6 +1184,123 @@ export const en = {
       gone: 'That post isn’t here any more',
       duplicated: 'Duplicated as a new post',
     },
+  },
+
+  approvals: {
+    title: 'Approvals',
+    stats: {
+      waiting: 'Waiting for you',
+      yours: 'Your posts in review',
+      /** `rel` is an `ago` string: "5 h ago" → "oldest 5 h". */
+      oldest: (rel: string) => `oldest ${rel.replace(/ ago$/, '')}`,
+      changes: 'Changes requested',
+      week: 'Approved this week',
+      average: 'Average time to approve',
+    },
+    /** "45 min", "2.6 h" */
+    duration: (min: number) => (min < 60 ? `${Math.round(min)} min` : `${(min / 60).toFixed(1)} h`),
+    queue: 'Approval queue',
+    tabs: { mine: 'Waiting for me', pending: 'All pending', changes: 'Changes requested', submitted: 'My submissions', approved: 'Recently approved' },
+    brands: 'Filter by brand',
+    all: 'All',
+    selectAll: 'Select all',
+    more: (n: number) => `Show ${n} more`,
+    select: (title: string) => `Select “${title}”`,
+    posts: 'Posts',
+    textOnly: 'Text only',
+    photo: (n: number) => `Photo ${n}`,
+    when: { goesOut: 'Goes out', dueSoon: 'Due soon · goes out', wasDue: 'Was due', wentOut: 'Went out' },
+    /** "Tomorrow 09:00", "Sun 19:00", "Nov 5 10:00" — 24-hour, as the reference's cards show it. */
+    slot: (d: Date, now: Date) => {
+      const diff = dayDiff(now, d)
+      const hm = `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+      return `${diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : diff > 1 && diff < 7 ? weekday(d) : monthDay(d)} ${hm}`
+    },
+    sent: (rel: string) => `sent ${rel}`,
+    writtenBy: 'Written by',
+    canApprove: 'Can approve',
+    approvers: 'Approvers',
+    you: 'You',
+    reviewers: (names: string[], total: number) => (total === 1 ? names[0] : total === 2 ? `${names[0]} or ${names[1]}` : `${names[0]}, ${names[1]} +${total - 2}`),
+    noOne: 'No one can approve this brand',
+    history: 'Review history',
+    earlier: (n: number) => `${plural(n, 'earlier step', 'earlier steps')}`,
+    did: { submitted: 'sent it for approval', approved: 'approved it', changes: 'asked for changes', comment: 'left a note' },
+    approve: 'Approve',
+    requestChanges: 'Request changes',
+    fix: 'Fix & resubmit',
+    withdraw: 'Withdraw to drafts',
+    edit: 'Edit',
+    open: 'Open post',
+    ownPost: 'You wrote this post — another approver signs it off',
+    stamp: 'Approved',
+    sentBackTo: (name: string) => `Sent back to ${name}`,
+    justNow: 'just now',
+    rule: {
+      title: 'The rule in force',
+      perm: { title: 'Approval when it’s needed', text: 'Anyone without “Publish without approval” sends their posts here first.' },
+      all: { title: 'Every post is approved', text: 'Even a manager’s post needs a second pair of eyes before it goes out.' },
+      off: { title: 'Approvals are off', text: 'Posts go straight to the calendar. Turn the rule on to review before anything goes out.' },
+      path: 'A post’s path',
+      steps: { draft: 'Draft', approval: 'Approval', scheduled: 'Scheduled', published: 'Published' },
+      loop: 'Changes requested go back to the writer',
+      needs: 'Needs approval',
+      can: 'Can approve',
+      noOne: 'No one',
+      direct: 'Your posts go straight to the calendar.',
+      reviewed: 'Your posts come here first.',
+      reviewer: 'You don’t write posts — you review them.',
+      change: 'Change the rule',
+    },
+    who: {
+      title: 'Who approves',
+      hint: 'tap a brand to filter',
+      count: (n: number, waiting: number) => `${n} can approve${waiting ? ` · ${waiting} waiting` : ''}`,
+      noOne: 'No one can approve',
+    },
+    bulk: { region: 'Selected posts', selected: 'selected', approve: 'Approve selected', clear: 'Clear' },
+    dialog: {
+      title: 'Request changes',
+      sub: (name: string) => `${name} will see this note on the post.`,
+      quick: 'Quick notes',
+      chips: ['Swap the photo', 'Shorten the caption', 'Check the price', 'Add the link', 'Fix the hashtags', 'Move the time'],
+      label: 'What should change?',
+      placeholder: 'Lead with the price, and swap the photo for the close-up.',
+      required: 'Say what should change.',
+      submit: 'Send back',
+      cancel: 'Cancel',
+    },
+    toast: {
+      approved: (when: string) => `Approved · goes out ${when}`,
+      approvedMany: (n: number) => `Approved ${plural(n, 'post', 'posts')} · they go out on schedule`,
+      sentBack: (name: string) => `Sent back to ${name}`,
+      withdrawn: 'Withdrawn to drafts',
+      withdrawNote: 'Withdrew it to keep editing.',
+      reconnectFirst: 'Reconnect the channel first',
+      channels: 'Channels',
+    },
+    empty: {
+      brandTitle: 'Nothing for this brand here',
+      brandText: (brand: string, n: number) => `No ${brand} posts in this tab — ${n} from other brands.`,
+      everyBrand: 'Show every brand',
+      mine: { title: 'Inbox zero for approvals', text: 'Nothing is waiting on you. New posts land here the moment someone sends one.' },
+      notReviewer: { title: 'Approving isn’t part of your role', text: 'Your posts go to a manager or the client. Follow them under My submissions.' },
+      pending: { title: 'Nothing pending', text: 'Every post that needed sign-off has had it. Drafts sent for approval show up here.' },
+      changes: { title: 'No posts sent back', text: 'When an approver asks for changes, the post and their note wait here for the writer.' },
+      submitted: { title: 'You have nothing in review', text: 'Write a post — if it needs sign-off it comes here, and you’ll see every note on it.' },
+      approved: { title: 'Nothing approved lately', text: 'Posts approved in the last 14 days are listed here with when they go out.' },
+      write: 'Write a post',
+    },
+  },
+
+  /** Signing a channel back in (overview "Reconnect", channels page). */
+  authorise: {
+    title: (network: string) => `Authorise on ${network}`,
+    sub: (handle: string) => `Signed in as ${handle}. Kataru is asking to:`,
+    scopes: (brand: string) => ['Publish posts and stories', 'Read comments and messages', `Reply as ${brand}`, 'Read page insights'],
+    allow: 'Allow access',
+    cancel: 'Cancel',
+    connected: (brand: string, network: string) => `${brand} · ${network} connected`,
   },
 }
 

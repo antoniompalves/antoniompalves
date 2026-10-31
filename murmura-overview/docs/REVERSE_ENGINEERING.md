@@ -178,7 +178,7 @@ on the page is **derived** in `src/data/selectors.ts` (nothing is hard-coded in 
 | Engagement rate | Σ engagements ÷ Σ reach of the posts published in the last 30 days | **10.3%** |
 | Posts going out this week | non-draft posts in the calendar week (Mon–Sun) — the same 19 the calendar shows for Oct 26 – Nov 1 | **19** |
 | Up next | soonest scheduled-or-awaiting post after `now`, then the next 6 | Ember & Oak · **18 h 45 min** |
-| Needs you | `todos` (approvals, failed post, channel reconnects), 4 visible | **6** |
+| Needs you | `todos` (approvals, failed post, channel reconnects), 4 visible — derived from the data since §14 | **6** |
 | 90D growth | Σ 90 points | **+238.9K · 32.4%** |
 | Top post | published this month, max reach; "× usual reach" = its reach ÷ the median reach of the last 30 days' posts | 346.9K reach · 23.2% · 2.8K saves · 8.9× |
 | Week ahead | posts per day, chip tone from status (sea scheduled, butter awaiting, coral failed/changes) | 1·6·3·5·1·1·4 |
@@ -671,3 +671,75 @@ to restore it, lets photos be dragged to reorder (here: move buttons) and animat
 the dials and the day marker; role locks for other people are modelled (who
 publishes directly, who approves) but the mock user is the owner.
 
+
+## 14. Approvals (`#/approvals`)
+
+Reached from the **Approvals** tab (its badge counts what waits on you), the dock's
+shield, "Review" / "View" in the overview's *Needs you* and the composer's
+"Goes through approval". Inspected the same way: computed styles at 1440 / 1280 /
+960 / 390 px, the page's `approvals-*` CSS and JS read for behaviour and wording
+only, and the reference's own state for the review trails.
+
+| Approvals · 1440 | Two selected | Request changes |
+| --- | --- | --- |
+| ![Approvals, waiting for me](screenshots/approvals-light.png) | ![Bulk bar with two posts selected](screenshots/approvals-bulk.png) | ![Request changes with quick notes](screenshots/approvals-request-changes.png) |
+
+| Dark | Phone | pt-PT |
+| --- | --- | --- |
+| ![Approvals, dark theme](screenshots/approvals-dark.png) | ![Approvals on a phone](screenshots/approvals-mobile.png) | ![Approvals in European Portuguese](screenshots/approvals-pt.png) |
+
+### Layout
+
+```
+header   title · 4 stats (waiting for you + "oldest 5 h", changes requested, approved this week, average time to approve)
+toolbar  5 tabs with counts (butter = mine, coral = changes) · brand chips · Select all
+grid     cards (auto-fill, min 340px, gap 16) | aside 340px (300px ≤ 1240px; below the cards, 2 columns, ≤ 1060px)
+         phones: one column, the first six cards then "Show N more"; tabs and brand chips scroll sideways
+```
+
+| Part | Value |
+| --- | --- |
+| Tabs | `--well` track, 41px pills (44 on touch), counts 21px; butter for *Waiting for me*, coral for *Changes requested* |
+| Brand chips | 34px (44 on touch), 22px brand mark, first word of the name; *All* and the picked one in ink |
+| Card | r28 glass card, 274px photo (r20) with a dot per photo, 18px select box, the networks, and a "Goes out / Due soon · goes out / Was due / Went out" badge (butter, coral within a day); brand + status pill + "sent 20 min ago"; text clamped to 2 lines; *Written by* / *Can approve* (you first, "You, Malik +1"); the latest review step (earlier ones folded); Approve · Request changes (icon only under 400px) · Edit · Withdraw to drafts (your own) · Open post |
+| Stamp | approving shows a pine "Approved" stamp for 650 ms (none with reduced motion) before the card leaves |
+| The rule in force | the workspace rule as a blue tile (Approval when it's needed / Every post is approved / Approvals are off), the draft → approval → scheduled → published path with the "changes go back to the writer" loop, the roles that need and give approval, what it means for you, *Change the rule* (admins) |
+| Who approves | one row per brand: approvers' avatars, "3 can approve · 2 waiting"; a row filters the page by that brand |
+| Bulk bar | fixed ink pill: "2 selected", **Approve selected**, Clear; only posts you may review can be picked |
+| Request changes | `<dialog>` with six quick notes that append to the note, a required textarea ("Say what should change.") and **Send back** |
+
+### Rules (`src/data/approvals.ts`)
+
+| Rule | Behaviour |
+| --- | --- |
+| Who reviews | anyone with "Approve posts" who sees the brand, never on their own post |
+| Queues | *Waiting for me*: awaiting posts you may review · *All pending* · *Changes requested* · *My submissions* (yours, awaiting or sent back) · *Recently approved* (approved in the last 14 days, newest first); all others soonest first |
+| Figures | *waiting* = your queue, *oldest* = its earliest submission; *approved this week* and *average time to approve* come from every post's review trail (submitted → next approval) |
+| Approve | scheduled at its time; if that is less than 10 min away it moves to the next half hour an hour out; logged as "approved “…”" (or "approved N posts"), Undo |
+| Send back | status *changes requested* with the note, shown on the post in the composer and in *Needs you* for the writer |
+| Withdraw | back to drafts with a note in the trail, Undo |
+
+The overview's *Needs you* is no longer a fixed list: it is built from the same
+data — posts waiting on you (three, soonest first), your posts sent back, failed
+posts, channels that lost access and unhappy conversations nobody (or you) owns —
+so it reads exactly as before with the mock and changes as you act. **Approve**
+works in place, **Review** opens the post drawer, **Retry** publishes again to the
+channels still connected (or points to Channels when none are), and **Reconnect**
+opens an "Authorise on YouTube" dialog that brings the channel back.
+
+| Needs you → Reconnect |
+| --- |
+| ![Authorise on YouTube from the overview](screenshots/overview-reconnect.png) |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| 25 landmarks (title, stats, tabs, brand chips, Select all, three cards and the first card's photo, badge, meta, text, people, history, actions, Approve; the rule card, its tile, path and roles; who approves) at **1440**, **1280**, **960** and **390** px (touch) | identical to the pixel |
+| Figures and counts: 5 waiting (oldest 5 h), 2 sent back, 15 approved this week, 2.6 h average; tabs 5 / 5 / 2 / – / 18; who approves per brand | identical |
+| 40 interaction checks (approve + stamp + undo, request changes with the required note and quick notes, bulk approve + undo, empty state, brand filter, every tab, drawer, overview approve / review / retry / reconnect, phone "Show 12 more", no sideways scroll at 1100 / 1000 / 390 px) | all pass, no console errors |
+| pt-PT: five tabs, the dialog, bulk bar, overview and the authorise dialog at 1440 and 390 px | no English left, nothing clipped |
+| English text of the other pages | unchanged (the overview included) |
+
+Known differences: the reference animates the card leaving the grid; here it
+leaves after the stamp without a reflow animation.

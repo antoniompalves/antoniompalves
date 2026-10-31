@@ -13,12 +13,15 @@ import {
   KeyRound,
   Link,
   PenLine,
+  Reply,
   RotateCw,
   Send,
   ShieldCheck,
   TriangleAlert,
+  Undo2,
   Users,
 } from 'lucide-react'
+import { AuthoriseDialog } from '../components/AuthoriseDialog'
 import { GrowthChart } from '../components/GrowthChart'
 import { PageTitle, Stat } from '../components/PageHead'
 import {
@@ -38,8 +41,13 @@ import {
   cn,
   toneFill,
 } from '../components/ui'
+import { PostDrawer } from '../components/calendar/PostDrawer'
+import { useToast } from '../components/Toast'
+import { usePostActions } from '../components/usePostActions'
+import { approve } from '../data/approvals'
 import { coverPhoto } from '../data/assets'
-import type { AuditKind } from '../data/types'
+import { useWorkspace } from '../data/store'
+import type { AuditKind, Channel, Post } from '../data/types'
 import type { GrowthRange, OverviewModel } from '../data/selectors'
 import { NETWORK_LABEL, NETWORK_ORDER, STATUS_TONE, clip } from '../data/selectors'
 import { useI18n } from '../i18n'
@@ -60,7 +68,7 @@ export function Overview({ model, now }: OverviewProps) {
       <OverviewHead model={model} />
       <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2 desk:grid-cols-12">
         <UpNext model={model} now={now} className="tablet:col-span-2 desk:col-span-7" />
-        <NeedsYou model={model} className="desk:col-span-5" />
+        <NeedsYou model={model} now={now} className="desk:col-span-5" />
         <AudienceGrowth model={model} className="desk:col-span-7" />
         <TopPost model={model} className="tablet:col-span-2 desk:col-span-5" />
         <WeekAhead model={model} className="col-span-full" />
@@ -185,12 +193,39 @@ function UpNext({ model, now, className }: SectionProps & { now: Date }) {
 
 const VISIBLE_TODOS = 4
 
-function NeedsYou({ model, className }: SectionProps) {
+function NeedsYou({ model, now, className }: SectionProps & { now: Date }) {
   const { t } = useI18n()
+  const { ws, dispatch } = useWorkspace()
+  const toast = useToast()
   const [expanded, setExpanded] = useState(false)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [authorise, setAuthorise] = useState<Channel | null>(null)
+  const { publish, duplicate, remove } = usePostActions(now, () => setOpenId(null))
   const todos = expanded ? model.todos : model.todos.slice(0, VISIBLE_TODOS)
   const hidden = model.todos.length - VISIBLE_TODOS
+  const nowMs = Math.floor(now.getTime() / 60_000) * 60_000
 
+  const approveOne = (p: Post) => {
+    const before = ws.posts
+    const done = approve(p, ws.currentUserId, nowMs)
+    dispatch({ type: 'savePost', post: done })
+    const line = p.text.split('\n')[0] ?? ''
+    dispatch({
+      type: 'audit',
+      event: { id: `au-${Date.now().toString(36)}`, actorId: ws.currentUserId, kind: 'approval', action: { type: 'approved', excerpt: line.length > 46 ? `${line.slice(0, 44)}…` : line, brandId: p.brandId }, at: new Date(nowMs).toISOString() },
+    })
+    toast({ text: t.approvals.toast.approved(t.dates.dayStamp(new Date(done.scheduledAt), now)), icon: Check, undo: () => dispatch({ type: 'restore', posts: before }) })
+  }
+
+  /** Retry without the channels that are still disconnected; with none left, reconnecting comes first. */
+  const retry = (p: Post) => {
+    const live = p.networks.filter((n) => ws.channels.some((c) => c.brandId === p.brandId && c.network === n && c.status !== 'disconnected'))
+    if (!live.length) return toast({ text: t.approvals.toast.reconnectFirst, icon: Link, action: { label: t.approvals.toast.channels, run: () => (window.location.hash = '#/channels') } })
+    dispatch({ type: 'savePost', post: { ...p, networks: live } })
+    publish(p.id)
+  }
+
+  const open = openId ? ws.posts.find((p) => p.id === openId) ?? null : null
   return (
     <Card title={t.overview.needsYou} tools={<Badge tone="coral">{model.todos.length}</Badge>} className={cn('flex flex-col', className)}>
       <ul className="grid grid-cols-1 content-start gap-2">
@@ -201,36 +236,57 @@ function NeedsYou({ model, className }: SectionProps) {
           >
             <span className="[grid-area:ico]">
               {todo.kind === 'approval' && <Thumb src={todo.post && coverPhoto(todo.post, 120)} className="size-11 rounded-[13px]" />}
-              {todo.kind === 'failed_post' && (
+              {(todo.kind === 'failed_post' || todo.kind === 'changes') && (
                 <span className={cn('grid size-10 place-items-center rounded-[13px]', toneFill.coral)}>
-                  <TriangleAlert size={19} aria-hidden />
+                  {todo.kind === 'changes' ? <Undo2 size={19} aria-hidden /> : <TriangleAlert size={19} aria-hidden />}
+                </span>
+              )}
+              {todo.kind === 'myPending' && (
+                <span className={cn('grid size-10 place-items-center rounded-[13px]', toneFill.sea)}>
+                  <Clock size={19} aria-hidden />
                 </span>
               )}
               {todo.kind === 'channel' && todo.channel && <NetIcon network={todo.channel.network} size="md" />}
+              {todo.kind === 'unhappy' && todo.conversation && <Avatar src={todo.conversation.contact.avatar} name={todo.conversation.contact.name} size="lg" />}
             </span>
             <div className="min-w-0 [grid-area:txt]">
               <b className="block text-xs font-semibold">{todo.title}</b>
               <small className="line-clamp-2 text-2xs text-muted">{todo.detail}</small>
             </div>
             <div className="flex flex-wrap gap-1.5 [grid-area:act]">
-              {todo.kind === 'approval' && (
+              {todo.kind === 'approval' && todo.post && (
                 <>
-                  <Button size="sm" variant="pine" icon={Check}>
+                  <Button size="sm" variant="pine" icon={Check} onClick={() => approveOne(todo.post!)}>
                     {t.overview.approve}
                   </Button>
-                  <Button size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost" onClick={() => setOpenId(todo.post!.id)}>
                     {t.overview.review}
                   </Button>
                 </>
               )}
-              {todo.kind === 'failed_post' && (
-                <Button size="sm" variant="ink" icon={RotateCw}>
+              {todo.kind === 'changes' && todo.post && (
+                <Button size="sm" icon={PenLine} href={`#/compose/${todo.post.id}`}>
+                  {t.overview.todo.edit}
+                </Button>
+              )}
+              {todo.kind === 'failed_post' && todo.post && (
+                <Button size="sm" variant="ink" icon={RotateCw} onClick={() => retry(todo.post!)}>
                   {t.overview.retry}
                 </Button>
               )}
-              {todo.kind === 'channel' && (
-                <Button size="sm" variant="ghost" icon={Link}>
+              {todo.kind === 'channel' && todo.channel && (
+                <Button size="sm" variant="ghost" icon={Link} onClick={() => setAuthorise(todo.channel!)}>
                   {t.overview.reconnect}
+                </Button>
+              )}
+              {todo.kind === 'unhappy' && todo.conversation && (
+                <Button size="sm" icon={Reply} href={`#/inbox/${todo.conversation.id}`}>
+                  {t.overview.todo.reply}
+                </Button>
+              )}
+              {todo.kind === 'myPending' && (
+                <Button size="sm" variant="ghost" href="#/approvals">
+                  {t.overview.todo.view}
                 </Button>
               )}
             </div>
@@ -251,6 +307,17 @@ function NeedsYou({ model, className }: SectionProps) {
           </li>
         )}
       </ul>
+      <PostDrawer
+        post={open}
+        brand={open ? ws.brands.find((b) => b.id === open.brandId) : undefined}
+        author={open ? ws.team.find((m) => m.id === open.authorId) : undefined}
+        now={now}
+        onClose={() => setOpenId(null)}
+        onPublish={publish}
+        onDuplicate={duplicate}
+        onDelete={remove}
+      />
+      <AuthoriseDialog channel={authorise} now={now} onClose={() => setAuthorise(null)} />
     </Card>
   )
 }

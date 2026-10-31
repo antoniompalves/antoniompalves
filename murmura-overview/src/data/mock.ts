@@ -9,7 +9,7 @@ import type { Competitor, Conversation, Keyword, Mention, Message, NetworkId, Po
  * Every figure the overview, calendar and analytics show is derived from these
  * entities (selectors.ts, calendar.ts, analytics.ts): 976.3K audience = Σ followers
  * of the 19 channels, +89.6K = new followers in the last 30 days of the
- * analytics series, 19 posts this week, 6 todos, 20 open conversations
+ * analytics series, 19 posts this week, 6 things that need you, 20 open conversations
  * (14 unread), 78 posts on the October grid, and so on.
  */
 
@@ -472,14 +472,6 @@ export const workspace: Workspace = {
     { id: 'sr3', title: 'Sorry + DM', text: 'We’re really sorry about this. Could you send us your order number in a DM? We’ll sort it today.' },
     { id: 'sr4', title: 'Booking', text: 'We’d love to have you in. You can pick a slot here: link in bio, or reply with your preferred week.' },
     { id: 'sr5', title: 'Sensitive skin', text: 'Bloom is fragrance-free and patch-tested, but we always suggest a small test on your wrist first.' },
-  ],
-  todos: [
-    { kind: 'approval', id: 'ap-p78', postId: 'p78' },
-    { kind: 'approval', id: 'ap-p83', postId: 'p83' },
-    { kind: 'approval', id: 'ap-p82', postId: 'p82' },
-    { kind: 'failed_post', id: 'fl-p89', postId: 'p89' },
-    { kind: 'channel', id: 'rc-hh-yt', channelId: 'ch-hh-yt' },
-    { kind: 'channel', id: 'rc-vg-fb', channelId: 'ch-vg-fb' },
   ],
   audit: [
     { id: 'au1', actorId: 'elise', kind: 'approval', action: { type: 'approved', excerpt: 'New harvest from Huila…', brandId: 'eo' }, at: minutesBefore(14) },

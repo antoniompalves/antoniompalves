@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { Badge } from './ui'
+import type { Tone } from '../data/types'
 
 /** One inline-block per character so a page title can rise in letter by letter. */
 function SplitWords({ lines }: { lines: string[] }) {
@@ -33,7 +34,7 @@ export function PageTitle({ lines, label }: { lines: string[]; label: string }) 
 }
 
 /** Header stat: glass disc icon, big value (+ optional growth badge), muted label. Phones drop the icon. */
-export function Stat({ icon: Icon, value, badge, label }: { icon: LucideIcon; value: string; badge?: string; label: string }) {
+export function Stat({ icon: Icon, value, badge, badgeTone = 'pine', label }: { icon: LucideIcon; value: string; badge?: string; badgeTone?: Tone; label: string }) {
   return (
     <div className="flex items-center gap-3">
       <span className="grid size-12 shrink-0 place-items-center rounded-full border border-rim bg-glass-2 max-mobile:hidden">
@@ -43,7 +44,7 @@ export function Stat({ icon: Icon, value, badge, label }: { icon: LucideIcon; va
         <dt className="max-w-[170px] text-2xs leading-[1.3] text-muted max-mobile:text-[12.5px]">{label}</dt>
         <dd className="flex items-center gap-2.5 text-[23px] font-semibold tracking-[-0.01em] max-mobile:text-lg max-mobile:font-bold">
           <b className="num">{value}</b>
-          {badge && <Badge tone="pine">{badge}</Badge>}
+          {badge && <Badge tone={badgeTone}>{badge}</Badge>}
         </dd>
       </div>
     </div>

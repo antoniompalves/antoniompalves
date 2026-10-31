@@ -149,7 +149,8 @@ export interface Review {
   /** Team member id. */
   by: string
   at: ISODate
-  decision: 'submitted' | 'approved' | 'changes'
+  /** 'comment' is a note without a decision, e.g. withdrawing a post to keep editing it. */
+  decision: 'submitted' | 'approved' | 'changes' | 'comment'
   note?: string
 }
 
@@ -313,6 +314,10 @@ export type AuditAction =
   | { type: 'sentForApproval'; excerpt: string; brandId: string }
   | { type: 'publishedPost'; excerpt: string; networks: number }
   | { type: 'scheduledPost'; excerpt: string; at: ISODate }
+  | { type: 'sentBack'; excerpt: string }
+  | { type: 'withdrew'; excerpt: string }
+  | { type: 'approvedMany'; count: number }
+  | { type: 'connectedChannel'; brandId: string; network: NetworkId; again: boolean }
 
 export interface AuditEvent {
   id: string
@@ -321,11 +326,6 @@ export interface AuditEvent {
   action: AuditAction
   at: ISODate
 }
-
-export type TodoItem =
-  | { kind: 'approval'; id: string; postId: string }
-  | { kind: 'failed_post'; id: string; postId: string }
-  | { kind: 'channel'; id: string; channelId: string }
 
 /* ───────────── listening ───────────── */
 
@@ -420,7 +420,6 @@ export interface Workspace {
   media: MediaAsset[]
   templates: Template[]
   hashtagSets: HashtagSet[]
-  todos: TodoItem[]
   audit: AuditEvent[]
   notifications: { unread: number }
 }

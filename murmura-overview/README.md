@@ -1,9 +1,9 @@
-# Kataru — overview, compose, calendar, inbox, analytics & listening (React + Tailwind)
+# Kataru — overview, compose, calendar, inbox, approvals, analytics & listening (React + Tailwind)
 
 **Kataru** (語る, *to narrate, to tell a story*) is a social-media workspace for
 brands and their teams. It is a pixel-matched recreation of the `#/overview` dashboard, the
 `#/compose` composer, the `#/calendar`
-publishing calendar, the `#/inbox` messaging view, the `#/analytics` reports and the
+publishing calendar, the `#/inbox` messaging view, the `#/approvals` queue, the `#/analytics` reports and the
 `#/listening` social listening page of the Murmura social-media workspace demo, rebuilt from scratch with **React 19, TypeScript, Tailwind CSS v4
 and Lucide icons**. Design tokens, layout metrics, routes and the data model were
 reverse-engineered with Playwright; see [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md).
@@ -32,7 +32,7 @@ language, can be switched from the account menu (avatar, top right) or forced wi
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/#/overview  ·  #/compose  ·  #/calendar  ·  #/inbox  ·  #/analytics  ·  #/listening  (add ?lang=pt-PT before the #)
+npm run dev        # http://localhost:5173/#/overview  ·  #/compose  ·  #/calendar  ·  #/inbox  ·  #/approvals  ·  #/analytics  ·  #/listening  (add ?lang=pt-PT before the #)
 npm run build      # type-check + production build
 ```
 
@@ -53,6 +53,18 @@ the week's best times from the engagement heatmaps and the next slot that doesn'
 crowd the brand's other posts. It schedules, publishes now, sends for approval
 (depending on the role and the workspace rule) or saves a draft; posts sent back
 with a note, waiting for approval, scheduled or published open with that context.
+
+| Approvals | Request changes | Phone |
+| --- | --- | --- |
+| ![Approvals, waiting for me](docs/screenshots/approvals-light.png) | ![Sending a post back with a note](docs/screenshots/approvals-request-changes.png) | ![Approvals on a phone](docs/screenshots/approvals-mobile.png) |
+
+Approvals lists what waits on you, everything pending, what was sent back, your
+own submissions and what was approved in the last two weeks, per brand. Approve
+one post (with Undo) or select several, send one back with a note (quick notes
+help), or withdraw your own to drafts. Next to the queue: the rule in force, a
+post's path, which roles need and give approval, and who approves each brand. The
+overview's *Needs you* is built from the same data and acts in place: approve,
+review in the drawer, retry a failed post, reconnect a channel.
 
 | Calendar · Week | Month | List |
 | --- | --- | --- |
@@ -119,6 +131,7 @@ src/
   pages/
     Overview.tsx          #/overview: header + 8 cards on a 12-col grid
     Compose.tsx           #/compose/:id: draft state, route, notes, schedule / publish / approval / draft
+    Approvals.tsx         #/approvals: stats, tabs, brand chips, cards, bulk approve, send back, withdraw
     Calendar.tsx          #/calendar: stats, filters, views, side panel, drawer wiring
     Inbox.tsx             #/inbox/:id: selection, actions + toasts, shortcuts, responsive panes
     Analytics.tsx         #/analytics/:network: stats, chips, expandable cards, table, top posts, brands, websites
@@ -127,7 +140,8 @@ src/
     AppShell.tsx          mesh background, top bar (sliding tab pill), dock, mobile nav + More sheet
     PageHead.tsx          letter-by-letter page title, header stat
     GrowthChart.tsx       SVG area chart: monotone curve, grid, crosshair, tooltip, ←/→ keys
-    Toast.tsx             bottom toast with Undo
+    Toast.tsx             bottom toast with Undo or an action
+    AuthoriseDialog.tsx   "Authorise on …": reconnects a channel (overview, channels)
     Popover.tsx           fixed popover anchored to its trigger (flips, clamps), menu rows
     Modal.tsx             centred <dialog> form shell and a confirm dialog
     useScrollEdges.ts     edge fades for sideways scrollers on phones
@@ -155,6 +169,9 @@ src/
       Panels.tsx          preview, when (best times, day bar), publish bar, your drafts
       Pickers.tsx         library photos, hashtag sets, templates
     PostPreview.tsx       a post as each network lays it out (composer and post drawer)
+    approvals/
+      ApprovalCard.tsx    photo, badge, people, review history, actions, approved stamp
+      Side.tsx            the rule in force, who approves, request-changes dialog
     listening/
       Keywords.tsx        tracked keywords: kind, brand, weekly count, 14-day line, sentiment split
       Stream.tsx          mentions: live toggle, filters, active chips, mention rows, paging
@@ -170,13 +187,14 @@ src/
   data/
     types.ts              Workspace schema (brands, campaigns, team, posts, channels, inbox, audit…)
     mock.ts               mock workspace frozen at Fri 30 Oct 2026, 14:15 UTC (80 posts, 19 channels, 6 websites, 22 conversations, 90 mentions)
-    selectors.ts          overview view-model (worded through the active catalogue)
+    selectors.ts          overview view-model (worded through the active catalogue; Needs you derived from the data)
     calendar.ts           calendar date math, lanes, ribbons, filters, stats
     inbox.ts              inbox views, filters, search, unread counts, time labels, tag rules
     analytics.ts          analytics view-model: ranges, network filter, every figure on #/analytics
     analyticsData.ts      180 days per network, per-account totals and curves, heatmaps (from the reference)
     webAnalytics.ts       website traffic shape (GA4-like), demo generator, websites view model
     compose.ts            composer rules: network limits, issues, best times, free slot, links, Assist
+    approvals.ts          approval queues, header figures, approve / send back / withdraw
     permissions.ts        roles, permissions, who approves and whose posts need approval
     postsData.ts          extra photos, campaigns, review trails per post (from the reference)
     listening.ts          listening view-model: stream filters, share of voice, cloud, sentiment, new mentions
