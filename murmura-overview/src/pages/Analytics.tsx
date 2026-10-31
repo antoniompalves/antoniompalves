@@ -25,7 +25,7 @@ import {
   topValue,
 } from '../data/analytics'
 import type { AnalyticsModel, BrandBy, Range, TableRow, TopBy } from '../data/analytics'
-import { photo } from '../data/assets'
+import { coverPhoto } from '../data/assets'
 import { NETWORK_LABEL, clip } from '../data/selectors'
 import { useWorkspace } from '../data/store'
 import type { ChannelStatus, NetworkId, Tone } from '../data/types'
@@ -450,8 +450,8 @@ function TopPosts({ model, by, network, onOpen }: { model: AnalyticsModel; by: T
               className="grid size-full cursor-pointer grid-rows-[auto_1fr] overflow-hidden rounded-[20px] border border-rim bg-glass-2 text-left transition-colors duration-150 hover:bg-glass-3"
             >
               <span className="relative block aspect-[1/0.86] overflow-hidden bg-well">
-                {p.image ? (
-                  <img src={photo(p.image, 360)} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+                {p.media.length ? (
+                  <img src={coverPhoto(p, 360)} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
                 ) : (
                   <span className={cn('absolute inset-0 overflow-hidden p-3.5 text-xs font-semibold leading-[1.3]', brandSurface[brand.tone])}>{clip(p.text, 90)}</span>
                 )}

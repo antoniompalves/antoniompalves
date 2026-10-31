@@ -3,7 +3,7 @@ import { dayKey, postsByDay } from '../../data/calendar'
 import { STATUS_TONE } from '../../data/selectors'
 import { useI18n } from '../../i18n'
 import { dayDiff } from '../../i18n/format'
-import { photo } from '../../data/assets'
+import { coverPhoto } from '../../data/assets'
 import { Avatar, BrandMark, NetStack, PostStatusPill, cn } from '../ui'
 
 const BAR: Record<string, string> = {
@@ -66,8 +66,8 @@ export function ListView({ days, posts, brands, team, now, onOpen }: ListViewPro
                   >
                     <span className="whitespace-nowrap text-xs font-bold tabular-nums max-mobile:self-center max-mobile:[grid-area:time]">{t.dates.time(new Date(p.scheduledAt))}</span>
                     <span className="grid size-[52px] place-items-center overflow-hidden rounded-[14px] bg-well max-mobile:[grid-area:thumb]">
-                      {p.image ? (
-                        <img src={photo(p.image, 120)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+                      {p.media.length ? (
+                        <img src={coverPhoto(p, 120)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
                       ) : (
                         <BrandMark brand={brand} size="md" />
                       )}

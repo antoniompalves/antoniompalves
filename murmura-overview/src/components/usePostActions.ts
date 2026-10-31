@@ -22,7 +22,7 @@ export function usePostActions(now: Date, afterChange: () => void) {
       undoable(t.postActions.published(p?.networks.map((n) => NETWORK_LABEL[n]) ?? []), () => dispatch({ type: 'publish', id, at: now.toISOString() }), Send)
       afterChange()
     },
-    duplicate: (id: string) => undoable(t.postActions.duplicated, () => dispatch({ type: 'duplicate', id, newId: `p${Date.now()}` })),
+    duplicate: (id: string) => undoable(t.postActions.duplicated, () => dispatch({ type: 'duplicate', id, newId: `p${Date.now()}`, at: now.toISOString() })),
     remove: (id: string) => {
       undoable(t.postActions.deleted, () => dispatch({ type: 'delete', id }))
       afterChange()

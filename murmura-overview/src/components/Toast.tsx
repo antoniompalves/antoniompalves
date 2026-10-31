@@ -8,6 +8,8 @@ interface ToastInput {
   icon?: LucideIcon
   /** Shows an "Undo" button that runs this and dismisses the toast. */
   undo?: () => void
+  /** Any other single follow-up, e.g. "View" after scheduling a post. */
+  action?: { label: string; run: () => void }
 }
 
 interface ToastItem extends ToastInput {
@@ -47,16 +49,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           >
             {Icon && <Icon size={18} aria-hidden className="shrink-0" />}
             <span className="min-w-0">{toast.text}</span>
-            {toast.undo && (
+            {(toast.undo || toast.action) && (
               <button
                 type="button"
                 onClick={() => {
-                  toast.undo?.()
+                  ;(toast.undo ?? toast.action?.run)?.()
                   setToast(null)
                 }}
                 className="cursor-pointer rounded-full bg-butter px-[13px] py-[7px] font-bold text-[#16191d]"
               >
-                {t.common.undo}
+                {toast.undo ? t.common.undo : toast.action?.label}
               </button>
             )}
           </div>

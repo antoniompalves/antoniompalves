@@ -1,6 +1,7 @@
 import { avatar, personPhoto } from './assets'
 import { ACCOUNT_STATS, HEAT, NETWORK_TRENDS, SERIES } from './analyticsData'
 import { COMPETITORS, KEYWORDS, MENTIONS } from './listeningData'
+import { POST_EXTRAS } from './postsData'
 import type { Competitor, Conversation, Keyword, Mention, Message, NetworkId, Post, PostMetrics, Workspace } from './types'
 
 /**
@@ -22,7 +23,9 @@ const NET: Record<string, NetworkId> = {
 }
 
 /* Every post on the reference calendar between Sep 28 and Nov 8 (read from its
-   List view), plus the two drafts pencilled in further out. `when` is MM-DD HH:mm UTC. */
+   List view), the two drafts pencilled in further out, and the posts scheduled for
+   Nov 9–12. `when` is MM-DD HH:mm UTC; further photos, campaigns and review trails
+   are in postsData.ts. */
 const POSTS: PostRow[] = [
   ['p28', 'hh', 'omar', 'published', '09-30 12:45', 'ig yt', 'hollow-sofa', 'Our wool throws are woven in a family mill outside Aarhus. Here’s the loom.'],
   ['p11', 'eo', 'elise', 'published', '09-30 19:30', 'ig tt', 'ember-latte', 'Behind the drum: our head roaster Ada on why we never rush the first crack.'],
@@ -104,6 +107,15 @@ const POSTS: PostRow[] = [
   ['p49', 'vg', 'freya', 'scheduled', '11-07 18:00', 'ig tt x', 'vantage-night', 'Two-stage correction + 9H ceramic on this GT. Swipe for the 50/50.'],
   ['p87', 'vg', 'omar', 'draft', '11-09 10:00', 'ig', null, 'Reel script: 60 seconds of foam, no music'],
   ['p88', 'wb', 'elise', 'draft', '11-11 10:00', 'ig', null, 'Ingredient spotlight series — calendula first'],
+  ['p16', 'eo', 'malik', 'scheduled', '11-09 09:00', 'ig fb tt th', 'ember-latte', 'Ten years, one roaster, about 400,000 cups. Thank you for drinking with us.'],
+  ['p33', 'hh', 'freya', 'scheduled', '11-09 12:30', 'ig pin fb yt', 'hollow-lamp', 'Light that behaves like late afternoon: meet the Pleat lamp in sand.'],
+  ['p67', 'wb', 'camila', 'scheduled', '11-09 17:00', 'ig pin th', 'wild-dried', 'Every bottle of Bloom oil holds 212 petals. We counted, then we stopped counting.'],
+  ['p50', 'vg', 'freya', 'scheduled', '11-09 18:30', 'ig yt tt x', 'vantage-lift', 'Night reveal. Same car, 31 hours later.'],
+  ['p77', 'ns', 'freya', 'scheduled', '11-10 12:30', 'li x', null, 'Approval loops are where good posts go to die. How we got ours to under four hours.'],
+  ['p68', 'wb', 'nia', 'scheduled', '11-12 11:00', 'ig pin th', 'wild-dropper', 'Slow skin: three drops, warm palms, press — don’t rub.'],
+  ['p17', 'eo', 'camila', 'scheduled', '11-12 12:30', 'ig fb tt', 'ember-pour', 'New harvest from Huila just landed. Bright, red-apple sweet, and roasted Tuesday. Bags go out Thursday ☕'],
+  ['p34', 'hh', 'haruto', 'scheduled', '11-12 19:30', 'ig pin fb yt', 'hollow-throw', 'Three ways to style a reading corner with one chair and one good lamp.'],
+  ['p51', 'vg', 'malik', 'scheduled', '11-12 19:30', 'ig yt x', 'vantage-drive', 'Wheels off, barrels done, balanced to the gram. Nobody sees it. We do.'],
 ]
 
 /* Lifetime metrics of every published post, as the reference stores them:
@@ -173,8 +185,11 @@ const posts: Post[] = POSTS.map(([id, brandId, authorId, status, when, nets, ima
   status,
   scheduledAt: `2026-${when.replace(' ', 'T')}:00Z`,
   networks: nets.split(' ').map((n) => NET[n]),
-  image: image ?? undefined,
+  media: image ? [image, ...(POST_EXTRAS[id].more ?? [])] : [],
   text,
+  createdAt: `${POST_EXTRAS[id].created.slice(0, -1)}:00Z`,
+  reviews: POST_EXTRAS[id].reviews.map(([by, at, decision, note]) => ({ by, at: `${at.slice(0, -1)}:00Z`, decision, ...(note && { note }) })),
+  ...(POST_EXTRAS[id].campaign && { campaignId: POST_EXTRAS[id].campaign }),
   ...(status === 'published' && { metrics: metricsFor(id) }),
   ...(id === 'p89' && {
     failure: { network: 'facebook' as const, code: 'disconnected' as const },
@@ -335,16 +350,42 @@ export const workspace: Workspace = {
     { id: 'cp3', brandId: 'vg', name: 'November bookings', start: '2026-10-24', end: '2026-11-13' },
     { id: 'cp4', brandId: 'wb', name: 'Spring Ritual launch', start: '2026-10-10', end: '2026-11-08' },
   ],
+  /* The 12 people on the reference team (one invite still pending) and its seven roles. */
   team: [
-    { id: 'camila', name: 'Camila Ortiz', role: 'Owner', avatar: avatar('camila'), title: 'Founder', brands: 'all', email: 'camila@northlight.studio' },
-    { id: 'malik', name: 'Malik Johnson', role: 'Admin', avatar: avatar('malik'), title: 'Operations lead', brands: 'all', email: 'malik@northlight.studio' },
-    { id: 'elise', name: 'Elise Marchand', role: 'Manager', avatar: avatar('elise'), title: 'Account manager', brands: ['eo', 'wb', 'ns'], email: 'elise@northlight.studio' },
-    { id: 'haruto', name: 'Haruto Sato', role: 'Manager', avatar: avatar('haruto'), title: 'Account manager', brands: ['vg', 'hh'], email: 'haruto@northlight.studio' },
-    { id: 'nia', name: 'Nia Okoro', role: 'Editor', avatar: avatar('nia'), title: 'Content creator', brands: ['eo', 'wb'], email: 'nia@northlight.studio' },
-    { id: 'omar', name: 'Omar Saleh', role: 'Editor', avatar: avatar('omar'), title: 'Video editor', brands: ['vg', 'hh'], email: 'omar@northlight.studio' },
-    { id: 'freya', name: 'Freya Nilsen', role: 'Editor', avatar: avatar('freya'), title: 'Copywriter', brands: 'all', email: 'freya@northlight.studio' },
-    { id: 'ines', name: 'Ines Duarte', role: 'Community', avatar: avatar('ines'), title: 'Community manager', brands: 'all', email: 'ines@northlight.studio' },
+    { id: 'camila', name: 'Camila Ortiz', role: 'owner', avatar: avatar('camila'), title: 'Founder', brands: 'all', email: 'camila@northlight.studio', status: 'active', mfa: true, joinedAt: '2025-02-22T00:00:00Z', lastActiveAt: minutesBefore(0) },
+    { id: 'malik', name: 'Malik Johnson', role: 'admin', avatar: avatar('malik'), title: 'Operations lead', brands: 'all', email: 'malik@northlight.studio', status: 'active', mfa: true, joinedAt: '2026-04-13T00:00:00Z', lastActiveAt: minutesBefore(1148) },
+    { id: 'elise', name: 'Elise Marchand', role: 'manager', avatar: avatar('elise'), title: 'Account manager', brands: ['eo', 'wb', 'ns'], email: 'elise@northlight.studio', status: 'active', mfa: true, joinedAt: '2024-09-26T00:00:00Z', lastActiveAt: minutesBefore(785) },
+    { id: 'haruto', name: 'Haruto Sato', role: 'manager', avatar: avatar('haruto'), title: 'Account manager', brands: ['vg', 'hh'], email: 'haruto@northlight.studio', status: 'active', mfa: true, joinedAt: '2025-04-30T00:00:00Z', lastActiveAt: minutesBefore(163) },
+    { id: 'nia', name: 'Nia Okoro', role: 'editor', avatar: avatar('nia'), title: 'Content creator', brands: ['eo', 'wb'], email: 'nia@northlight.studio', status: 'active', mfa: true, joinedAt: '2024-05-16T00:00:00Z', lastActiveAt: minutesBefore(48) },
+    { id: 'omar', name: 'Omar Saleh', role: 'editor', avatar: avatar('omar'), title: 'Video editor', brands: ['vg', 'hh'], email: 'omar@northlight.studio', status: 'active', mfa: true, joinedAt: '2025-12-14T00:00:00Z', lastActiveAt: minutesBefore(311) },
+    { id: 'freya', name: 'Freya Nilsen', role: 'editor', avatar: avatar('freya'), title: 'Copywriter', brands: 'all', email: 'freya@northlight.studio', status: 'active', mfa: false, joinedAt: '2024-11-15T00:00:00Z', lastActiveAt: minutesBefore(897) },
+    { id: 'ines', name: 'Ines Duarte', role: 'community', avatar: avatar('ines'), title: 'Community manager', brands: 'all', email: 'ines@northlight.studio', status: 'active', mfa: true, joinedAt: '2026-04-28T00:00:00Z', lastActiveAt: minutesBefore(1397) },
+    { id: 'lin', name: 'Lin Zhao', role: 'analyst', avatar: avatar('lin'), title: 'Data analyst', brands: 'all', email: 'lin@northlight.studio', status: 'active', mfa: false, joinedAt: '2024-08-01T00:00:00Z', lastActiveAt: minutesBefore(782) },
+    { id: 'kwame', name: 'Kwame Asante', role: 'client', avatar: avatar('kwame'), title: 'Owner, Vantage Garage', brands: ['vg'], email: 'kwame@northlight.studio', status: 'active', mfa: false, joinedAt: '2026-04-08T00:00:00Z', lastActiveAt: minutesBefore(1776) },
+    { id: 'peter', name: 'Peter Lund', role: 'client', avatar: avatar('peter'), title: 'Marketing, Hollow Home', brands: ['hh'], email: 'peter@northlight.studio', status: 'active', mfa: false, joinedAt: '2025-02-19T00:00:00Z', lastActiveAt: minutesBefore(1241) },
+    { id: 'sara', name: 'Sara Whitfield', role: 'editor', title: 'Freelance designer', brands: ['eo'], email: 'sara@northlight.studio', status: 'invited', mfa: true, joinedAt: '2026-09-04T00:00:00Z' },
   ],
+  roles: [
+    { id: 'owner', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage', 'channels.manage', 'team.manage', 'billing.manage', 'settings.manage'], tone: 'ink', system: true },
+    { id: 'admin', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage', 'channels.manage', 'team.manage', 'settings.manage'], tone: 'sea', system: true },
+    { id: 'manager', perms: ['post.create', 'post.publish', 'post.approve', 'post.delete', 'calendar.edit', 'inbox.reply', 'inbox.assign', 'analytics.view', 'analytics.export', 'listening.manage', 'library.manage'], tone: 'pine', system: true },
+    { id: 'editor', perms: ['post.create', 'calendar.edit', 'inbox.reply', 'analytics.view', 'library.manage'], tone: 'butter', system: true },
+    { id: 'community', perms: ['inbox.reply', 'inbox.assign', 'analytics.view'], tone: 'lilac', system: true },
+    { id: 'analyst', perms: ['analytics.view', 'analytics.export', 'listening.manage'], tone: 'plain', system: true },
+    { id: 'client', perms: ['post.approve', 'analytics.view'], tone: 'coral', system: true },
+  ],
+  settings: {
+    name: 'Northlight Studio',
+    weekStart: 1,
+    approval: 'perm',
+    shortenLinks: true,
+    utm: true,
+    utmSource: 'kataru',
+    notify: { approvals: true, mentions: true, failures: true, digest: false },
+    plan: 'agency',
+    seats: 15,
+    requireMfa: false,
+  },
   /* The 19 connected accounts, in the order the reference lists them. */
   channels: [
     { id: 'ch-eo-ig', brandId: 'eo', network: 'instagram', handle: '@emberandoak', followers: 48210, status: 'connected' },
@@ -385,35 +426,46 @@ export const workspace: Workspace = {
   keywords,
   mentions,
   competitors,
-  media: (
-    [
-      ['eo', 'ember-latte', 'Latte art, close'],
-      ['eo', 'ember-pour', 'Milk pour'],
-      ['eo', 'ember-roastery', 'The roastery'],
-      ['eo', 'ember-shot', 'Espresso pull'],
-      ['eo', 'ember-weigh', 'Weighing the dose'],
-      ['hh', 'hollow-chair', 'Bouclé lounge chair'],
-      ['hh', 'hollow-lamp', 'Pleat table lamp'],
-      ['hh', 'hollow-throw', 'Wool throw'],
-      ['hh', 'hollow-sofa', 'Friends on the Låg sofa'],
-      ['hh', 'hollow-detail', 'Oak side table'],
-      ['hh', 'hollow-room', 'Reading corner'],
-      ['hh', 'hollow-living', 'Living room, full set'],
-      ['vg', 'vantage-gauge', 'Redline'],
-      ['vg', 'vantage-wheel', 'Fresh ceramic coat'],
-      ['vg', 'vantage-night', 'Parking deck reveal'],
-      ['vg', 'vantage-lift', 'Wheel balancing'],
-      ['vg', 'vantage-drive', 'Delivery drive'],
-      ['vg', 'vantage-engine', 'Engine bay detail'],
-      ['wb', 'wild-daisy', 'Daisy bath'],
-      ['wb', 'wild-dried', 'Dried botanicals'],
-      ['wb', 'wild-dropper', 'Facial oil drop'],
-      ['wb', 'wild-petals', 'Rose petals'],
-      ['wb', 'wild-bloom', 'Rose & jasmine'],
-      ['wb', 'wild-vials', 'Tincture vials'],
-      ['wb', 'wild-golden', 'Golden hour dropper'],
-    ] as const
-  ).map(([brandId, seed, title]) => ({ brandId, seed, title })),
+  /* The brand libraries: photos with their tags, stars and who added them, caption templates and hashtag sets. */
+  media: [
+    { seed: 'ember-latte', brandId: 'eo', title: 'Latte art, close', tags: ['latte', 'cafe'], starred: true, width: 900, height: 603, addedAt: '2026-10-02T00:00:00Z', addedBy: 'freya' },
+    { seed: 'ember-pour', brandId: 'eo', title: 'Milk pour', tags: ['latte', 'process'], width: 725, height: 900, addedAt: '2026-10-19T00:00:00Z', addedBy: 'elise' },
+    { seed: 'ember-roastery', brandId: 'eo', title: 'The roastery', tags: ['roastery', 'behind the scenes'], width: 900, height: 502, addedAt: '2026-08-16T00:00:00Z', addedBy: 'freya' },
+    { seed: 'ember-shot', brandId: 'eo', title: 'Espresso pull', tags: ['espresso', 'process'], width: 725, height: 900, addedAt: '2026-10-21T00:00:00Z', addedBy: 'omar' },
+    { seed: 'ember-weigh', brandId: 'eo', title: 'Weighing the dose', tags: ['process', 'beans'], width: 725, height: 900, addedAt: '2026-09-18T00:00:00Z', addedBy: 'nia' },
+    { seed: 'hollow-chair', brandId: 'hh', title: 'Bouclé lounge chair', tags: ['product', 'chair'], starred: true, width: 720, height: 900, addedAt: '2026-08-23T00:00:00Z', addedBy: 'omar' },
+    { seed: 'hollow-lamp', brandId: 'hh', title: 'Pleat table lamp', tags: ['product', 'lighting'], width: 720, height: 900, addedAt: '2026-08-23T00:00:00Z', addedBy: 'omar' },
+    { seed: 'hollow-throw', brandId: 'hh', title: 'Wool throw', tags: ['product', 'textiles'], width: 720, height: 900, addedAt: '2026-09-20T00:00:00Z', addedBy: 'omar' },
+    { seed: 'hollow-sofa', brandId: 'hh', title: 'Friends on the Låg sofa', tags: ['lifestyle', 'sofa'], width: 900, height: 600, addedAt: '2026-10-04T00:00:00Z', addedBy: 'freya' },
+    { seed: 'hollow-detail', brandId: 'hh', title: 'Oak side table', tags: ['product', 'detail'], width: 900, height: 900, addedAt: '2026-08-29T00:00:00Z', addedBy: 'omar' },
+    { seed: 'hollow-room', brandId: 'hh', title: 'Reading corner', tags: ['interior', 'chair'], width: 720, height: 900, addedAt: '2026-10-26T00:00:00Z', addedBy: 'elise' },
+    { seed: 'hollow-living', brandId: 'hh', title: 'Living room, full set', tags: ['interior', 'campaign'], width: 900, height: 600, addedAt: '2026-09-13T00:00:00Z', addedBy: 'elise' },
+    { seed: 'vantage-gauge', brandId: 'vg', title: 'Redline', tags: ['detail', 'night'], starred: true, width: 720, height: 900, addedAt: '2026-10-24T00:00:00Z', addedBy: 'nia' },
+    { seed: 'vantage-wheel', brandId: 'vg', title: 'Fresh ceramic coat', tags: ['wheels', 'detail'], width: 900, height: 675, addedAt: '2026-08-19T00:00:00Z', addedBy: 'elise' },
+    { seed: 'vantage-night', brandId: 'vg', title: 'Parking deck reveal', tags: ['reveal', 'night'], width: 900, height: 675, addedAt: '2026-08-18T00:00:00Z', addedBy: 'freya' },
+    { seed: 'vantage-lift', brandId: 'vg', title: 'Wheel balancing', tags: ['workshop', 'wheels'], width: 720, height: 900, addedAt: '2026-09-07T00:00:00Z', addedBy: 'omar' },
+    { seed: 'vantage-drive', brandId: 'vg', title: 'Delivery drive', tags: ['customer', 'drive'], width: 720, height: 900, addedAt: '2026-09-01T00:00:00Z', addedBy: 'freya' },
+    { seed: 'vantage-engine', brandId: 'vg', title: 'Engine bay detail', tags: ['workshop', 'engine'], width: 900, height: 675, addedAt: '2026-09-10T00:00:00Z', addedBy: 'freya' },
+    { seed: 'wild-daisy', brandId: 'wb', title: 'Daisy bath', tags: ['ritual', 'flowers'], starred: true, width: 900, height: 599, addedAt: '2026-09-16T00:00:00Z', addedBy: 'freya' },
+    { seed: 'wild-dried', brandId: 'wb', title: 'Dried botanicals', tags: ['ingredients', 'flatlay'], width: 600, height: 900, addedAt: '2026-09-30T00:00:00Z', addedBy: 'omar' },
+    { seed: 'wild-dropper', brandId: 'wb', title: 'Facial oil drop', tags: ['product', 'oil'], width: 900, height: 599, addedAt: '2026-08-17T00:00:00Z', addedBy: 'nia' },
+    { seed: 'wild-petals', brandId: 'wb', title: 'Rose petals', tags: ['ingredients'], width: 600, height: 900, addedAt: '2026-09-27T00:00:00Z', addedBy: 'nia' },
+    { seed: 'wild-bloom', brandId: 'wb', title: 'Rose & jasmine', tags: ['ingredients', 'flowers'], width: 671, height: 900, addedAt: '2026-10-11T00:00:00Z', addedBy: 'freya' },
+    { seed: 'wild-vials', brandId: 'wb', title: 'Tincture vials', tags: ['product', 'lab'], width: 900, height: 596, addedAt: '2026-08-22T00:00:00Z', addedBy: 'omar' },
+    { seed: 'wild-golden', brandId: 'wb', title: 'Golden hour dropper', tags: ['product', 'campaign'], width: 599, height: 900, addedAt: '2026-10-14T00:00:00Z', addedBy: 'nia' },
+  ],
+  templates: [
+    { id: 't1', brandId: null, name: 'Launch countdown', text: "In {days} days: {product}. Turn on notifications so you’re first in line." },
+    { id: 't2', brandId: null, name: 'Giveaway rules', text: "GIVEAWAY 🎁 Win {prize}.\n1. Follow {handle}\n2. Like this post\n3. Tag a friend\nEnds {date}. Worldwide." },
+    { id: 't3', brandId: 'vg', name: 'Before / after', text: "Before → after. {service} on a {car}. {hours} hours in the bay." },
+    { id: 't4', brandId: 'eo', name: 'New origin', text: "New in: {origin}. Tastes like {notes}. Roasted {day}, ships {ship}." },
+  ],
+  hashtagSets: [
+    { id: 'h1', brandId: 'eo', name: 'Coffee core', tags: ['#specialtycoffee', '#slowcoffee', '#portlandcoffee', '#pourover', '#coffeeroasters'] },
+    { id: 'h2', brandId: 'hh', name: 'Interiors', tags: ['#scandihome', '#interiordesign', '#slowliving', '#boucle', '#danishdesign'] },
+    { id: 'h3', brandId: 'vg', name: 'Detailing', tags: ['#ceramiccoating', '#paintcorrection', '#detailing', '#carsofinstagram', '#austincars'] },
+    { id: 'h4', brandId: 'wb', name: 'Skin rituals', tags: ['#cleanbeauty', '#botanicalskincare', '#facialoil', '#selfcareritual', '#lisbon'] },
+  ],
   savedReplies: [
     { id: 'sr1', title: 'Thanks!', text: 'Thank you so much — that means a lot to the whole team 🧡' },
     { id: 'sr2', title: 'Shipping', text: 'We ship worldwide! Orders leave within 2 working days and you’ll get tracking by email.' },
@@ -433,8 +485,8 @@ export const workspace: Workspace = {
     { id: 'au1', actorId: 'elise', kind: 'approval', action: { type: 'approved', excerpt: 'New harvest from Huila…', brandId: 'eo' }, at: minutesBefore(14) },
     { id: 'au2', actorId: 'malik', kind: 'channel', action: { type: 'reconnected', brandId: 'hh', network: 'pinterest' }, at: minutesBefore(2 * 60) },
     { id: 'au3', actorId: 'haruto', kind: 'review', action: { type: 'requestedChanges', brandId: 'vg' }, at: minutesBefore(5 * 60) },
-    { id: 'au4', actorId: 'camila', kind: 'member', action: { type: 'invited', name: 'Sara Whitfield', role: 'Editor' }, at: minutesBefore(7 * 60) },
-    { id: 'au5', actorId: 'malik', kind: 'permission', action: { type: 'grantedPermission', role: 'Community', permission: 'assignConversations' }, at: minutesBefore(9 * 60) },
+    { id: 'au4', actorId: 'camila', kind: 'member', action: { type: 'invited', name: 'Sara Whitfield', role: 'editor' }, at: minutesBefore(7 * 60) },
+    { id: 'au5', actorId: 'malik', kind: 'permission', action: { type: 'grantedPermission', role: 'community', permission: 'inbox.assign' }, at: minutesBefore(9 * 60) },
     { id: 'au6', actorId: 'omar', kind: 'schedule', action: { type: 'scheduled', count: 3, brandId: 'vg' }, at: minutesBefore(11 * 60) },
     { id: 'au7', actorId: 'ines', kind: 'inbox', action: { type: 'closedConversations', count: 14 }, at: minutesBefore(13 * 60) },
   ],

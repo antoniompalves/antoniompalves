@@ -21,7 +21,37 @@ export type NetworkId =
 /** Semantic colour roles used for badges, chips, brand marks and meters. */
 export type Tone = 'butter' | 'pine' | 'coral' | 'sea' | 'lilac' | 'ink' | 'plain'
 
-export type Role = 'Owner' | 'Admin' | 'Manager' | 'Editor' | 'Contributor' | 'Community' | 'Analyst'
+/** The seven roles every workspace starts with; teams can add their own (named) roles too. */
+export type SystemRole = 'owner' | 'admin' | 'manager' | 'editor' | 'community' | 'analyst' | 'client'
+
+/** What a role lets people do (the Team page's permission matrix). */
+export type Permission =
+  | 'post.create'
+  | 'post.publish'
+  | 'post.approve'
+  | 'post.delete'
+  | 'calendar.edit'
+  | 'inbox.reply'
+  | 'inbox.assign'
+  | 'analytics.view'
+  | 'analytics.export'
+  | 'listening.manage'
+  | 'library.manage'
+  | 'channels.manage'
+  | 'team.manage'
+  | 'billing.manage'
+  | 'settings.manage'
+
+export interface RoleDef {
+  /** A SystemRole, or a generated id for a role the team added. */
+  id: string
+  /** Only for added roles; system roles are named by the catalogues. */
+  name?: string
+  description?: string
+  perms: Permission[]
+  tone: Tone
+  system: boolean
+}
 
 export interface Brand {
   id: string
@@ -45,14 +75,22 @@ export interface Campaign {
 export interface TeamMember {
   id: string
   name: string
-  role: Role
-  avatar: string
+  /** RoleDef id. */
+  role: string
+  /** Missing for people without a photo (and invites): tinted initials instead. */
+  avatar?: string
   /** Job title shown when they're assigned a conversation. */
   title?: string
   /** Brands they work on; only these teammates are offered when assigning a conversation. */
   brands: string[] | 'all'
   /** Where scheduled reports are sent. */
   email: string
+  status: 'active' | 'invited' | 'suspended'
+  /** Two-factor sign-in turned on. */
+  mfa: boolean
+  joinedAt: ISODate
+  /** Missing until they first sign in. */
+  lastActiveAt?: ISODate
 }
 
 export type ChannelStatus = 'connected' | 'expiring' | 'disconnected'
@@ -106,17 +144,33 @@ export interface PostMetrics {
   views: number
 }
 
+/** One step of a post's sign-off: sent for approval, approved, or sent back with a note. */
+export interface Review {
+  /** Team member id. */
+  by: string
+  at: ISODate
+  decision: 'submitted' | 'approved' | 'changes'
+  note?: string
+}
+
 export interface Post {
   id: string
   brandId: string
   authorId: string
   text: string
-  /** Photo seed (see assets.ts); posts without media render their brand mark. */
-  image?: string
+  /** Photo seeds in order (see assets.ts), up to 10; posts without media render their brand mark. */
+  media: string[]
   networks: NetworkId[]
   status: PostStatus
   /** Publish time; for drafts, the time they are pencilled in for. */
   scheduledAt: ISODate
+  /** When it was started. */
+  createdAt: ISODate
+  reviews: Review[]
+  campaignId?: string
+  /** Instagram only: posted as the first comment, right after the post. */
+  firstComment?: string
+  link?: string
   metrics?: PostMetrics
   /** Why publishing failed; the UI words it per language. */
   failure?: { network: NetworkId; code: 'disconnected' }
@@ -177,6 +231,51 @@ export interface MediaAsset {
   seed: string
   brandId: string
   title: string
+  tags: string[]
+  starred?: boolean
+  width: number
+  height: number
+  addedAt: ISODate
+  /** Team member id. */
+  addedBy: string
+}
+
+/** A caption to start from; `{product}`-style slots are filled in by hand. */
+export interface Template {
+  id: string
+  /** Null: every brand can use it. */
+  brandId: string | null
+  name: string
+  text: string
+}
+
+/** Hashtags a brand always uses, added in one tap. */
+export interface HashtagSet {
+  id: string
+  brandId: string
+  name: string
+  tags: string[]
+}
+
+/**
+ * Who needs a second pair of eyes: nobody ('off'), people whose role lacks
+ * "Publish without approval" ('perm'), or everyone but owners and admins ('all').
+ */
+export type ApprovalRule = 'off' | 'perm' | 'all'
+
+export interface WorkspaceSettings {
+  name: string
+  /** 1 = weeks start on Monday. */
+  weekStart: 0 | 1
+  approval: ApprovalRule
+  shortenLinks: boolean
+  /** Tag links in posts with utm_source / utm_medium / utm_campaign. */
+  utm: boolean
+  utmSource: string
+  notify: { approvals: boolean; mentions: boolean; failures: boolean; digest: boolean }
+  plan: 'starter' | 'growth' | 'agency'
+  seats: number
+  requireMfa: boolean
 }
 
 export interface SavedReply {
@@ -187,7 +286,6 @@ export interface SavedReply {
 
 export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox' | 'listening'
 
-export type Permission = 'assignConversations'
 
 /** An analytics report emailed on a schedule. */
 export interface ScheduledReport {
@@ -204,8 +302,8 @@ export type AuditAction =
   | { type: 'approved'; excerpt: string; brandId: string }
   | { type: 'reconnected'; brandId: string; network: NetworkId }
   | { type: 'requestedChanges'; brandId: string }
-  | { type: 'invited'; name: string; role: Role }
-  | { type: 'grantedPermission'; role: Role; permission: Permission }
+  | { type: 'invited'; name: string; role: string }
+  | { type: 'grantedPermission'; role: string; permission: Permission }
   | { type: 'scheduled'; count: number; brandId: string }
   | { type: 'closedConversations'; count: number }
   | { type: 'trackedKeyword'; term: string; brandId: string }
@@ -297,6 +395,8 @@ export interface Workspace {
   brands: Brand[]
   campaigns: Campaign[]
   team: TeamMember[]
+  roles: RoleDef[]
+  settings: WorkspaceSettings
   channels: Channel[]
   websites: Website[]
   posts: Post[]
@@ -314,6 +414,8 @@ export interface Workspace {
   competitors: Competitor[]
   savedReplies: SavedReply[]
   media: MediaAsset[]
+  templates: Template[]
+  hashtagSets: HashtagSet[]
   todos: TodoItem[]
   audit: AuditEvent[]
   notifications: { unread: number }

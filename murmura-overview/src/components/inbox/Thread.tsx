@@ -28,7 +28,7 @@ import {
 import type { Brand, Conversation, MediaAsset, Message, Post, SavedReply, Sentiment, TeamMember } from '../../data/types'
 import { NETWORK_LABEL } from '../../data/selectors'
 import { useI18n } from '../../i18n'
-import { photo } from '../../data/assets'
+import { coverPhoto, photo } from '../../data/assets'
 import { MenuDivider, MenuItem, Popover } from '../Popover'
 import { Avatar, cn } from '../ui'
 import { Face } from './ConversationList'
@@ -277,7 +277,7 @@ export function Thread(props: ThreadProps) {
           className="relative z-[2] flex w-full shrink-0 cursor-pointer items-center gap-2.5 border-b border-line bg-ib-bar px-3.5 py-1.5 text-left before:my-0.5 before:w-[3px] before:shrink-0 before:self-stretch before:rounded-[3px] before:bg-sea before:content-[''] hover:bg-float"
         >
           <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[7px] bg-well">
-            {post.image && <img src={photo(post.image, 96)} alt="" className="size-full object-cover" />}
+            {post.media.length > 0 && <img src={coverPhoto(post, 96)} alt="" className="size-full object-cover" />}
           </span>
           <span className="grid min-w-0 flex-1">
             <small className="text-[12.5px] font-bold text-ib-acc-text">

@@ -5,7 +5,7 @@ import type { Brand, Conversation, Post, Sentiment, TeamMember } from '../../dat
 import { lastMessage } from '../../data/inbox'
 import { NETWORK_LABEL, clip } from '../../data/selectors'
 import { useI18n } from '../../i18n'
-import { photo } from '../../data/assets'
+import { coverPhoto } from '../../data/assets'
 import { Avatar, BrandMark, Button, NetIcon, cn } from '../ui'
 import { Face, KIND_ICON } from './ConversationList'
 import { AssignMenu, ibIc } from './Thread'
@@ -220,7 +220,7 @@ export function ContactInfo(props: ContactInfoProps) {
           <Section title={t.inbox.onThisPost}>
             <button type="button" onClick={props.onOpenPost} className="flex w-full cursor-pointer items-center gap-3 text-left text-2xs text-muted">
               <span className="size-[72px] shrink-0 overflow-hidden rounded-xl bg-well">
-                {post.image && <img src={photo(post.image, 160)} alt="" className="size-full object-cover" />}
+                {post.media.length > 0 && <img src={coverPhoto(post, 160)} alt="" className="size-full object-cover" />}
               </span>
               <span>{clip(post.text, 88)}</span>
             </button>

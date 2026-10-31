@@ -15,6 +15,7 @@ import type { Messages } from '../i18n'
 import type { Conversation, Message, Sentiment } from '../data/types'
 import { cn } from '../components/ui'
 import { useMediaQuery } from '../components/useMediaQuery'
+import { can, seesBrand } from '../data/permissions'
 
 const EMPTY_DRAFT: Draft = { text: '', note: false }
 
@@ -54,7 +55,8 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   const currentId = hash.split('/')[2] || null
   const current = currentId ? ws.conversations.find((c) => c.id === currentId) : undefined
   // Only teammates who work on the conversation's brand can take it; you come first.
-  const assignable = current ? [me, ...ws.team.filter((m) => m.id !== me.id && (m.brands === 'all' || m.brands.includes(current.brandId)))] : []
+  // People who can answer the inbox for this brand (not analysts, clients or pending invites).
+  const assignable = current ? [me, ...ws.team.filter((m) => m.id !== me.id && seesBrand(m, current.brandId) && can(ws, m.id, 'inbox.reply'))] : []
 
   // On wide screens a conversation is always open, as in the reference, unless one was just marked unread.
   const parked = useRef(false)

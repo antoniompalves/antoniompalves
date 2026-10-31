@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import type { AuditAction, ConversationKind, KeywordKind, NetworkId, Permission, PostStatus, Role, Sentiment } from '../data/types'
+import type { AuditAction, ConversationKind, KeywordKind, NetworkId, Permission, PostStatus, Sentiment, SystemRole } from '../data/types'
+import type { PermissionGroup } from '../data/permissions'
 import { dayDiff, num, splitMinutes, utc } from './format'
 
 /**
@@ -29,17 +30,53 @@ const STATUS: Record<PostStatus, string> = {
   failed: 'Failed',
 }
 
-const ROLES: Record<Role, string> = {
-  Owner: 'Owner',
-  Admin: 'Admin',
-  Manager: 'Manager',
-  Editor: 'Editor',
-  Contributor: 'Contributor',
-  Community: 'Community',
-  Analyst: 'Analyst',
+const ROLES: Record<SystemRole, string> = {
+  owner: 'Owner',
+  admin: 'Admin',
+  manager: 'Manager',
+  editor: 'Editor',
+  community: 'Community',
+  analyst: 'Analyst',
+  client: 'Client',
 }
 
-const PERMISSIONS: Record<Permission, string> = { assignConversations: 'Assign conversations' }
+const ROLE_DESCRIPTIONS: Record<SystemRole, string> = {
+  owner: 'Full control, including billing. Cannot be edited.',
+  admin: 'Runs the workspace: team, roles, channels and settings.',
+  manager: 'Publishes and approves for the brands they look after.',
+  editor: 'Writes posts; every post goes to a manager for approval.',
+  community: 'Answers the inbox and hands conversations on.',
+  analyst: 'Reads every report and runs listening. Cannot post.',
+  client: 'Your client: reviews and approves their own brand’s posts.',
+}
+
+const PERMISSIONS: Record<Permission, { label: string; hint: string }> = {
+  'post.create': { label: 'Write posts', hint: 'Draft posts and send them for approval' },
+  'post.publish': { label: 'Publish without approval', hint: 'Schedule or publish straight away' },
+  'post.approve': { label: 'Approve posts', hint: 'Approve or send back other people’s posts' },
+  'post.delete': { label: 'Delete posts', hint: 'Remove scheduled and published posts' },
+  'calendar.edit': { label: 'Reschedule', hint: 'Drag posts to a new time on the calendar' },
+  'inbox.reply': { label: 'Reply in inbox', hint: 'Answer comments, messages and mentions' },
+  'inbox.assign': { label: 'Assign conversations', hint: 'Hand conversations to teammates' },
+  'analytics.view': { label: 'View analytics', hint: 'See reports and post performance' },
+  'analytics.export': { label: 'Export reports', hint: 'Download CSV and PDF reports' },
+  'listening.manage': { label: 'Manage listening', hint: 'Add and remove tracked keywords' },
+  'library.manage': { label: 'Manage library', hint: 'Upload, tag and delete media and templates' },
+  'channels.manage': { label: 'Connect channels', hint: 'Connect, reconnect and remove social accounts' },
+  'team.manage': { label: 'Manage team & roles', hint: 'Invite people, change roles and permissions' },
+  'billing.manage': { label: 'Billing', hint: 'Change plan, seats and payment details' },
+  'settings.manage': { label: 'Workspace settings', hint: 'Approval rules, time zone, branding' },
+}
+
+const PERMISSION_GROUPS: Record<PermissionGroup, string> = {
+  publishing: 'Publishing',
+  engagement: 'Engagement',
+  insights: 'Insights',
+  content: 'Content',
+  admin: 'Admin',
+}
+
+const role = (id: string) => ROLES[id as SystemRole] ?? id
 
 const KINDS: Record<ConversationKind, { one: string; many: string }> = {
   comment: { one: 'Comment', many: 'Comments' },
@@ -171,6 +208,9 @@ export const en = {
 
   status: STATUS,
   roles: ROLES,
+  roleDescriptions: ROLE_DESCRIPTIONS,
+  permissions: PERMISSIONS,
+  permissionGroups: PERMISSION_GROUPS,
   kinds: KINDS,
   sentiment: SENTIMENT,
 
@@ -286,9 +326,9 @@ export const en = {
       case 'requestedChanges':
         return `requested changes on a ${brand(a.brandId)} post`
       case 'invited':
-        return `invited ${a.name} as ${ROLES[a.role]}`
+        return `invited ${a.name} as ${role(a.role)}`
       case 'grantedPermission':
-        return `gave ${ROLES[a.role]} the “${PERMISSIONS[a.permission]}” permission`
+        return `gave ${role(a.role)} the “${PERMISSIONS[a.permission].label}” permission`
       case 'scheduled':
         return `scheduled ${plural(a.count, 'post', 'posts')} for ${brand(a.brandId)}`
       case 'closedConversations':

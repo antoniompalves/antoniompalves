@@ -38,7 +38,7 @@ import {
   cn,
   toneFill,
 } from '../components/ui'
-import { photo } from '../data/assets'
+import { coverPhoto } from '../data/assets'
 import type { AuditKind } from '../data/types'
 import type { GrowthRange, OverviewModel } from '../data/selectors'
 import { NETWORK_LABEL, NETWORK_ORDER, STATUS_TONE, clip } from '../data/selectors'
@@ -122,7 +122,7 @@ function UpNext({ model, now, className }: SectionProps & { now: Date }) {
       {hero && (
         <article className="grid h-[clamp(250px,20vw,290px)] grid-cols-[clamp(170px,30%,250px)_minmax(0,1fr)] items-stretch gap-5 rounded-tile bg-ink p-3.5 text-on-ink max-[600px]:h-auto max-[600px]:grid-cols-1 max-[600px]:gap-3.5 max-[600px]:p-3">
           <button type="button" aria-label={t.overview.openPost} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-white/6 max-[600px]:aspect-video">
-            {hero.image && <img src={photo(hero.image, 600)} alt="" className="absolute inset-0 size-full object-cover" />}
+            {hero.media.length > 0 && <img src={coverPhoto(hero, 600)} alt="" className="absolute inset-0 size-full object-cover" />}
           </button>
           <div className="flex min-w-0 flex-col gap-2 pb-0.5 pr-1.5 pt-1.5">
             <p className="flex min-w-0 items-center gap-[9px] text-xs font-semibold">
@@ -162,7 +162,7 @@ function UpNext({ model, now, className }: SectionProps & { now: Date }) {
               type="button"
               className="flex w-full cursor-pointer items-center gap-[11px] rounded-[18px] border border-line bg-glass-2 p-2 text-left transition-colors hover:bg-glass-3"
             >
-              <Thumb src={p.image && photo(p.image, 120)} className="size-[50px] rounded-[13px]" />
+              <Thumb src={coverPhoto(p, 120)} className="size-[50px] rounded-[13px]" />
               <span className="min-w-0 flex-1">
                 <b className="block truncate text-xs font-semibold">{clip(p.text, 43)}</b>
                 <small className="block text-2xs text-muted">
@@ -200,7 +200,7 @@ function NeedsYou({ model, className }: SectionProps) {
             className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 rounded-[18px] border border-line bg-glass-2 p-3 [grid-template-areas:'ico_txt'_'ico_act']"
           >
             <span className="[grid-area:ico]">
-              {todo.kind === 'approval' && <Thumb src={todo.post?.image && photo(todo.post.image, 120)} className="size-11 rounded-[13px]" />}
+              {todo.kind === 'approval' && <Thumb src={todo.post && coverPhoto(todo.post, 120)} className="size-11 rounded-[13px]" />}
               {todo.kind === 'failed_post' && (
                 <span className={cn('grid size-10 place-items-center rounded-[13px]', toneFill.coral)}>
                   <TriangleAlert size={19} aria-hidden />
@@ -317,7 +317,7 @@ function TopPost({ model, className }: SectionProps) {
           aria-label={t.overview.openTopPost}
           className="relative block min-h-[300px] w-full flex-1 cursor-pointer overflow-hidden rounded-tile text-left text-[#f6f7f5] max-desk:min-h-[320px]"
         >
-          {p.image && <img src={photo(p.image, 900)} alt="" className="absolute inset-0 size-full object-cover" />}
+          {p.media.length > 0 && <img src={coverPhoto(p, 900)} alt="" className="absolute inset-0 size-full object-cover" />}
           <span className="absolute inset-0 bg-[linear-gradient(rgb(10_10_12/0)_30%,rgb(10_10_12/0.78))]" />
           <Badge tone="butter" className="absolute left-3.5 top-3.5">
             {t.overview.usualReach(t.numbers.times(p.reachVsUsual))}

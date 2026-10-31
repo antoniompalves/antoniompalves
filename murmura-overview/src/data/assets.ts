@@ -10,6 +10,9 @@ const SEED = 'murmura'
 export const photo = (seed: string, size = 720) =>
   `https://picsum.photos/seed/${SEED}-${seed}/${size}/${size}`
 
+/** A post's first photo at `size`, or undefined for text-only posts. */
+export const coverPhoto = (post: { media: string[] }, size?: number) => (post.media[0] ? photo(post.media[0], size) : undefined)
+
 export const avatar = (seed: string, size = 96) =>
   `https://i.pravatar.cc/${size}?u=${SEED}-${seed}`
 

@@ -7,6 +7,7 @@ import { ConfirmDialog, Modal } from '../Modal'
 import { MenuDivider, MenuItem, Popover } from '../Popover'
 import { useToast } from '../Toast'
 import { Avatar, Button, cn } from '../ui'
+import { can } from '../../data/permissions'
 
 /** Weekly reports go out on Mondays at 9:00, monthly ones on the 1st. */
 function nextRun(now: Date, frequency: ScheduledReport['frequency']) {
@@ -181,7 +182,7 @@ function ScheduleForm({ scope, onClose, onSchedule }: { scope: string; onClose: 
         <fieldset className="grid min-w-0 gap-2" aria-describedby={error ? 'report-error' : undefined}>
           <legend className={label}>{r.recipients}</legend>
           <div className="grid max-h-60 grid-cols-[repeat(auto-fill,minmax(min(220px,100%),1fr))] gap-1.5 overflow-auto p-0.5">
-            {ws.team.map((m) => {
+            {ws.team.filter((m) => can(ws, m.id, 'analytics.view')).map((m) => {
               const on = recipients.includes(m.id)
               return (
                 <label

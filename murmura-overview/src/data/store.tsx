@@ -11,7 +11,7 @@ export type WorkspaceAction =
   | { type: 'move'; id: string; to: string }
   | { type: 'restore'; posts: Post[] }
   | { type: 'publish'; id: string; at: string }
-  | { type: 'duplicate'; id: string; newId: string }
+  | { type: 'duplicate'; id: string; newId: string; at: string }
   | { type: 'delete'; id: string }
   | { type: 'conversation'; id: string; patch: Partial<Conversation> }
   | { type: 'send'; id: string; message: Message; close?: boolean }
@@ -43,7 +43,7 @@ function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
     case 'duplicate': {
       const source = ws.posts.find((p) => p.id === action.id)
       if (!source) return ws
-      return { ...ws, posts: [...ws.posts, { ...source, id: action.newId, status: 'draft', metrics: undefined, failure: undefined }] }
+      return { ...ws, posts: [...ws.posts, { ...source, id: action.newId, status: 'draft', createdAt: action.at, reviews: [], metrics: undefined, failure: undefined }] }
     }
     case 'delete':
       return { ...ws, posts: ws.posts.filter((p) => p.id !== action.id) }

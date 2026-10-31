@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { KataruMark } from './Logo'
 import {
   Bell,
   CalendarDays,
@@ -27,8 +26,11 @@ import {
   X,
 } from 'lucide-react'
 import type { RouteId } from '../data/routes'
+import { roleName } from '../data/permissions'
+import { useWorkspace } from '../data/store'
 import type { NavItem, TeamMember } from '../data/types'
 import { LOCALES, useI18n } from '../i18n'
+import { KataruMark } from './Logo'
 import { MenuItem, Popover } from './Popover'
 import { Avatar, IconButton, cn } from './ui'
 
@@ -178,7 +180,8 @@ function AccountButton({ user }: { user: TeamMember }) {
   const { t, locale, setLocale } = useI18n()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLButtonElement>(null)
-  const role = t.roles[user.role]
+  const { ws } = useWorkspace()
+  const role = roleName(t, ws, user.role)
   return (
     <>
       <button

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import type { AuditAction, ConversationKind, NetworkId, Permission, PostStatus, Role, Sentiment } from '../data/types'
+import type { AuditAction, ConversationKind, NetworkId, Permission, PostStatus, Sentiment, SystemRole } from '../data/types'
+import type { PermissionGroup } from '../data/permissions'
 import type { Messages } from './en'
 import { capitalize, dayDiff, num, splitMinutes, utc } from './format'
 
@@ -39,17 +40,53 @@ const STATUS: Record<PostStatus, string> = {
   failed: 'Falhou',
 }
 
-const ROLES: Record<Role, string> = {
-  Owner: 'Titular',
-  Admin: 'Administração',
-  Manager: 'Gestão',
-  Editor: 'Edição',
-  Contributor: 'Colaboração',
-  Community: 'Comunidade',
-  Analyst: 'Análise',
+const ROLES: Record<SystemRole, string> = {
+  owner: 'Titular',
+  admin: 'Administração',
+  manager: 'Gestão',
+  editor: 'Edição',
+  community: 'Comunidade',
+  analyst: 'Análise',
+  client: 'Cliente',
 }
 
-const PERMISSIONS: Record<Permission, string> = { assignConversations: 'Atribuir conversas' }
+const ROLE_DESCRIPTIONS: Record<SystemRole, string> = {
+  owner: 'Controlo total, incluindo a faturação. Não pode ser editado.',
+  admin: 'Gere o workspace: equipa, perfis, canais e definições.',
+  manager: 'Publica e aprova pelas marcas de que trata.',
+  editor: 'Escreve publicações; cada uma vai a aprovação de um gestor.',
+  community: 'Responde às mensagens e passa conversas a outros.',
+  analyst: 'Lê todos os relatórios e gere a escuta. Não publica.',
+  client: 'O seu cliente: revê e aprova as publicações da própria marca.',
+}
+
+const PERMISSIONS: Record<Permission, { label: string; hint: string }> = {
+  'post.create': { label: 'Escrever publicações', hint: 'Criar rascunhos e enviá-los para aprovação' },
+  'post.publish': { label: 'Publicar sem aprovação', hint: 'Agendar ou publicar de imediato' },
+  'post.approve': { label: 'Aprovar publicações', hint: 'Aprovar ou devolver publicações de outras pessoas' },
+  'post.delete': { label: 'Apagar publicações', hint: 'Remover publicações agendadas e publicadas' },
+  'calendar.edit': { label: 'Reagendar', hint: 'Arrastar publicações para outra hora no calendário' },
+  'inbox.reply': { label: 'Responder em Mensagens', hint: 'Responder a comentários, mensagens e menções' },
+  'inbox.assign': { label: 'Atribuir conversas', hint: 'Passar conversas a colegas' },
+  'analytics.view': { label: 'Ver análises', hint: 'Ver relatórios e o desempenho das publicações' },
+  'analytics.export': { label: 'Exportar relatórios', hint: 'Descarregar relatórios em CSV e PDF' },
+  'listening.manage': { label: 'Gerir a escuta', hint: 'Seguir e deixar de seguir palavras-chave' },
+  'library.manage': { label: 'Gerir a biblioteca', hint: 'Carregar, etiquetar e apagar media e modelos' },
+  'channels.manage': { label: 'Ligar canais', hint: 'Ligar, voltar a ligar e remover contas sociais' },
+  'team.manage': { label: 'Gerir equipa e perfis', hint: 'Convidar pessoas, mudar perfis e permissões' },
+  'billing.manage': { label: 'Faturação', hint: 'Mudar de plano, lugares e dados de pagamento' },
+  'settings.manage': { label: 'Definições do workspace', hint: 'Regras de aprovação, fuso horário, marca' },
+}
+
+const PERMISSION_GROUPS: Record<PermissionGroup, string> = {
+  publishing: 'Publicação',
+  engagement: 'Interação',
+  insights: 'Análise',
+  content: 'Conteúdo',
+  admin: 'Administração',
+}
+
+const role = (id: string) => ROLES[id as SystemRole] ?? id
 
 const KINDS: Record<ConversationKind, { one: string; many: string }> = {
   comment: { one: 'Comentário', many: 'Comentários' },
@@ -168,6 +205,9 @@ export const ptPT: Messages = {
 
   status: STATUS,
   roles: ROLES,
+  roleDescriptions: ROLE_DESCRIPTIONS,
+  permissions: PERMISSIONS,
+  permissionGroups: PERMISSION_GROUPS,
   kinds: KINDS,
   sentiment: SENTIMENT,
 
@@ -282,9 +322,9 @@ export const ptPT: Messages = {
       case 'requestedChanges':
         return `pediu alterações a uma publicação de ${brand(a.brandId)}`
       case 'invited':
-        return `convidou ${a.name} com o perfil ${ROLES[a.role]}`
+        return `convidou ${a.name} com o perfil ${role(a.role)}`
       case 'grantedPermission':
-        return `deu ao perfil ${ROLES[a.role]} a permissão “${PERMISSIONS[a.permission]}”`
+        return `deu ao perfil ${role(a.role)} a permissão “${PERMISSIONS[a.permission].label}”`
       case 'scheduled':
         return `agendou ${plural(a.count, 'publicação', 'publicações')} para ${brand(a.brandId)}`
       case 'closedConversations':

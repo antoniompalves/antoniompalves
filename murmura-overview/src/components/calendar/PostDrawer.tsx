@@ -20,7 +20,7 @@ import type { Brand, NetworkId, Post, TeamMember } from '../../data/types'
 import { NETWORK_LABEL, clip } from '../../data/selectors'
 import { engagementRate, engagements } from '../../data/analytics'
 import { useI18n } from '../../i18n'
-import { photo } from '../../data/assets'
+import { coverPhoto } from '../../data/assets'
 import { BrandMark, Button, IconButton, NetStack, PostStatusPill, Segmented, cn, toneFill } from '../ui'
 
 interface PostDrawerProps {
@@ -154,8 +154,8 @@ const TEXT_FIRST: NetworkId[] = ['x', 'threads', 'linkedin']
 
 function Media({ post, className }: { post: Post; className?: string }) {
   const { t } = useI18n()
-  return post.image ? (
-    <img src={photo(post.image, 760)} alt="" className={cn('size-full object-cover', className)} />
+  return post.media.length ? (
+    <img src={coverPhoto(post, 760)} alt="" className={cn('size-full object-cover', className)} />
   ) : (
     <span
       className={cn(
@@ -204,7 +204,7 @@ function Preview({ post, brand, network, stamp }: { post: Post; brand: Brand; ne
               <span className="text-[13px] text-muted">@{brand.handle} · {stamp}</span>
             </p>
             <p className="whitespace-normal py-1 [overflow-wrap:anywhere]">{post.text}</p>
-            {post.image && (
+            {post.media.length > 0 && (
               <div className="mb-1 aspect-[16/10] overflow-hidden rounded-2xl bg-well">
                 <Media post={post} />
               </div>

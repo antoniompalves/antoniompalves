@@ -21,7 +21,7 @@ import {
 } from '../../data/calendar'
 import { STATUS_TONE } from '../../data/selectors'
 import { useI18n } from '../../i18n'
-import { photo } from '../../data/assets'
+import { coverPhoto } from '../../data/assets'
 import { BrandMark, NetStack, cn, toneFill } from '../ui'
 import type { DropTarget } from './useCalendarDrag'
 
@@ -335,7 +335,7 @@ function Tile({ post, brand, lane, lifted, landed, onPointerDown, onClick, onKey
   const failed = statusGroup(post.status) === 'failed'
   const extra = post.networks.length - 3
   const movable = isMovable(post)
-  const thumbPad = post.image ? 'pr-7 @max-[92px]:pr-0' : ''
+  const thumbPad = post.media.length ? 'pr-7 @max-[92px]:pr-0' : ''
   return (
     <button
       type="button"
@@ -377,9 +377,9 @@ function Tile({ post, brand, lane, lifted, landed, onPointerDown, onClick, onKey
           {extra > 0 && <small className="text-[12.5px] font-bold opacity-80 @max-[84px]:hidden">+{extra}</small>}
         </span>
       </span>
-      {post.image && (
+      {post.media.length > 0 && (
         <span className="absolute right-1.5 top-1.5 size-[26px] overflow-hidden rounded-lg shadow-[0_0_0_1.5px_color-mix(in_srgb,currentColor_30%,transparent)] @max-[92px]:hidden">
-          <img src={photo(post.image, 96)} alt="" loading="lazy" decoding="async" draggable={false} className="size-full object-cover" />
+          <img src={coverPhoto(post, 96)} alt="" loading="lazy" decoding="async" draggable={false} className="size-full object-cover" />
         </span>
       )}
     </button>
