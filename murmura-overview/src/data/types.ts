@@ -60,6 +60,8 @@ export interface Brand {
   tone: Tone
   /** Account handle used in post previews, e.g. "emberandoak". */
   handle: string
+  /** "Coffee roasters · Portland" (workspace content, not translated). */
+  industry: string
 }
 
 /** A dated marketing push for one brand, drawn as a ribbon across the calendar. */
@@ -285,7 +287,7 @@ export interface SavedReply {
   text: string
 }
 
-export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox' | 'listening'
+export type AuditKind = 'approval' | 'channel' | 'review' | 'member' | 'permission' | 'schedule' | 'inbox' | 'listening' | 'auth'
 
 
 /** An analytics report emailed on a schedule. */
@@ -318,6 +320,9 @@ export type AuditAction =
   | { type: 'withdrew'; excerpt: string }
   | { type: 'approvedMany'; count: number }
   | { type: 'connectedChannel'; brandId: string; network: NetworkId; again: boolean }
+  | { type: 'signedIn' }
+  | { type: 'signedOut' }
+  | { type: 'switchedAccount'; to: string }
 
 export interface AuditEvent {
   id: string

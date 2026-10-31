@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   TriangleAlert,
   Undo2,
+  UserRound,
   Users,
 } from 'lucide-react'
 import { AuthoriseDialog } from '../components/AuthoriseDialog'
@@ -606,6 +607,7 @@ const AUDIT_ICON: Record<AuditKind, LucideIcon> = {
   schedule: Send,
   inbox: Inbox,
   listening: Ear,
+  auth: UserRound,
 }
 
 function TeamActivity({ model, now, className }: SectionProps & { now: Date }) {

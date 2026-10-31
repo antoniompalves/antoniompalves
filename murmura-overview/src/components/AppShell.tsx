@@ -9,13 +9,11 @@ import {
   House,
   Image,
   Inbox,
-  Languages,
   LayoutGrid,
   Link,
   Moon,
   PenLine,
   Plus,
-  RefreshCw,
   Search,
   Settings,
   ShieldCheck,
@@ -24,16 +22,13 @@ import {
   X,
 } from 'lucide-react'
 import type { RouteId } from '../data/routes'
-import { roleName } from '../data/permissions'
-import { useWorkspace } from '../data/store'
 import type { NavItem, TeamMember } from '../data/types'
-import { LOCALES, useI18n } from '../i18n'
+import { useI18n } from '../i18n'
 import { KataruMark } from './Logo'
-import { ConfirmDialog } from './Modal'
-import { MenuDivider, MenuItem, Popover } from './Popover'
+import { AccountButton } from './shell/Account'
+import type { ThemePref } from './shell/Account'
 import { BrandSwitcher, CreateMenu, Notifications, TodayPopover } from './shell/Menus'
-import { useToast } from './Toast'
-import { Avatar, IconButton, cn } from './ui'
+import { IconButton, cn } from './ui'
 
 /* ───────────────────────── background ───────────────────────── */
 
@@ -65,9 +60,13 @@ interface TopBarProps {
   activeTab: string
   user: TeamMember
   now: Date
+  theme: ThemePref
+  onTheme: (t: ThemePref) => void
+  onSearch: () => void
+  onShortcuts: () => void
 }
 
-export function TopBar({ tabs, activeTab, user, now }: TopBarProps) {
+export function TopBar({ tabs, activeTab, user, now, theme, onTheme, onSearch, onShortcuts }: TopBarProps) {
   const { t } = useI18n()
   const trackRef = useRef<HTMLDivElement>(null)
   const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
@@ -141,92 +140,16 @@ export function TopBar({ tabs, activeTab, user, now }: TopBarProps) {
           type="button"
           aria-label={t.shell.search}
           title={t.shell.search}
+          onClick={onSearch}
           className="inline-grid size-[46px] cursor-pointer place-items-center rounded-full border border-rim bg-glass-2 pointer-coarse:size-11 mobile:hidden"
         >
           <Search size={20} aria-hidden />
         </button>
         <BrandSwitcher />
         <Notifications now={now} />
-        <AccountButton user={user} />
+        <AccountButton user={user} theme={theme} onTheme={onTheme} onShortcuts={onShortcuts} />
       </div>
     </header>
-  )
-}
-
-/** Avatar button; its menu holds the account's preferences (the interface language) and resetting the demo. */
-function AccountButton({ user }: { user: TeamMember }) {
-  const { t, locale, setLocale } = useI18n()
-  const [open, setOpen] = useState(false)
-  const [resetting, setResetting] = useState(false)
-  const ref = useRef<HTMLButtonElement>(null)
-  const { ws, reset } = useWorkspace()
-  const toast = useToast()
-  const role = roleName(t, ws, user.role)
-  const r = t.shell.reset
-  return (
-    <>
-      <button
-        ref={ref}
-        type="button"
-        aria-label={t.shell.account(user.name, role)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-12 cursor-pointer items-center gap-2.5 rounded-full border border-rim bg-glass-2 p-0.5"
-      >
-        <Avatar src={user.avatar} name={user.name} size="lg" />
-        <span className="hidden pr-3.5 text-left leading-[1.15] min-[1500px]:block">
-          <b className="block text-xs font-bold">{user.name}</b>
-          <small className="block text-[12.5px] text-muted">{role}</small>
-        </span>
-      </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchor={ref} placement="bottom-end" label={t.shell.accountMenu}>
-        <p className="px-3 pb-1 pt-2 text-[12.5px] font-bold uppercase tracking-[0.06em] text-muted" id="account-language">
-          {t.shell.language}
-        </p>
-        <div role="menu" aria-label={t.shell.accountMenu}>
-          <div role="group" aria-labelledby="account-language">
-            {LOCALES.map((l) => (
-              <MenuItem
-                key={l.id}
-                icon={Languages}
-                lang={l.id}
-                checked={locale === l.id}
-                onClick={() => {
-                  setLocale(l.id)
-                  setOpen(false)
-                }}
-              >
-                {l.name}
-              </MenuItem>
-            ))}
-          </div>
-          <MenuDivider />
-          <MenuItem
-            icon={RefreshCw}
-            onClick={() => {
-              setOpen(false)
-              setResetting(true)
-            }}
-          >
-            {r.item}
-          </MenuItem>
-        </div>
-      </Popover>
-      <ConfirmDialog
-        open={resetting}
-        title={r.title}
-        text={r.text}
-        confirm={r.confirm}
-        cancel={r.cancel}
-        onClose={() => setResetting(false)}
-        onConfirm={() => {
-          setResetting(false)
-          reset()
-          toast({ text: r.done, icon: RefreshCw })
-        }}
-      />
-    </>
   )
 }
 
@@ -291,16 +214,17 @@ interface DockProps {
   channelsNeedAttention: boolean
   now: Date
   onOpenPost: (id: string) => void
+  onSearch: () => void
 }
 
-export function Dock({ route, theme, onToggleTheme, channelsNeedAttention, now, onOpenPost }: DockProps) {
+export function Dock({ route, theme, onToggleTheme, channelsNeedAttention, now, onOpenPost, onSearch }: DockProps) {
   const { t } = useI18n()
   const [menu, setMenu] = useState<'new' | 'today' | null>(null)
   const newRef = useRef<HTMLButtonElement>(null)
   const todayRef = useRef<HTMLButtonElement>(null)
   const toggle = (id: 'new' | 'today') => setMenu((m) => (m === id ? null : id))
   const top: DockEntry[] = [
-    { id: 'search', label: t.shell.search, kbd: '⌘K', icon: Search },
+    { id: 'search', label: t.shell.search, kbd: '⌘K', icon: Search, onClick: onSearch },
     { id: 'new', label: t.shell.create, kbd: 'N', icon: Plus, primary: true, onClick: () => toggle('new') },
     { id: 'today', label: t.shell.todaysQueue, icon: Clock, onClick: () => toggle('today') },
     { id: 'library', label: t.routes.library.label, icon: Image, href: '#/library' },
@@ -349,6 +273,7 @@ interface MobileNavProps {
   approvals: number
   now: Date
   onOpenPost: (id: string) => void
+  onSearch: () => void
 }
 
 /** Pages reached from the "More" sheet on phones, in the reference's order. */
@@ -364,7 +289,7 @@ const MORE_PAGES: { id: RouteId; icon: LucideIcon }[] = [
 ]
 
 /** Below 761px the dock collapses into a bottom bar, as in the reference: four destinations plus "More". */
-export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals, now, onOpenPost }: MobileNavProps) {
+export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals, now, onOpenPost, onSearch }: MobileNavProps) {
   const { t } = useI18n()
   const [sheet, setSheet] = useState(false)
   const [menu, setMenu] = useState<'new' | 'today' | null>(null)
@@ -427,6 +352,10 @@ export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals,
         theme={theme}
         onToggleTheme={onToggleTheme}
         approvals={approvals}
+        onSearch={() => {
+          setSheet(false)
+          window.setTimeout(onSearch, 260)
+        }}
         onToday={() => {
           setSheet(false)
           // After the sheet has slid away, as in the reference.
@@ -501,10 +430,11 @@ function SheetTile({ href, icon: Icon, label, count, current, onClick }: SheetTi
 interface MoreSheetProps extends Pick<MobileNavProps, 'route' | 'theme' | 'onToggleTheme' | 'approvals'> {
   open: boolean
   onClose: () => void
+  onSearch: () => void
   onToday: () => void
 }
 
-function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals, onToday }: MoreSheetProps) {
+function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals, onSearch, onToday }: MoreSheetProps) {
   const { t } = useI18n()
   const ref = useRef<HTMLDialogElement>(null)
 
@@ -544,7 +474,7 @@ function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals, onTo
           ))}
         </nav>
         <div className="grid grid-cols-3 gap-2">
-          <button type="button" className={ghost}>
+          <button type="button" onClick={onSearch} className={ghost}>
             <Search size={18} aria-hidden />
             {t.shell.search}
           </button>

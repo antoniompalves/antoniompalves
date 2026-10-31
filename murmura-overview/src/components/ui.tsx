@@ -172,11 +172,12 @@ export function IconButton({ label, icon: Icon, href, variant = 'line', size = '
 
 /* ───────────────────────── badges & pills ───────────────────────── */
 
-export function Badge({ tone, className, children }: { tone: Tone; className?: string; children: ReactNode }) {
+export function Badge({ tone, size = 'md', className, children }: { tone: Tone; size?: 'md' | 'sm'; className?: string; children: ReactNode }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-[3px] text-[12.5px] font-bold tracking-[0.01em]',
+        'inline-flex items-center whitespace-nowrap rounded-full font-bold tracking-[0.01em]',
+        size === 'md' ? 'px-2.5 py-[3px] text-[12.5px]' : 'h-[21px] px-2 text-[11.5px]',
         tone === 'plain' ? 'border border-line bg-glass-2 text-text' : toneFill[tone],
         className,
       )}
@@ -244,7 +245,7 @@ export function BrandMark({ brand, size = 'sm', className }: { brand: Brand; siz
   )
 }
 
-const avatarSize = { xs: 'size-5 text-[9px]', menu: 'size-[22px] text-[9.5px]', xsm: 'size-[26px] text-[10px]', sm: 'size-7 text-[11px]', md: 'size-9 text-[13px]', lg: 'size-[42px] text-sm' } as const
+const avatarSize = { xs: 'size-5 text-[9px]', menu: 'size-[22px] text-[9.5px]', xsm: 'size-[26px] text-[10px]', sm: 'size-7 text-[11px]', md: 'size-9 text-[13px]', lg: 'size-[42px] text-sm', fill: 'size-full text-[13px]' } as const
 
 const AVATAR_TONES = ['bg-[#f4dba8]', 'bg-[#cde8de]', 'bg-[#f3cdbf]', 'bg-[#cfe3f1]'] as const
 
@@ -361,7 +362,7 @@ interface NetIconProps {
   network: NetworkId
   size?: keyof typeof netSize
   /** Surface the badge sits on; tunes background + ring so stacks read cleanly. */
-  surface?: 'default' | 'stack' | 'on-ink' | 'on-photo' | 'badge' | 'chip' | 'on-pill'
+  surface?: 'default' | 'stack' | 'on-ink' | 'on-ink-soft' | 'on-photo' | 'badge' | 'chip' | 'on-pill'
   className?: string
 }
 
@@ -375,7 +376,7 @@ export function NetIcon({ network, size = 'xs', surface = 'default', className }
       className={cn(
         'inline-grid shrink-0 place-items-center rounded-full border',
         netSize[size],
-        surface !== 'on-pill' && netColor[network],
+        surface !== 'on-pill' && surface !== 'on-ink-soft' && netColor[network],
         surface === 'default' && 'border-line bg-glass-2',
         surface === 'stack' && 'border-transparent bg-solid shadow-[0_0_0_2px_var(--solid)]',
         surface === 'on-ink' && 'border-transparent bg-on-ink shadow-[0_0_0_2px_var(--ink)]',
@@ -383,6 +384,7 @@ export function NetIcon({ network, size = 'xs', surface = 'default', className }
         surface === 'badge' && 'border-transparent bg-float shadow-[0_0_0_2px_var(--float)]',
         surface === 'chip' && 'border-line bg-solid',
         surface === 'on-pill' && 'border-transparent bg-white/14 text-inherit dark:bg-black/10',
+        surface === 'on-ink-soft' && 'border-white/12 bg-white/8 text-inherit dark:border-black/10 dark:bg-black/6',
         className,
       )}
     >

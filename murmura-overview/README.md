@@ -162,6 +162,10 @@ src/
     Toast.tsx             bottom toast with Undo or an action
     AuthoriseDialog.tsx   "Authorise on …": reconnects a channel (overview, channels)
     shell/Menus.tsx       brand switcher, notifications, Today's queue, Create menu
+    shell/Finder.tsx      ⌘K search: pages, posts, conversations, people, brands, networks
+    shell/Account.tsx     account menu: switch account, shortcuts, theme, language, reset, sign out
+    shell/SignIn.tsx      sign-in screen after signing out
+    Drawer.tsx            side drawer (a bottom sheet on phones) and the keyboard shortcuts list
     Popover.tsx           fixed popover anchored to its trigger (flips, clamps), menu rows
     Modal.tsx             <dialog> form shell (centred; a bottom sheet on phones) and a confirm dialog
     useScrollEdges.ts     edge fades for sideways scrollers on phones
@@ -249,7 +253,11 @@ server/                   publishing service (docs/PUBLISHING.md)
 
 The top bar's brand switcher narrows every page to one brand; the bell lists
 notifications (new ones arrive as posts are sent for approval, approved or sent
-back); the dock's clock shows today's queue and its + creates posts.
+back); the dock's clock shows today's queue and its + creates posts. ⌘K (or `/`)
+searches pages, posts, conversations, people and brands; `?` lists the keyboard
+shortcuts. The account menu switches between team members (each role sees the
+app differently), picks Light / Dark / Match system, and signs out to a sign-in
+screen.
 
 Theme follows `html[data-theme]` and is toggled from the dock; the language follows
 `html[lang]` and is picked from the account menu (both persisted per browser).

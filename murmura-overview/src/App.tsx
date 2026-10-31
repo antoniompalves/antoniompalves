@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { LucideProvider } from 'lucide-react'
 import { AppFrame, Dock, Mesh, MobileNav, TopBar } from './components/AppShell'
 import { Card } from './components/ui'
+import { ShortcutsDrawer } from './components/Drawer'
+import type { ThemePref } from './components/shell/Account'
+import { Finder } from './components/shell/Finder'
+import { SignIn } from './components/shell/SignIn'
 import { ToastProvider } from './components/Toast'
 import { PostDrawer } from './components/calendar/PostDrawer'
 import { usePostActions } from './components/usePostActions'
@@ -9,6 +13,7 @@ import { I18nProvider, useI18n } from './i18n'
 import { workspace } from './data/mock'
 import { loadSetting, saveSetting } from './storage'
 import { matchRoute, tabRoutes } from './data/routes'
+import type { RouteId } from './data/routes'
 import { selectOverview } from './data/selectors'
 import { WorkspaceProvider, useWorkspace } from './data/store'
 import type { ClockOrigin } from './data/store'
@@ -24,6 +29,9 @@ import { Overview } from './pages/Overview'
 
 type Theme = 'light' | 'dark'
 
+/** Pages behind "G then …", as in the reference. */
+const GO: Record<string, RouteId> = { o: 'overview', c: 'compose', l: 'calendar', i: 'inbox', a: 'analytics', n: 'listening', s: 'settings', p: 'approvals', t: 'team' }
+
 function useHash() {
   const [hash, setHash] = useState(() => window.location.hash || '#/overview')
   useEffect(() => {
@@ -34,13 +42,22 @@ function useHash() {
   return hash
 }
 
+/** Light, dark or the system's; the dock's toggle sets the opposite of what shows. */
 function useTheme() {
-  const [theme, setTheme] = useState<Theme>(() => (loadSetting('theme') as Theme) || 'light')
+  const [pref, setPref] = useState<ThemePref>(() => (loadSetting('theme') as ThemePref) || 'light')
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const on = () => setSystemDark(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  const theme: Theme = pref === 'system' ? (systemDark ? 'dark' : 'light') : pref
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    saveSetting('theme', theme)
   }, [theme])
-  return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))] as const
+  useEffect(() => saveSetting('theme', pref), [pref])
+  return { theme, pref, setPref, toggle: () => setPref(theme === 'dark' ? 'light' : 'dark') }
 }
 
 /** Mock "now": the workspace clock, ticking along with real time in whole seconds. */
@@ -73,7 +90,41 @@ function Shell() {
   const { ws, all, clock } = useWorkspace()
   const { t } = useI18n()
   const hash = useHash()
-  const [theme, toggleTheme] = useTheme()
+  const { theme, pref, setPref, toggle: toggleTheme } = useTheme()
+  const [finder, setFinder] = useState(false)
+  const [shortcuts, setShortcuts] = useState(false)
+
+  // ⌘K / Ctrl+K anywhere; elsewhere single keys, not while typing or with a dialog open, and not when a page already used the key.
+  useEffect(() => {
+    if (!ws.signedIn) return
+    let g = 0
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setFinder((v) => !v)
+        return
+      }
+      const typing = (e.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable="true"]')
+      if (e.defaultPrevented || typing || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('dialog[open]')) return
+      const k = e.key.toLowerCase()
+      if (g && Date.now() - g < 1200 && GO[k]) {
+        window.location.hash = `#/${GO[k]}`
+        g = 0
+        return
+      }
+      g = 0
+      if (k === 'g') g = Date.now()
+      else if (e.key === '/') {
+        e.preventDefault()
+        setFinder(true)
+      } else if (k === 'n') {
+        e.preventDefault()
+        window.location.hash = '#/compose'
+      } else if (e.key === '?') setShortcuts(true)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [ws.signedIn])
   const now = useMockNow(clock)
   const minuteKey = Math.floor(now.getTime() / 60_000)
   // Recompute once a minute (or when the data changes): countdowns and "x min ago" only change that often.
@@ -99,11 +150,19 @@ function Shell() {
     badge: r.path === '#/inbox' ? model.badges.inbox : r.path === '#/approvals' ? model.badges.approvals : undefined,
   }))
 
+  if (!ws.signedIn)
+    return (
+      <>
+        <Mesh />
+        <SignIn />
+      </>
+    )
+
   return (
     <>
       <Mesh />
       <AppFrame>
-        <TopBar tabs={tabs} activeTab={routeId} user={model.user} now={now} />
+        <TopBar tabs={tabs} activeTab={routeId} user={model.user} now={now} theme={pref} onTheme={setPref} onSearch={() => setFinder(true)} onShortcuts={() => setShortcuts(true)} />
         <main id="main" className="relative">
           {routeId === 'overview' ? (
             <Overview model={model} now={now} />
@@ -141,7 +200,7 @@ function Shell() {
           )}
         </main>
       </AppFrame>
-      <Dock route={routeId} theme={theme} onToggleTheme={toggleTheme} channelsNeedAttention={model.badges.channelsNeedAttention} now={now} onOpenPost={setOpenPost} />
+      <Dock route={routeId} theme={theme} onToggleTheme={toggleTheme} channelsNeedAttention={model.badges.channelsNeedAttention} now={now} onOpenPost={setOpenPost} onSearch={() => setFinder(true)} />
       <MobileNav
         route={routeId}
         theme={theme}
@@ -150,8 +209,11 @@ function Shell() {
         approvals={model.badges.approvals}
         now={now}
         onOpenPost={setOpenPost}
+        onSearch={() => setFinder(true)}
       />
       <PostDrawerHost id={openPost} now={now} onClose={() => setOpenPost(null)} />
+      <Finder open={finder} onClose={() => setFinder(false)} onOpenPost={setOpenPost} />
+      <ShortcutsDrawer open={shortcuts} onClose={() => setShortcuts(false)} />
     </>
   )
 }

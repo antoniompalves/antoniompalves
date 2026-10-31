@@ -258,6 +258,25 @@ export const ptPT: Messages = {
     account: (name: string, role: string) => `Conta: ${name}, ${role}`,
     accountMenu: 'Conta',
     language: 'Idioma',
+    profile: (name: string, role: string) => `${name} · ${role}`,
+    switchAccount: 'Mudar de conta…',
+    shortcuts: 'Atalhos de teclado',
+    themeLight: 'Claro',
+    themeDark: 'Escuro',
+    themeSystem: 'Como o sistema',
+    signOut: 'Terminar sessão',
+    switcher: { label: 'Mudar de conta', title: 'Entrar como…', sub: 'veja a app com cada perfil' },
+    signedInAs: (first: string, role: string) => `Sessão iniciada como ${first} · ${role}`,
+    keys: {
+      title: 'Atalhos de teclado',
+      rows: [
+        ['Pesquisar', ['⌘ K', 'ou', '/']],
+        ['Nova publicação', ['N']],
+        ['Ir para uma página', ['G e depois O / C / L / I / A / N / S']],
+        ['Fechar', ['Esc']],
+        ['Esta lista', ['?']],
+      ] as [string, string[]][],
+    },
     reset: {
       item: 'Repor dados de demonstração',
       title: 'Repor os dados de demonstração?',
@@ -308,6 +327,45 @@ export const ptPT: Messages = {
         case 'changes':
           return `${person(e.by)} pediu alterações a “${e.excerpt}”`
       }
+    },
+  },
+
+  finder: {
+    label: 'Pesquisar no Kataru',
+    placeholder: 'Pesquisar publicações, conversas, pessoas, páginas…',
+    results: 'Resultados',
+    esc: 'esc',
+    groups: { pages: 'Páginas', actions: 'Ações', posts: 'Publicações', conversations: 'Conversas', people: 'Pessoas', brands: 'Marcas', channels: 'Canais' },
+    goTo: 'Ir para a página',
+    write: 'Escrever uma publicação',
+    writeMeta: 'Abre o editor',
+    postMeta: (brand: string, status: string, date: string) => `${brand} · ${status.toLowerCase()} · ${date}`,
+    personMeta: (role: string, title: string) => (title ? `${role} · ${title}` : role),
+    connected: (n: number) => plural(n, 'conta ligada', 'contas ligadas'),
+    none: (q: string) => `Nada corresponde a “${q}”`,
+    noneText: 'Experimente uma palavra de uma publicação, uma pessoa ou uma rede.',
+  },
+
+  signIn: {
+    lede: (em: (word: string) => ReactNode) => (
+      <>
+        Todas as contas.
+        <br />
+        Um só {em('espaço')} tranquilo.
+      </>
+    ),
+    foot: (workspace: string, channels: number, people: number) => `${workspace} · ${plural(channels, 'canal', 'canais')} · ${plural(people, 'pessoa', 'pessoas')}`,
+    title: 'Iniciar sessão',
+    text: 'Use o seu email de trabalho, ou abra a demonstração como alguém da equipa — cada pessoa tem um perfil diferente.',
+    email: 'Email de trabalho',
+    password: 'Palavra-passe',
+    submit: 'Iniciar sessão',
+    or: 'ou continue como',
+    errors: {
+      empty: 'Indique o email e a palavra-passe.',
+      unknown: 'Ninguém neste espaço de trabalho usa esse email.',
+      invited: 'Este convite ainda não foi aceite — procure a ligação no seu email.',
+      suspended: 'Esta conta está suspensa. Peça a alguém da administração para a reativar.',
     },
   },
 
@@ -428,6 +486,12 @@ export const ptPT: Messages = {
         return `aprovou ${a.count} publicações de uma vez`
       case 'connectedChannel':
         return `${a.again ? 'voltou a ligar' : 'ligou'} ${brand(a.brandId)} ao ${network(a.network)}`
+      case 'signedIn':
+        return 'iniciou sessão'
+      case 'signedOut':
+        return 'terminou sessão'
+      case 'switchedAccount':
+        return `mudou para ${a.to}`
     }
   },
 

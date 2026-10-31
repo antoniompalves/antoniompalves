@@ -1,4 +1,5 @@
 import type { Messages } from '../i18n'
+import type { RouteId } from './routes'
 import type { Permission, RoleDef, SystemRole, TeamMember, Workspace } from './types'
 
 /**
@@ -77,3 +78,14 @@ export function needsApproval(ws: Workspace, memberId: string) {
 export function roleName(t: Messages, ws: Workspace, roleId: string) {
   return isSystemRole(roleId) ? t.roles[roleId] : (ws.roles.find((r) => r.id === roleId)?.name ?? roleId)
 }
+
+/** Pages that need one of these permissions; every other page is open to everyone (as in the reference). */
+export const ROUTE_NEEDS: Partial<Record<RouteId, Permission[]>> = {
+  compose: ['post.create'],
+  inbox: ['inbox.reply', 'inbox.assign'],
+  approvals: ['post.approve', 'post.create'],
+  analytics: ['analytics.view'],
+  listening: ['analytics.view', 'listening.manage'],
+}
+
+export const canOpen = (ws: Workspace, memberId: string, route: RouteId) => !ROUTE_NEEDS[route] || ROUTE_NEEDS[route]!.some((p) => can(ws, memberId, p))

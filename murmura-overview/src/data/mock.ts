@@ -338,11 +338,11 @@ export const workspace: Workspace = {
   timeZone: 'Europe/Lisbon',
   currentUserId: 'camila',
   brands: [
-    { id: 'eo', name: 'Ember & Oak', initials: 'EO', tone: 'coral', handle: 'emberandoak' },
-    { id: 'hh', name: 'Hollow Home', initials: 'HH', tone: 'butter', handle: 'hollowhome' },
-    { id: 'vg', name: 'Vantage Garage', initials: 'VG', tone: 'ink', handle: 'vantagegarage' },
-    { id: 'wb', name: 'Wildroot Botanics', initials: 'WB', tone: 'pine', handle: 'wildrootbotanics' },
-    { id: 'ns', name: 'Northlight Studio', initials: 'NS', tone: 'sea', handle: 'northlightstudio' },
+    { id: 'eo', name: 'Ember & Oak', initials: 'EO', tone: 'coral', handle: 'emberandoak', industry: 'Coffee roasters · Portland' },
+    { id: 'hh', name: 'Hollow Home', initials: 'HH', tone: 'butter', handle: 'hollowhome', industry: 'Furniture & interiors · Copenhagen' },
+    { id: 'vg', name: 'Vantage Garage', initials: 'VG', tone: 'ink', handle: 'vantagegarage', industry: 'Performance detailing · Austin' },
+    { id: 'wb', name: 'Wildroot Botanics', initials: 'WB', tone: 'pine', handle: 'wildrootbotanics', industry: 'Botanical skincare · Lisbon' },
+    { id: 'ns', name: 'Northlight Studio', initials: 'NS', tone: 'sea', handle: 'northlightstudio', industry: 'Our agency' },
   ],
   campaigns: [
     { id: 'cp1', brandId: 'eo', name: 'Autumn harvest', start: '2026-10-20', end: '2026-11-19' },

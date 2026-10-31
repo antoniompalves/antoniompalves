@@ -262,6 +262,27 @@ export const en = {
     account: (name: string, role: string) => `Account: ${name}, ${role}`,
     accountMenu: 'Account',
     language: 'Language',
+    /** First row of the account menu: "Camila Ortiz · Owner". */
+    profile: (name: string, role: string) => `${name} · ${role}`,
+    switchAccount: 'Switch account…',
+    shortcuts: 'Keyboard shortcuts',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeSystem: 'Match system',
+    signOut: 'Sign out',
+    switcher: { label: 'Switch account', title: 'Sign in as…', sub: 'see the app through each role' },
+    signedInAs: (first: string, role: string) => `Signed in as ${first} · ${role}`,
+    keys: {
+      title: 'Keyboard shortcuts',
+      /** Each shortcut and its keys; a key "or" is printed as a key too, as in the reference. */
+      rows: [
+        ['Search', ['⌘ K', 'or', '/']],
+        ['New post', ['N']],
+        ['Go to a page', ['G then O / C / L / I / A / N / S']],
+        ['Close', ['Esc']],
+        ['This list', ['?']],
+      ] as [string, string[]][],
+    },
     reset: {
       item: 'Reset demo data',
       title: 'Reset demo data?',
@@ -313,6 +334,47 @@ export const en = {
         case 'changes':
           return `${person(e.by)} asked for changes on “${e.excerpt}”`
       }
+    },
+  },
+
+  /** ⌘K: pages, posts, conversations, people, brands and networks. */
+  finder: {
+    label: 'Search Kataru',
+    placeholder: 'Search posts, conversations, people, pages…',
+    results: 'Results',
+    esc: 'esc',
+    groups: { pages: 'Pages', actions: 'Actions', posts: 'Posts', conversations: 'Conversations', people: 'People', brands: 'Brands', channels: 'Channels' },
+    goTo: 'Go to page',
+    write: 'Write a new post',
+    writeMeta: 'Opens the composer',
+    postMeta: (brand: string, status: string, date: string) => `${brand} · ${status.toLowerCase()} · ${date}`,
+    personMeta: (role: string, title: string) => (title ? `${role} · ${title}` : role),
+    connected: (n: number) => plural(n, 'connected account', 'connected accounts'),
+    none: (q: string) => `Nothing matches “${q}”`,
+    noneText: 'Try a word from a post, a person or a network.',
+  },
+
+  /** The sign-in screen after "Sign out". */
+  signIn: {
+    lede: (em: (word: string) => ReactNode) => (
+      <>
+        Every account.
+        <br />
+        One calm {em('workspace')}.
+      </>
+    ),
+    foot: (workspace: string, channels: number, people: number) => `${workspace} · ${plural(channels, 'channel', 'channels')} · ${plural(people, 'person', 'people')}`,
+    title: 'Sign in',
+    text: 'Use your work email, or open the demo as one of the team — each person has a different role.',
+    email: 'Work email',
+    password: 'Password',
+    submit: 'Sign in',
+    or: 'or continue as',
+    errors: {
+      empty: 'Enter your email and password.',
+      unknown: 'No one on this workspace uses that email.',
+      invited: 'This invite hasn’t been accepted yet — check your email for the link.',
+      suspended: 'This account is suspended. Ask an admin to restore it.',
     },
   },
 
@@ -436,6 +498,12 @@ export const en = {
         return `approved ${a.count} posts at once`
       case 'connectedChannel':
         return `${a.again ? 'reconnected' : 'connected'} ${brand(a.brandId)} on ${network(a.network)}`
+      case 'signedIn':
+        return 'signed in'
+      case 'signedOut':
+        return 'signed out'
+      case 'switchedAccount':
+        return `switched to ${a.to}`
     }
   },
 

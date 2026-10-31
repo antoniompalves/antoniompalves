@@ -872,3 +872,71 @@ each disabled without the permission it needs.
 | 21 interaction checks (menu, toast, scoped pages, saved across reloads, notices read one by one and all at once, a notice for the writer of an approved post, Today's queue → drawer, Create → composer at 9:00, phone More → Today) and the approvals, compose, listening and persistence suites | all pass, no console errors |
 | pt-PT: the four panels and the scoped pages at 1440 and 390 px | no English left, nothing clipped |
 | English text of 13 states with every brand | unchanged |
+
+## 17. Shell: search, shortcuts, account menu and sign-in
+
+| Search (⌘K) | Account menu | Switch account | Shortcuts |
+| --- | --- | --- | --- |
+| ![Search with "ni"](screenshots/shell-finder.png) | ![Account menu](screenshots/shell-account-menu.png) | ![Sign in as…](screenshots/shell-switch-account.png) | ![Keyboard shortcuts](screenshots/shell-shortcuts.png) |
+
+| Sign in | Phone · pt-PT |
+| --- | --- |
+| ![Sign-in screen](screenshots/signin.png) | ![Sign-in on a phone in Portuguese](screenshots/signin-mobile-pt.png) |
+
+### Search
+
+⌘K / Ctrl+K anywhere (it also closes it), `/`, the dock's Search, the phone's
+search button and the More sheet's *Search*. A 640px dialog 12vh from the top
+(the browser's default `100% − 38px` on phones): an 18px field with an `esc`
+key (hidden on touch), then results, 52vh at most.
+
+| Typed | Results, in order (as the reference) |
+| --- | --- |
+| nothing | the first five pages the person can open, *Write a new post* |
+| a word | up to 8 pages; 5 posts ("Ember & Oak · published · Oct 4", opens the post drawer); 4 conversations (name or any message); 4 people (name, email, title); brands (switch to that brand); 2 networks ("3 connected accounts") |
+
+The first match in each title is marked; arrows move (wrapping), Enter or a click
+goes, the pointer selects. "Nothing matches “zzzz”" otherwise. Pages a role can't
+open are left out (`canOpen` in `permissions.ts`, the reference's rule: compose
+needs *Create posts*, the inbox *Reply* or *Assign*, approvals *Approve* or
+*Create*, analytics *View analytics*, listening analytics or listening).
+
+### Keys
+
+`⌘K` / `/` search, `N` new post, `G` then `O C L I A N S` (and `P` approvals, `T`
+team) within 1.2 s to go to a page, `?` this list, `Esc` closes. None of them
+fire while typing, with a dialog open, or when the page already used the key
+(the inbox keeps `/` for its own search). The list itself is a 480px drawer
+(a bottom sheet on phones), keys drawn as in the reference — "or" included.
+
+### Account menu
+
+*Camila Ortiz · Owner* (→ settings), *Switch account…*, *Keyboard shortcuts*,
+then Light / Dark / **Match system** (follows the device, live), Kataru's two
+languages, *Reset demo data* and *Sign out* (in red). **Switch account** is a
+360px "Sign in as… — see the app through each role" list of the active team with
+role badges; picking someone signs them in ("Signed in as Nia · Editor"), keeps
+the brand if they can see it (Nia: *All my brands* = Ember & Oak, Wildroot) and
+logs "switched to Nia Okoro" in the team activity.
+
+### Sign-in
+
+*Sign out* (logged) shows the sign-in screen, which stays across reloads until
+someone signs in. Two panels (one column below 861px): the ink intro with the
+butter mark, three of the brands' photos fanned at −9°, 4° and 13°, "Every
+account. One calm workspace.", the networks and "Northlight Studio · 19 channels
+· 11 people"; and the form, with the demo's email and password filled in.
+Errors as the reference: empty fields, an unknown email, an invite not accepted
+yet, a suspended account. Under "or continue as", the first active person of
+each role (owner, admin, manager, editor, community, analyst, client). The
+reference's tagline shows "workspace" in white (its word animation drops the
+colour), so it's white here too.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| Search (empty, "ni", nothing found), account menu, switch account, shortcuts at 1440 and 390 px; sign-in's 19 landmarks at both widths | identical, apart from the menu's extra language rows and a 2px shift of the account panels on phones (the reference's buttons overflow its header by 9px with the longer "murmura") |
+| 37 interaction checks (⌘K both ways, `/`, groups and marks, arrows + Enter → drawer, brand result, empty state, `G I`, the inbox's own `/`, typing ignored, `N`, `?`, Dark, Match system following the device, switch account → toast, label, brands, activity; sign out → stays signed out, no keys, three errors, one person per role, sign in as a client; the phone's search) and the earlier suites | all pass, no console errors |
+| pt-PT: search, account menu, switch account, shortcuts, sign-in with an error, 1440 and 390 px | no English interface text left (job titles are team data), nothing clipped |
+| English text of 13 states | unchanged |
