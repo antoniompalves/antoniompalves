@@ -30,10 +30,30 @@ Changes are saved in the browser (`kataru-workspace`) and survive a reload;
 other open tabs follow along. **Reset demo data** in the account menu puts the
 starting data back, keeping the theme, language and Google Analytics settings.
 
+### Accounts and a shared workspace
+
+Served by its own server (`server/`), the same app becomes a company's shared
+workspace: one company, its brands, and a team who each **sign in** (password,
+**two-step codes** from an authenticator app, or **single sign-on** with Google,
+Microsoft or any OpenID provider), are **invited** with a role and the brands they
+work on, and see each other's changes **live**. The server checks every change
+against the person's role and brands, keeps everything in **MySQL/MariaDB** (or
+SQLite), and serves the app at the same address. Where the app finds no server
+(a static host, `npm run dev`), it is the demo above.
+
+```bash
+npm run build && KATARU_STATIC_DIR=dist npm run server   # http://localhost:8787 → Set up Kataru
+npm run build:cpanel                                     # a package for cPanel's "Setup Node.js App"
+npm run test:server                                      # accounts and publishing tests
+```
+
+How it works, settings and the API: [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md).
+Putting it on cPanel hosting (Node.js App + MySQL), step by step:
+[`docs/CPANEL.md`](docs/CPANEL.md).
+
 ### Publishing to the networks
 
-Real posting goes through a small service in `server/` (Node 22, no
-dependencies): sign-in with **Meta** (Facebook Pages + Instagram), **Threads**,
+Real posting goes through the same server (`server/`): sign-in with **Meta** (Facebook Pages + Instagram), **Threads**,
 **LinkedIn**, **TikTok** and **YouTube**, tokens kept encrypted and refreshed,
 per-network checks, a scheduler with retries, and public hosting for the media
 networks fetch. `src/data/publisher.ts` is the app's client. Setting up each
@@ -41,8 +61,8 @@ network's developer app, the reviews they require and their limits are in
 [`docs/PUBLISHING.md`](docs/PUBLISHING.md).
 
 ```bash
-cp server/.env.example server/.env && npm run publisher   # the service
-npm run test:publisher                                     # its tests (networks mocked)
+cp server/.env.example server/.env && npm run server   # the server
+npm run test:server                                     # its tests (networks mocked)
 ```
 
 The app speaks **English** and **European Portuguese**: it follows the browser's
@@ -287,7 +307,14 @@ src/
     listeningData.ts      14 keywords, 90 mentions and 9 competitors (from the reference)
     ga4.ts                GA4 Data API from the browser: Google sign-in token, batchRunReports, mapping
     ga4Store.tsx          demo ↔ live switch, GA4 settings saved per browser
-    store.tsx             shared store (posts, conversations, reports, keywords and mentions, with undo), saved per browser, reset
+    store.tsx             the demo's store (useWorkspace): the shared reducer, undo, saved per browser, reset
+    reducer.ts            every change as an action, and the reducer — shared with the server
+    sync.ts               patches: what changed, cut to the brands each person sees — shared with the server
+    defaults.ts           a new company's workspace: roles, settings, brands, owner; moving the sample to today
+    access.ts             who may do what (shared with the server)
+    server.ts             finding and calling the Kataru server; demo or server mode
+    serverStore.tsx       the shared workspace offered to pages exactly as the demo's (useWorkspace)
+    syncEngine.ts         live sync: optimistic changes, ordered batches, SSE or polling, offline, refusals
     persist.ts            saving and loading the workspace: version, seed fingerprint, mock clock
     scope.ts              what pages show: the person's brands narrowed by the brand switcher
     notices.ts            notifications: who gets told what when posts move
@@ -295,9 +322,14 @@ src/
     publishing.ts         the app ↔ publishing service contract (shared with server/)
     publisher.ts          client for the publishing service: connect, accounts, media, publish, jobs
     assets.ts             image URL helpers (swap for real assets here)
-server/                   publishing service (docs/PUBLISHING.md)
-  index.ts                start: config, encrypted store, scheduler, HTTP
-  app.ts                  HTTP API: connect + callback, accounts, media, posts, jobs, TikTok creator info
+src/components/auth/      sign-in screens (setup, sign in, second step, links), Account & security, Team & access
+server/                   accounts, shared workspace and publishing (docs/ACCOUNTS.md, docs/PUBLISHING.md)
+  index.ts                start: config, database, accounts, encrypted store, scheduler, HTTP
+  app.ts                  HTTP: publishing API (connect + callback, accounts, media, posts, jobs); hands the rest to kataru.ts
+  kataru.ts               accounts API: setup, sign-in, two-step, SSO, links, account, team, workspace + live stream, the built app
+  db.ts                   SQLite (node:sqlite) or MySQL/MariaDB (mysql2), one interface, migrations
+  accounts/               passwords (scrypt), TOTP + recovery codes, sessions/links/limits, OpenID Connect, SMTP mail
+  workspace/              the shared workspace: policy (role + brand checks), hub (events, snapshots, live patches)
   config.ts               environment (server/.env.example)
   store.ts                connections, jobs and media in one AES-256-GCM sealed file
   publish.ts              job runner: token refresh, rules, publish, retries; the scheduler
@@ -310,7 +342,8 @@ server/                   publishing service (docs/PUBLISHING.md)
     tiktok.ts             TikTok Content Posting API (direct post, chunked upload, status)
     youtube.ts            YouTube Data API v3 (PKCE, resumable upload)
     http.ts               fetch wrapper: one error vocabulary for every network
-  test/                   node:test suites with every network mocked
+  test/                   node:test suites: accounts end to end (SQLite, and MySQL with TEST_MYSQL_URL); every network mocked
+scripts/build-cpanel.mjs  the cPanel package: app + bundled server + startup file (docs/CPANEL.md)
 ```
 
 The top bar's brand switcher narrows every page to one brand; the bell lists

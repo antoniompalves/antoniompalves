@@ -55,13 +55,13 @@ npm run typecheck                       # app + server
 | --- | --- |
 | `PUBLISHER_PUBLIC_URL` | The service's public HTTPS address. Each network's redirect URI is `<PUBLISHER_PUBLIC_URL>/auth/<meta\|threads\|linkedin\|tiktok\|youtube>/callback`. |
 | `PUBLISHER_APP_ORIGIN` | Kataru's origin(s). Only these get CORS and the sign-in result. |
-| `PUBLISHER_API_KEY` | What the app sends as `Authorization: Bearer …` (24+ characters). |
+| `PUBLISHER_API_KEY` | For other services: sent as `Authorization: Bearer …` (24+ characters). With accounts on (the default), people signed in use their session instead and the key is optional. |
 | `PUBLISHER_SECRET` | Encrypts the store (32+ characters). Losing it means connecting every account again. |
 | `PUBLISHER_DATA_DIR` | Where the encrypted store and uploaded media live. Put it on a persistent volume and back it up. |
 | per network | `META_*`, `THREADS_*`, `LINKEDIN_*`, `TIKTOK_*`, `GOOGLE_*`; a network without credentials is reported as off by `/health`. |
 
 Deploy it as **one** instance (the store is a single file it owns) behind
-HTTPS. The service refuses to start without the API key and the secret.
+HTTPS. The service refuses to start without the secret (and, with accounts turned off, the API key).
 
 ### API
 
@@ -253,7 +253,7 @@ Rules: exactly one video; the title is `options.youtube.title` or the post's fir
 - Sign-ins use a one-time, 15-minute `state` (and PKCE for Google). The callback page posts the result to the app's origin only.
 - Tokens are stored encrypted (AES-256-GCM) and never returned by the API.
 - Uploaded media are public by design (networks fetch them) behind 128-bit random ids.
-- The API key is shared by everyone using the app. Kataru's sign-in is still the demo's, so before real use put the service behind real authentication (an SSO proxy, or sessions tied to Kataru's own login) and give each workspace its own key.
+- People call the publishing API with their Kataru session ([`ACCOUNTS.md`](ACCOUNTS.md)): connecting accounts needs **Manage channels**, publishing needs **Publish**. The API key is only for other services; keep it out of the app.
 
 ## What the app does with it today, and next
 

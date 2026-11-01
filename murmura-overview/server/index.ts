@@ -17,7 +17,7 @@ const config = readConfig()
 assertRunnable(config)
 const store = await new Store(config.dataDir, keyFrom(config.secret)).load()
 const providers = buildProviders(config)
-const media = new MediaLibrary(config.dataDir, store, config.publicUrl, config.maxMediaBytes)
+const media = new MediaLibrary(config.dataDir, store, `${config.publicUrl}${config.accounts.basePath}`, config.maxMediaBytes)
 const db = config.accounts.enabled ? await openDb(config.accounts.databaseUrl) : null
 const kataru = db ? await createKataru(config, { db }) : undefined
 const deps = { store, providers, media, kataru }

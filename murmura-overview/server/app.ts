@@ -84,7 +84,8 @@ if (window.opener) window.opener.postMessage(${json}, ${JSON.stringify(origin)})
 export function createHandler(config: Config, deps: Deps & { media: MediaLibrary; kataru?: Kataru }) {
   const pending = new Map<string, { provider: PublishProvider; verifier?: string; origin: string; at: number }>()
   const now = () => deps.now?.() ?? Date.now()
-  const redirectUri = (p: PublishProvider) => `${config.publicUrl}/auth/${p}/callback`
+  const base = config.accounts.basePath
+  const redirectUri = (p: PublishProvider) => `${config.publicUrl}${base}/auth/${p}/callback`
 
   const cors = (req: IncomingMessage, res: ServerResponse) => {
     const origin = req.headers.origin
@@ -192,8 +193,12 @@ export function createHandler(config: Config, deps: Deps & { media: MediaLibrary
 
   async function route(req: IncomingMessage, res: ServerResponse) {
     const url = new URL(req.url ?? '/', config.publicUrl)
-    const path = url.pathname.replace(/\/+$/, '') || '/'
+    // Under a path (KATARU_BASE_PATH, e.g. /kataru), routes are the same below it.
+    const full = url.pathname.replace(/\/+$/, '') || '/'
+    const path = base && (full === base || full.startsWith(`${base}/`)) ? full.slice(base.length) || '/' : full
     const method = req.method ?? 'GET'
+    // The app's relative links need the trailing slash: /kataru → /kataru/
+    if (base && url.pathname === base && method === 'GET') return res.writeHead(301, { location: `${base}/${url.search}` }).end()
     cors(req, res)
     if (method === 'OPTIONS') return res.writeHead(204).end()
 

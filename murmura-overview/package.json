@@ -11,7 +11,8 @@
     "publisher": "npm run server",
     "test:publisher": "npm run test:server",
     "server": "node --env-file-if-exists=server/.env server/index.ts",
-    "test:server": "node --test server/test/*.test.ts"
+    "test:server": "node --test server/test/*.test.ts",
+    "build:cpanel": "node scripts/build-cpanel.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.65.0",
@@ -26,6 +27,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "rolldown": "1.2.16",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
