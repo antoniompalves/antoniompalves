@@ -58,6 +58,8 @@ export function Popover({ open, onClose, anchor, placement = 'bottom-start', lab
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       e.stopPropagation()
+      // Inside a modal, Escape closes the menu, not the modal too.
+      e.preventDefault()
       onClose()
       anchor.current?.focus()
     }

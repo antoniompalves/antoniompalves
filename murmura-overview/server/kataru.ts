@@ -479,9 +479,15 @@ export async function createKataru(config: Config, deps: KataruDeps) {
 
   async function actions(req: IncomingMessage, res: ServerResponse) {
     const m = await me(req)
-    const body = await readJson<{ actions?: unknown }>(req, 4 * 1024 * 1024)
+    const body = await readJson<{ actions?: unknown; id?: unknown }>(req, 4 * 1024 * 1024)
+    // A batch sent again after a lost reply is applied once.
+    const batch = str(body.id, 80) && `batch:${m.user.id}:${str(body.id, 80)}`
+    const seen = batch ? await accounts.getEphemeral(batch) : null
+    if (seen) return send(res, 200, { from: Number(seen), to: Number(seen), patch: null, duplicate: true })
     try {
-      send(res, 200, await hub.apply({ userId: m.user.id, memberId: m.member.id }, body.actions as WorkspaceAction[]))
+      const change = await hub.apply({ userId: m.user.id, memberId: m.member.id }, body.actions as WorkspaceAction[])
+      if (batch) await accounts.putEphemeral(batch, String(change.to), 10 * MIN)
+      send(res, 200, change)
     } catch (e) {
       if (e instanceof Refused) throw new HttpError(e.code === 'forbidden' ? 403 : 400, e.code, e.message, { version: hub.version })
       throw e

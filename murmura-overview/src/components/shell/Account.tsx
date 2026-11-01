@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react'
-import { ArrowLeftRight, Command, Languages, LogOut, MonitorSmartphone, Moon, RefreshCw, ShieldCheck, Sun, UserRound } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowLeftRight, Command, Languages, Link2, LogOut, MonitorSmartphone, Moon, RefreshCw, ShieldCheck, Sun, UserRound, Users } from 'lucide-react'
+import { AccountDialog } from '../auth/AccountDialog'
+import { TeamDialog } from '../auth/TeamDialog'
 import { ConfirmDialog } from '../Modal'
 import { MenuDivider, MenuItem, Popover } from '../Popover'
 import { useToast } from '../Toast'
 import { Avatar, Badge, cn } from '../ui'
-import { roleName, roleOf } from '../../data/permissions'
+import { can, roleName, roleOf } from '../../data/permissions'
 import { useWorkspace } from '../../data/store'
 import type { AuditAction, TeamMember } from '../../data/types'
 import { LOCALES, useI18n } from '../../i18n'
@@ -25,10 +27,29 @@ interface Props {
  */
 export function AccountButton({ user, theme, onTheme, onShortcuts }: Props) {
   const { t, locale, setLocale } = useI18n()
-  const { ws, all, dispatch, reset, clock } = useWorkspace()
+  const { ws, all, dispatch, reset, clock, mode, server } = useWorkspace()
   const toast = useToast()
   const [menu, setMenu] = useState<'menu' | 'switch' | null>(null)
   const [resetting, setResetting] = useState(false)
+  const [dialog, setDialog] = useState<'account' | 'team' | null>(null)
+  const demo = mode === 'demo'
+  const admin = can(all, user.id, 'team.manage') || can(all, user.id, 'settings.manage')
+
+  // Back from linking a sign-in ("#/account?sso=linked"): open the account dialog and say how it went.
+  useEffect(() => {
+    if (demo) return
+    const check = () => {
+      const m = window.location.hash.match(/^#\/account(?:\?sso=(\w+))?/)
+      if (!m) return
+      window.history.replaceState(null, '', '#/overview')
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+      setDialog('account')
+      if (m[1]) toast({ text: m[1] === 'linked' ? t.auth.account.linkedDone : t.auth.account.taken, icon: Link2 })
+    }
+    check()
+    window.addEventListener('hashchange', check)
+    return () => window.removeEventListener('hashchange', check)
+  }, [demo, toast, t])
   const ref = useRef<HTMLButtonElement>(null)
   const role = roleName(t, ws, user.role)
   const s = t.shell
@@ -74,14 +95,28 @@ export function AccountButton({ user, theme, onTheme, onShortcuts }: Props) {
             icon={UserRound}
             onClick={() => {
               close()
-              window.location.hash = '#/settings'
+              if (demo) window.location.hash = '#/settings'
+              else setDialog('account')
             }}
           >
             {s.profile(user.name, role)}
           </MenuItem>
-          <MenuItem icon={ArrowLeftRight} onClick={() => setMenu('switch')}>
-            {s.switchAccount}
-          </MenuItem>
+          {demo ? (
+            <MenuItem icon={ArrowLeftRight} onClick={() => setMenu('switch')}>
+              {s.switchAccount}
+            </MenuItem>
+          ) : (
+            <>
+              <MenuItem icon={ShieldCheck} onClick={() => (close(), setDialog('account'))}>
+                {t.auth.account.menu}
+              </MenuItem>
+              {admin && (
+                <MenuItem icon={Users} onClick={() => (close(), setDialog('team'))}>
+                  {t.auth.team.menu}
+                </MenuItem>
+              )}
+            </>
+          )}
           <MenuItem
             icon={Command}
             onClick={() => {
@@ -108,20 +143,24 @@ export function AccountButton({ user, theme, onTheme, onShortcuts }: Props) {
             ))}
           </div>
           <MenuDivider />
-          <MenuItem
-            icon={RefreshCw}
-            onClick={() => {
-              close()
-              setResetting(true)
-            }}
-          >
-            {s.reset.item}
-          </MenuItem>
+          {demo && (
+            <MenuItem
+              icon={RefreshCw}
+              onClick={() => {
+                close()
+                setResetting(true)
+              }}
+            >
+              {s.reset.item}
+            </MenuItem>
+          )}
           <MenuItem
             icon={LogOut}
             className="text-bad"
             onClick={() => {
               close()
+              // The server notes signing out itself.
+              if (!demo) return void server?.signOut()
               audit({ type: 'signedOut' })
               dispatch({ type: 'signOut' })
             }}
@@ -161,6 +200,8 @@ export function AccountButton({ user, theme, onTheme, onShortcuts }: Props) {
         </div>
       </Popover>
 
+      {!demo && <AccountDialog open={dialog === 'account'} onClose={() => setDialog(null)} />}
+      {!demo && admin && <TeamDialog open={dialog === 'team'} onClose={() => setDialog(null)} />}
       <ConfirmDialog
         open={resetting}
         title={s.reset.title}

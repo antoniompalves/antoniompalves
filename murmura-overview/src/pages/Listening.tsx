@@ -30,7 +30,7 @@ const LIVE_EVERY = 12_000
  * sentiment over time and the competitors (6 columns from 1340px, 1 from 1000px).
  */
 export function Listening({ now }: { now: Date }) {
-  const { ws, all, dispatch } = useWorkspace()
+  const { ws, all, dispatch, mode } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const l = t.listening
@@ -40,7 +40,8 @@ export function Listening({ now }: { now: Date }) {
   const [brandId, setBrandId] = useState(() => ws.brands[0]?.id ?? '')
   const [filters, setFilters] = useState<StreamFilters>(NO_STREAM_FILTERS)
   const [shown, setShown] = useState(pageSize)
-  const [live, setLive] = useState(true)
+  // Simulated mentions belong to the demo; a shared workspace only shows real ones.
+  const [live, setLive] = useState(mode === 'demo')
   const [fresh, setFresh] = useState<string | null>(null)
   const [allKeywords, setAllKeywords] = useState(false)
   const [adding, setAdding] = useState(false)
@@ -211,7 +212,7 @@ export function Listening({ now }: { now: Date }) {
           />
         </AnCard>
 
-        <AnCard {...card('st')} title={l.stream.title} tools={<LiveToggle live={live} onToggle={toggleLive} />} className="scroll-mt-4 self-stretch">
+        <AnCard {...card('st')} title={l.stream.title} tools={mode === 'demo' ? <LiveToggle live={live} onToggle={toggleLive} /> : undefined} className="scroll-mt-4 self-stretch">
           <Stream
             mentions={stream}
             shown={Math.max(shown, pageSize)}

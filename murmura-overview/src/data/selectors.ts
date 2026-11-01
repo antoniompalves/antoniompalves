@@ -94,7 +94,8 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages, everyBrand
   const growth = (range: GrowthRange) => {
     const series = followerGrowth.slice(-range)
     const added = series.reduce((sum, p) => sum + p.value, 0)
-    return { series, added, rate: added / (audience - added) }
+    // No audience yet (a new workspace): no growth rather than 0 ÷ 0.
+    return { series, added, rate: audience - added > 0 ? added / (audience - added) : 0 }
   }
   // Engagements per reach across everything published in the last 30 days.
   const recent = publishedIn(ws, now, 30, null)

@@ -20,6 +20,8 @@ interface GrowthChartProps {
 const labelStep = (n: number) => (n <= 31 ? 3 : n <= 92 ? 9 : Math.ceil(n / 10))
 
 function niceMax(max: number, ticks = 2) {
+  // Nothing yet (a new workspace): a flat line on a 0–2 axis.
+  if (!(max > 0)) return { top: ticks, step: 1 }
   const raw = max / ticks
   const pow = 10 ** Math.floor(Math.log10(raw))
   const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((s) => s >= raw) ?? raw

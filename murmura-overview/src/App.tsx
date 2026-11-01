@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LucideProvider } from 'lucide-react'
+import { CloudOff, Wifi } from 'lucide-react'
+import { AuthGate, Unreachable } from './components/auth/AuthGate'
 import { AppFrame, Dock, Mesh, MobileNav, TopBar } from './components/AppShell'
 import { Card } from './components/ui'
 import { ShortcutsDrawer } from './components/Drawer'
 import type { ThemePref } from './components/shell/Account'
 import { Finder } from './components/shell/Finder'
 import { SignIn } from './components/shell/SignIn'
-import { ToastProvider } from './components/Toast'
+import { ToastProvider, useToast } from './components/Toast'
 import { PostDrawer } from './components/calendar/PostDrawer'
 import { usePostActions } from './components/usePostActions'
 import { I18nProvider, useI18n } from './i18n'
@@ -17,6 +19,8 @@ import type { RouteId } from './data/routes'
 import { selectOverview } from './data/selectors'
 import { WorkspaceProvider, useWorkspace } from './data/store'
 import type { ClockOrigin } from './data/store'
+import { detect } from './data/server'
+import type { Backend } from './data/server'
 import { Ga4Provider, withSavedWebsites } from './data/ga4Store'
 import type { NavItem } from './data/types'
 import { Analytics } from './pages/Analytics'
@@ -75,17 +79,68 @@ function useMockNow(origin: ClockOrigin) {
 export default function App() {
   return (
     <I18nProvider>
-      <WorkspaceProvider seed={workspace} withSettings={withSavedWebsites}>
-        <Ga4Provider>
-          <ToastProvider>
-            <LucideProvider size={20} strokeWidth={1.7}>
-              <Shell />
-            </LucideProvider>
-          </ToastProvider>
-        </Ga4Provider>
-      </WorkspaceProvider>
+      <ToastProvider>
+        <LucideProvider size={20} strokeWidth={1.7}>
+          <Root />
+        </LucideProvider>
+      </ToastProvider>
     </I18nProvider>
   )
+}
+
+/** The sample workspace, for "Start with sample data" on a new server. */
+const sample = async () => workspace
+
+/**
+ * The demo (everything in this browser) or a Kataru server (accounts, one
+ * workspace shared by the team): whichever answers (data/server.ts).
+ */
+function Root() {
+  const [backend, setBackend] = useState<Backend | null>(null)
+  const probe = useCallback(() => {
+    setBackend(null)
+    void detect().then(setBackend)
+  }, [])
+  useEffect(probe, [probe])
+  if (!backend) return <Mesh />
+  if (backend.kind === 'unreachable')
+    return (
+      <>
+        <Mesh />
+        <Unreachable onRetry={probe} />
+      </>
+    )
+  if (backend.kind === 'server')
+    return (
+      <AuthGate initial={backend.session} sample={sample}>
+        <Ga4Provider>
+          <Shell />
+          <SyncNotices />
+        </Ga4Provider>
+      </AuthGate>
+    )
+  return (
+    <WorkspaceProvider seed={workspace} withSettings={withSavedWebsites}>
+      <Ga4Provider>
+        <Shell />
+      </Ga4Provider>
+    </WorkspaceProvider>
+  )
+}
+
+/** Says so when changes can't reach the server, and when they get through again. */
+function SyncNotices() {
+  const { server } = useWorkspace()
+  const { t } = useI18n()
+  const toast = useToast()
+  const was = useRef(server?.status)
+  useEffect(() => {
+    const now = server?.status
+    if (now === 'offline' && was.current !== 'offline') toast({ text: t.auth.sync.offline, icon: CloudOff })
+    else if (was.current === 'offline' && now !== 'offline') toast({ text: t.auth.sync.back, icon: Wifi })
+    was.current = now
+  }, [server?.status, t, toast])
+  return null
 }
 
 function Shell() {

@@ -138,6 +138,12 @@ for (const kind of kinds) {
         assert.equal(r.status, 200, JSON.stringify(r.body))
         assert.equal(r.body.to, r.body.from + 1)
         assert.deepEqual(r.body.patch.lists.posts.put.map((x: { item: Post }) => x.item.id), ['p1', 'p2'])
+        // A batch sent twice (a reply lost on the way) is applied once.
+        const once = { id: 'tab1-7', actions: [{ type: 'audit', event: { id: 'au-once', actorId: 'ana-silva', kind: 'auth', action: { type: 'signedIn' }, at: '2026-11-01T00:00:00Z' } }] }
+        const first = await owner.post('/api/workspace/actions', once)
+        const second = await owner.post('/api/workspace/actions', once)
+        assert.deepEqual([second.body.duplicate, second.body.to], [true, first.body.to])
+        assert.equal((await owner.get('/api/workspace')).body.ws.audit.filter((e: { id: string }) => e.id === 'au-once').length, 1)
         r = await owner.post('/api/workspace/actions', { actions: [{ type: 'signIn', userId: 'x' }] })
         assert.equal(r.status, 403, 'browser-only changes are refused')
         r = await owner.post('/api/workspace/actions', { actions: [{ type: 'saveMember', member: { ...ws.team[0], role: 'client' } }] })

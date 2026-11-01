@@ -4,6 +4,8 @@ import { STORAGE_KEY, fingerprint, loadWorkspace, parseSaved, saveWorkspace } fr
 import { reduce, revertOf } from './reducer'
 import type { WorkspaceAction } from './reducer'
 import { scopeView } from './scope'
+import type { SessionUser } from './server'
+import type { SyncStatus } from './syncEngine'
 import type { Workspace } from './types'
 
 export type { WorkspaceAction } from './reducer'
@@ -21,7 +23,19 @@ export interface ClockOrigin {
   real: number
 }
 
-interface WorkspaceContextValue {
+/** In server mode: the live connection and this person's session. */
+export interface ServerLink {
+  status: SyncStatus
+  /** Nothing waiting to be saved. */
+  settled: boolean
+  user: SessionUser
+  company: string
+  sso: { id: string; name: string }[]
+  mail: boolean
+  signOut: () => Promise<void>
+}
+
+export interface WorkspaceContextValue {
   /** What pages show: the brands the signed-in person sees, narrowed by the brand switcher (scope.ts). */
   ws: Workspace
   /** Everything, for undo snapshots and settings that span every brand. */
@@ -35,9 +49,12 @@ interface WorkspaceContextValue {
   clock: ClockOrigin
   /** Back to the starting data, keeping who is signed in. */
   reset: () => void
+  /** The demo (saved in this browser) or a Kataru server shared by the team. */
+  mode: 'demo' | 'server'
+  server?: ServerLink
 }
 
-const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
+export const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
 
 interface ProviderProps {
   seed: Workspace
@@ -101,7 +118,7 @@ export function WorkspaceProvider({ seed, withSettings = (ws) => ws, children }:
   }, [])
 
   const view = useMemo(() => scopeView(ws), [ws])
-  return <WorkspaceContext.Provider value={{ ws: view, all: ws, dispatch, undoable, clock, reset }}>{children}</WorkspaceContext.Provider>
+  return <WorkspaceContext.Provider value={{ ws: view, all: ws, dispatch, undoable, clock, reset, mode: 'demo' }}>{children}</WorkspaceContext.Provider>
 }
 
 export function useWorkspace() {
