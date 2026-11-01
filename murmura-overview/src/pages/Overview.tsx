@@ -198,7 +198,7 @@ const VISIBLE_TODOS = 4
 
 function NeedsYou({ model, now, className }: SectionProps & { now: Date }) {
   const { t } = useI18n()
-  const { ws, all, dispatch } = useWorkspace()
+  const { ws, dispatch, undoable } = useWorkspace()
   const toast = useToast()
   const [expanded, setExpanded] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -209,15 +209,14 @@ function NeedsYou({ model, now, className }: SectionProps & { now: Date }) {
   const nowMs = Math.floor(now.getTime() / 60_000) * 60_000
 
   const approveOne = (p: Post) => {
-    const before = all.posts
     const done = approve(p, ws.currentUserId, nowMs)
-    dispatch({ type: 'savePost', post: done })
+    const undo = undoable({ type: 'savePost', post: done })
     dispatch({ type: 'notify', notices: approvedNotices(ws.currentUserId, p, nowMs) })
     dispatch({
       type: 'audit',
       event: { id: `au-${Date.now().toString(36)}`, actorId: ws.currentUserId, kind: 'approval', action: { type: 'approved', excerpt: excerpt(p.text), brandId: p.brandId }, at: new Date(nowMs).toISOString() },
     })
-    toast({ text: t.approvals.toast.approved(t.dates.dayStamp(new Date(done.scheduledAt), now)), icon: Check, undo: () => dispatch({ type: 'restore', posts: before }) })
+    toast({ text: t.approvals.toast.approved(t.dates.dayStamp(new Date(done.scheduledAt), now)), icon: Check, undo })
   }
 
   /** Retry without the channels that are still disconnected; with none left, reconnecting comes first. */

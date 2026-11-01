@@ -43,7 +43,7 @@ const slug = (s: string) =>
  * the creators' accounts.
  */
 export function Creators({ now }: { now: Date }) {
-  const { ws, all, dispatch } = useWorkspace()
+  const { ws, all, dispatch, undoable } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const c = t.creators
@@ -64,10 +64,6 @@ export function Creators({ now }: { now: Date }) {
   const firstName = (id: string) => creatorName(id).split(' ')[0]
 
   const audit = (action: AuditAction) => dispatch({ type: 'audit', event: { id: `au-${Date.now().toString(36)}`, actorId: me, kind: 'creator', action, at: new Date(nowMs).toISOString() } })
-  const snapshot = () => {
-    const before = { creators: all.creators, creatorCampaigns: all.creatorCampaigns, deliverables: all.deliverables }
-    return () => dispatch({ type: 'restoreCreators', ...before })
-  }
   const guard = (run: () => void) => (manage ? run() : toast({ text: c.toast.cant, icon: Lock }))
 
   /* ───── saving ───── */
@@ -99,29 +95,25 @@ export function Creators({ now }: { now: Date }) {
 
   const saveResults = (d: Deliverable) => {
     setDialog(null)
-    const undo = snapshot()
-    dispatch({ type: 'saveDeliverable', deliverable: d })
+    const undo = undoable({ type: 'saveDeliverable', deliverable: d })
     audit({ type: 'loggedResults', creator: creatorName(d.creatorId), network: d.network })
     toast({ text: c.toast.resultsLogged(firstName(d.creatorId)), icon: BarChart3, undo })
   }
 
   const setDeliverableStatus = (d: Deliverable, s: DeliverableStatus) => {
-    const undo = snapshot()
-    dispatch({ type: 'saveDeliverable', deliverable: { ...d, status: s } })
+    const undo = undoable({ type: 'saveDeliverable', deliverable: { ...d, status: s } })
     toast({ text: c.toast.status(c.status[s]), icon: Check, undo })
     // Going live is the moment to log what it did.
     if (s === 'live' && !d.results) window.setTimeout(() => setDialog({ kind: 'results', deliverable: { ...d, status: s } }), 250)
   }
 
   const togglePaid = (d: Deliverable) => {
-    const undo = snapshot()
-    dispatch({ type: 'saveDeliverable', deliverable: { ...d, paid: !d.paid } })
+    const undo = undoable({ type: 'saveDeliverable', deliverable: { ...d, paid: !d.paid } })
     toast({ text: d.paid ? c.toast.unpaid(firstName(d.creatorId)) : c.toast.paid(firstName(d.creatorId), money(d.fee)), icon: Wallet, undo })
   }
 
   const deleteDeliverable = (d: Deliverable) => {
-    const undo = snapshot()
-    dispatch({ type: 'deleteDeliverable', id: d.id })
+    const undo = undoable({ type: 'deleteDeliverable', id: d.id })
     toast({ text: c.toast.deliverableDeleted, icon: Trash2, undo })
   }
 
@@ -141,13 +133,10 @@ export function Creators({ now }: { now: Date }) {
 
   const confirmDelete = () => {
     if (!dialog) return
-    const undo = snapshot()
     if (dialog.kind === 'deleteCampaign') {
-      dispatch({ type: 'deleteCreatorCampaign', id: dialog.campaign.id })
-      toast({ text: c.toast.campaignDeleted(dialog.campaign.name), icon: Trash2, undo })
+      toast({ text: c.toast.campaignDeleted(dialog.campaign.name), icon: Trash2, undo: undoable({ type: 'deleteCreatorCampaign', id: dialog.campaign.id }) })
     } else if (dialog.kind === 'removeCreator') {
-      dispatch({ type: 'deleteCreator', id: dialog.creator.id })
-      toast({ text: c.toast.creatorRemoved(dialog.creator.name), icon: Trash2, undo })
+      toast({ text: c.toast.creatorRemoved(dialog.creator.name), icon: Trash2, undo: undoable({ type: 'deleteCreator', id: dialog.creator.id }) })
     }
     setDialog(null)
   }

@@ -42,7 +42,7 @@ const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x
  * days, nudged with Alt + arrows, and opened in a preview drawer.
  */
 export function Calendar({ now }: { now: Date }) {
-  const { ws, all, dispatch } = useWorkspace()
+  const { ws, undoable } = useWorkspace()
   const toast = useToast()
   const { t } = useI18n()
   const [view, setView] = useState<CalendarView>('week')
@@ -77,11 +77,10 @@ export function Calendar({ now }: { now: Date }) {
   /* ── mutations (all undoable) ── */
 
   const move = (id: string, when: Date) => {
-    const before = all.posts
-    dispatch({ type: 'move', id, to: when.toISOString() })
+    const undo = undoable({ type: 'move', id, to: when.toISOString() })
     setLandedId(id)
     window.setTimeout(() => setLandedId((cur) => (cur === id ? null : cur)), 1300)
-    toast({ text: t.calendar.moved(t.dates.relativeDay(when, now), t.dates.time(when)), undo: () => dispatch({ type: 'restore', posts: before }) })
+    toast({ text: t.calendar.moved(t.dates.relativeDay(when, now), t.dates.time(when)), undo })
   }
   const denied = () => toast({ text: t.calendar.pastSlot, icon: TriangleAlert })
   const drag = useCalendarDrag({ posts: ws.posts, now, onDrop: move, onDenied: denied, formatTime: t.dates.time })

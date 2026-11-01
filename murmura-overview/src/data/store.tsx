@@ -1,8 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { Dispatch, ReactNode } from 'react'
 import { STORAGE_KEY, fingerprint, loadWorkspace, parseSaved, saveWorkspace } from './persist'
+import { reduce, revertOf } from './reducer'
+import type { WorkspaceAction } from './reducer'
 import { scopeView } from './scope'
-import type { AuditEvent, Channel, Conversation, Creator, CreatorCampaign, Deliverable, InboxAccount, Keyword, Mention, Message, Notice, Post, ScheduledReport, Website, Workspace } from './types'
+import type { Workspace } from './types'
+
+export type { WorkspaceAction } from './reducer'
 
 /**
  * Single workspace shared by every view, so rescheduling a post on the
@@ -10,167 +14,6 @@ import type { AuditEvent, Channel, Conversation, Creator, CreatorCampaign, Deliv
  * saved per browser after each change (see persist.ts) and follows changes
  * made in other tabs.
  */
-
-export type WorkspaceAction =
-  | { type: 'move'; id: string; to: string }
-  | { type: 'restore'; posts: Post[] }
-  | { type: 'publish'; id: string; at: string }
-  | { type: 'duplicate'; id: string; newId: string; at: string }
-  | { type: 'delete'; id: string }
-  /** Insert a post, or replace the one with its id (the composer's saves). */
-  | { type: 'savePost'; post: Post }
-  | { type: 'conversation'; id: string; patch: Partial<Conversation> }
-  | { type: 'send'; id: string; message: Message; close?: boolean }
-  /** Marks these open conversations read (the ones on screen). */
-  | { type: 'readAll'; ids: string[] }
-  | { type: 'restoreConversations'; conversations: Conversation[] }
-  | { type: 'addReport'; report: ScheduledReport }
-  | { type: 'restoreReports'; reports: ScheduledReport[] }
-  | { type: 'setWebsites'; websites: Website[] }
-  | { type: 'channel'; id: string; patch: Partial<Channel> }
-  /** Add a channel, or replace the one with its id. */
-  | { type: 'saveChannel'; channel: Channel }
-  /** A WhatsApp number or Google location for a brand's inbox: add, or remove by id. */
-  | { type: 'saveInboxAccount'; account: InboxAccount }
-  | { type: 'removeInboxAccount'; id: string }
-  /** Creators page: add or replace by id; deleting a campaign or a creator takes their deliverables along. */
-  | { type: 'saveCreator'; creator: Creator }
-  | { type: 'saveCreatorCampaign'; campaign: CreatorCampaign }
-  | { type: 'saveDeliverable'; deliverable: Deliverable }
-  | { type: 'deleteDeliverable'; id: string }
-  | { type: 'deleteCreatorCampaign'; id: string }
-  | { type: 'deleteCreator'; id: string }
-  | { type: 'restoreCreators'; creators: Creator[]; creatorCampaigns: CreatorCampaign[]; deliverables: Deliverable[] }
-  | { type: 'audit'; event: AuditEvent }
-  /** Take an activity entry back out (an undone action). */
-  | { type: 'unaudit'; id: string }
-  /** `index` puts a keyword back where it was (undoing "Stop tracking"). */
-  | { type: 'track'; keyword: Keyword; mentions: Mention[]; index?: number }
-  | { type: 'untrack'; id: string }
-  | { type: 'mentionArrived'; mention: Mention }
-  | { type: 'mention'; id: string; patch: Partial<Mention> }
-  | { type: 'mentionToInbox'; id: string; conversation: Conversation }
-  /** Replace everything: a reset, or a save from another tab. */
-  | { type: 'load'; ws: Workspace }
-  | { type: 'scope'; brandId: string | null }
-  | { type: 'notify'; notices: Notice[] }
-  | { type: 'readNotices'; ids: string[] }
-  | { type: 'signIn'; userId: string }
-  | { type: 'signOut' }
-
-/** Replace the item with the same id, or add it at the end. */
-const upsert = <T extends { id: string }>(list: T[], item: T) => (list.some((x) => x.id === item.id) ? list.map((x) => (x.id === item.id ? item : x)) : [...list, item])
-
-function reducer(ws: Workspace, action: WorkspaceAction): Workspace {
-  const update = (id: string, patch: (p: Post) => Post) => ({
-    ...ws,
-    posts: ws.posts.map((p) => (p.id === id ? patch(p) : p)),
-  })
-  switch (action.type) {
-    case 'move':
-      return update(action.id, (p) => ({ ...p, scheduledAt: action.to }))
-    case 'restore':
-      return { ...ws, posts: action.posts }
-    case 'publish':
-      return update(action.id, (p) => ({ ...p, status: 'published', scheduledAt: action.at, failure: undefined }))
-    case 'duplicate': {
-      const source = ws.posts.find((p) => p.id === action.id)
-      if (!source) return ws
-      return { ...ws, posts: [...ws.posts, { ...source, id: action.newId, status: 'draft', createdAt: action.at, reviews: [], metrics: undefined, failure: undefined }] }
-    }
-    case 'delete':
-      return { ...ws, posts: ws.posts.filter((p) => p.id !== action.id) }
-    case 'savePost': {
-      const exists = ws.posts.some((p) => p.id === action.post.id)
-      return { ...ws, posts: exists ? ws.posts.map((p) => (p.id === action.post.id ? action.post : p)) : [...ws.posts, action.post] }
-    }
-    case 'conversation':
-      return { ...ws, conversations: ws.conversations.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
-    case 'send':
-      return {
-        ...ws,
-        conversations: ws.conversations.map((c) =>
-          c.id === action.id
-            ? { ...c, unread: false, messages: [...c.messages, action.message], ...(action.close && { status: 'done' as const }) }
-            : c,
-        ),
-      }
-    case 'readAll':
-      return { ...ws, conversations: ws.conversations.map((c) => (action.ids.includes(c.id) && c.status === 'open' && c.unread ? { ...c, unread: false } : c)) }
-    case 'restoreConversations':
-      return { ...ws, conversations: action.conversations }
-    case 'addReport':
-      return { ...ws, reports: [...ws.reports, action.report] }
-    case 'restoreReports':
-      return { ...ws, reports: action.reports }
-    case 'setWebsites':
-      return { ...ws, websites: action.websites }
-    case 'channel':
-      return { ...ws, channels: ws.channels.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
-    case 'saveCreator':
-      return { ...ws, creators: upsert(ws.creators, action.creator) }
-    case 'saveCreatorCampaign':
-      return { ...ws, creatorCampaigns: upsert(ws.creatorCampaigns, action.campaign) }
-    case 'saveDeliverable':
-      return { ...ws, deliverables: upsert(ws.deliverables, action.deliverable) }
-    case 'deleteDeliverable':
-      return { ...ws, deliverables: ws.deliverables.filter((d) => d.id !== action.id) }
-    case 'deleteCreatorCampaign':
-      return { ...ws, creatorCampaigns: ws.creatorCampaigns.filter((c) => c.id !== action.id), deliverables: ws.deliverables.filter((d) => d.campaignId !== action.id) }
-    case 'deleteCreator':
-      return { ...ws, creators: ws.creators.filter((c) => c.id !== action.id), deliverables: ws.deliverables.filter((d) => d.creatorId !== action.id) }
-    case 'restoreCreators':
-      return { ...ws, creators: action.creators, creatorCampaigns: action.creatorCampaigns, deliverables: action.deliverables }
-    case 'saveInboxAccount':
-      return { ...ws, inboxAccounts: [...ws.inboxAccounts.filter((a) => a.id !== action.account.id), action.account] }
-    case 'removeInboxAccount':
-      return { ...ws, inboxAccounts: ws.inboxAccounts.filter((a) => a.id !== action.id) }
-    case 'saveChannel':
-      return ws.channels.some((c) => c.id === action.channel.id)
-        ? { ...ws, channels: ws.channels.map((c) => (c.id === action.channel.id ? action.channel : c)) }
-        : { ...ws, channels: [...ws.channels, action.channel] }
-    case 'audit':
-      return { ...ws, audit: [action.event, ...ws.audit] }
-    case 'unaudit':
-      return { ...ws, audit: ws.audit.filter((e) => e.id !== action.id) }
-    case 'track': {
-      const keywords = [...ws.keywords]
-      keywords.splice(action.index ?? keywords.length, 0, action.keyword)
-      return { ...ws, keywords, mentions: newestFirst([...ws.mentions, ...action.mentions]) }
-    }
-    case 'untrack':
-      return { ...ws, keywords: ws.keywords.filter((k) => k.id !== action.id), mentions: ws.mentions.filter((m) => m.keywordId !== action.id) }
-    case 'mentionArrived':
-      return { ...ws, mentions: [action.mention, ...ws.mentions] }
-    case 'mention':
-      return { ...ws, mentions: ws.mentions.map((m) => (m.id === action.id ? { ...m, ...action.patch } : m)) }
-    case 'mentionToInbox':
-      return {
-        ...ws,
-        conversations: [action.conversation, ...ws.conversations],
-        mentions: ws.mentions.map((m) => (m.id === action.id ? { ...m, conversationId: action.conversation.id } : m)),
-      }
-    case 'load':
-      return action.ws
-    case 'scope':
-      return { ...ws, brandScope: action.brandId }
-    case 'notify':
-      // Newest first, and only the latest 40 are kept.
-      return { ...ws, notices: [...action.notices, ...ws.notices].slice(0, 40) }
-    case 'readNotices':
-      return { ...ws, notices: ws.notices.map((n) => (action.ids.includes(n.id) ? { ...n, read: true } : n)) }
-    case 'signIn': {
-      const who = ws.team.find((m) => m.id === action.userId)
-      // A brand they can't see falls back to every brand.
-      const keep = !ws.brandScope || !who || who.brands === 'all' || who.brands.includes(ws.brandScope)
-      return { ...ws, currentUserId: action.userId, signedIn: true, brandScope: keep ? ws.brandScope : null }
-    }
-    case 'signOut':
-      return { ...ws, signedIn: false }
-  }
-}
-
-const newestFirst = (mentions: Mention[]) => [...mentions].sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
 
 /** Where the mock clock starts: `mock` (ms) at the real moment `real`. */
 export interface ClockOrigin {
@@ -184,6 +27,11 @@ interface WorkspaceContextValue {
   /** Everything, for undo snapshots and settings that span every brand. */
   all: Workspace
   dispatch: Dispatch<WorkspaceAction>
+  /**
+   * Makes these changes and returns what undoes them: only the items they
+   * touched go back, so a teammate's changes in the meantime stay.
+   */
+  undoable: (...actions: WorkspaceAction[]) => () => void
   clock: ClockOrigin
   /** Back to the starting data, keeping who is signed in. */
   reset: () => void
@@ -207,7 +55,7 @@ export function WorkspaceProvider({ seed, withSettings = (ws) => ws, children }:
     const mock = Math.max(Date.parse(seed.now), saved ? Date.parse(saved.clock) : 0)
     return { ws, clock: { mock, real: Date.now() } }
   })
-  const [ws, dispatch] = useReducer(reducer, boot.ws)
+  const [ws, dispatch] = useReducer(reduce, boot.ws)
   const [clock, setClock] = useState<ClockOrigin>(boot.clock)
   // The state as loaded (from the seed, a save or another tab) needn't be written back.
   const clean = useRef<Workspace>(boot.ws)
@@ -242,8 +90,18 @@ export function WorkspaceProvider({ seed, withSettings = (ws) => ws, children }:
     setClock({ mock: Date.parse(seed.now), real: Date.now() })
   }, [seed, withSettings, me])
 
+  // The latest state, ahead of React when several changes are made in one go.
+  const latest = useRef(ws)
+  latest.current = ws
+  const undoable = useCallback((...actions: WorkspaceAction[]) => {
+    const { after, undo } = revertOf(latest.current, actions)
+    latest.current = after
+    actions.forEach(dispatch)
+    return () => dispatch(undo)
+  }, [])
+
   const view = useMemo(() => scopeView(ws), [ws])
-  return <WorkspaceContext.Provider value={{ ws: view, all: ws, dispatch, clock, reset }}>{children}</WorkspaceContext.Provider>
+  return <WorkspaceContext.Provider value={{ ws: view, all: ws, dispatch, undoable, clock, reset }}>{children}</WorkspaceContext.Provider>
 }
 
 export function useWorkspace() {

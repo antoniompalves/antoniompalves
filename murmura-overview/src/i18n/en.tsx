@@ -528,6 +528,14 @@ export const en = {
         return `connected ${a.source === 'whatsapp' ? 'WhatsApp Business' : 'Google Business Profile'} for ${brand(a.brandId)}`
       case 'disconnectedInbox':
         return `disconnected ${a.source === 'whatsapp' ? 'WhatsApp Business' : 'Google Business Profile'} from ${brand(a.brandId)}`
+      case 'joinedTeam':
+        return 'joined the team'
+      case 'changedRole':
+        return `made ${a.name} ${role(a.role)}`
+      case 'suspendedMember':
+        return `${a.suspended ? 'suspended' : 'reactivated'} ${a.name}`
+      case 'revokedInvite':
+        return `withdrew ${a.name}’s invitation`
       case 'signedIn':
         return 'signed in'
       case 'signedOut':

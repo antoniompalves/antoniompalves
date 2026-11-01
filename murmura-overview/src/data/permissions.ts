@@ -1,6 +1,7 @@
 import type { Messages } from '../i18n'
 import type { RouteId } from './routes'
-import type { Permission, RoleDef, SystemRole, TeamMember, Workspace } from './types'
+import { can, member, seesBrand } from './access.ts'
+import type { Permission, SystemRole, Workspace } from './types'
 
 /**
  * Roles and what they allow, as the reference models them: seven system roles
@@ -52,18 +53,7 @@ export const PERMISSION_GROUP: Record<Permission, PermissionGroup> = {
 const SYSTEM: SystemRole[] = ['owner', 'admin', 'manager', 'editor', 'community', 'analyst', 'client']
 export const isSystemRole = (id: string): id is SystemRole => (SYSTEM as string[]).includes(id)
 
-export const member = (ws: Workspace, id: string) => ws.team.find((m) => m.id === id)
-export const roleOf = (ws: Workspace, m: TeamMember | undefined): RoleDef | undefined => (m ? ws.roles.find((r) => r.id === m.role) : undefined)
-
-/** Whether someone may do something. Owners always may; invited or suspended people can't do anything yet. */
-export function can(ws: Workspace, memberId: string, perm: Permission) {
-  const m = member(ws, memberId)
-  if (!m || m.status !== 'active') return false
-  if (m.role === 'owner') return true
-  return !!roleOf(ws, m)?.perms.includes(perm)
-}
-
-export const seesBrand = (m: TeamMember, brandId: string) => m.brands === 'all' || m.brands.includes(brandId)
+export { can, member, roleOf, seesBrand } from './access.ts'
 
 /** Active people who can approve posts for a brand. */
 export const approversFor = (ws: Workspace, brandId: string) => ws.team.filter((m) => m.status === 'active' && seesBrand(m, brandId) && can(ws, m.id, 'post.approve'))

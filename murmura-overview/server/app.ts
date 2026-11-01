@@ -16,6 +16,8 @@ import type { Account, Connection, Provider } from './providers/types.ts'
 import { youtubeProvider } from './providers/youtube.ts'
 import { issues } from './rules.ts'
 import type { Job } from './store.ts'
+import type { Kataru } from './kataru.ts'
+import type { Permission } from '../src/data/types.ts'
 
 export const API_VERSION = 1
 const PROVIDERS: PublishProvider[] = ['meta', 'threads', 'linkedin', 'tiktok', 'youtube']
@@ -56,6 +58,13 @@ export const jobSummary = (j: Job): PublishJob => ({
   error: j.error,
 })
 
+/** What a signed-in teammate needs to use each publishing endpoint. */
+function publisherNeeds(method: string, path: string): Permission[] {
+  if (path.startsWith('/api/connect/') || path.startsWith('/api/connections/')) return ['channels.manage']
+  if (method === 'GET') return ['post.create', 'post.publish', 'channels.manage', 'analytics.view']
+  return ['post.publish']
+}
+
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`)
 
 /** The page the sign-in popup lands on: tells the app what happened, then closes. */
@@ -72,7 +81,7 @@ if (window.opener) window.opener.postMessage(${json}, ${JSON.stringify(origin)})
  * /media are reached by the networks and the sign-in popup, so they carry
  * their own checks (an unguessable state, unguessable media ids).
  */
-export function createHandler(config: Config, deps: Deps & { media: MediaLibrary }) {
+export function createHandler(config: Config, deps: Deps & { media: MediaLibrary; kataru?: Kataru }) {
   const pending = new Map<string, { provider: PublishProvider; verifier?: string; origin: string; at: number }>()
   const now = () => deps.now?.() ?? Date.now()
   const redirectUri = (p: PublishProvider) => `${config.publicUrl}/auth/${p}/callback`
@@ -82,8 +91,10 @@ export function createHandler(config: Config, deps: Deps & { media: MediaLibrary
     if (origin && config.appOrigins.includes(origin)) {
       res.setHeader('access-control-allow-origin', origin)
       res.setHeader('vary', 'origin')
-      res.setHeader('access-control-allow-headers', 'authorization, content-type')
-      res.setHeader('access-control-allow-methods', 'GET, POST, DELETE, OPTIONS')
+      res.setHeader('access-control-allow-headers', 'authorization, content-type, x-kataru')
+      res.setHeader('access-control-allow-methods', 'GET, POST, PATCH, DELETE, OPTIONS')
+      // The app on another address (development) signs in with a cookie.
+      if (deps.kataru) res.setHeader('access-control-allow-credentials', 'true')
       res.setHeader('access-control-max-age', '600')
     }
   }
@@ -200,9 +211,13 @@ export function createHandler(config: Config, deps: Deps & { media: MediaLibrary
       return res.end(await deps.media.read(rec.id))
     }
 
+    // Accounts, the shared workspace and the built app.
+    if (deps.kataru && (await deps.kataru.handle(req, res, path, url))) return
     if (!path.startsWith('/api/')) return fail(res, 404, 'not_found', 'Not found')
     const auth = req.headers.authorization ?? ''
-    if (!auth.startsWith('Bearer ') || !safeEqual(auth.slice(7), config.apiKey)) return fail(res, 401, 'unauthorized', 'Missing or wrong API key')
+    const keyed = !!config.apiKey && auth.startsWith('Bearer ') && safeEqual(auth.slice(7), config.apiKey)
+    // Without the key, someone signed in whose role allows it.
+    if (!keyed && !(deps.kataru && (await deps.kataru.allows(req, publisherNeeds(method, path))))) return fail(res, 401, 'unauthorized', 'Missing or wrong API key')
 
     if (path === '/api/accounts' && method === 'GET') return send(res, 200, accounts())
 

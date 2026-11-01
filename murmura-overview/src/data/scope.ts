@@ -1,6 +1,6 @@
-import { seesBrand } from './permissions'
-import type { Range } from './analyticsData'
-import type { AnalyticsHistory, Channel, NetworkId, Workspace } from './types'
+import { seesBrand } from './access.ts'
+import type { Range } from './analyticsData.ts'
+import type { AnalyticsHistory, Channel, NetworkId, Workspace } from './types.ts'
 
 const RANGES: Range[] = [7, 30, 90]
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0)

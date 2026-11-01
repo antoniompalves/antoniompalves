@@ -12,6 +12,7 @@ import type { Draft } from '../components/inbox/Thread'
 import type { InboxFilters, InboxView } from '../data/inbox'
 import { NO_INBOX_FILTERS, byActivity, inView, inboxStats, matchesInboxFilters, matchesSearch, tagSuggestions } from '../data/inbox'
 import { useWorkspace } from '../data/store'
+import type { WorkspaceAction } from '../data/store'
 import { useI18n } from '../i18n'
 import type { Messages } from '../i18n'
 import type { Conversation, Message, Sentiment } from '../data/types'
@@ -31,7 +32,7 @@ const go = (id?: string) => {
  * optional contact panel. Shortcuts: J/K move, E done, R reply, / search.
  */
 export function Inbox({ now, hash }: { now: Date; hash: string }) {
-  const { ws, all, dispatch } = useWorkspace()
+  const { ws, dispatch, undoable } = useWorkspace()
   const toast = useToast()
   const { t } = useI18n()
   const [view, setView] = useState<InboxView>('all')
@@ -79,10 +80,15 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   /* ── actions ── */
 
   const patch = (id: string, p: Partial<Conversation>) => dispatch({ type: 'conversation', id, patch: p })
-  const undoTo = (before: Conversation[], id?: string) => () => {
-    dispatch({ type: 'restoreConversations', conversations: before })
-    if (id) go(id)
+  /** Makes the changes; undoing them puts the conversations back (and opens `id` again). */
+  const changeTo = (actions: WorkspaceAction[], id?: string) => {
+    const undo = undoable(...actions)
+    return () => {
+      undo()
+      if (id) go(id)
+    }
   }
+  const patchTo = (c: Conversation, p: Partial<Conversation>, reopen = false) => changeTo([{ type: 'conversation', id: c.id, patch: p }], reopen ? c.id : undefined)
   const nextAfter = (id: string) => {
     const i = rows.findIndex((r) => r.id === id)
     const rest = rows.filter((r) => r.id !== id)
@@ -91,24 +97,20 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   const firstName = (c: Conversation) => c.contact.name.split(' ')[0]
 
   const done = (c: Conversation) => {
-    const before = all.conversations
     if (c.status === 'done') {
-      patch(c.id, { status: 'open' })
-      toast({ text: t.inbox.toast.reopened(firstName(c), c.kind), icon: RotateCcw, undo: undoTo(before, c.id) })
+      toast({ text: t.inbox.toast.reopened(firstName(c), c.kind), icon: RotateCcw, undo: patchTo(c, { status: 'open' }, true) })
       return
     }
     const next = nextAfter(c.id)
     setStampId(c.id)
     window.setTimeout(() => {
       setStampId(null)
-      patch(c.id, { status: 'done', unread: false })
-      toast({ text: t.inbox.toast.done(firstName(c), c.kind), icon: CheckCheck, undo: undoTo(before, c.id) })
+      toast({ text: t.inbox.toast.done(firstName(c), c.kind), icon: CheckCheck, undo: patchTo(c, { status: 'done', unread: false }, true) })
       if (view !== 'done') go(next)
     }, 450)
   }
 
   const send = (c: Conversation, draft: Draft, close = false) => {
-    const before = all.conversations
     const rule = replyWindow(ws, c, now.getTime())
     const message: Message = {
       id: `${c.id}-m${Date.now()}`,
@@ -123,39 +125,35 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
     }
     const closing = close && !draft.note
     // A Google review has one public reply: a new one takes the old one's place.
-    if (!draft.note && c.network === 'google' && rule.kind === 'review' && rule.replied) {
-      patch(c.id, { messages: c.messages.filter((m) => m.from !== 'us' || m.note) })
-      toast({ text: t.inbox.toast.replyUpdated, icon: Globe, undo: undoTo(before, c.id) })
-    }
-    dispatch({ type: 'send', id: c.id, message, close: closing })
+    const replacing = !draft.note && c.network === 'google' && rule.kind === 'review' && rule.replied
+    const actions: WorkspaceAction[] = [
+      ...(replacing ? [{ type: 'conversation' as const, id: c.id, patch: { messages: c.messages.filter((m) => m.from !== 'us' || m.note) } }] : []),
+      { type: 'send', id: c.id, message, close: closing },
+    ]
+    const undo = changeTo(actions, c.id)
+    if (replacing) toast({ text: t.inbox.toast.replyUpdated, icon: Globe, undo })
     setDrafts((d) => ({ ...d, [c.id]: EMPTY_DRAFT }))
     if (closing) {
-      toast({ text: t.inbox.toast.sentAndClosed(firstName(c)), icon: Send, undo: undoTo(before, c.id) })
+      toast({ text: t.inbox.toast.sentAndClosed(firstName(c)), icon: Send, undo })
       if (view !== 'done') go(nextAfter(c.id))
     }
   }
 
   const markAllRead = () => {
-    const before = all.conversations
     const n = stats.unread
-    dispatch({ type: 'readAll', ids: ws.conversations.map((c) => c.id) })
-    toast({ text: t.inbox.toast.markedRead(n), icon: CheckCheck, undo: undoTo(before) })
+    toast({ text: t.inbox.toast.markedRead(n), icon: CheckCheck, undo: changeTo([{ type: 'readAll', ids: ws.conversations.map((c) => c.id) }]) })
   }
 
   // The reference confirms assignment in place (avatar on the row and header), without a toast.
   const assign = (c: Conversation, memberId: string | null) => patch(c.id, { assigneeId: memberId ?? undefined })
 
   const priority = (c: Conversation) => {
-    const before = all.conversations
-    patch(c.id, { priority: !c.priority })
-    toast({ text: c.priority ? t.inbox.toast.priorityOff : t.inbox.toast.priorityOn, icon: Flag, undo: undoTo(before) })
+    toast({ text: c.priority ? t.inbox.toast.priorityOff : t.inbox.toast.priorityOn, icon: Flag, undo: patchTo(c, { priority: !c.priority }) })
   }
 
   const sentiment = (c: Conversation, s: Sentiment) => {
     if (c.sentiment === s) return
-    const before = all.conversations
-    patch(c.id, { sentiment: s })
-    toast({ text: t.inbox.toast.sentiment(s), icon: Smile, undo: undoTo(before) })
+    toast({ text: t.inbox.toast.sentiment(s), icon: Smile, undo: patchTo(c, { sentiment: s }) })
   }
 
   const addTag = (c: Conversation, tag: string) => {
@@ -166,9 +164,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
   }
 
   const removeTag = (c: Conversation, tag: string) => {
-    const before = all.conversations
-    patch(c.id, { tags: c.tags.filter((x) => x !== tag) })
-    toast({ text: t.inbox.toast.untagged(tag), icon: Hash, undo: undoTo(before) })
+    toast({ text: t.inbox.toast.untagged(tag), icon: Hash, undo: patchTo(c, { tags: c.tags.filter((x) => x !== tag) }) })
   }
 
   // "Mark as unread" puts the conversation back and parks the inbox on its empty state.

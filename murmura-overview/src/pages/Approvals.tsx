@@ -12,6 +12,7 @@ import type { ApprovalTab } from '../data/approvals'
 import { approvedNotices, changesNotices, excerpt } from '../data/notices'
 import { can, member } from '../data/permissions'
 import { useWorkspace } from '../data/store'
+import type { WorkspaceAction } from '../data/store'
 import type { AuditAction, AuditEvent, Post } from '../data/types'
 import { useI18n } from '../i18n'
 
@@ -23,7 +24,7 @@ const TAB_COUNT: Partial<Record<ApprovalTab, string>> = { mine: 'bg-butter text-
  * with a note or withdraw, next to the rule in force and who approves each brand.
  */
 export function Approvals({ now }: { now: Date }) {
-  const { ws, all: full, dispatch } = useWorkspace()
+  const { ws, dispatch, undoable } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const a = t.approvals
@@ -58,12 +59,10 @@ export function Approvals({ now }: { now: Date }) {
   const firstName = (id: string) => member(ws, id)?.name.split(' ')[0] ?? ''
 
   const approveAll = (posts: Post[]) => {
-    const before = full.posts
     const done = posts.map((p) => approve(p, me, nowMs))
-    done.forEach((p) => dispatch({ type: 'savePost', post: p }))
+    const undo = undoable(...done.map((p): WorkspaceAction => ({ type: 'savePost', post: p })))
     dispatch({ type: 'notify', notices: done.flatMap((p) => approvedNotices(me, p, nowMs)) })
     setSelected(new Set())
-    const undo = () => dispatch({ type: 'restore', posts: before })
     if (done.length === 1) {
       audit('approval', { type: 'approved', excerpt: excerpt(done[0].text), brandId: done[0].brandId })
       toast({ text: a.toast.approved(t.dates.dayStamp(new Date(done[0].scheduledAt), now)), icon: CheckCheck, undo })
@@ -94,10 +93,9 @@ export function Approvals({ now }: { now: Date }) {
   }
 
   const withdrawOne = (p: Post) => {
-    const before = full.posts
-    dispatch({ type: 'savePost', post: withdraw(p, me, nowMs, a.toast.withdrawNote) })
+    const undo = undoable({ type: 'savePost', post: withdraw(p, me, nowMs, a.toast.withdrawNote) })
     audit('approval', { type: 'withdrew', excerpt: excerpt(p.text) })
-    toast({ text: a.toast.withdrawn, icon: Undo2, undo: () => dispatch({ type: 'restore', posts: before }) })
+    toast({ text: a.toast.withdrawn, icon: Undo2, undo })
   }
 
   const empty = (() => {

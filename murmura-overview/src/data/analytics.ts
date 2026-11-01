@@ -106,7 +106,7 @@ function accountRows(ws: Workspace, now: Date, range: Range, network: NetworkId)
   return ws.channels
     .filter((c) => c.network === network)
     .map((channel) => {
-      const stats = ws.analytics.accounts[channel.id][range]
+      const stats = ws.analytics.accounts[channel.id]?.[range] ?? { gained: 0, impressions: 0, trend: [] }
       const own = posts.filter((p) => p.brandId === channel.brandId)
       return {
         key: channel.id,
@@ -198,7 +198,7 @@ export function selectAnalytics(ws: Workspace, now: Date, range: Range, net: Net
       accounts: own.length,
       posts: brandPosts.length,
       followers: own.length ? sum(own.map((c) => c.followers)) : null,
-      impressions: sum(own.map((c) => ws.analytics.accounts[c.id][range].impressions)),
+      impressions: sum(own.map((c) => ws.analytics.accounts[c.id]?.[range].impressions ?? 0)),
       engagementRate: avgRate(brandPosts),
     }
   })

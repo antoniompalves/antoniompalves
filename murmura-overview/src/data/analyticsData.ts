@@ -4,7 +4,7 @@
  * against every figure it prints for 7D/30D/90D × all networks + each network.
  * Generated once from those captures; edit the captures, not this file.
  */
-import type { NetworkId } from './types'
+import type { NetworkId } from './types.ts'
 
 export type Range = 7 | 30 | 90
 

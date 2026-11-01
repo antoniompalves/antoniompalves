@@ -28,7 +28,7 @@ const DAY = 86_400_000
  * preview | when, the publish bar and your drafts.
  */
 export function Compose({ now, hash }: { now: Date; hash: string }) {
-  const { ws, all, dispatch } = useWorkspace()
+  const { ws, dispatch, undoable } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const c = t.compose
@@ -234,9 +234,7 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   }
 
   const deleteDraft = (p: Post) => {
-    const before = all.posts
-    dispatch({ type: 'delete', id: p.id })
-    toast({ text: c.toast.deleted, icon: Trash2, undo: () => dispatch({ type: 'restore', posts: before }) })
+    toast({ text: c.toast.deleted, icon: Trash2, undo: undoable({ type: 'delete', id: p.id }) })
     if (p.id === editId) go('#/compose')
   }
 

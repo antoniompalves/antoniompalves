@@ -4,7 +4,7 @@
  * into entities so every widget on #/overview can be computed from them.
  */
 
-import type { AccountRange, NetworkSeries, Range } from './analyticsData'
+import type { AccountRange, NetworkSeries, Range } from './analyticsData.ts'
 
 export type ISODate = string
 
@@ -394,6 +394,10 @@ export type AuditAction =
   | { type: 'disconnectedChannel'; brandId: string; network: NetworkId }
   | { type: 'signedOut' }
   | { type: 'connectedInbox'; brandId: string; source: 'whatsapp' | 'google' }
+  | { type: 'joinedTeam' }
+  | { type: 'changedRole'; name: string; role: string }
+  | { type: 'suspendedMember'; name: string; suspended: boolean }
+  | { type: 'revokedInvite'; name: string }
   | { type: 'addedCreator'; name: string }
   | { type: 'createdCreatorCampaign'; name: string; brandId: string }
   | { type: 'loggedResults'; creator: string; network: NetworkId }

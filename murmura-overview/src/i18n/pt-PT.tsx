@@ -515,6 +515,14 @@ export const ptPT: Messages = {
         return `ligou ${a.source === 'whatsapp' ? 'o WhatsApp Business' : 'o Perfil da Empresa no Google'} de ${brand(a.brandId)}`
       case 'disconnectedInbox':
         return `desligou ${a.source === 'whatsapp' ? 'o WhatsApp Business' : 'o Perfil da Empresa no Google'} de ${brand(a.brandId)}`
+      case 'joinedTeam':
+        return 'juntou-se à equipa'
+      case 'changedRole':
+        return `deu a ${a.name} o perfil ${role(a.role)}`
+      case 'suspendedMember':
+        return `${a.suspended ? 'suspendeu' : 'reativou'} ${a.name}`
+      case 'revokedInvite':
+        return `retirou o convite a ${a.name}`
       case 'signedIn':
         return 'iniciou sessão'
       case 'signedOut':

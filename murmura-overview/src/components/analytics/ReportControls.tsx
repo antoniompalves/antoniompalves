@@ -25,7 +25,7 @@ function nextRun(now: Date, frequency: ScheduledReport['frequency']) {
  * reports exist, a menu listing them (pick one to stop it) plus "New".
  */
 export function ReportControls({ scope, now }: { scope: string; now: Date }) {
-  const { ws, dispatch } = useWorkspace()
+  const { ws, undoable } = useWorkspace()
   const { t } = useI18n()
   const r = t.analytics.report
   const toast = useToast()
@@ -36,10 +36,9 @@ export function ReportControls({ scope, now }: { scope: string; now: Date }) {
   const member = (id: string) => ws.team.find((m) => m.id === id)
 
   const stop = (report: ScheduledReport) => {
-    const before = ws.reports
-    dispatch({ type: 'restoreReports', reports: before.filter((x) => x.id !== report.id) })
+    const undo = undoable({ type: 'removeReport', id: report.id })
     setStopping(null)
-    toast({ text: r.stopped, icon: Trash2, undo: () => dispatch({ type: 'restoreReports', reports: before }) })
+    toast({ text: r.stopped, icon: Trash2, undo })
   }
 
   return (
@@ -104,12 +103,12 @@ export function ReportControls({ scope, now }: { scope: string; now: Date }) {
           scope={scope}
           onClose={() => setForm(false)}
           onSchedule={(report) => {
-            dispatch({ type: 'addReport', report })
+            const undo = undoable({ type: 'addReport', report })
             setForm(false)
             toast({
               text: r.scheduled(report.frequency, t.dates.dayTime(nextRun(now, report.frequency))),
               icon: Mail,
-              undo: () => dispatch({ type: 'restoreReports', reports: ws.reports }),
+              undo,
             })
           }}
         />
