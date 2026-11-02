@@ -138,6 +138,9 @@ interface EditorProps {
   onHashtags: (name: string, tags: string[]) => void
   onTemplate: (tpl: Template) => void
   onRemovePhoto: (seed: string) => void
+  /** Photos and videos from this device, kept as light copies (lightMedia.ts). */
+  onUpload?: (files: File[]) => void
+  uploading?: boolean
   onCopyLink: () => void
   onInsertLink: () => void
   /** The text box edits the main text ('all') or one network's own version. */
@@ -549,7 +552,7 @@ export function Editor(props: EditorProps) {
             onClose={() => setAltFor(null)}
           />
         )}
-        <MediaPicker open={menu === 'media'} onClose={close} anchor={mediaBtn} brand={brand.name} assets={props.media} picked={draft.media} onToggle={togglePhoto} />
+        <MediaPicker open={menu === 'media'} onClose={close} anchor={mediaBtn} brand={brand.name} assets={props.media} picked={draft.media} onToggle={togglePhoto} onUpload={props.onUpload} uploading={props.uploading} />
         <HashtagPicker
           open={menu === 'tags'}
           onClose={close}

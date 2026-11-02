@@ -52,7 +52,7 @@ export function Modal({ open, onClose, title, sub, onSubmit, error, footer, size
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      onClose={onClose}
+      onClose={(e) => e.target === e.currentTarget && onClose()}
       onClick={(e) => e.target === ref.current && onClose()}
       className={cn(
         'm-auto max-h-[calc(100dvh-32px)] max-w-none overflow-auto overscroll-contain rounded-card border border-rim bg-solid p-0 text-text shadow-pop backdrop:bg-[rgb(16_18_20/0.26)] backdrop:backdrop-blur-[6px] open:animate-rise dark:backdrop:bg-black/60',

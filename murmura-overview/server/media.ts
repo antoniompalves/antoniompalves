@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { randomId } from './crypto.ts'
 import { rawFetch } from './providers/http.ts'
@@ -8,6 +8,12 @@ import type { MediaRecord, Store } from './store.ts'
 
 /** Photos, videos, and PDFs for LinkedIn documents. */
 const ALLOWED = /^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm)|application\/pdf)$/
+/** The light copies the app keeps: still images only, small. */
+const PREVIEW = /^image\/(jpeg|png|webp)$/
+export const PREVIEW_MAX = 300 * 1024
+const DAY = 86_400_000
+/** After the last post using an original is out (or failed for good), it stays this long. */
+const GRACE = 2 * DAY
 
 /**
  * Media the app uploads, served back at PUBLISHER_PUBLIC_URL/media/<id>: Meta,
@@ -20,26 +26,64 @@ export class MediaLibrary implements MediaSource {
   private publicUrl: string
   private maxBytes: number
 
-  constructor(dataDir: string, store: Store, publicUrl: string, maxBytes: number) {
+  private keepDays: number
+
+  /** `keepDays`: how long an original nobody has scheduled yet is kept (PUBLISHER_KEEP_ORIGINAL_DAYS). */
+  constructor(dataDir: string, store: Store, publicUrl: string, maxBytes: number, keepDays = 30) {
     this.dir = join(dataDir, 'media')
     this.store = store
     this.publicUrl = publicUrl
     this.maxBytes = maxBytes
+    this.keepDays = keepDays
   }
 
   url(id: string) {
     return `${this.publicUrl}/media/${id}`
   }
 
-  async save(bytes: Buffer, mime: string): Promise<MediaRecord & { url: string }> {
+  async save(bytes: Buffer, mime: string, role: 'original' | 'preview' = 'original', now = Date.now()): Promise<MediaRecord & { url: string }> {
+    if (role === 'preview') {
+      if (!PREVIEW.test(mime)) throw new ProviderError('invalid', 'Previews are JPEG, PNG or WebP images')
+      if (bytes.length > PREVIEW_MAX) throw new ProviderError('invalid', `Previews are at most ${PREVIEW_MAX / 1024} KB; make a lighter copy first`)
+    }
     if (!ALLOWED.test(mime)) throw new ProviderError('invalid', `Unsupported media type ${mime || '(none)'}`)
     if (bytes.length > this.maxBytes) throw new ProviderError('invalid', `File is larger than ${Math.round(this.maxBytes / 1048576)} MB`)
     await mkdir(this.dir, { recursive: true })
-    const rec: MediaRecord = { id: randomId('m', 16), mime, size: bytes.length, createdAt: Date.now() }
+    const rec: MediaRecord = { id: randomId('m', 16), mime, size: bytes.length, createdAt: now, role, ...(role === 'original' && { deleteAfter: now + this.keepDays * DAY }) }
     await writeFile(join(this.dir, rec.id), bytes)
     this.store.data.media.push(rec)
     await this.store.save()
     return { ...rec, url: this.url(rec.id) }
+  }
+
+  /**
+   * Lets originals go once nothing needs them: a post still waiting keeps its
+   * files; when every post using one is out (or failed for good) it goes two
+   * days later; one never scheduled goes after `keepDays`. Previews stay.
+   */
+  async sweep(now = Date.now()) {
+    const removed: MediaRecord[] = []
+    for (const rec of [...this.store.data.media]) {
+      if (rec.role === 'preview') continue
+      const url = this.url(rec.id)
+      const uses = this.store.data.jobs.filter((j) => j.post.media.some((m) => m.url === url))
+      if (uses.some((j) => j.status === 'scheduled' || j.status === 'publishing' || j.status === 'processing')) continue
+      const done = uses.map((j) => j.updatedAt + GRACE)
+      // Used by posts: two days after the last one is out. Never used: after keepDays.
+      const until = done.length ? Math.max(...done) : (rec.deleteAfter ?? rec.createdAt + this.keepDays * DAY)
+      if (until > now) continue
+      await rm(join(this.dir, rec.id), { force: true })
+      this.store.data.media = this.store.data.media.filter((m) => m.id !== rec.id)
+      removed.push(rec)
+    }
+    if (removed.length) await this.store.save()
+    return removed
+  }
+
+  /** How much is kept: light copies, and originals waiting to be published. */
+  stats() {
+    const sum = (role: 'original' | 'preview') => this.store.data.media.filter((m) => (m.role ?? 'original') === role).reduce((a, m) => ({ count: a.count + 1, bytes: a.bytes + m.size }), { count: 0, bytes: 0 })
+    return { previews: sum('preview'), originals: sum('original') }
   }
 
   record(id: string) {

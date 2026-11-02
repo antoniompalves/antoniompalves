@@ -35,7 +35,7 @@ export async function freshDb(kind: 'sqlite' | 'mysql'): Promise<{ url: string; 
   }
   const url = process.env.TEST_MYSQL_URL!
   const probe = await openDb(url)
-  for (const t of ['kt_users', 'kt_sessions', 'kt_tokens', 'kt_identities', 'kt_attempts', 'kt_ephemeral', 'kt_workspace', 'kt_events', 'kt_meta']) await probe.run(`DROP TABLE IF EXISTS ${t}`)
+  for (const t of ['kt_users', 'kt_sessions', 'kt_tokens', 'kt_identities', 'kt_attempts', 'kt_ephemeral', 'kt_workspace', 'kt_events', 'kt_archive', 'kt_backups', 'kt_meta']) await probe.run(`DROP TABLE IF EXISTS ${t}`)
   await probe.close()
   return { url, db: await openDb(url) }
 }

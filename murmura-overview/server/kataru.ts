@@ -21,6 +21,9 @@ import { upsert } from './db.ts'
 import { HttpError, clientIp, cookie, cookies, isEmail, readJson, send, str } from './http.ts'
 import { Hub } from './workspace/hub.ts'
 import { Refused } from './workspace/policy.ts'
+import { DEFAULT_ARCHIVE_DAYS, allArchived, archiveStats, archived, daily, listArchive, listBackups, makeBackup, readBackup, restoreArchived, restoreWorkspace, runArchive, workspaceOf } from './workspace/archive.ts'
+import { ARCHIVE_LISTS } from '../src/data/archive.ts'
+import type { ArchiveList } from '../src/data/archive.ts'
 
 /**
  * Kataru's accounts API: the first-run setup, signing in (password, two-factor
@@ -36,6 +39,8 @@ const MIN = 60_000
 
 export interface KataruDeps {
   db: Db
+  /** The publishing service's files, for the storage figures. */
+  media?: { stats(): { previews: { count: number; bytes: number }; originals: { count: number; bytes: number } } }
   now?: () => number
   log?: (s: string) => void
   mailer?: Mailer
@@ -96,6 +101,12 @@ export async function createKataru(config: Config, deps: KataruDeps) {
 
   const sweeper = setInterval(() => void accounts.sweep().catch(() => undefined), 60 * MIN)
   sweeper.unref?.()
+  // Once a day: a backup, then old items to the archive (archive.ts).
+  const runDaily = () => void daily(db, hub, now(), log).catch((e) => log(`[daily] ${(e as Error).message}`))
+  const dailyTimer = setInterval(runDaily, 60 * MIN)
+  dailyTimer.unref?.()
+  const firstDaily = setTimeout(runDaily, 15_000)
+  firstDaily.unref?.()
 
   /* ───── helpers ───── */
 
@@ -713,6 +724,65 @@ export async function createKataru(config: Config, deps: KataruDeps) {
     send(res, 200, { ok: true })
   }
 
+  /* ───── data: backups, the archive, storage ───── */
+
+  async function dataInfo(req: IncomingMessage, res: ServerResponse) {
+    const m = await me(req)
+    needs(m, 'settings.manage')
+    const doc = JSON.stringify(m.ws)
+    send(res, 200, {
+      backups: await listBackups(db),
+      archive: await archiveStats(db),
+      archiveDays: m.ws.settings.archiveDays ?? DEFAULT_ARCHIVE_DAYS,
+      workspaceBytes: Buffer.byteLength(doc),
+      media: deps.media?.stats() ?? null,
+      canRestore: m.member.role === 'owner',
+    })
+  }
+
+  const download = (res: ServerResponse, name: string, body: string) => {
+    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'content-disposition': `attachment; filename="${name}"`, 'cache-control': 'no-store' })
+    res.end(body)
+  }
+
+  async function fullExport(req: IncomingMessage, res: ServerResponse) {
+    const m = await me(req)
+    needs(m, 'settings.manage')
+    const stamp = iso().slice(0, 10)
+    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'content-disposition': `attachment; filename="kataru-export-${stamp}.json"`, 'cache-control': 'no-store' })
+    // The live workspace, then every archived item, written as it is read.
+    res.write(`{"kataru":1,"exportedAt":${JSON.stringify(iso())},"version":${hub.version},"workspace":${JSON.stringify(hub.view(m.member.id).ws)},"archive":[`)
+    const sees = (b: string | null) => !b || m.member.brands === 'all' || m.member.brands.includes(b)
+    let first = true
+    for await (const a of allArchived(db)) {
+      const brand = (a.item as { brandId?: string }).brandId ?? null
+      if (!sees(brand)) continue
+      res.write(`${first ? '' : ','}${JSON.stringify(a)}`)
+      first = false
+    }
+    res.end(']}')
+  }
+
+  async function archiveList(req: IncomingMessage, res: ServerResponse, url: URL) {
+    const m = await me(req)
+    const settingsOk = can(m.ws, m.member.id, 'settings.manage')
+    if (!settingsOk && !can(m.ws, m.member.id, 'analytics.view') && !can(m.ws, m.member.id, 'post.create')) throw new HttpError(403, 'forbidden', "Your role can't open the archive")
+    const lists = (url.searchParams.get('lists') ?? '').split(',').filter(Boolean) as ArchiveList[]
+    send(
+      res,
+      200,
+      await listArchive(db, {
+        lists: lists.length ? lists : undefined,
+        brands: m.member.brands,
+        withoutBrand: settingsOk,
+        q: str(url.searchParams.get('q'), 80) || undefined,
+        year: Number(url.searchParams.get('year')) || undefined,
+        offset: Number(url.searchParams.get('offset')) || 0,
+        limit: Number(url.searchParams.get('limit')) || 50,
+      }),
+    )
+  }
+
   /* ───── the built app ───── */
 
   const root = a.staticDir ? resolve(a.staticDir) : ''
@@ -754,7 +824,7 @@ export async function createKataru(config: Config, deps: KataruDeps) {
     const method = req.method ?? 'GET'
     if (!path.startsWith('/api/')) return serveStatic(req, res, path)
     const r = path.slice(4)
-    const known = /^\/(session|setup|auth|workspace|account|team|presence)(\/|$)/.test(r)
+    const known = /^\/(session|setup|auth|workspace|account|team|presence|data|export|backups|archive)(\/|$)/.test(r)
     if (!known) return false
     try {
       // Changes need the app's own header: another site can't send it without asking first (CORS).
@@ -835,6 +905,53 @@ export async function createKataru(config: Config, deps: KataruDeps) {
       }
     }
 
+    if (is('GET', '/data')) return dataInfo(req, res)
+    if (is('GET', '/export')) return fullExport(req, res)
+    if (is('POST', '/backups')) {
+      const m_ = await me(req)
+      needs(m_, 'settings.manage')
+      return send(res, 200, await makeBackup(db, hub, 'manual', now()))
+    }
+    if (is('POST', '/backups/restore')) {
+      const m_ = await me(req)
+      if (m_.member.role !== 'owner') throw new HttpError(403, 'owner', 'Only the owner can restore a backup')
+      const body = await readJson<{ backup?: unknown }>(req, 40 * 1024 * 1024)
+      const ws = workspaceOf(body.backup)
+      if (!ws) throw new HttpError(400, 'invalid', "That file isn't a Kataru backup")
+      await restoreWorkspace(db, hub, ws, now())
+      return send(res, 200, { ok: true })
+    }
+    m = r.match(/^\/backups\/(b-[\w-]+)(\/restore)?$/)
+    if (m) {
+      const m_ = await me(req)
+      needs(m_, 'settings.manage')
+      const text = await readBackup(db, m[1]!)
+      if (!text) throw new HttpError(404, 'not_found', 'No such backup')
+      if (!m[2] && method === 'GET') return download(res, `kataru-backup-${m[1]}.json`, text)
+      if (m[2] && method === 'POST') {
+        if (m_.member.role !== 'owner') throw new HttpError(403, 'owner', 'Only the owner can restore a backup')
+        await restoreWorkspace(db, hub, workspaceOf(JSON.parse(text))!, now())
+        return send(res, 200, { ok: true })
+      }
+    }
+    if (is('GET', '/archive')) return archiveList(req, res, url)
+    if (is('POST', '/archive/run')) {
+      const m_ = await me(req)
+      needs(m_, 'settings.manage')
+      return send(res, 200, { moved: await runArchive(db, hub, now()) })
+    }
+    m = r.match(/^\/archive\/(\w+)\/([\w:.-]{1,100})(\/restore)?$/)
+    if (m && (ARCHIVE_LISTS as readonly string[]).includes(m[1]!)) {
+      const m_ = await me(req)
+      const found = await archived(db, m[1]!, m[2]!)
+      if (!found || (found.brandId && m_.member.brands !== 'all' && !m_.member.brands.includes(found.brandId)) || (!found.brandId && !can(m_.ws, m_.member.id, 'settings.manage'))) throw new HttpError(404, 'not_found', 'Not in the archive')
+      if (!m[3] && method === 'GET') return send(res, 200, found)
+      if (m[3] && method === 'POST') {
+        needs(m_, 'settings.manage')
+        await restoreArchived(db, hub, m[1] as ArchiveList, m[2]!)
+        return send(res, 200, { ok: true })
+      }
+    }
     if (is('GET', '/team')) return team(req, res)
     if (is('POST', '/team/invite')) return invite(req, res)
     m = r.match(/^\/team\/([\w-]{1,64})(?:\/(resend|reset-link|mfa-off))?$/)
@@ -867,6 +984,8 @@ export async function createKataru(config: Config, deps: KataruDeps) {
     setupCode,
     async close() {
       clearInterval(sweeper)
+      clearInterval(dailyTimer)
+      clearTimeout(firstDaily)
       await hub.close()
     },
     sessionHash,

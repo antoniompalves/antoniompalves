@@ -4,6 +4,7 @@ import type {
   Campaign,
   Idea,
   KeyDate,
+  MediaAsset,
   PostComment,
   Channel,
   Conversation,
@@ -97,6 +98,11 @@ export type WorkspaceAction =
   | { type: 'removeMember'; id: string }
   | { type: 'saveBrand'; brand: Brand }
   | { type: 'settings'; patch: Partial<WorkspaceSettings> }
+  /** Old items leaving the live workspace for the archive, or coming back (sent by the server). */
+  | { type: 'archive'; lists: Partial<Record<CollectionKey, string[]>> }
+  | { type: 'unarchive'; lists: Partial<Record<CollectionKey, unknown[]>> }
+  /** A photo or video added to a brand's library (its light copy), or changed. */
+  | { type: 'saveMedia'; asset: MediaAsset }
   /* This browser only: never sent to the server. */
   /** Replace everything: a reset, a save from another tab, or what the server sent. */
   | { type: 'load'; ws: Workspace }
@@ -319,6 +325,26 @@ export function reduce(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, brands: upsert(ws.brands, action.brand) }
     case 'settings':
       return { ...ws, settings: { ...ws.settings, ...action.patch } }
+    case 'saveMedia':
+      return { ...ws, media: [...ws.media.filter((m) => m.seed !== action.asset.seed), action.asset] }
+    case 'archive': {
+      let next = ws
+      for (const [key, ids] of Object.entries(action.lists) as [CollectionKey, string[]][]) {
+        if (!(COLLECTIONS as readonly string[]).includes(key) || !ids?.length) continue
+        const gone = new Set(ids)
+        next = { ...next, [key]: list(next, key).filter((x) => !gone.has(keyOf(x))) }
+      }
+      return next
+    }
+    case 'unarchive': {
+      let next = ws
+      for (const [key, items] of Object.entries(action.lists) as [CollectionKey, unknown[]][]) {
+        if (!(COLLECTIONS as readonly string[]).includes(key) || !items?.length) continue
+        const back = new Set(items.map(keyOf))
+        next = { ...next, [key]: [...list(next, key).filter((x) => !back.has(keyOf(x))), ...(items as Item[])] }
+      }
+      return next
+    }
     case 'load':
       return action.ws
     case 'scope':

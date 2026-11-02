@@ -229,12 +229,46 @@ const MIGRATIONS: ((d: Dialect) => string[])[] = [
   },
 ]
 
+MIGRATIONS.push((d) => {
+  const text = d === 'mysql' ? 'LONGTEXT' : 'TEXT'
+  const tail = d === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : ''
+  const index = (name: string, table: string, cols: string) => (d === 'mysql' ? `CREATE INDEX ${name} ON ${table} (${cols})` : `CREATE INDEX IF NOT EXISTS ${name} ON ${table} (${cols})`)
+  return [
+    // Old items out of the live workspace, one row each, searchable.
+    `CREATE TABLE IF NOT EXISTS kt_archive (
+      list VARCHAR(32) NOT NULL,
+      id VARCHAR(100) NOT NULL,
+      brand_id VARCHAR(80) NULL,
+      at BIGINT NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      archived_at BIGINT NOT NULL,
+      doc ${text} NOT NULL,
+      PRIMARY KEY (list, id)
+    )${tail}`,
+    index('kt_archive_at', 'kt_archive', 'list, at'),
+    // Copies of the whole workspace: gzip, base64.
+    `CREATE TABLE IF NOT EXISTS kt_backups (
+      id VARCHAR(40) NOT NULL PRIMARY KEY,
+      kind VARCHAR(16) NOT NULL,
+      created_at BIGINT NOT NULL,
+      version BIGINT NOT NULL,
+      size BIGINT NOT NULL,
+      data ${text} NOT NULL
+    )${tail}`,
+  ]
+})
+
 async function migrate(db: Db) {
   await db.run(`CREATE TABLE IF NOT EXISTS kt_meta (k VARCHAR(64) NOT NULL PRIMARY KEY, v TEXT NOT NULL)${db.dialect === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4' : ''}`)
   const row = await db.get<{ v: string }>('SELECT v FROM kt_meta WHERE k = ?', ['schema'])
   const at = row ? Number(row.v) : 0
   for (let i = at; i < MIGRATIONS.length; i++) {
-    for (const sql of MIGRATIONS[i]!(db.dialect)) await db.run(sql)
+    for (const sql of MIGRATIONS[i]!(db.dialect)) {
+      // MySQL has no CREATE INDEX IF NOT EXISTS: an index already there (a migration cut short) is fine.
+      await db.run(sql).catch((e: Error) => {
+        if (!/Duplicate key name/i.test(e.message)) throw e
+      })
+    }
     await upsert(db, 'kt_meta', ['k'], { k: 'schema', v: String(i + 1) })
   }
 }

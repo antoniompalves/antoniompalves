@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Calendar, CalendarDays, Check, Copy, FileText, History, Lightbulb, Link as LinkIcon, Plus, Repeat as RepeatIcon, Send, Shield, ShieldCheck, Sparkles, Trash2, TriangleAlert } from 'lucide-react'
+import { Calendar, CalendarDays, Check, Copy, FileText, History, Image as ImageIcon, Lightbulb, Link as LinkIcon, Plus, Repeat as RepeatIcon, Send, Shield, ShieldCheck, Sparkles, Trash2, TriangleAlert } from 'lucide-react'
 import { PageTitle, Stat } from '../components/PageHead'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
@@ -17,6 +17,8 @@ import { useWorkspace } from '../data/store'
 import { clientNotices, excerpt, ideaAnswerNotices, submittedNotices } from '../data/notices'
 import { clientsOf, firstStage, needsClient, occurrenceAt, occurrenceText } from '../data/workflow'
 import { CollabCard, RepeatCard } from '../components/collab/Repeat'
+import { addToLibrary } from '../data/lightMedia'
+import { api } from '../data/server'
 import { Presence } from '../components/collab/Presence'
 import type { AuditAction, AuditEvent, NetworkId, Post, PostStatus, PostVersion, RepeatRule, Template } from '../data/types'
 import { useI18n } from '../i18n'
@@ -31,7 +33,7 @@ const DAY = 86_400_000
  * preview | when, the publish bar and your drafts.
  */
 export function Compose({ now, hash }: { now: Date; hash: string }) {
-  const { ws, dispatch, undoable } = useWorkspace()
+  const { ws, dispatch, undoable, mode } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()
   const c = t.compose
@@ -336,6 +338,32 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
     toast({ text: c.toast.templateInserted(tpl.name), icon: FileText })
   }
 
+  /* ───── uploads: a light copy each, added to the brand's library and to this post ───── */
+  const [uploading, setUploading] = useState(false)
+  const upload = async (files: File[]) => {
+    setUploading(true)
+    try {
+      // The original goes to the server only when posts are published from Kataru (connected accounts).
+      const keepOriginal = mode === 'server' && (await api<unknown[]>('GET', '/accounts').catch(() => [])).length > 0
+      const added: string[] = []
+      for (const f of files) {
+        try {
+          const asset = await addToLibrary(f, { server: mode === 'server', keepOriginal, brandId: brand.id, by: me, now })
+          dispatch({ type: 'saveMedia', asset })
+          added.push(asset.seed)
+          const kept = t.data.bytes(asset.bytes ?? 0)
+          const of = t.data.bytes(asset.originalBytes ?? 0)
+          toast({ text: asset.kind === 'video' ? t.data.upload.video(kept, of) : t.data.upload.done(kept, of), icon: ImageIcon })
+        } catch {
+          toast({ text: t.data.upload.failed, icon: TriangleAlert })
+        }
+      }
+      if (added.length) setDraft({ media: [...draft.media, ...added].slice(0, 20) })
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const removePhoto = (seedId: string) => {
     const before = draft.media
     setDraft({ media: draft.media.filter((s) => s !== seedId) })
@@ -538,6 +566,8 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
           onHashtags={addTags}
           onTemplate={insertTemplate}
           onRemovePhoto={removePhoto}
+          onUpload={(files) => void upload(files)}
+          uploading={uploading}
           onCopyLink={copyLink}
           onInsertLink={insertLink}
           tab={tab}

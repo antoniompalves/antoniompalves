@@ -62,6 +62,8 @@ export const jobSummary = (j: Job): PublishJob => ({
 function publisherNeeds(method: string, path: string): Permission[] {
   if (path.startsWith('/api/connect/') || path.startsWith('/api/connections/')) return ['channels.manage']
   if (method === 'GET') return ['post.create', 'post.publish', 'channels.manage', 'analytics.view']
+  // Adding photos and videos to the library is part of writing posts.
+  if (path === '/api/media') return ['post.create', 'post.publish', 'library.manage']
   return ['post.publish']
 }
 
@@ -249,7 +251,8 @@ export function createHandler(config: Config, deps: Deps & { media: MediaLibrary
 
     if (path === '/api/media' && method === 'POST') {
       const mime = String(req.headers['content-type'] ?? '').split(';')[0]
-      const rec = await deps.media.save(await read(req, config.maxMediaBytes), mime)
+      const role = url.searchParams.get('role') === 'preview' ? 'preview' : 'original'
+      const rec = await deps.media.save(await read(req, config.maxMediaBytes), mime, role, now())
       return send(res, 201, { id: rec.id, url: rec.url, mime: rec.mime, size: rec.size })
     }
 

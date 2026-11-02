@@ -68,6 +68,9 @@ const RULES: Record<WorkspaceAction['type'], Rule> = {
   settings: ['settings.manage'],
   // Through the team endpoints only, which also look after the sign-in accounts.
   saveMember: 'never',
+  saveMedia: ['library.manage', 'post.create'],
+  archive: 'never',
+  unarchive: 'never',
   removeMember: 'never',
   // This browser only.
   load: 'never',
@@ -82,6 +85,7 @@ const LIST_RULES: Partial<Record<CollectionKey, Permission[]>> = {
   posts: ['post.create', 'post.approve', 'post.publish', 'calendar.edit', 'post.delete'],
   conversations: ['inbox.reply', 'inbox.assign'],
   reports: ['analytics.view'],
+  media: ['library.manage', 'post.create'],
   ideas: ['post.create', 'post.approve'],
   keyDates: ['calendar.edit', 'settings.manage'],
   campaigns: ['calendar.edit', 'settings.manage'],

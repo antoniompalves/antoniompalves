@@ -27,6 +27,13 @@ export interface MediaRecord {
   mime: string
   size: number
   createdAt: number
+  /**
+   * "preview": the light copy the app keeps (≤ 300 KB). "original" (the
+   * default): the full file, kept only until the posts using it are out.
+   */
+  role?: 'original' | 'preview'
+  /** Originals: when the file may go, unless a post still waiting needs it. */
+  deleteAfter?: number
 }
 
 interface Data {

@@ -7,8 +7,10 @@
 /** Seed prefix of the placeholders, from before the app was renamed; changing it would change every picture. */
 const SEED = 'murmura'
 
-export const photo = (seed: string, size = 720) =>
-  `https://picsum.photos/seed/${SEED}-${seed}/${size}/${size}`
+/** Uploads are stored as their light copy's address (or, in the demo, the copy itself). */
+const own = (seed: string) => seed.startsWith('data:') || seed.includes('/')
+
+export const photo = (seed: string, size = 720) => (own(seed) ? seed : `https://picsum.photos/seed/${SEED}-${seed}/${size}/${size}`)
 
 /** A wide 3:2 photo (brand covers on the channels page). */
 export const widePhoto = (seed: string, width = 900) => `https://picsum.photos/seed/${SEED}-${seed}/${width}/${Math.round((width * 2) / 3)}`

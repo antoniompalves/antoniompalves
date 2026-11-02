@@ -53,7 +53,7 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
     <dialog
       ref={ref}
       aria-label={t.drawer.label}
-      onClose={onClose}
+      onClose={(e) => e.target === e.currentTarget && onClose()}
       onClick={(e) => e.target === ref.current && onClose()}
       className="fixed inset-y-3 left-auto right-3 m-0 h-auto max-h-none w-[min(480px,calc(100vw-24px))] max-w-none overflow-auto overscroll-contain rounded-[28px] border border-rim bg-glass-3 p-0 text-text shadow-pop backdrop:bg-[rgb(16_18_20/0.26)] backdrop:backdrop-blur-[6px] open:animate-drawer dark:backdrop:bg-black/60"
     >

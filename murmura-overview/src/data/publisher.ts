@@ -140,7 +140,8 @@ export function toPublishPost(post: Post, network: NetworkId, mediaUrl: (ref: st
   const view = viewOn(post, network, library)
   return {
     text: showsCaption(view.format) ? view.text : '',
-    media: view.media.map((m) => ({ url: mediaUrl(m.seed), kind: m.kind, ...(view.alt[m.seed] && { alt: view.alt[m.seed] }) })),
+    // Uploads publish from their original, kept on the server until the post is out.
+    media: view.media.map((m) => ({ url: library.find((a) => a.seed === m.seed)?.original ?? mediaUrl(m.seed), kind: m.kind, ...(view.alt[m.seed] && { alt: view.alt[m.seed] }) })),
     format: view.format,
     ...(view.title?.trim() && { title: view.title.trim() }),
     ...(post.link && view.format !== 'story' && { link: post.link }),

@@ -52,6 +52,11 @@ sign-off, read per person and who's on the same post, key dates and themes on
 the calendar, repeating and evergreen posts:
 [`docs/COLLABORATION.md`](docs/COLLABORATION.md).
 
+Nightly compressed backups, a full export and spreadsheets, an archive that
+takes year-old items out of the live workspace, and media kept only as light
+copies (photos ≤ 100 KB, videos as their cover; originals only until published):
+[`docs/DATA.md`](docs/DATA.md).
+
 How it works, settings and the API: [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md).
 Putting it on cPanel hosting (Node.js App + MySQL), step by step:
 [`docs/CPANEL.md`](docs/CPANEL.md).

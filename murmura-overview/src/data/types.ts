@@ -364,6 +364,10 @@ export interface MediaAsset {
   addedAt: ISODate
   /** Team member id. */
   addedBy: string
+  /** Uploads: the light copy Kataru keeps (bytes), the file it came from, and that file while it's kept for publishing. */
+  bytes?: number
+  originalBytes?: number
+  original?: string
 }
 
 /** A WhatsApp Business number or a Google Business Profile location feeding a brand's inbox (Messenger comes with the Facebook Page). */
@@ -425,6 +429,8 @@ export interface WorkspaceSettings {
   plan: 'starter' | 'growth' | 'agency'
   seats: number
   requireMfa: boolean
+  /** Days after which old posts, conversations and the like move to the archive (0: never). Default 365. */
+  archiveDays?: number
 }
 
 export interface SavedReply {

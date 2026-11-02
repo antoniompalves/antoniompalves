@@ -1,5 +1,6 @@
+import { useRef } from 'react'
 import type { RefObject } from 'react'
-import { FileText, Folder, Hash, Image as ImageIcon, Play, Star } from 'lucide-react'
+import { FileText, Folder, Hash, Image as ImageIcon, Play, Star, Upload } from 'lucide-react'
 import { Empty } from '../analytics/parts'
 import { Popover } from '../Popover'
 import { Button, cn } from '../ui'
@@ -18,8 +19,9 @@ const head = 'flex items-baseline justify-between gap-3 px-2 pb-2 pt-1.5'
 const title = 'text-sm font-semibold'
 
 /** "Media": the brand's library as a 3-column grid; picks are numbered in posting order. */
-export function MediaPicker({ open, onClose, anchor, brand, assets, picked, onToggle }: PickerProps & { brand: string; assets: MediaAsset[]; picked: string[]; onToggle: (seed: string) => void }) {
+export function MediaPicker({ open, onClose, anchor, brand, assets, picked, onToggle, onUpload, uploading }: PickerProps & { brand: string; assets: MediaAsset[]; picked: string[]; onToggle: (seed: string) => void; onUpload?: (files: File[]) => void; uploading?: boolean }) {
   const { t } = useI18n()
+  const fileRef = useRef<HTMLInputElement>(null)
   const p = t.compose.pickers
   return (
     <Popover open={open} onClose={onClose} anchor={anchor} label={p.library(brand)} className="w-[min(380px,calc(100vw-24px))]">
@@ -66,9 +68,30 @@ export function MediaPicker({ open, onClose, anchor, brand, assets, picked, onTo
         <Empty icon={ImageIcon} title={p.noMedia(brand)} text={p.noMediaText} />
       )}
       <div className="flex items-center justify-between gap-2 px-1.5 pb-1 pt-2.5">
-        <Button variant="ghost" size="sm" icon={Folder} href="#/library">
-          {p.openLibrary}
-        </Button>
+        {onUpload ? (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              hidden
+              aria-label={t.data.upload.label}
+              onChange={(e) => {
+                const files = [...(e.target.files ?? [])]
+                e.target.value = ''
+                if (files.length) onUpload(files)
+              }}
+            />
+            <Button variant="ghost" size="sm" icon={Upload} disabled={uploading} onClick={() => fileRef.current?.click()} aria-label={t.data.upload.label}>
+              {uploading ? t.data.upload.working : t.data.upload.button}
+            </Button>
+          </>
+        ) : (
+          <Button variant="ghost" size="sm" icon={Folder} href="#/library">
+            {p.openLibrary}
+          </Button>
+        )}
         <Button size="sm" onClick={onClose}>
           {p.done}
         </Button>

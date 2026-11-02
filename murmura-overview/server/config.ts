@@ -9,6 +9,8 @@ export interface Config {
   secret: string
   dataDir: string
   maxMediaBytes: number
+  /** Originals nobody scheduled are deleted after this many days (light previews stay). */
+  keepOriginalDays: number
   meta: { appId: string; appSecret: string; configId: string; version: string }
   threads: { appId: string; appSecret: string }
   linkedin: { clientId: string; clientSecret: string; version: string; organizations: boolean }
@@ -56,6 +58,7 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     secret: e('KATARU_SECRET', e('PUBLISHER_SECRET')),
     dataDir: e('PUBLISHER_DATA_DIR', './.publisher-data'),
     maxMediaBytes: Number(e('PUBLISHER_MAX_MEDIA_MB', '512')) * 1024 * 1024,
+    keepOriginalDays: Number(e('PUBLISHER_KEEP_ORIGINAL_DAYS', '30')),
     meta: { appId: e('META_APP_ID'), appSecret: e('META_APP_SECRET'), configId: e('META_CONFIG_ID'), version: e('META_GRAPH_VERSION', 'v26.0') },
     threads: { appId: e('THREADS_APP_ID'), appSecret: e('THREADS_APP_SECRET') },
     linkedin: {

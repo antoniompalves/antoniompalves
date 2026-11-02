@@ -17,11 +17,14 @@ const config = readConfig()
 assertRunnable(config)
 const store = await new Store(config.dataDir, keyFrom(config.secret)).load()
 const providers = buildProviders(config)
-const media = new MediaLibrary(config.dataDir, store, `${config.publicUrl}${config.accounts.basePath}`, config.maxMediaBytes)
+const media = new MediaLibrary(config.dataDir, store, `${config.publicUrl}${config.accounts.basePath}`, config.maxMediaBytes, config.keepOriginalDays)
 const db = config.accounts.enabled ? await openDb(config.accounts.databaseUrl) : null
-const kataru = db ? await createKataru(config, { db }) : undefined
+const kataru = db ? await createKataru(config, { db, media }) : undefined
 const deps = { store, providers, media, kataru }
 const scheduler = startScheduler(deps)
+// Originals go once their posts are out; the light copies stay.
+const sweep = setInterval(() => void media.sweep().catch((e) => console.log(`[media] ${(e as Error).message}`)), 60 * 60_000)
+sweep.unref()
 const server = createServer(createHandler(config, deps))
 
 server.listen(config.port, () => {
