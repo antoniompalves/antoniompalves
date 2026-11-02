@@ -2,6 +2,7 @@ import { can, member } from '../../src/data/access.ts'
 import { COLLECTIONS, keyOf, reduce } from '../../src/data/reducer.ts'
 import type { CollectionKey, WorkspaceAction } from '../../src/data/reducer.ts'
 import { viewFor } from '../../src/data/sync.ts'
+import { mayGoOut } from '../../src/data/workflow.ts'
 import type { Permission, Workspace } from '../../src/data/types.ts'
 
 /**
@@ -52,6 +53,17 @@ const RULES: Record<WorkspaceAction['type'], Rule> = {
   mentionToInbox: ['listening.manage', 'inbox.reply'],
   notify: 'anyone',
   readNotices: 'anyone',
+  commentPost: 'anyone',
+  resolveComment: 'anyone',
+  deleteComment: 'anyone', // only their own (below)
+  saveIdea: 'anyone', // others' ideas need post.create (below)
+  deleteIdea: 'anyone', // their own, or post.delete (below)
+  saveKeyDate: ['calendar.edit', 'settings.manage'],
+  deleteKeyDate: ['calendar.edit', 'settings.manage'],
+  saveCampaign: ['calendar.edit', 'settings.manage'],
+  deleteCampaign: ['calendar.edit', 'settings.manage'],
+  seen: 'anyone',
+  unseen: 'anyone',
   saveBrand: ['settings.manage'],
   settings: ['settings.manage'],
   // Through the team endpoints only, which also look after the sign-in accounts.
@@ -70,6 +82,9 @@ const LIST_RULES: Partial<Record<CollectionKey, Permission[]>> = {
   posts: ['post.create', 'post.approve', 'post.publish', 'calendar.edit', 'post.delete'],
   conversations: ['inbox.reply', 'inbox.assign'],
   reports: ['analytics.view'],
+  ideas: ['post.create', 'post.approve'],
+  keyDates: ['calendar.edit', 'settings.manage'],
+  campaigns: ['calendar.edit', 'settings.manage'],
   channels: ['channels.manage'],
   inboxAccounts: ['channels.manage'],
   creators: ['creators.manage'],
@@ -87,6 +102,10 @@ const allowed = (ws: Workspace, me: string, rule: Rule) => rule === 'anyone' || 
 /** The changes as they will be applied: audit entries always carry who made them. */
 function clean(me: string, a: WorkspaceAction): WorkspaceAction {
   if (a.type === 'audit') return { ...a, event: { ...a.event, actorId: me } }
+  if (a.type === 'commentPost') return { ...a, comment: { ...a.comment, by: me } }
+  if (a.type === 'readNotices') return { ...a, by: me }
+  if (a.type === 'seen' || a.type === 'unseen') return { ...a, by: me }
+  if (a.type === 'savePost' && a.at) return { ...a, by: me }
   return a
 }
 
@@ -116,13 +135,33 @@ export function vet(ws: Workspace, memberId: string, actions: unknown): { action
         if (!listRule || !allowed(next, memberId, listRule)) throw new Refused('forbidden', `Your role can't undo changes to ${key}`)
       }
     }
+    if (a.type === 'deleteComment' && next.posts.find((p) => p.id === a.postId)?.comments?.some((x) => x.id === a.id && x.by !== memberId)) throw new Refused('forbidden', 'Only your own notes can be deleted')
+    if (a.type === 'saveIdea') {
+      const was = (next.ideas ?? []).find((i) => i.id === a.idea.id)
+      if (!was && a.idea.by !== memberId) throw new Refused('forbidden', 'Ideas are suggested in your own name')
+      if (was && was.by !== memberId && !can(next, memberId, 'post.create')) throw new Refused('forbidden', "Only the content team can answer someone else's idea")
+    }
+    if (a.type === 'deleteIdea' && (next.ideas ?? []).some((i) => i.id === a.id && i.by !== memberId) && !can(next, memberId, 'post.delete')) throw new Refused('forbidden', 'Only your own ideas can be withdrawn')
     const c = clean(memberId, a)
     const after = reduce(next, c)
     reach(next, after, memberId, c)
+    signedOff(next, after)
     out.push(c)
     next = after
   }
   return { actions: out, next }
+}
+
+/** Posts of brands with client approval go out only once the brand's client signed them off. */
+function signedOff(before: Workspace, after: Workspace) {
+  if (before.posts === after.posts) return
+  const was = new Map(before.posts.map((p) => [p.id, p]))
+  for (const p of after.posts) {
+    const old = was.get(p.id)
+    if (old === p || (p.status !== 'scheduled' && p.status !== 'published')) continue
+    if (old && old.status === p.status && old.text === p.text && old.media.join() === p.media.join()) continue
+    if (!mayGoOut(after, p)) throw new Refused('forbidden', "This brand's client has to approve the post before it goes out")
+  }
 }
 
 /** Every item the change touched must be one this person sees, before and after. */

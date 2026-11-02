@@ -3,6 +3,7 @@ import type { WorkspaceAction } from './reducer'
 import { ApiError, api, apiUrl } from './server'
 import type { Snapshot } from './server'
 import { applyPatch } from './sync'
+import { withDefaults } from './defaults'
 import type { Patch } from './sync'
 import type { Workspace } from './types'
 
@@ -45,6 +46,8 @@ export class SyncEngine {
   confirmed: Workspace
   version: number
   status: SyncStatus = 'live'
+  /** Who has the app open, and where (server/workspace/hub.ts). */
+  presence: { memberId: string; where: string; at: number }[] = []
   private pending: Batch[] = []
   private outbox: WorkspaceAction[] = []
   private inflight: Batch | null = null
@@ -64,7 +67,7 @@ export class SyncEngine {
   private events: SyncEvents
 
   constructor(first: Snapshot, events: SyncEvents) {
-    this.confirmed = first.ws
+    this.confirmed = withDefaults(first.ws)
     this.version = first.version
     this.events = events
   }
@@ -162,7 +165,7 @@ export class SyncEngine {
 
   private adopt(s: Snapshot) {
     if (s.version < this.version) return
-    this.confirmed = s.ws
+    this.confirmed = withDefaults(s.ws)
     this.version = s.version
     this.emit()
   }
@@ -215,6 +218,10 @@ export class SyncEngine {
       if (version > this.version) void this.refetch()
     })
     source.onmessage = (e) => this.receive(JSON.parse(e.data) as Change)
+    source.addEventListener('presence', (e) => {
+      this.presence = JSON.parse((e as MessageEvent<string>).data) as SyncEngine['presence']
+      this.emit()
+    })
     source.onerror = () => {
       failures++
       // The stream closed for good (signed out, suspended): check why.
@@ -237,7 +244,7 @@ export class SyncEngine {
       try {
         const r = await api<{ version: number; ws?: Workspace }>('GET', `/workspace/changes?since=${this.version}`)
         if (r.ws && r.version > this.version && !this.inflight) {
-          this.confirmed = r.ws
+          this.confirmed = withDefaults(r.ws)
           this.version = r.version
           this.emit()
         }

@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  Clock,
-  Copy,
-  PenLine,
-  Send,
-  Trash2,
-  TriangleAlert,
-  X,
-} from 'lucide-react'
+import { Clock, Copy, Leaf, MessageSquare, PenLine, Recycle, Repeat, Send, ShieldCheck, Trash2, TriangleAlert, X } from 'lucide-react'
+import { PostNotes } from '../collab/Notes'
+import { RecycleDialog } from '../collab/Recycle'
+import { useToast } from '../Toast'
+import { clientsOf, mayGoOut, needsClient, stageOf } from '../../data/workflow'
 import type { Brand, NetworkId, Post, TeamMember } from '../../data/types'
 import { NETWORK_LABEL, clip } from '../../data/selectors'
 import { engagementRate, engagements } from '../../data/analytics'
@@ -34,9 +30,12 @@ interface PostDrawerProps {
  */
 export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDuplicate, onDelete }: PostDrawerProps) {
   const { t } = useI18n()
-  const { all } = useWorkspace()
+  const { all, dispatch, undoable } = useWorkspace()
+  const toast = useToast()
+  const c = t.collab
   const ref = useRef<HTMLDialogElement>(null)
   const [network, setNetwork] = useState<NetworkId | null>(null)
+  const [recycling, setRecycling] = useState(false)
 
   useEffect(() => {
     const d = ref.current
@@ -125,10 +124,64 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
             <span>{post.networks.map((n) => `${NETWORK_LABEL[n]} @${brand.handle}`).join(' · ')}</span>
           </div>
 
+          {post.status === 'awaiting_approval' && needsClient(all, post.brandId) && (
+            <p className="flex items-center gap-2 rounded-2xl bg-glass-2 px-3.5 py-2.5 text-xs font-semibold">
+              <ShieldCheck size={17} aria-hidden className="shrink-0" />
+              {stageOf(all, post) === 'client' ? c.client.waiting(t.collab.list(clientsOf(all, post.brandId).map((m) => m.name.split(' ')[0]!))) : c.client.teamStage}
+            </p>
+          )}
+
+          {post.seriesId &&
+            (() => {
+              const series = all.posts.filter((p) => p.seriesId === post.seriesId).sort((a, b) => (a.occurrence ?? 0) - (b.occurrence ?? 0))
+              const later = series.filter((p) => (p.occurrence ?? 0) > (post.occurrence ?? 0) && p.status !== 'published')
+              return (
+                <div className="flex flex-wrap items-center gap-2.5 rounded-2xl bg-glass-2 px-3.5 py-2.5 text-xs">
+                  <Repeat size={17} aria-hidden className="shrink-0" />
+                  <span className="flex-1 font-semibold">{c.repeat.series((post.occurrence ?? 0) + 1, series.length)}</span>
+                  {later.length > 0 && (
+                    <Button size="sm" variant="ghost" onClick={() => toast({ text: c.repeat.stopped(later.length), icon: Repeat, undo: undoable(...later.map((p) => ({ type: 'delete' as const, id: p.id }))) })}>
+                      {c.repeat.stop}
+                    </Button>
+                  )}
+                </div>
+              )
+            })()}
+
+          {post.status === 'published' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant={post.evergreen ? 'pine' : 'ghost'}
+                icon={Leaf}
+                aria-pressed={!!post.evergreen}
+                onClick={() => {
+                  const { evergreen, ...rest } = post
+                  dispatch({ type: 'savePost', post: evergreen ? rest : { ...post, evergreen: { variations: [] } } })
+                  toast({ text: evergreen ? c.evergreen.unmarked : c.evergreen.marked, icon: Leaf })
+                }}
+              >
+                {c.evergreen.mark}
+              </Button>
+              <Button size="sm" variant="ghost" icon={Recycle} onClick={() => setRecycling(true)}>
+                {c.evergreen.recycle}
+              </Button>
+            </div>
+          )}
+
+          <section aria-label={c.notes.title} className="grid gap-2.5 rounded-[22px] border border-line p-4">
+            <h3 className="flex items-center gap-2 text-sm font-bold">
+              <MessageSquare size={17} aria-hidden />
+              {c.notes.title}
+              <small className="font-normal text-muted">{c.notes.sub}</small>
+            </h3>
+            <PostNotes post={post} now={now} />
+          </section>
+
           <footer className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
             {post.status !== 'published' && (
               <>
-                <Button icon={Send} onClick={() => onPublish(post.id)}>
+                <Button icon={Send} onClick={() => onPublish(post.id)} disabled={!mayGoOut(all, { ...post, status: 'published' })} title={mayGoOut(all, post) ? undefined : c.client.mustWait}>
                   {t.drawer.publishNow}
                 </Button>
                 <Button variant="ghost" icon={PenLine} href={`#/compose/${post.id}`}>
@@ -142,6 +195,7 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
           </footer>
         </div>
       )}
+      {recycling && post && <RecycleDialog post={post} now={now} onClose={() => setRecycling(false)} />}
     </dialog>
   )
 }

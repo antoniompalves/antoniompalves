@@ -6,6 +6,7 @@ import { MenuDivider, MenuItem, Popover } from '../Popover'
 import { useToast } from '../Toast'
 import { BrandMark, Button, NetStack, PostStatusPill } from '../ui'
 import { can } from '../../data/permissions'
+import { noticeRead } from '../../data/workflow'
 import { noticesFor } from '../../data/notices'
 import { brandsFor } from '../../data/scope'
 import { NETWORK_LABEL } from '../../data/selectors'
@@ -83,7 +84,7 @@ export function Notifications({ now }: { now: Date }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLButtonElement>(null)
   const list = noticesFor(all, all.currentUserId)
-  const unread = list.filter((n) => !n.read)
+  const unread = list.filter((n) => !noticeRead(n, all.currentUserId))
   const n = t.notices
   const brand = (id: string) => all.brands.find((b) => b.id === id)?.name ?? ''
   const person = (id: string) => all.team.find((m) => m.id === id)?.name.split(' ')[0] ?? ''
@@ -106,7 +107,7 @@ export function Notifications({ now }: { now: Date }) {
       <Popover open={open} onClose={() => setOpen(false)} anchor={ref} placement="bottom-end" label={n.title} className="w-[360px]">
         <div className={popHead}>
           <span className="text-sm font-bold">{n.title}</span>
-          <Button size="sm" variant="ghost" disabled={!unread.length} onClick={() => dispatch({ type: 'readNotices', ids: unread.map((x) => x.id) })}>
+          <Button size="sm" variant="ghost" disabled={!unread.length} onClick={() => dispatch({ type: 'readNotices', ids: unread.map((x) => x.id), by: all.currentUserId })}>
             {n.markAll}
           </Button>
         </div>
@@ -119,14 +120,14 @@ export function Notifications({ now }: { now: Date }) {
                   key={x.id}
                   href={x.href}
                   onClick={() => {
-                    if (!x.read) dispatch({ type: 'readNotices', ids: [x.id] })
+                    if (!noticeRead(x, all.currentUserId)) dispatch({ type: 'readNotices', ids: [x.id], by: all.currentUserId })
                     setOpen(false)
                   }}
                   className={popRow}
                 >
                   <span className="relative grid size-[34px] shrink-0 place-items-center rounded-full border border-line-2 pointer-coarse:size-11">
                     <Icon size={17} aria-hidden />
-                    {!x.read && <span className="absolute -right-px -top-px size-[9px] rounded-full bg-coral shadow-[0_0_0_2px_var(--float)]" />}
+                    {!noticeRead(x, all.currentUserId) && <span className="absolute -right-px -top-px size-[9px] rounded-full bg-coral shadow-[0_0_0_2px_var(--float)]" />}
                   </span>
                   <span className="min-w-0">
                     <b className="text-xs font-semibold">{n.text(x.event, brand, (id) => NETWORK_LABEL[id], person)}</b>

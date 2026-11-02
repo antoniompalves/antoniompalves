@@ -1,9 +1,11 @@
+import { withDefaults } from '../../src/data/defaults.ts'
 import { reduce } from '../../src/data/reducer.ts'
 import type { WorkspaceAction } from '../../src/data/reducer.ts'
 import { diff, viewFor } from '../../src/data/sync.ts'
 import type { Patch } from '../../src/data/sync.ts'
 import type { Workspace } from '../../src/data/types.ts'
 import type { Db } from '../db.ts'
+import { upsert } from '../db.ts'
 import { vet } from './policy.ts'
 
 /**
@@ -29,8 +31,19 @@ export interface Change {
 export interface Subscriber {
   memberId: string
   send(change: Change): void
+  /** Who is where right now (see setPresence). */
+  presence?(list: Presence[]): void
   close(): void
 }
+
+/** Someone with the app open: the page (and post or conversation) they're on. */
+export interface Presence {
+  memberId: string
+  where: string
+  at: number
+}
+
+const PRESENCE_TTL = 45_000
 
 export interface Actor {
   userId: string | null
@@ -47,6 +60,7 @@ export class Hub {
   private line: Promise<unknown> = Promise.resolve()
   private snapshotTimer: ReturnType<typeof setTimeout> | null = null
   private savedVersion = 0
+  private lastPresence = '[]'
   private watch: ReturnType<typeof setInterval> | null = null
   private db: Db
   private now: () => number
@@ -78,7 +92,7 @@ export class Hub {
   private async reloadSnapshot() {
     const row = await this.db.get<{ version: number | string; doc: string }>('SELECT version, doc FROM kt_workspace WHERE id = 1')
     if (!row) return false
-    this.ws = JSON.parse(row.doc) as Workspace
+    this.ws = withDefaults(JSON.parse(row.doc) as Workspace)
     this.version = Number(row.version)
     this.savedVersion = this.version
     return true
@@ -190,7 +204,10 @@ export class Hub {
     this.subs.add(s)
     if (!this.watch) {
       // While anyone is connected, pick up what other processes wrote.
-      this.watch = setInterval(() => void this.sync().catch((e) => this.log(`[workspace] ${(e as Error).message}`)), 2000)
+      this.watch = setInterval(() => {
+        void this.sync().catch((e) => this.log(`[workspace] ${(e as Error).message}`))
+        void this.sharePresence().catch(() => undefined)
+      }, 2000)
       this.watch.unref?.()
     }
     return () => {
@@ -200,6 +217,32 @@ export class Hub {
         this.watch = null
       }
     }
+  }
+
+  /**
+   * Where someone is (a route like "#/compose/p12"), kept in the database for
+   * a short while so every process sees it; the app says it again every 20 s.
+   */
+  async setPresence(memberId: string, where: string) {
+    const key = `presence:${memberId}`
+    const value = JSON.stringify({ memberId, where: where.slice(0, 120), at: this.now() })
+    await upsert(this.db, 'kt_ephemeral', ['k'], { k: key, v: value, expires_at: this.now() + PRESENCE_TTL })
+    await this.sharePresence()
+  }
+
+  async presence(): Promise<Presence[]> {
+    const rows = await this.db.all<{ v: string }>("SELECT v FROM kt_ephemeral WHERE k LIKE 'presence:%' AND expires_at > ?", [this.now()])
+    return rows.map((r) => JSON.parse(r.v) as Presence).sort((a, b) => a.memberId.localeCompare(b.memberId))
+  }
+
+  /** Tells everyone connected here when who-is-where changed. */
+  private async sharePresence() {
+    if (!this.subs.size) return
+    const list = await this.presence()
+    const key = JSON.stringify(list.map((p) => [p.memberId, p.where]))
+    if (key === this.lastPresence) return
+    this.lastPresence = key
+    for (const s of this.subs) s.presence?.(list)
   }
 
   /** Disconnects someone everywhere (suspended, or signed out of every device). */

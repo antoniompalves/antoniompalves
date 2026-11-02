@@ -1,3 +1,5 @@
+import { DateLabel } from '../collab/Editorial'
+import type { CalendarDate } from '../../data/editorial'
 import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Plus } from 'lucide-react'
@@ -9,6 +11,8 @@ import { BrandMark, cn, toneFill } from '../ui'
 import type { DragApi } from './WeekView'
 
 interface MonthViewProps {
+  /** Holidays, observances and the team's dates, by day (editorial.ts). */
+  dates?: Map<string, CalendarDate[]>
   days: Date[]
   anchor: Date
   posts: Post[]
@@ -86,7 +90,7 @@ interface MonthRowProps extends MonthViewProps {
   month: number
 }
 
-function MonthRow({ week, byDay, month, campaigns, brands, selectedCampaign, now, drag, landedId, onOpen, onGoWeek, onCreateAt }: MonthRowProps) {
+function MonthRow({ week, byDay, month, campaigns, brands, selectedCampaign, now, drag, landedId, onOpen, onGoWeek, onCreateAt, dates }: MonthRowProps) {
   const { t } = useI18n()
   const ribs = ribbons(campaigns, week[0], 7)
   const today = dayKey(now)
@@ -140,6 +144,13 @@ function MonthRow({ week, byDay, month, campaigns, brands, selectedCampaign, now
                 </button>
               )}
             </div>
+            {(dates?.get(k)?.length ?? 0) > 0 && (
+              <div className="grid min-w-0 gap-px px-1">
+                {dates!.get(k)!.slice(0, 2).map((x) => (
+                  <DateLabel key={x.key ?? x.id} d={x} />
+                ))}
+              </div>
+            )}
             <div className="grid min-w-0 gap-[3px]">
               {dayPosts.slice(0, MAX_CHIPS).map((p) => (
                 <MonthChip

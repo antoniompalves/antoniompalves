@@ -358,6 +358,14 @@ export const en = {
           return `${person(e.by)} approved “${e.excerpt}”`
         case 'changes':
           return `${person(e.by)} asked for changes on “${e.excerpt}”`
+        case 'mentioned':
+          return `${person(e.by)} mentioned you on “${e.excerpt}”`
+        case 'idea':
+          return `${person(e.by)} suggested an idea: “${e.title}”`
+        case 'ideaAnswer':
+          return e.accepted ? `${person(e.by)} took up your idea “${e.title}”` : `${person(e.by)} declined your idea “${e.title}”`
+        case 'clientReview':
+          return `${person(e.by)} sent “${e.excerpt}” for your approval`
       }
     },
   },
@@ -539,6 +547,14 @@ export const en = {
         return `disconnected ${a.source === 'whatsapp' ? 'WhatsApp Business' : 'Google Business Profile'} from ${brand(a.brandId)}`
       case 'joinedTeam':
         return 'joined the team'
+      case 'suggestedIdea':
+        return `suggested “${a.title}” for ${brand(a.brandId)}`
+      case 'scheduledSeries':
+        return `scheduled “${a.excerpt}” to repeat ${a.count} times`
+      case 'recycledPost':
+        return `scheduled “${a.excerpt}” again`
+      case 'clientApproved':
+        return `signed off “${a.excerpt}” for ${brand(a.brandId)}`
       case 'changedRole':
         return `made ${a.name} ${role(a.role)}`
       case 'suspendedMember':
@@ -1928,6 +1944,181 @@ export const en = {
       header: ['Creator', 'Network', 'Format', 'Due', 'Status', 'Fee', 'Paid', 'Posted', 'Link', 'Code', 'Reach', 'Views', 'Likes', 'Comments', 'Shares', 'Saves', 'Clicks', 'Conversions', 'Revenue', 'Engagements', 'Engagement rate %'],
       yes: 'Yes',
       no: 'No',
+    },
+  },
+
+  /** Working together on posts: notes, versions, ideas, the client's sign-off, presence, key dates, series and evergreen posts. */
+  collab: {
+    list: (names: string[]) => (names.length <= 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`),
+    presence: {
+      editing: (names: string, many: boolean) => `${names} ${many ? 'are' : 'is'} editing this too`,
+      viewing: (names: string, many: boolean) => `${names} ${many ? 'are' : 'is'} here too`,
+    },
+    notes: {
+      title: 'Notes',
+      sub: 'Only the team sees these. @ to mention someone.',
+      placeholder: 'Write a note… @ to mention someone',
+      send: 'Add note',
+      added: 'Note added',
+      mentioned: (names: string) => `Note added · ${names} will be told`,
+      resolve: 'Resolve',
+      reopen: 'Reopen',
+      remove: 'Delete',
+      removed: 'Note deleted',
+      empty: 'No notes yet. Ask a question, or leave a tip for whoever picks it up.',
+      resolvedCount: (n: number) => `${plural(n, 'resolved note', 'resolved notes')}`,
+      show: 'Show',
+      hide: 'Hide',
+      people: 'People to mention',
+      count: (n: number) => plural(n, 'note', 'notes'),
+    },
+    versions: {
+      title: 'Versions',
+      empty: 'Earlier versions show here once the text, photos or networks change.',
+      restore: 'Restore',
+      restored: 'Earlier version restored. Save to keep it.',
+      photos: (n: number) => plural(n, 'photo', 'photos'),
+    },
+    ideas: {
+      tab: 'Ideas',
+      suggest: 'Suggest an idea',
+      title: 'Suggest an idea',
+      sub: 'A post you’d like to see: the team writes it and, where the brand asks for it, sends it back to you to approve.',
+      brand: 'Brand',
+      name: 'Idea',
+      namePlaceholder: 'e.g. Salt-season survival tips',
+      text: 'What it’s about',
+      textPlaceholder: 'What should the post say or show? Photos, people, offers?',
+      wantedBy: 'Wanted by (optional)',
+      link: 'Link (optional)',
+      send: 'Send idea',
+      cancel: 'Cancel',
+      missing: 'Give it a name and say what it’s about.',
+      sent: 'Idea sent to the team',
+      wanted: (date: string) => `For ${date}`,
+      status: { new: 'New', accepted: 'Accepted', declined: 'Declined', draft: 'Being written', team: 'With the team', client: 'Waiting for the client', changes: 'Changes asked', scheduled: 'Scheduled', published: 'Published', failed: 'Failed' } as Record<string, string>,
+      create: 'Write the post',
+      open: 'Open the post',
+      decline: 'Decline',
+      declineTitle: 'Decline this idea?',
+      declineSub: (name: string) => `Tell ${name} why, so the next one lands.`,
+      reason: 'Reason',
+      declined: 'Idea declined',
+      withdraw: 'Withdraw',
+      withdrawn: 'Idea withdrawn',
+      reply: (name: string) => `${name}:`,
+      empty: { title: 'No ideas yet', text: 'Clients and the team can suggest posts here; managers turn them into content.' },
+      fromIdea: (name: string, title: string) => `From ${name}’s idea: “${title}”`,
+    },
+    client: {
+      stage: 'Client review',
+      teamStage: 'Team review',
+      waiting: (names: string) => `Waiting for ${names} (client)`,
+      sent: (names: string) => `Sent to ${names} for approval`,
+      approvedOn: 'Approved: now with the client',
+      approved: 'Approved by the client',
+      ruleTitle: 'Client sign-off',
+      ruleText: 'Posts for these brands go to the brand’s client after the team, and only go out once the client approves.',
+      noClient: 'No client on this brand yet',
+      toggle: (brand: string) => `${brand}: the client signs off`,
+      on: (brand: string) => `${brand}’s client now signs off its posts`,
+      off: (brand: string) => `${brand} no longer waits for its client`,
+      mustWait: 'This brand’s client has to approve it first',
+    },
+    dates: {
+      show: 'Key dates',
+      comingUp: 'Coming up',
+      comingUpSub: 'Holidays, observances and your own dates, next 60 days',
+      plan: 'Plan a post',
+      add: 'Add a date',
+      addTheme: 'New campaign or theme',
+      none: 'Nothing in the next 60 days.',
+      inDays: (n: number) => (n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : `In ${n} days`),
+      kinds: { holiday: 'Public holiday', regional: 'Local holiday', observance: 'Observance', retail: 'Shopping moment', sector: 'For your sector', own: 'Your date' } as Record<string, string>,
+      dialog: { title: 'Add a date', name: 'Name', date: 'Date', yearly: 'Every year', brand: 'Brand', allBrands: 'Every brand', note: 'Note (optional)', save: 'Add date', cancel: 'Cancel', added: (name: string) => `${name} is on the calendar`, removed: 'Date removed', remove: (name: string) => `Remove ${name}` },
+      theme: { title: 'New campaign or theme', name: 'Name', brand: 'Brand', start: 'Starts', end: 'Ends', save: 'Create', created: (name: string) => `${name} is on the calendar`, bad: 'Give it a name, and an end after its start.' },
+      names: {
+        newYear: 'New Year’s Day',
+        valentines: 'Valentine’s Day',
+        carnival: 'Carnival',
+        womensDay: 'International Women’s Day',
+        fathersDay: 'Father’s Day (Portugal)',
+        happiness: 'International Day of Happiness',
+        goodFriday: 'Good Friday',
+        easter: 'Easter Sunday',
+        earthDay: 'Earth Day',
+        designDay: 'World Design Day',
+        freedomDay: 'Freedom Day (25 de Abril)',
+        labourDay: 'Labour Day',
+        mothersDay: 'Mother’s Day (Portugal)',
+        europeDay: 'Europe Day',
+        teaDay: 'International Tea Day',
+        corpusChristi: 'Corpus Christi',
+        childrensDay: 'Children’s Day',
+        environmentDay: 'World Environment Day',
+        portugalDay: 'Portugal Day',
+        santoAntonio: 'Santo António (Lisbon)',
+        saoJoao: 'São João (Porto)',
+        socialMediaDay: 'Social Media Day',
+        chocolateDay: 'World Chocolate Day',
+        selfCareDay: 'International Self-Care Day',
+        assumption: 'Assumption Day',
+        coffeeDay: 'International Coffee Day',
+        republicDay: 'Republic Day',
+        foodDay: 'World Food Day',
+        halloween: 'Halloween',
+        allSaints: 'All Saints’ Day',
+        singlesDay: 'Singles’ Day (11.11)',
+        blackFriday: 'Black Friday',
+        cyberMonday: 'Cyber Monday',
+        restorationDay: 'Restoration of Independence',
+        immaculate: 'Immaculate Conception',
+        christmasEve: 'Christmas Eve',
+        christmas: 'Christmas Day',
+        newYearsEve: 'New Year’s Eve',
+      } as Record<string, string>,
+    },
+    repeat: {
+      title: 'Repeat',
+      none: 'Doesn’t repeat',
+      every: { week: 'Every week', '2weeks': 'Every 2 weeks', month: 'Every month' } as Record<string, string>,
+      how: 'How often',
+      times: 'Times',
+      variations: 'Variations',
+      variationsHint: 'Each time goes out with the next text, then they start over.',
+      addVariation: 'Add a variation',
+      variation: (n: number) => `Variation ${n}`,
+      remove: (n: number) => `Remove variation ${n}`,
+      dates: 'Goes out',
+      more: (n: number) => `+${n} more`,
+      series: (k: number, n: number) => `Part ${k} of ${n} of a series`,
+      stop: 'Stop the series after this one',
+      stopped: (n: number) => `${plural(n, 'later post', 'later posts')} removed`,
+      scheduled: (n: number) => `${n} posts scheduled`,
+      sent: (n: number) => `${n} posts sent for approval`,
+      saved: (n: number) => `${n} drafts saved`,
+    },
+    evergreen: {
+      mark: 'Evergreen',
+      marked: 'Marked evergreen: find it under Evergreen on the calendar',
+      unmarked: 'No longer evergreen',
+      recycle: 'Post again',
+      title: 'Post again',
+      sub: 'A new post from this one, with fresh text if you like.',
+      text: 'Text',
+      original: 'Original',
+      variation: (n: number) => `Variation ${n}`,
+      keep: 'Keep this text as a variation',
+      when: 'When',
+      schedule: 'Schedule',
+      send: 'Send for approval',
+      cancel: 'Cancel',
+      done: (when: string) => `Scheduled again for ${when}`,
+      sentDone: 'Sent for approval',
+      card: 'Evergreen',
+      cardSub: 'Published posts worth posting again',
+      empty: 'Mark a published post as evergreen (open it from the calendar) to recycle it from here.',
+      last: (ago: string) => `Last out ${ago}`,
     },
   },
 

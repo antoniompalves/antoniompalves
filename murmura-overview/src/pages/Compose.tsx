@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Calendar, CalendarDays, Check, Copy, FileText, Link as LinkIcon, Plus, Send, Shield, ShieldCheck, Sparkles, Trash2, TriangleAlert } from 'lucide-react'
+import { Calendar, CalendarDays, Check, Copy, FileText, History, Lightbulb, Link as LinkIcon, Plus, Repeat as RepeatIcon, Send, Shield, ShieldCheck, Sparkles, Trash2, TriangleAlert } from 'lucide-react'
 import { PageTitle, Stat } from '../components/PageHead'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
@@ -14,8 +14,11 @@ import { tidyExtras, viewOn } from '../data/formats'
 import { approversFor, can, member, needsApproval } from '../data/permissions'
 import { NETWORK_LABEL } from '../data/selectors'
 import { useWorkspace } from '../data/store'
-import { excerpt, submittedNotices } from '../data/notices'
-import type { AuditAction, AuditEvent, NetworkId, Post, PostStatus, Template } from '../data/types'
+import { clientNotices, excerpt, ideaAnswerNotices, submittedNotices } from '../data/notices'
+import { clientsOf, firstStage, needsClient, occurrenceAt, occurrenceText } from '../data/workflow'
+import { CollabCard, RepeatCard } from '../components/collab/Repeat'
+import { Presence } from '../components/collab/Presence'
+import type { AuditAction, AuditEvent, NetworkId, Post, PostStatus, PostVersion, RepeatRule, Template } from '../data/types'
 import { useI18n } from '../i18n'
 
 const DAY = 86_400_000
@@ -38,6 +41,8 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   const [, path = '', query = ''] = hash.match(/^#\/compose\/?([^?]*)\??(.*)$/) ?? []
   const editId = path || null
   const askedAt = Number(new URLSearchParams(query).get('at')) || null
+  const askedIdea = new URLSearchParams(query).get('idea')
+  const idea = (ws.ideas ?? []).find((i) => i.id === askedIdea) ?? null
 
   const liveChannels = (brandId: string) => ws.channels.filter((ch) => ch.brandId === brandId && ch.status !== 'disconnected')
 
@@ -84,17 +89,21 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   // The composer follows the address: a post id loads that post, the bare route starts a new one.
   const seed = useRef<Draft | null>(null)
   const load = (): { key: string; draft: Draft } => {
-    const key = `${editId ?? 'new'}|${askedAt ?? ''}`
+    const key = `${editId ?? 'new'}|${askedAt ?? ''}|${askedIdea ?? ''}`
     const post = editId ? ws.posts.find((p) => p.id === editId) : undefined
-    const draft = seed.current ?? (post ? fromPost(post) : blank(undefined, undefined, askedAt))
+    // From an idea: its brand, its brief as the first text, and its date when it has one.
+    const fromIdea = idea && !post ? { ...blank(idea.brandId, undefined, idea.wantedBy ? Date.parse(`${idea.wantedBy}T10:00:00Z`) : askedAt), text: idea.text } : null
+    const draft = seed.current ?? (post ? fromPost(post) : (fromIdea ?? blank(undefined, undefined, askedAt)))
     seed.current = null
     return { key, draft }
   }
   const [state, setState] = useState(() => ({ ...load(), pristine: '' }))
-  const routeKey = `${editId ?? 'new'}|${askedAt ?? ''}`
+  const routeKey = `${editId ?? 'new'}|${askedAt ?? ''}|${askedIdea ?? ''}`
+  const [repeat, setRepeat] = useState<RepeatRule | null>(null)
   if (state.key !== routeKey) {
     const next = load()
     setState({ ...next, pristine: JSON.stringify(next.draft) })
+    setRepeat(null)
   }
   const draft = state.draft
   const pristine = state.pristine || JSON.stringify(draft)
@@ -122,8 +131,12 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   const issues = useMemo(() => issuesOf(draft, ws.channels, nowMs, ws.media), [draft, ws.channels, nowMs, ws.media])
   const blocking = issues.filter(isBlocking)
   const blockingNow = blocking.filter((i) => i.kind !== 'past')
-  const approval = needsApproval(ws, me)
-  const approvers = approversFor(ws, brand.id).filter((m) => m.id !== me)
+  const clientStep = needsClient(ws, brand.id)
+  const approval = needsApproval(ws, me) || clientStep
+  const stage = firstStage(ws, me, brand.id)
+  const approvers = stage === 'client' ? clientsOf(ws, brand.id) : approversFor(ws, brand.id).filter((m) => m.id !== me && (!clientStep || m.role !== 'client'))
+  const ideaId = post?.ideaId ?? idea?.id
+  const fromIdea = ideaId ? (ws.ideas ?? []).find((i) => i.id === ideaId) : undefined
   const best = bestTimes(nets, nowMs)
   const day = sameDay(ws, brand.id, draft.at, editId)
   const link = finalLink(draft, ws)
@@ -174,33 +187,72 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
       ...(draft.firstComment.trim() && nets.includes('instagram') && { firstComment: draft.firstComment.trim() }),
       ...(link && { link }),
       ...(status === 'published' && { metrics: { impressions: 0, reach: 0, likes: 0, comments: 0, shares: 0, saves: 0, clicks: 0, views: 0 } }),
+      // Sent to the client straight away when a manager sends it; the team first otherwise.
+      ...(mode === 'approval' && clientStep && { stage }),
+      ...(ideaId && { ideaId }),
+      ...(post?.seriesId && { seriesId: post.seriesId, occurrence: post.occurrence }),
+      ...(post?.evergreen && { evergreen: post.evergreen }),
+      ...(post?.recycledFrom && { recycledFrom: post.recycledFrom }),
     }
     // Formats, versions, titles and alt text, for the networks and photos still in the post.
     for (const [k, v] of Object.entries(tidyExtras(nets, draft.media, draft, draft.text))) if (v) (saved as unknown as Record<string, unknown>)[k] = v
-    dispatch({ type: 'savePost', post: saved })
+    // A new post that repeats: one post per time, the text taking turns with the variations.
+    const series = !post && repeat && mode !== 'now' ? Array.from({ length: repeat.count }, (_, k) => k) : [0]
+    const posts: Post[] = series.map((k) =>
+      k === 0
+        ? series.length > 1
+          ? { ...saved, seriesId: id, occurrence: 0, repeat: { ...repeat!, variations: repeat!.variations.filter((v) => v.trim()) } }
+          : saved
+        : {
+            ...saved,
+            id: `${id}-${k}`,
+            seriesId: id,
+            occurrence: k,
+            text: occurrenceText(saved.text, repeat!, k),
+            scheduledAt: new Date(occurrenceAt(Date.parse(at), repeat!, k)).toISOString(),
+            versions: undefined,
+          },
+    )
+    for (const p of posts) dispatch({ type: 'savePost', post: p, by: me, at: nowIso })
+    // The idea it came from is taken up, and whoever had it hears so.
+    if (fromIdea && !fromIdea.postId) {
+      dispatch({ type: 'saveIdea', idea: { ...fromIdea, status: 'accepted', postId: id } })
+      dispatch({ type: 'notify', notices: ideaAnswerNotices(me, fromIdea.by, fromIdea.title, true, nowMs) })
+    }
     const quote = excerpt(saved.text) || c.untitled
     const isNew = !post
+    if (series.length > 1) audit('schedule', { type: 'scheduledSeries', excerpt: quote, count: series.length })
     if (mode === 'draft') {
       audit('schedule', { type: 'savedDraft', brandId: brand.id })
-      toast({ text: c.toast.draftSaved, icon: FileText })
+      toast({ text: series.length > 1 ? t.collab.repeat.saved(series.length) : c.toast.draftSaved, icon: FileText })
       seed.current = draft
+      setRepeat(null)
       setState((s) => ({ ...s, pristine: JSON.stringify(draft) }))
       if (isNew) go(`#/compose/${id}`)
       return
     }
     if (mode === 'approval') {
       audit('approval', { type: 'sentForApproval', excerpt: quote, brandId: brand.id })
-      dispatch({ type: 'notify', notices: submittedNotices(ws, me, saved, nowMs) })
-      toast({ text: c.toast.sent(approvers.length), icon: Shield, ...(isNew && { action: { label: c.toast.view, run: () => go('#/approvals') } }) })
+      dispatch({ type: 'notify', notices: stage === 'client' && clientStep ? clientNotices(ws, me, saved, nowMs) : submittedNotices(ws, me, saved, nowMs) })
+      const text = series.length > 1 ? t.collab.repeat.sent(series.length) : stage === 'client' && clientStep ? t.collab.client.sent(t.collab.list(approvers.map((m) => m.name.split(' ')[0]!))) : c.toast.sent(approvers.length)
+      toast({ text, icon: Shield, ...(isNew && { action: { label: c.toast.view, run: () => go('#/approvals') } }) })
     } else if (mode === 'now') {
       audit('schedule', { type: 'publishedPost', excerpt: quote, networks: nets.length })
       toast({ text: c.toast.published(nets.map((n) => NETWORK_LABEL[n])), icon: Send })
     } else {
       audit('schedule', { type: 'scheduledPost', excerpt: quote, at })
-      toast({ text: c.toast.scheduled(t.dates.dayStamp(new Date(at), now)), icon: Check, ...(isNew && { action: { label: c.toast.view, run: () => go('#/calendar') } }) })
+      toast({ text: series.length > 1 ? t.collab.repeat.scheduled(series.length) : c.toast.scheduled(t.dates.dayStamp(new Date(at), now)), icon: Check, ...(isNew && { action: { label: c.toast.view, run: () => go('#/calendar') } }) })
     }
     // Start the next post for the same brand and channels.
     restart(blank(brand.id, draft.channels))
+  }
+
+  /** An earlier version back in the editor (saved only when the post is). */
+  const restoreVersion = (v: PostVersion) => {
+    const before = draft
+    const own = ws.channels.filter((ch) => ch.brandId === brand.id)
+    setDraft({ text: v.text, media: [...v.media], channels: own.filter((ch) => v.networks.includes(ch.network)).map((ch) => ch.id) })
+    toast({ text: t.collab.versions.restored, icon: History, undo: () => setDraft(before) })
   }
 
   const onAction = (kind: 'main' | 'now' | 'draft') => {
@@ -317,6 +369,29 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
   const notes: ReactNode[] = []
   const note = 'flex flex-wrap items-start gap-3 rounded-[20px] px-4 py-3.5 text-xs [&>svg]:mt-px [&>svg]:size-5 [&>svg]:shrink-0'
   const noteText = 'min-w-0 flex-[240px] [&>b]:mb-0.5 [&>b]:block [&>b]:text-sm [&>b]:font-bold'
+  if (fromIdea) {
+    const by = member(ws, fromIdea.by)
+    notes.push(
+      <div key="idea" className={cn(note, toneFill.butter)}>
+        <Lightbulb aria-hidden />
+        <p className={noteText}>
+          <b>{t.collab.ideas.fromIdea(by?.name.split(' ')[0] ?? '', fromIdea.title)}</b>
+          {fromIdea.text}
+        </p>
+      </div>,
+    )
+  }
+  if (post?.seriesId) {
+    const n = ws.posts.filter((p) => p.seriesId === post.seriesId).length
+    notes.push(
+      <div key="series" className={cn(note, 'border border-line bg-glass-2')}>
+        <RepeatIcon aria-hidden />
+        <p className={noteText}>
+          <b>{t.collab.repeat.series((post.occurrence ?? 0) + 1, n)}</b>
+        </p>
+      </div>,
+    )
+  }
   if (post) {
     const reviews = [...post.reviews].reverse()
     const changes = reviews.find((r) => r.decision === 'changes')
@@ -344,7 +419,8 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
         </div>,
       )
     } else if (post.status === 'awaiting_approval') {
-      const who = approversFor(ws, post.brandId).filter((m) => m.id !== post.authorId)
+      const atClient = needsClient(ws, post.brandId) && (post.stage ?? 'team') === 'client'
+      const who = atClient ? clientsOf(ws, post.brandId) : approversFor(ws, post.brandId).filter((m) => m.id !== post.authorId && (!needsClient(ws, post.brandId) || m.role !== 'client'))
       notes.push(
         <div key="pending" className={cn(note, toneFill.butter)}>
           {who.length ? (
@@ -430,7 +506,14 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
       <div className="cm-grid">
         <Editor
           title={post ? (readOnly ? c.editor.viewTitle : c.editor.editTitle) : c.editor.newTitle}
-          titleExtra={post && <PostStatusPill status={post.status} />}
+          titleExtra={
+            post && (
+              <>
+                <PostStatusPill status={post.status} />
+                <Presence where={`#/compose/${post.id}`} editing />
+              </>
+            )
+          }
           notes={notes.length ? notes : undefined}
           brands={ws.brands}
           brand={brand}
@@ -485,6 +568,7 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
           day={day}
           brand={brand.name}
         />
+        {!readOnly && !post && <RepeatCard rule={repeat} onRule={setRepeat} at={draft.at} />}
         <PublishBar
           approval={approval}
           approvers={approvers}
@@ -493,11 +577,12 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
           mainLabel={mainLabel}
           blocked={blocking.length}
           blockedNow={blockingNow.length}
-          nowLocked={approval && ws.settings.approval === 'all'}
+          nowLocked={approval && (ws.settings.approval === 'all' || clientStep)}
           why={why}
           onAction={onAction}
           readOnly={readOnly ? { published: true, when: t.dates.dayStamp(new Date(post!.scheduledAt), now), onOpen: () => setOpenId(post!.id), onDuplicate: duplicateIntoNew, onNew: startNew } : null}
         />
+        {post && <CollabCard post={post} now={now} onRestore={restoreVersion} />}
         <DraftsCard toFinish={toFinish} waiting={waiting} current={editId} brands={ws.brands} now={now} onDelete={deleteDraft} />
       </div>
 

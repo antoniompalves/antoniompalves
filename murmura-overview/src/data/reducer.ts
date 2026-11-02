@@ -1,6 +1,10 @@
 import type {
   AuditEvent,
   Brand,
+  Campaign,
+  Idea,
+  KeyDate,
+  PostComment,
   Channel,
   Conversation,
   Creator,
@@ -34,8 +38,26 @@ export type WorkspaceAction =
   | { type: 'publish'; id: string; at: string }
   | { type: 'duplicate'; id: string; newId: string; at: string }
   | { type: 'delete'; id: string }
-  /** Insert a post, or replace the one with its id (the composer's saves). */
-  | { type: 'savePost'; post: Post }
+  /**
+   * Insert a post, or replace the one with its id (the composer's saves). With
+   * `by` and `at`, a change to its text, media or networks keeps the old version.
+   */
+  | { type: 'savePost'; post: Post; by?: string; at?: string }
+  /** The team's notes on a post. */
+  | { type: 'commentPost'; postId: string; comment: PostComment }
+  | { type: 'resolveComment'; postId: string; id: string; resolved: boolean }
+  | { type: 'deleteComment'; postId: string; id: string }
+  /** Ideas for posts: add or replace by id, or remove. */
+  | { type: 'saveIdea'; idea: Idea }
+  | { type: 'deleteIdea'; id: string }
+  /** The editorial calendar: the team's own dates, and campaigns or themes. */
+  | { type: 'saveKeyDate'; date: KeyDate }
+  | { type: 'deleteKeyDate'; id: string }
+  | { type: 'saveCampaign'; campaign: Campaign }
+  | { type: 'deleteCampaign'; id: string }
+  /** Conversations `by` has opened (read for them only), or wants back as unread. */
+  | { type: 'seen'; ids: string[]; by: string }
+  | { type: 'unseen'; id: string; by: string }
   | { type: 'conversation'; id: string; patch: Partial<Conversation> }
   | { type: 'send'; id: string; message: Message; close?: boolean }
   /** Marks these open conversations read (the ones on screen). */
@@ -68,7 +90,8 @@ export type WorkspaceAction =
   | { type: 'mention'; id: string; patch: Partial<Mention> }
   | { type: 'mentionToInbox'; id: string; conversation: Conversation }
   | { type: 'notify'; notices: Notice[] }
-  | { type: 'readNotices'; ids: string[] }
+  /** Notifications read; by `by` only when given (everyone otherwise, as in the demo). */
+  | { type: 'readNotices'; ids: string[]; by?: string }
   /* People, brands and settings: sent by the accounts server (invites, roles, sign-ins). */
   | { type: 'saveMember'; member: TeamMember }
   | { type: 'removeMember'; id: string }
@@ -107,6 +130,8 @@ export const COLLECTIONS = [
   'media',
   'templates',
   'hashtagSets',
+  'ideas',
+  'keyDates',
   'audit',
   'notices',
 ] as const satisfies readonly (keyof Workspace)[]
@@ -167,8 +192,42 @@ export function reduce(ws: Workspace, action: WorkspaceAction): Workspace {
     }
     case 'delete':
       return { ...ws, posts: ws.posts.filter((p) => p.id !== action.id) }
-    case 'savePost':
-      return { ...ws, posts: upsert(ws.posts, action.post) }
+    case 'savePost': {
+      const before = ws.posts.find((p) => p.id === action.post.id)
+      if (!before) return { ...ws, posts: [...ws.posts, action.post] }
+      const changed = before.text !== action.post.text || before.media.join() !== action.post.media.join() || before.networks.join() !== action.post.networks.join()
+      const history = changed && action.by && action.at ? [...(before.history ?? []), { by: action.by, at: action.at, text: before.text, media: before.media, networks: before.networks }].slice(-15) : before.history
+      // A save from the composer doesn't carry the notes and versions: they stay.
+      const next: Post = { ...action.post, comments: action.post.comments ?? before.comments, history: action.post.history ?? history }
+      if (!next.comments) delete next.comments
+      if (!next.history) delete next.history
+      return { ...ws, posts: ws.posts.map((p) => (p.id === next.id ? next : p)) }
+    }
+    case 'commentPost':
+      return update(action.postId, (p) => ({ ...p, comments: [...(p.comments ?? []), action.comment] }))
+    case 'resolveComment':
+      return update(action.postId, (p) => ({ ...p, comments: (p.comments ?? []).map((c) => (c.id === action.id ? { ...c, resolved: action.resolved } : c)) }))
+    case 'deleteComment':
+      return update(action.postId, (p) => ({ ...p, comments: (p.comments ?? []).filter((c) => c.id !== action.id) }))
+    case 'saveIdea':
+      return { ...ws, ideas: upsert(ws.ideas ?? [], action.idea) }
+    case 'deleteIdea':
+      return { ...ws, ideas: (ws.ideas ?? []).filter((i) => i.id !== action.id) }
+    case 'saveKeyDate':
+      return { ...ws, keyDates: upsert(ws.keyDates ?? [], action.date) }
+    case 'deleteKeyDate':
+      return { ...ws, keyDates: (ws.keyDates ?? []).filter((d) => d.id !== action.id) }
+    case 'saveCampaign':
+      return { ...ws, campaigns: upsert(ws.campaigns, action.campaign) }
+    case 'deleteCampaign':
+      return { ...ws, campaigns: ws.campaigns.filter((c) => c.id !== action.id), posts: ws.posts.map((p) => (p.campaignId === action.id ? { ...p, campaignId: undefined } : p)) }
+    case 'seen':
+      return {
+        ...ws,
+        conversations: ws.conversations.map((c) => (action.ids.includes(c.id) && c.unread && !c.seenBy?.includes(action.by) ? { ...c, seenBy: [...(c.seenBy ?? []), action.by] } : c)),
+      }
+    case 'unseen':
+      return { ...ws, conversations: ws.conversations.map((c) => (c.id === action.id ? { ...c, unread: true, seenBy: (c.seenBy ?? []).filter((x) => x !== action.by) } : c)) }
     case 'conversation':
       return { ...ws, conversations: ws.conversations.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
     case 'send':
@@ -244,7 +303,14 @@ export function reduce(ws: Workspace, action: WorkspaceAction): Workspace {
       // Newest first, and only the latest 40 are kept.
       return { ...ws, notices: [...action.notices, ...ws.notices].slice(0, 40) }
     case 'readNotices':
-      return { ...ws, notices: ws.notices.map((n) => (action.ids.includes(n.id) ? { ...n, read: true } : n)) }
+      return {
+        ...ws,
+        notices: ws.notices.map((n) => {
+          if (!action.ids.includes(n.id)) return n
+          if (!action.by) return { ...n, read: true }
+          return n.readBy?.includes(action.by) ? n : { ...n, readBy: [...(n.readBy ?? []), action.by] }
+        }),
+      }
     case 'saveMember':
       return { ...ws, team: upsert(ws.team, action.member) }
     case 'removeMember':

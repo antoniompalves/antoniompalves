@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ArrowUpRight, Check, FileText, History, PenLine, TriangleAlert, Undo2 } from 'lucide-react'
-import { Avatar, BrandMark, Button, IconButton, NetStack, PostStatusPill, cn, toneFill } from '../ui'
+import { ArrowUpRight, Check, FileText, History, PenLine, TriangleAlert, Undo2, MessageSquare } from 'lucide-react'
+import { Avatar, Badge, BrandMark, Button, IconButton, NetStack, PostStatusPill, cn, toneFill } from '../ui'
+import { needsClient, stageOf } from '../../data/workflow'
 import { dueState, lastOf, reviewersOf } from '../../data/approvals'
 import { photo } from '../../data/assets'
 import { postTitle } from '../../data/compose'
@@ -36,8 +37,7 @@ export function ApprovalCard({ post: p, ws, me, now, reviewable, selected, onSel
   const at = new Date(p.scheduledAt)
 
   const when = (() => {
-    if (p.status === 'scheduled' || p.status === 'published')
-      return { tone: (p.status === 'published' ? 'pine' : 'sea') as Tone, label: p.status === 'published' ? a.when.wentOut : a.when.goesOut }
+    if (p.status === 'scheduled' || p.status === 'published') return { tone: (p.status === 'published' ? 'pine' : 'sea') as Tone, label: p.status === 'published' ? a.when.wentOut : a.when.goesOut }
     const due = dueState(p, nowMs)
     return {
       tone: (p.status === 'changes_requested' || due !== 'later' ? 'coral' : 'butter') as Tone,
@@ -57,10 +57,7 @@ export function ApprovalCard({ post: p, ws, me, now, reviewable, selected, onSel
   return (
     <article
       aria-label={`${brand.name}: ${title}`}
-      className={cn(
-        'relative flex min-w-0 flex-col rounded-card border border-rim bg-glass p-2.5 shadow-card [container-type:inline-size] max-mobile:p-2',
-        selected && 'shadow-[var(--shadow),0_0_0_2px_var(--text)]',
-      )}
+      className={cn('relative flex min-w-0 flex-col rounded-card border border-rim bg-glass p-2.5 shadow-card [container-type:inline-size] max-mobile:p-2', selected && 'shadow-[var(--shadow),0_0_0_2px_var(--text)]')}
     >
       <div
         className={cn(
@@ -69,9 +66,7 @@ export function ApprovalCard({ post: p, ws, me, now, reviewable, selected, onSel
         )}
       >
         {p.media.length ? (
-          p.media.map((seed, i) => (
-            <img key={seed} src={photo(seed, 900)} alt="" loading="lazy" decoding="async" className={cn('absolute inset-0 size-full object-cover transition-opacity duration-300', i === shown ? 'opacity-100' : 'opacity-0')} />
-          ))
+          p.media.map((seed, i) => <img key={seed} src={photo(seed, 900)} alt="" loading="lazy" decoding="async" className={cn('absolute inset-0 size-full object-cover transition-opacity duration-300', i === shown ? 'opacity-100' : 'opacity-0')} />)
         ) : (
           <>
             <FileText size={28} aria-hidden />
@@ -100,7 +95,10 @@ export function ApprovalCard({ post: p, ws, me, now, reviewable, selected, onSel
           </label>
         )}
         {stamped && (
-          <span aria-hidden className="absolute inset-0 z-[3] m-auto grid h-fit w-fit animate-stamp justify-items-center gap-0.5 rounded-[14px] border-4 border-double border-pine bg-[color-mix(in_srgb,var(--pine)_10%,var(--float))] px-[22px] pb-[9px] pt-2.5 text-pine dark:border-good dark:text-good">
+          <span
+            aria-hidden
+            className="absolute inset-0 z-[3] m-auto grid h-fit w-fit animate-stamp justify-items-center gap-0.5 rounded-[14px] border-4 border-double border-pine bg-[color-mix(in_srgb,var(--pine)_10%,var(--float))] px-[22px] pb-[9px] pt-2.5 text-pine dark:border-good dark:text-good"
+          >
             <span className="text-[clamp(34px,3.4vw,46px)] font-bold uppercase leading-none tracking-[0.1em]">{a.stamp}</span>
           </span>
         )}
@@ -113,6 +111,17 @@ export function ApprovalCard({ post: p, ws, me, now, reviewable, selected, onSel
             <span className="truncate">{brand.name}</span>
           </span>
           <PostStatusPill status={p.status} size="md" className="flex-none" />
+          {p.status === 'awaiting_approval' && needsClient(ws, p.brandId) && (
+            <Badge tone={stageOf(ws, p) === 'client' ? 'lilac' : 'plain'} size="tight" className="flex-none">
+              {stageOf(ws, p) === 'client' ? t.collab.client.stage : t.collab.client.teamStage}
+            </Badge>
+          )}
+          {(p.comments?.length ?? 0) > 0 && (
+            <span title={t.collab.notes.count(p.comments!.length)} className="inline-flex flex-none items-center gap-1 text-[12.5px] font-semibold text-muted">
+              <MessageSquare size={14} aria-hidden />
+              {p.comments!.length}
+            </span>
+          )}
           <span className="ml-auto flex-none whitespace-nowrap text-2xs text-muted @max-[400px]:hidden">{sent ? a.sent(t.dates.ago(sent.at, now)) : t.dates.ago(p.createdAt, now)}</span>
         </div>
         <p className="line-clamp-4 text-sm leading-[1.5] [overflow-wrap:anywhere] max-mobile:line-clamp-5">{p.text}</p>

@@ -71,6 +71,8 @@ export interface Brand {
   industry: string
   /** Photo seed for the brand's cover on the channels page. */
   cover: string
+  /** Posts need the brand's client to sign them off (after the team) before they go out. */
+  clientApproval?: boolean
 }
 
 /** A dated marketing push for one brand, drawn as a ribbon across the calendar. */
@@ -209,6 +211,79 @@ export interface Post {
   titles?: Partial<Record<NetworkId, string>>
   /** Alt text for screen readers, per photo seed. */
   alt?: Record<string, string>
+  /** The team's notes on the post, with @mentions (never published). */
+  comments?: PostComment[]
+  /** Earlier versions, newest last: saved whenever the text, media or networks change. */
+  history?: PostVersion[]
+  /** Whose sign-off it waits for: the team, then the brand's client (brands with client approval). */
+  stage?: 'team' | 'client'
+  /** The idea it was made from. */
+  ideaId?: string
+  /** Recurring posts: the series (the first post's id), and which occurrence this is (0 = first). */
+  seriesId?: string
+  occurrence?: number
+  /** How the series repeats, on its first post. */
+  repeat?: RepeatRule
+  /** Copied from this published post (evergreen recycling). */
+  recycledFrom?: string
+  /** Evergreen: worth posting again; alternative texts to rotate through. */
+  evergreen?: { variations: string[]; lastAt?: ISODate }
+}
+
+export interface PostComment {
+  id: string
+  by: string
+  at: ISODate
+  text: string
+  /** Team member ids mentioned with @. */
+  mentions: string[]
+  resolved?: boolean
+}
+
+export interface PostVersion {
+  by: string
+  at: ISODate
+  text: string
+  media: string[]
+  networks: NetworkId[]
+}
+
+export interface RepeatRule {
+  every: 'week' | '2weeks' | 'month'
+  /** How many times in all, the first included. */
+  count: number
+  /** Alternative texts, rotated with the main text. */
+  variations: string[]
+}
+
+/** A suggestion for a post (from a client or anyone on the team) that a manager turns into content. */
+export interface Idea {
+  id: string
+  brandId: string
+  by: string
+  at: ISODate
+  title: string
+  text: string
+  /** YYYY-MM-DD it should go out by. */
+  wantedBy?: string
+  link?: string
+  status: 'new' | 'accepted' | 'declined'
+  /** Why it was declined, or a note back. */
+  reply?: string
+  /** The post made from it. */
+  postId?: string
+}
+
+/** A date for the editorial calendar that the team added (the built-in ones are in observances.ts). */
+export interface KeyDate {
+  id: string
+  /** YYYY-MM-DD; with `yearly`, only the month and day count. */
+  date: string
+  yearly: boolean
+  name: string
+  /** null: every brand. */
+  brandId: string | null
+  note?: string
 }
 
 export interface DailyPoint {
@@ -263,6 +338,8 @@ export interface Conversation {
   messages: Message[]
   sentiment: Sentiment
   unread: boolean
+  /** Who has read it since the last message came in (unread for everyone else). */
+  seenBy?: string[]
   priority: boolean
   status: 'open' | 'done'
   assigneeId?: string
@@ -395,6 +472,10 @@ export type AuditAction =
   | { type: 'signedOut' }
   | { type: 'connectedInbox'; brandId: string; source: 'whatsapp' | 'google' }
   | { type: 'joinedTeam' }
+  | { type: 'suggestedIdea'; title: string; brandId: string }
+  | { type: 'scheduledSeries'; excerpt: string; count: number }
+  | { type: 'recycledPost'; excerpt: string }
+  | { type: 'clientApproved'; excerpt: string; brandId: string }
   | { type: 'changedRole'; name: string; role: string }
   | { type: 'suspendedMember'; name: string; suspended: boolean }
   | { type: 'revokedInvite'; name: string }
@@ -588,6 +669,10 @@ export interface Workspace {
   media: MediaAsset[]
   templates: Template[]
   hashtagSets: HashtagSet[]
+  /** Post ideas from clients and the team. */
+  ideas: Idea[]
+  /** The team's own dates on the editorial calendar. */
+  keyDates: KeyDate[]
   audit: AuditEvent[]
   notices: Notice[]
   /** The top bar's brand switcher: one brand, or null for every brand the person sees. */
@@ -605,13 +690,19 @@ export type NoticeEvent =
   | { type: 'submitted'; by: string; excerpt: string }
   | { type: 'approved'; by: string; excerpt: string }
   | { type: 'changes'; by: string; excerpt: string }
+  | { type: 'mentioned'; by: string; excerpt: string }
+  | { type: 'idea'; by: string; title: string }
+  | { type: 'ideaAnswer'; by: string; title: string; accepted: boolean }
+  | { type: 'clientReview'; by: string; excerpt: string }
 
 /** A notification in the bell's list; `for` keeps it to one person. */
 export interface Notice {
   id: string
   at: ISODate
   href: string
+  /** Read by everyone (older notices); otherwise see readBy. */
   read: boolean
+  readBy?: string[]
   for?: string
   event: NoticeEvent
 }

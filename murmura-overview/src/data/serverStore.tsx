@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import type { ReactNode } from 'react'
 import { revertOf } from './reducer'
 import type { WorkspaceAction } from './reducer'
-import { scopeView } from './scope'
+import { personal, scopeView } from './scope'
+import { api } from './server'
 import type { SessionInfo, SessionUser, Snapshot } from './server'
 import { WorkspaceContext } from './store'
 import type { ClockOrigin, ServerLink } from './store'
@@ -44,6 +45,20 @@ export function ServerWorkspaceProvider({ first, user, session, events, signOut,
   const shared = useSyncExternalStore(engine.subscribe, engine.view)
   const status = useSyncExternalStore(engine.subscribe, () => engine.status)
   const settled = useSyncExternalStore(engine.subscribe, () => engine.settled)
+  const everyone = useSyncExternalStore(engine.subscribe, () => engine.presence)
+  const presence = useMemo(() => everyone.filter((p) => p.memberId !== user.memberId), [everyone, user.memberId])
+
+  // Where this person is: said on every page change and every 20 s while the app is open.
+  useEffect(() => {
+    const say = () => void api('POST', '/presence', { where: window.location.hash || '#/overview' }).catch(() => undefined)
+    say()
+    const id = window.setInterval(say, 20_000)
+    window.addEventListener('hashchange', say)
+    return () => {
+      window.clearInterval(id)
+      window.removeEventListener('hashchange', say)
+    }
+  }, [])
   const [brandScope, setBrandScope] = useState<string | null>(null)
 
   // Leaving with changes still on their way: the browser asks first.
@@ -91,7 +106,7 @@ export function ServerWorkspaceProvider({ first, user, session, events, signOut,
   // Real time: the server's clock is the clock.
   const [clock] = useState<ClockOrigin>(() => ({ mock: Date.now(), real: Date.now() }))
   const reset = useCallback(() => undefined, [])
-  const server: ServerLink = useMemo(() => ({ status, settled, user, company: all.settings.name, sso: session.sso, mail: session.mail, signOut }), [status, settled, user, all.settings.name, session.sso, session.mail, signOut])
-  const view = useMemo(() => scopeView(all), [all])
+  const server: ServerLink = useMemo(() => ({ status, settled, user, company: all.settings.name, sso: session.sso, mail: session.mail, signOut, presence }), [status, settled, user, all.settings.name, session.sso, session.mail, signOut, presence])
+  const view = useMemo(() => personal(scopeView(all)), [all])
   return <WorkspaceContext.Provider value={{ ws: view, all, dispatch, undoable, clock, reset, mode: 'server', server }}>{children}</WorkspaceContext.Provider>
 }

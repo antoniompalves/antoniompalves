@@ -82,7 +82,20 @@ export function scopeView(ws: Workspace): Workspace {
     media: ws.media.filter((m) => shown(m.brandId)),
     templates: ws.templates.filter((x) => shown(x.brandId)),
     hashtagSets: ws.hashtagSets.filter((h) => shown(h.brandId)),
+    ideas: (ws.ideas ?? []).filter((i) => shown(i.brandId)),
+    keyDates: (ws.keyDates ?? []).filter((d) => shown(d.brandId)),
   }
+}
+
+/**
+ * What "read" means for the person looking: a conversation is unread for them
+ * until they open it, a notification until they read it (workflow.ts).
+ */
+export function personal(ws: Workspace): Workspace {
+  const me = ws.currentUserId
+  const conversations = ws.conversations.some((c) => c.seenBy?.length) ? ws.conversations.map((c) => (c.unread && c.seenBy?.includes(me) ? { ...c, unread: false } : c)) : ws.conversations
+  const notices = ws.notices.some((n) => n.readBy?.length) ? ws.notices.map((n) => (!n.read && n.readBy?.includes(me) ? { ...n, read: true } : n)) : ws.notices
+  return conversations === ws.conversations && notices === ws.notices ? ws : { ...ws, conversations, notices }
 }
 
 /** The brands someone may pick in the switcher. */

@@ -3,7 +3,7 @@ import type { Dispatch, ReactNode } from 'react'
 import { STORAGE_KEY, fingerprint, loadWorkspace, parseSaved, saveWorkspace } from './persist'
 import { reduce, revertOf } from './reducer'
 import type { WorkspaceAction } from './reducer'
-import { scopeView } from './scope'
+import { personal, scopeView } from './scope'
 import type { SessionUser } from './server'
 import type { SyncStatus } from './syncEngine'
 import type { Workspace } from './types'
@@ -33,6 +33,8 @@ export interface ServerLink {
   sso: { id: string; name: string }[]
   mail: boolean
   signOut: () => Promise<void>
+  /** Teammates with the app open and the page they're on (#/compose/p12…), not counting this person. */
+  presence: { memberId: string; where: string }[]
 }
 
 export interface WorkspaceContextValue {
@@ -117,7 +119,7 @@ export function WorkspaceProvider({ seed, withSettings = (ws) => ws, children }:
     return () => dispatch(undo)
   }, [])
 
-  const view = useMemo(() => scopeView(ws), [ws])
+  const view = useMemo(() => personal(scopeView(ws)), [ws])
   return <WorkspaceContext.Provider value={{ ws: view, all: ws, dispatch, undoable, clock, reset, mode: 'demo' }}>{children}</WorkspaceContext.Provider>
 }
 

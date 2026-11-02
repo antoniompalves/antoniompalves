@@ -72,7 +72,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
 
   // Opening a conversation reads it.
   useEffect(() => {
-    if (current?.unread) dispatch({ type: 'conversation', id: current.id, patch: { unread: false } })
+    if (current?.unread) dispatch({ type: 'seen', ids: [current.id], by: ws.currentUserId })
     setTagOpen(false)
     // Only when the selection changes; "Mark as unread" must stick.
   }, [currentId])
@@ -141,7 +141,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
 
   const markAllRead = () => {
     const n = stats.unread
-    toast({ text: t.inbox.toast.markedRead(n), icon: CheckCheck, undo: changeTo([{ type: 'readAll', ids: ws.conversations.map((c) => c.id) }]) })
+    toast({ text: t.inbox.toast.markedRead(n), icon: CheckCheck, undo: changeTo([{ type: 'seen', ids: ws.conversations.filter((c) => c.unread).map((c) => c.id), by: ws.currentUserId }]) })
   }
 
   // The reference confirms assignment in place (avatar on the row and header), without a toast.
@@ -169,7 +169,7 @@ export function Inbox({ now, hash }: { now: Date; hash: string }) {
 
   // "Mark as unread" puts the conversation back and parks the inbox on its empty state.
   const markUnread = (c: Conversation) => {
-    patch(c.id, { unread: true })
+    dispatch({ type: 'unseen', id: c.id, by: ws.currentUserId })
     parked.current = true
     window.location.replace('#/inbox')
     toast({ text: t.inbox.toast.unread, icon: Bell })

@@ -46,8 +46,8 @@ import {
 import { PostDrawer } from '../components/calendar/PostDrawer'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
-import { approve } from '../data/approvals'
-import { approvedNotices, excerpt } from '../data/notices'
+import { approveStep } from '../data/approvals'
+import { approvedNotices, clientNotices, excerpt } from '../data/notices'
 import { coverPhoto } from '../data/assets'
 import { useWorkspace } from '../data/store'
 import type { AuditKind, Channel, Post } from '../data/types'
@@ -209,14 +209,15 @@ function NeedsYou({ model, now, className }: SectionProps & { now: Date }) {
   const nowMs = Math.floor(now.getTime() / 60_000) * 60_000
 
   const approveOne = (p: Post) => {
-    const done = approve(p, ws.currentUserId, nowMs)
+    const step = approveStep(ws, p, ws.currentUserId, nowMs)
+    const done = step.post
     const undo = undoable({ type: 'savePost', post: done })
-    dispatch({ type: 'notify', notices: approvedNotices(ws.currentUserId, p, nowMs) })
+    dispatch({ type: 'notify', notices: step.toClient ? clientNotices(ws, ws.currentUserId, done, nowMs) : approvedNotices(ws.currentUserId, p, nowMs) })
     dispatch({
       type: 'audit',
       event: { id: `au-${Date.now().toString(36)}`, actorId: ws.currentUserId, kind: 'approval', action: { type: 'approved', excerpt: excerpt(p.text), brandId: p.brandId }, at: new Date(nowMs).toISOString() },
     })
-    toast({ text: t.approvals.toast.approved(t.dates.dayStamp(new Date(done.scheduledAt), now)), icon: Check, undo })
+    toast({ text: step.toClient ? t.collab.client.approvedOn : t.approvals.toast.approved(t.dates.dayStamp(new Date(done.scheduledAt), now)), icon: Check, undo })
   }
 
   /** Retry without the channels that are still disconnected; with none left, reconnecting comes first. */

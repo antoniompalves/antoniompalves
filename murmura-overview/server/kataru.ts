@@ -203,7 +203,8 @@ export async function createKataru(config: Config, deps: KataruDeps) {
       if (!Array.isArray(sample.team) || !Array.isArray(sample.posts) || !Array.isArray(sample.brands) || typeof sample.now !== 'string') throw new HttpError(400, 'invalid', 'The sample workspace is not valid')
       // The sample's day becomes today; its owner becomes you.
       const days = Math.round((now() - Date.parse(sample.now)) / 86_400_000) * 86_400_000
-      const shifted = shiftDates(sample, days)
+      // Yearly dates keep their day; everything else moves.
+      const shifted = { ...shiftDates(sample, days), keyDates: (sample.keyDates ?? []).map((d) => (d.yearly ? d : shiftDates(d, days))) }
       const owner = shifted.team.find((m) => m.role === 'owner') ?? shifted.team[0]!
       memberId = owner.id
       ws = {
@@ -469,8 +470,10 @@ export async function createKataru(config: Config, deps: KataruDeps) {
     const stop = hub.subscribe({
       memberId: m.member.id,
       send: (change) => res.write(`data: ${JSON.stringify(change)}\n\n`),
+      presence: (list) => res.write(`event: presence\ndata: ${JSON.stringify(list)}\n\n`),
       close: () => res.end(),
     })
+    res.write(`event: presence\ndata: ${JSON.stringify(await hub.presence())}\n\n`)
     req.on('close', () => {
       clearInterval(ping)
       stop()
@@ -751,7 +754,7 @@ export async function createKataru(config: Config, deps: KataruDeps) {
     const method = req.method ?? 'GET'
     if (!path.startsWith('/api/')) return serveStatic(req, res, path)
     const r = path.slice(4)
-    const known = /^\/(session|setup|auth|workspace|account|team)(\/|$)/.test(r)
+    const known = /^\/(session|setup|auth|workspace|account|team|presence)(\/|$)/.test(r)
     if (!known) return false
     try {
       // Changes need the app's own header: another site can't send it without asking first (CORS).
@@ -793,6 +796,12 @@ export async function createKataru(config: Config, deps: KataruDeps) {
     if (is('GET', '/workspace/stream')) return stream(req, res)
     if (is('POST', '/workspace/actions')) return actions(req, res)
 
+    if (is('POST', '/presence')) {
+      const m = await me(req)
+      const body = await readJson(req)
+      await hub.setPresence(m.member.id, str(body.where, 120))
+      return send(res, 200, { ok: true })
+    }
     if (is('GET', '/account')) return account(req, res)
     if (is('PATCH', '/account')) return updateProfile(req, res)
     if (is('POST', '/account/password')) return changePassword(req, res)

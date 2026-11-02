@@ -4,9 +4,56 @@ import { Modal } from '../Modal'
 import { Avatar, Badge, BrandMark, Button, cn, toneFill } from '../ui'
 import { approversFor, can, needsApproval, roleName } from '../../data/permissions'
 import type { Brand, Post, Workspace } from '../../data/types'
+import { clientsOf } from '../../data/workflow'
 import { useI18n } from '../../i18n'
 
 const card = 'min-w-0 rounded-card border border-rim bg-glass p-5 shadow-card max-mobile:p-4'
+
+/**
+ * "Client sign-off": per brand, whether posts go to the brand's client after
+ * the team (workflow.ts). Workspace settings can switch it.
+ */
+export function ClientCard({ ws, me, onToggle }: { ws: Workspace; me: string; onToggle: (brand: Brand, on: boolean) => void }) {
+  const { t } = useI18n()
+  const c = t.collab.client
+  const manage = can(ws, me, 'settings.manage')
+  return (
+    <section aria-labelledby="ap-client-t" className={card}>
+      <header className="mb-1.5 flex min-h-[42px] items-center">
+        <h2 id="ap-client-t" className="text-base font-semibold tracking-[-0.005em]">
+          {c.ruleTitle}
+        </h2>
+      </header>
+      <p className="mb-3 text-2xs text-muted">{c.ruleText}</p>
+      <ul className="grid gap-1.5">
+        {ws.brands.map((b) => {
+          const clients = clientsOf(ws, b.id)
+          const on = !!b.clientApproval
+          return (
+            <li key={b.id} className="flex items-center gap-2.5">
+              <BrandMark brand={b} size="sm" />
+              <span className="min-w-0 flex-1">
+                <b className="block truncate text-xs font-semibold">{b.name}</b>
+                <small className="block truncate text-[12.5px] text-muted">{clients.length ? clients.map((m) => m.name).join(', ') : c.noClient}</small>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={on}
+                aria-label={c.toggle(b.name)}
+                disabled={!manage}
+                onClick={() => onToggle(b, !on)}
+                className={cn('relative h-6 w-10 shrink-0 cursor-pointer rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50', on ? 'bg-pine' : 'bg-line-2')}
+              >
+                <span className={cn('absolute top-0.5 size-5 rounded-full bg-white shadow transition-[left]', on ? 'left-[18px]' : 'left-0.5')} />
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
 
 /** "The rule in force": the workspace's approval rule, a post's path, which roles need approval and which approve. */
 export function RuleCard({ ws, me }: { ws: Workspace; me: string }) {
@@ -150,15 +197,18 @@ export function RequestChangesDialog({ author, onSend, onClose }: { author: stri
           <Button variant="ghost" onClick={onClose}>
             {d.cancel}
           </Button>
-          <Button type="submit">
-            {d.submit}
-          </Button>
+          <Button type="submit">{d.submit}</Button>
         </>
       }
     >
       <div role="group" aria-label={d.quick} className="flex flex-wrap gap-1.5">
         {d.chips.map((chip) => (
-          <button key={chip} type="button" onClick={() => add(chip)} className="inline-flex h-[34px] cursor-pointer items-center rounded-full border border-line bg-glass-2 px-[13px] text-2xs font-semibold hover:bg-glass-3 pointer-coarse:h-11 pointer-coarse:px-3.5">
+          <button
+            key={chip}
+            type="button"
+            onClick={() => add(chip)}
+            className="inline-flex h-[34px] cursor-pointer items-center rounded-full border border-line bg-glass-2 px-[13px] text-2xs font-semibold hover:bg-glass-3 pointer-coarse:h-11 pointer-coarse:px-3.5"
+          >
             {chip}
           </button>
         ))}

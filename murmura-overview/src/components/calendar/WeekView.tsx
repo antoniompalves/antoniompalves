@@ -1,3 +1,5 @@
+import { DateLabel } from '../collab/Editorial'
+import type { CalendarDate } from '../../data/editorial'
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { Flag, Plus, TriangleAlert } from 'lucide-react'
@@ -33,6 +35,8 @@ export interface DragApi {
 }
 
 interface WeekViewProps {
+  /** Holidays, observances and the team's dates, by day (editorial.ts). */
+  dates?: Map<string, CalendarDate[]>
   days: Date[]
   posts: Post[]
   allPosts: Post[]
@@ -114,6 +118,7 @@ export function WeekView(props: WeekViewProps) {
                 {gap && <i aria-hidden className="size-1.5 rounded-full bg-coral" />}
                 {count === 0 ? (gap ? t.calendar.gap : t.calendar.free) : t.common.post(count)}
               </span>
+              {props.dates?.get(k)?.slice(0, 1).map((x) => <DateLabel key={x.key ?? x.id} d={x} className="max-w-full justify-center px-1" />)}
             </div>
           )
         })}

@@ -508,7 +508,9 @@ html.cl-dragging * {
   align-items: start;
   grid-template:
     "ed pv when"
+    "ed pv rep"
     "ed pv bar"
+    "ed pv co"
     "ed pv drafts"
     "ed pv ." 1fr / minmax(0, 1.62fr) minmax(0, 1fr) minmax(0, 0.9fr);
 }
@@ -517,7 +519,9 @@ html.cl-dragging * {
     grid-template:
       "ed pv"
       "when bar"
-      "when drafts" 1fr / minmax(0, 1.3fr) minmax(0, 1fr);
+      "when co"
+      "rep co"
+      "rep drafts" 1fr / minmax(0, 1.3fr) minmax(0, 1fr);
   }
 }
 @media (width <= 1000px) {
@@ -525,8 +529,10 @@ html.cl-dragging * {
     grid-template:
       "ed ed"
       "pv when"
+      "pv rep"
       "pv bar"
       "pv ." 1fr
+      "co co"
       "drafts drafts" / minmax(0, 1fr) minmax(0, 1fr);
   }
 }
@@ -534,7 +540,7 @@ html.cl-dragging * {
   .cm-grid {
     grid-template-rows: none;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "ed" "pv" "when" "bar" "drafts";
+    grid-template-areas: "ed" "pv" "when" "rep" "bar" "co" "drafts";
   }
 }
 

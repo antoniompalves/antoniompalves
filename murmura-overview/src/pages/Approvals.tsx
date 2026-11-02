@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CheckCheck, ChevronDown, Clock, Inbox as InboxIcon, Layers, Lock, PenLine, Shield, Undo2 } from 'lucide-react'
+import { CheckCheck, ChevronDown, Clock, Inbox as InboxIcon, Layers, Lightbulb, Lock, PenLine, Shield, Undo2 } from 'lucide-react'
 import { PageTitle, Stat } from '../components/PageHead'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
 import { PostDrawer } from '../components/calendar/PostDrawer'
 import { ApprovalCard } from '../components/approvals/ApprovalCard'
-import { RequestChangesDialog, RuleCard, WhoCard } from '../components/approvals/Side'
+import { ClientCard, RequestChangesDialog, RuleCard, WhoCard } from '../components/approvals/Side'
+import { IdeaDialog, IdeasList } from '../components/collab/Ideas'
 import { BrandMark, Button, cn } from '../components/ui'
-import { APPROVAL_TABS, approvalStats, approve, canReview, queue, sendBack, withdraw } from '../data/approvals'
+import { APPROVAL_TABS, approvalStats, approveStep, canReview, queue, sendBack, withdraw } from '../data/approvals'
+import { isClient } from '../data/workflow'
 import type { ApprovalTab } from '../data/approvals'
-import { approvedNotices, changesNotices, excerpt } from '../data/notices'
+import { approvedNotices, changesNotices, clientNotices, excerpt } from '../data/notices'
 import { can, member } from '../data/permissions'
 import { useWorkspace } from '../data/store'
 import type { WorkspaceAction } from '../data/store'
@@ -32,8 +34,18 @@ export function Approvals({ now }: { now: Date }) {
   const nowMs = Math.floor(now.getTime() / 60_000) * 60_000
   const reviewer = can(ws, me, 'post.approve')
 
-  const [tab, setTab] = useState<ApprovalTab>(reviewer ? 'mine' : 'submitted')
+  const [tabPick, setTab] = useState<ApprovalTab | 'ideas'>(() => (/[?&]tab=ideas/.test(window.location.hash) ? 'ideas' : reviewer ? 'mine' : 'submitted'))
+  const ideasTab = tabPick === 'ideas'
+  const tab: ApprovalTab = ideasTab ? 'pending' : tabPick
+  const [suggesting, setSuggesting] = useState(false)
+  // A notification about an idea opens this tab ("#/approvals?tab=ideas").
+  useEffect(() => {
+    const onHash = () => /[?&]tab=ideas/.test(window.location.hash) && setTab('ideas')
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
   const [brandId, setBrandId] = useState<string | null>(null)
+  const newIdeas = (ws.ideas ?? []).filter((i) => i.status === 'new' && !i.postId && (!brandId || i.brandId === brandId)).length
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [asking, setAsking] = useState<Post | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -52,18 +64,25 @@ export function Approvals({ now }: { now: Date }) {
   useEffect(() => {
     setSelected(new Set())
     setAll(false)
-  }, [tab, brandId])
+  }, [tabPick, brandId])
 
-  const audit = (kind: AuditEvent['kind'], action: AuditAction) =>
-    dispatch({ type: 'audit', event: { id: `au-${Date.now().toString(36)}`, actorId: me, kind, action, at: new Date(nowMs).toISOString() } })
+  const audit = (kind: AuditEvent['kind'], action: AuditAction) => dispatch({ type: 'audit', event: { id: `au-${Date.now().toString(36)}`, actorId: me, kind, action, at: new Date(nowMs).toISOString() } })
   const firstName = (id: string) => member(ws, id)?.name.split(' ')[0] ?? ''
 
   const approveAll = (posts: Post[]) => {
-    const done = posts.map((p) => approve(p, me, nowMs))
+    const steps = posts.map((p) => approveStep(ws, p, me, nowMs))
+    const done = steps.map((s) => s.post)
     const undo = undoable(...done.map((p): WorkspaceAction => ({ type: 'savePost', post: p })))
-    dispatch({ type: 'notify', notices: done.flatMap((p) => approvedNotices(me, p, nowMs)) })
+    // To the client next, or back to the writer as approved.
+    dispatch({ type: 'notify', notices: steps.flatMap((s) => (s.toClient ? clientNotices(ws, me, s.post, nowMs) : approvedNotices(me, s.post, nowMs))) })
     setSelected(new Set())
-    if (done.length === 1) {
+    if (steps.every((s) => s.toClient)) {
+      audit('approval', done.length === 1 ? { type: 'approved', excerpt: excerpt(done[0].text), brandId: done[0].brandId } : { type: 'approvedMany', count: done.length })
+      toast({ text: t.collab.client.approvedOn, icon: CheckCheck, undo })
+    } else if (done.length === 1 && isClient(ws, me)) {
+      audit('approval', { type: 'clientApproved', excerpt: excerpt(done[0].text), brandId: done[0].brandId })
+      toast({ text: a.toast.approved(t.dates.dayStamp(new Date(done[0].scheduledAt), now)), icon: CheckCheck, undo })
+    } else if (done.length === 1) {
       audit('approval', { type: 'approved', excerpt: excerpt(done[0].text), brandId: done[0].brandId })
       toast({ text: a.toast.approved(t.dates.dayStamp(new Date(done[0].scheduledAt), now)), icon: CheckCheck, undo })
     } else {
@@ -100,13 +119,43 @@ export function Approvals({ now }: { now: Date }) {
 
   const empty = (() => {
     const elsewhere = brandId ? queue(ws, me, tab, nowMs).length : 0
-    if (brandId && elsewhere) return { title: a.empty.brandTitle, text: a.empty.brandText(ws.brands.find((b) => b.id === brandId)?.name ?? '', elsewhere), icon: Layers, action: <Button variant="ghost" icon={Layers} onClick={() => setBrandId(null)}>{a.empty.everyBrand}</Button> }
-    if (tab === 'mine') return reviewer ? { ...a.empty.mine, icon: InboxIcon } : { ...a.empty.notReviewer, icon: Lock, action: <Button variant="ghost" onClick={() => setTab('submitted')}>{a.tabs.submitted}</Button> }
-    if (tab === 'submitted') return { ...a.empty.submitted, icon: PenLine, action: <Button icon={PenLine} href="#/compose">{a.empty.write}</Button> }
+    if (brandId && elsewhere)
+      return {
+        title: a.empty.brandTitle,
+        text: a.empty.brandText(ws.brands.find((b) => b.id === brandId)?.name ?? '', elsewhere),
+        icon: Layers,
+        action: (
+          <Button variant="ghost" icon={Layers} onClick={() => setBrandId(null)}>
+            {a.empty.everyBrand}
+          </Button>
+        ),
+      }
+    if (tab === 'mine')
+      return reviewer
+        ? { ...a.empty.mine, icon: InboxIcon }
+        : {
+            ...a.empty.notReviewer,
+            icon: Lock,
+            action: (
+              <Button variant="ghost" onClick={() => setTab('submitted')}>
+                {a.tabs.submitted}
+              </Button>
+            ),
+          }
+    if (tab === 'submitted')
+      return {
+        ...a.empty.submitted,
+        icon: PenLine,
+        action: (
+          <Button icon={PenLine} href="#/compose">
+            {a.empty.write}
+          </Button>
+        ),
+      }
     return { ...a.empty[tab], icon: CheckCheck }
   })()
 
-  const open = openId ? ws.posts.find((p) => p.id === openId) ?? null : null
+  const open = openId ? (ws.posts.find((p) => p.id === openId) ?? null) : null
   const chip = 'inline-flex h-[34px] shrink-0 cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-full border text-2xs font-semibold transition-colors pointer-coarse:h-11'
 
   return (
@@ -128,17 +177,30 @@ export function Approvals({ now }: { now: Date }) {
               <button
                 key={k}
                 type="button"
-                aria-pressed={tab === k}
+                aria-pressed={!ideasTab && tab === k}
                 onClick={() => setTab(k)}
                 className={cn(
                   'inline-flex cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-full px-4 py-2.5 text-xs font-semibold transition-[background-color,color,box-shadow] duration-300 ease-soft pointer-coarse:min-h-11',
-                  tab === k ? 'bg-glass-3 text-text shadow-[0_2px_8px_rgb(0_0_0/0.08)] dark:bg-white/14' : 'text-muted',
+                  !ideasTab && tab === k ? 'bg-glass-3 text-text shadow-[0_2px_8px_rgb(0_0_0/0.08)] dark:bg-white/14' : 'text-muted',
                 )}
               >
                 {a.tabs[k]}
                 {counts[k] > 0 && <span className={cn('inline-grid h-[21px] min-w-[21px] place-items-center rounded-full px-1.5 text-[12.5px] font-bold', TAB_COUNT[k] ?? 'bg-line-2 text-text')}>{counts[k]}</span>}
               </button>
             ))}
+            <button
+              type="button"
+              aria-pressed={ideasTab}
+              onClick={() => setTab('ideas')}
+              className={cn(
+                'inline-flex cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-full px-4 py-2.5 text-xs font-semibold transition-[background-color,color,box-shadow] duration-300 ease-soft pointer-coarse:min-h-11',
+                ideasTab ? 'bg-glass-3 text-text shadow-[0_2px_8px_rgb(0_0_0/0.08)] dark:bg-white/14' : 'text-muted',
+              )}
+            >
+              <Lightbulb size={16} aria-hidden />
+              {t.collab.ideas.tab}
+              {newIdeas > 0 && <span className="inline-grid h-[21px] min-w-[21px] place-items-center rounded-full bg-butter px-1.5 text-[12.5px] font-bold text-[#16191d]">{newIdeas}</span>}
+            </button>
           </div>
         </div>
         <span className="flex-1 max-mobile:hidden" />
@@ -161,21 +223,29 @@ export function Approvals({ now }: { now: Date }) {
             ))}
           </div>
         )}
-        <button
-          type="button"
-          aria-pressed={reviewable.length > 0 && chosen.length === reviewable.length}
-          disabled={!reviewable.length}
-          onClick={() => setSelected(chosen.length === reviewable.length ? new Set() : new Set(reviewable.map((p) => p.id)))}
-          className={cn(chip, 'px-3 disabled:cursor-not-allowed disabled:opacity-45 max-mobile:px-3.5', chosen.length && chosen.length === reviewable.length ? 'border-transparent bg-pill text-on-pill' : 'border-rim bg-glass-2 enabled:hover:bg-glass-3')}
-        >
-          <CheckCheck size={18} aria-hidden className="max-mobile:size-4" />
-          {a.selectAll}
-        </button>
+        {ideasTab ? (
+          <Button size="sm" icon={Lightbulb} onClick={() => setSuggesting(true)}>
+            {t.collab.ideas.suggest}
+          </Button>
+        ) : (
+          <button
+            type="button"
+            aria-pressed={reviewable.length > 0 && chosen.length === reviewable.length}
+            disabled={!reviewable.length}
+            onClick={() => setSelected(chosen.length === reviewable.length ? new Set() : new Set(reviewable.map((p) => p.id)))}
+            className={cn(chip, 'px-3 disabled:cursor-not-allowed disabled:opacity-45 max-mobile:px-3.5', chosen.length && chosen.length === reviewable.length ? 'border-transparent bg-pill text-on-pill' : 'border-rim bg-glass-2 enabled:hover:bg-glass-3')}
+          >
+            <CheckCheck size={18} aria-hidden className="max-mobile:size-4" />
+            {a.selectAll}
+          </button>
+        )}
       </div>
 
       <div className="grid items-start gap-4 grid-cols-[minmax(0,1fr)_340px] max-[1240px]:grid-cols-[minmax(0,1fr)_300px] max-[1060px]:grid-cols-1">
         <div className="grid min-w-0 gap-3.5">
-          {list.length ? (
+          {ideasTab ? (
+            <IdeasList brandId={brandId} now={now} />
+          ) : list.length ? (
             <div role="list" aria-label={a.posts} className={cn('grid grid-cols-[repeat(auto-fill,minmax(min(340px,100%),1fr))] items-stretch gap-4 max-mobile:gap-3.5', !all && 'max-mobile:[&>:nth-child(n+7)]:hidden')}>
               {list.map((p) => (
                 <div role="listitem" key={p.id} className="grid">
@@ -204,14 +274,14 @@ export function Approvals({ now }: { now: Date }) {
               ))}
             </div>
           ) : null}
-          {list.length > 6 && !all && (
+          {!ideasTab && list.length > 6 && !all && (
             <div className="hidden justify-center max-mobile:flex">
               <Button variant="ghost" icon={ChevronDown} onClick={() => setAll(true)} className="h-[46px] bg-glass-2 px-[22px]">
                 {a.more(list.length - 6)}
               </Button>
             </div>
           )}
-          {!list.length && (
+          {!ideasTab && !list.length && (
             <div className="grid justify-items-center gap-2 rounded-card border border-rim bg-glass px-6 py-[clamp(36px,6vw,72px)] text-center shadow-card">
               <div aria-hidden className="relative mb-3.5 h-[120px] w-[170px]">
                 <span className="absolute left-0 top-3.5 grid h-[98px] w-[82px] -rotate-12 place-items-center rounded-[20px] border border-line-2 bg-glass-2 shadow-[0_18px_30px_-18px_rgb(30_20_10/0.5)]" />
@@ -229,11 +299,23 @@ export function Approvals({ now }: { now: Date }) {
         <aside aria-label={a.rule.title} className="sticky top-[18px] grid min-w-0 gap-4 max-[1060px]:static max-[1060px]:grid-cols-2 max-[1060px]:items-start max-mobile:grid-cols-1">
           <RuleCard ws={ws} me={me} />
           <WhoCard ws={ws} brandId={brandId} onBrand={(id) => setBrandId(brandId === id ? null : id)} />
+          <ClientCard
+            ws={ws}
+            me={me}
+            onToggle={(b, on) => {
+              dispatch({ type: 'saveBrand', brand: { ...b, clientApproval: on } })
+              toast({ text: on ? t.collab.client.on(b.name) : t.collab.client.off(b.name), icon: Shield })
+            }}
+          />
         </aside>
       </div>
 
       {chosen.length > 0 && (
-        <div role="region" aria-label={a.bulk.region} className="fixed inset-x-0 bottom-6 z-[35] mx-auto flex w-fit max-w-[calc(100vw-24px)] animate-rise items-center gap-2.5 rounded-full bg-pill py-[7px] pl-5 pr-[7px] text-on-pill shadow-pop max-mobile:bottom-[calc(76px+env(safe-area-inset-bottom))]">
+        <div
+          role="region"
+          aria-label={a.bulk.region}
+          className="fixed inset-x-0 bottom-6 z-[35] mx-auto flex w-fit max-w-[calc(100vw-24px)] animate-rise items-center gap-2.5 rounded-full bg-pill py-[7px] pl-5 pr-[7px] text-on-pill shadow-pop max-mobile:bottom-[calc(76px+env(safe-area-inset-bottom))]"
+        >
           <span className="mr-1 whitespace-nowrap text-xs font-semibold">
             <b className="inline-block text-lg tabular-nums">{chosen.length}</b> {a.bulk.selected}
           </span>
@@ -246,6 +328,7 @@ export function Approvals({ now }: { now: Date }) {
         </div>
       )}
 
+      {suggesting && <IdeaDialog now={now} defaultBrand={brandId} onClose={() => setSuggesting(false)} />}
       {asking && <RequestChangesDialog author={member(ws, asking.authorId)?.name ?? ''} onSend={(note) => sendBackWith(asking, note)} onClose={() => setAsking(null)} />}
       <PostDrawer
         post={open}

@@ -194,6 +194,12 @@ const posts: Post[] = POSTS.map(([id, brandId, authorId, status, when, nets, ima
   ...(id === 'p89' && {
     failure: { network: 'facebook' as const, code: 'disconnected' as const },
   }),
+  ...(id === 'p79' && {
+    comments: [
+      { id: 'cm1', by: 'elise', at: '2026-10-30T11:05:00Z', text: '@Freya could we lead with the grind tip? It’s the bit people save.', mentions: ['freya'] },
+      { id: 'cm2', by: 'freya', at: '2026-10-30T11:40:00Z', text: 'Good call, swapping the first two lines now.', mentions: [] },
+    ],
+  }),
 }))
 
 /* "Best times" heat per weekday (Mon…Sun) × hour (6 AM…11 PM), read from the
@@ -551,6 +557,17 @@ export const workspace: Workspace = {
     { id: 'sr3', title: 'Sorry + DM', text: 'We’re really sorry about this. Could you send us your order number in a DM? We’ll sort it today.' },
     { id: 'sr4', title: 'Booking', text: 'We’d love to have you in. You can pick a slot here: link in bio, or reply with your preferred week.' },
     { id: 'sr5', title: 'Sensitive skin', text: 'Bloom is fragrance-free and patch-tested, but we always suggest a small test on your wrist first.' },
+  ],
+  /* Ideas from clients and the team, waiting for a manager. */
+  ideas: [
+    { id: 'idea1', brandId: 'vg', by: 'kwame', at: minutesBefore(3 * 60), title: 'Salt-season survival tips', text: 'A short reel with three things drivers can do this winter to protect paint from road salt. We can film in the bay on Thursday.', wantedBy: '2026-11-12', status: 'new' },
+    { id: 'idea2', brandId: 'hh', by: 'peter', at: minutesBefore(26 * 60), title: 'Inside the Ro workshop', text: 'Photos of the joinery on the new Ro side table, from raw oak to finish. Our carpenter is happy to be in them.', status: 'new' },
+    { id: 'idea3', brandId: 'eo', by: 'ines', at: minutesBefore(2 * 24 * 60), title: 'Reply of the week', text: 'A carousel with the nicest comment we got this week and our answer.', status: 'accepted', reply: 'Love it, Nia will take it.' },
+  ],
+  /* The team's own dates on the editorial calendar. */
+  keyDates: [
+    { id: 'kd1', date: '2020-11-14', yearly: true, name: 'Ember & Oak’s birthday', brandId: 'eo' },
+    { id: 'kd2', date: '2026-11-26', yearly: false, name: 'Winter catalogue out', brandId: 'hh', note: 'Print and online on the same day.' },
   ],
   audit: [
     { id: 'au1', actorId: 'elise', kind: 'approval', action: { type: 'approved', excerpt: 'New harvest from Huila…', brandId: 'eo' }, at: minutesBefore(14) },

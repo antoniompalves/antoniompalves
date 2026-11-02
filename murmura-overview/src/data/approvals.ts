@@ -1,5 +1,6 @@
-import { approversFor, can, seesBrand } from './permissions'
+import { approversFor, can } from './permissions'
 import type { Post, Review, Workspace } from './types'
+import { isClient, needsClient, reviewsAt, stageOf } from './workflow'
 
 /**
  * #/approvals: the queues, the header figures and the review steps, as the
@@ -16,9 +17,12 @@ export const APPROVAL_TABS: ApprovalTab[] = ['mine', 'pending', 'changes', 'subm
 const lastOf = (p: Post, decision: Review['decision']) => [...p.reviews].reverse().find((r) => r.decision === decision)
 const at = (p: Post) => Date.parse(p.scheduledAt)
 
-/** Whether `me` may approve or send back this post: approvers of its brand who didn't write it. */
-export const canReview = (ws: Workspace, me: string, p: Post) =>
-  p.authorId !== me && can(ws, me, 'post.approve') && !!ws.team.find((m) => m.id === me && seesBrand(m, p.brandId))
+/**
+ * Whether `me` may approve or send back this post: approvers of its brand who
+ * didn't write it; for brands with client approval, the team first, then the
+ * client (workflow.ts).
+ */
+export const canReview = reviewsAt
 
 /** One queue, soonest first ("Recently approved": last approved first, 14 days back). */
 export function queue(ws: Workspace, me: string, tab: ApprovalTab, now: number, brandId: string | null = null) {
@@ -71,10 +75,10 @@ export function approvalStats(ws: Workspace, me: string, now: number) {
   }
 }
 
-/** Who can sign a post off: the brand's approvers but its author, `me` first. */
+/** Who can sign a post off at its step: the brand's approvers but its author, `me` first. */
 export const reviewersOf = (ws: Workspace, me: string, p: Post) =>
   approversFor(ws, p.brandId)
-    .filter((m) => m.id !== p.authorId)
+    .filter((m) => m.id !== p.authorId && (!needsClient(ws, p.brandId) || (stageOf(ws, p) === 'client') === (m.role === 'client')))
     .sort((a, b) => Number(b.id === me) - Number(a.id === me))
 
 /** When "Due soon" applies: it goes out within a day. */
@@ -85,6 +89,18 @@ export function nextSlot(now: number) {
   const d = new Date(now + 60 * MINUTE)
   d.setUTCMinutes(d.getUTCMinutes() < 30 ? 30 : 60, 0, 0)
   return d.getTime()
+}
+
+/**
+ * Approving at a post's step: a team approval of a brand with client approval
+ * hands it to the client; otherwise it is scheduled.
+ */
+export function approveStep(ws: Workspace, p: Post, me: string, now: number): { post: Post; toClient: boolean } {
+  if (needsClient(ws, p.brandId) && stageOf(ws, p) === 'team' && !isClient(ws, me))
+    return { post: { ...p, stage: 'client', reviews: [...p.reviews, { by: me, at: new Date(now).toISOString(), decision: 'approved' }] }, toClient: true }
+  const { stage: _done, ...rest } = approve(p, me, now)
+  void _done
+  return { post: rest, toClient: false }
 }
 
 export function approve(p: Post, me: string, now: number): Post {
@@ -99,12 +115,14 @@ export function approve(p: Post, me: string, now: number): Post {
 export const sendBack = (p: Post, me: string, note: string, now: number): Post => ({
   ...p,
   status: 'changes_requested',
+  stage: undefined,
   reviews: [...p.reviews, { by: me, at: new Date(now).toISOString(), decision: 'changes', note }],
 })
 
 export const withdraw = (p: Post, me: string, now: number, note: string): Post => ({
   ...p,
   status: 'draft',
+  stage: undefined,
   reviews: [...p.reviews, { by: me, at: new Date(now).toISOString(), decision: 'comment', note }],
 })
 

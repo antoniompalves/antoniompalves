@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Flag, LayoutGrid, Plus, Send, ShieldCheck, Sparkles, TriangleAlert, X } from 'lucide-react'
+import { CalendarDays, CalendarHeart, ChevronDown, ChevronLeft, ChevronRight, Flag, LayoutGrid, Plus, Send, ShieldCheck, Sparkles, TriangleAlert, X } from 'lucide-react'
 import { PageTitle, Stat } from '../components/PageHead'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
@@ -30,6 +30,9 @@ import { NETWORK_LABEL, NETWORK_ORDER } from '../data/selectors'
 import { useWorkspace } from '../data/store'
 import type { NetworkId } from '../data/types'
 import { useI18n } from '../i18n'
+import { ComingUpCard, EvergreenCard } from '../components/collab/Editorial'
+import { datesByDay } from '../data/editorial'
+import { loadSetting, saveSetting } from '../storage'
 
 const VIEWS: CalendarView[] = ['week', 'month', 'list']
 
@@ -59,6 +62,9 @@ export function Calendar({ now }: { now: Date }) {
   const shownDays = periodDays(view, anchor)
   const first = dayKey(shownDays[0])
   const last = dayKey(shownDays[shownDays.length - 1])
+  // Holidays and observances on the grid; the filter bar switches them off.
+  const [showDates, setShowDates] = useState(() => loadSetting('calendar-dates') !== 'off')
+  const dates = useMemo(() => (showDates ? datesByDay(ws, first, last) : undefined), [showDates, ws, first, last])
   const visible = ws.posts.filter((p) => matchesFilters(p, filters, ws.campaigns))
   const inPeriod = visible.filter((p) => p.scheduledAt.slice(0, 10) >= first && p.scheduledAt.slice(0, 10) <= last)
   const brandCount = new Set(inPeriod.map((p) => p.brandId)).size
@@ -135,7 +141,7 @@ export function Calendar({ now }: { now: Date }) {
         </div>
       </header>
 
-      <FilterBar filters={filters} setFilters={setFilters} campaigns={ws.campaigns} brandName={(id) => brands.get(id)?.name ?? ''} />
+      <FilterBar filters={filters} setFilters={setFilters} campaigns={ws.campaigns} brandName={(id) => brands.get(id)?.name ?? ''} showDates={showDates} setShowDates={setShowDates} />
 
       <div className="grid items-start gap-4 grid-cols-[minmax(0,1fr)_300px] min-[1500px]:grid-cols-[minmax(0,1fr)_330px] max-desk:grid-cols-1">
         <section
@@ -187,6 +193,7 @@ export function Calendar({ now }: { now: Date }) {
           <div className="relative">
             {view === 'week' && (
               <WeekView
+                dates={dates}
                 days={shownDays}
                 posts={inPeriod}
                 allPosts={ws.posts}
@@ -206,6 +213,7 @@ export function Calendar({ now }: { now: Date }) {
             )}
             {view === 'month' && (
               <MonthView
+                dates={dates}
                 days={shownDays}
                 anchor={anchor}
                 posts={inPeriod}
@@ -247,6 +255,8 @@ export function Calendar({ now }: { now: Date }) {
           />
           <DraftsCard drafts={drafts} brands={brands} team={team} drag={drag} onOpen={setOpenId} />
           <NetworkCard posts={weekPosts} period={period('week')} />
+          <ComingUpCard now={now} />
+          <EvergreenCard now={now} />
         </aside>
       </div>
 
@@ -271,9 +281,11 @@ interface FilterBarProps {
   setFilters: (f: Filters | ((f: Filters) => Filters)) => void
   campaigns: { id: string; name: string; brandId: string; start: string; end: string }[]
   brandName: (id: string) => string
+  showDates: boolean
+  setShowDates: (on: boolean) => void
 }
 
-function FilterBar({ filters, setFilters, campaigns, brandName }: FilterBarProps) {
+function FilterBar({ filters, setFilters, campaigns, brandName, showDates, setShowDates }: FilterBarProps) {
   const { t } = useI18n()
   const sep = <span aria-hidden className="h-[22px] w-px shrink-0 bg-line-2" />
   return (
@@ -329,6 +341,19 @@ function FilterBar({ filters, setFilters, campaigns, brandName }: FilterBarProps
           </select>
           <ChevronDown size={16} aria-hidden className="pointer-events-none absolute right-3 text-muted" />
         </label>
+        {sep}
+        <Chip
+          pressed={showDates}
+          compact
+          aria-label={t.collab.dates.show}
+          title={t.collab.dates.show}
+          onClick={() => {
+            saveSetting('calendar-dates', showDates ? 'off' : 'on')
+            setShowDates(!showDates)
+          }}
+        >
+          <CalendarHeart size={16} aria-hidden />
+        </Chip>
         {hasFilters(filters) && (
           <Button size="sm" variant="ghost" icon={X} className="h-[34px]" onClick={() => setFilters(NO_FILTERS)}>
             {t.common.clear}

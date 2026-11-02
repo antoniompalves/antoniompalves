@@ -1,3 +1,4 @@
+import { Presence } from '../collab/Presence'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent, ReactNode, RefObject } from 'react'
 import {
@@ -173,6 +174,7 @@ export function Thread(props: ThreadProps) {
             <small className="truncate text-[12.5px] text-muted">{t.inbox.context(c.kind, SOURCE_LABEL[c.network], brand.name)}</small>
           </span>
         </button>
+        <Presence where={`#/inbox/${c.id}`} className="max-w-[230px] max-[1100px]:hidden" />
         <div className="flex shrink-0 items-center gap-0.5">
           <button
             ref={assignBtn}

@@ -204,8 +204,8 @@ for (const kind of kinds) {
         r = await rui.post('/api/workspace/actions', { actions: [{ type: 'delete', id: 'p3' }] })
         assert.equal(r.status, 200, 'their own draft is fine')
 
-        await live.until(5)
-        for (const e of live.events.slice(1)) {
+        await live.until(7)
+        for (const e of live.events.filter((x) => x.event === 'message')) {
           if (e.data.to <= version) continue
           assert.equal(e.data.from, version)
           if (e.data.patch) mine = applyPatch(mine, e.data.patch)
@@ -219,7 +219,7 @@ for (const kind of kinds) {
 
         // Rui's stream never carried Lumen Café.
         await ruiLive.until(4)
-        assert.ok(!JSON.stringify(ruiLive.events).includes('lumen-cafe'))
+        assert.ok(!JSON.stringify(ruiLive.events.filter((x) => x.event === 'message')).includes('lumen-cafe'))
         ruiLive.close()
 
         // Two-step verification for the owner.
@@ -403,7 +403,7 @@ for (const kind of kinds) {
         assert.deepEqual(b.kataru.hub.view('ana').ws.posts.map((p) => p.id).sort(), ['a1', 'a2', 'b1'])
         // B's subscriber hears A's changes within its watch interval.
         await live.until(4, 4000)
-        assert.ok(live.events.length >= 3)
+        assert.ok(live.events.filter((x) => x.event === 'message').length >= 2)
         live.close()
       } finally {
         await a.close()

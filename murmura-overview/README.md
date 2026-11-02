@@ -47,6 +47,11 @@ npm run build:cpanel                                     # a package for cPanel'
 npm run test:server                                      # accounts and publishing tests
 ```
 
+Notes with @mentions and versions, ideas from clients with the client's
+sign-off, read per person and who's on the same post, key dates and themes on
+the calendar, repeating and evergreen posts:
+[`docs/COLLABORATION.md`](docs/COLLABORATION.md).
+
 How it works, settings and the API: [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md).
 Putting it on cPanel hosting (Node.js App + MySQL), step by step:
 [`docs/CPANEL.md`](docs/CPANEL.md).

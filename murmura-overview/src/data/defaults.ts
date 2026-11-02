@@ -148,12 +148,17 @@ export function emptyWorkspace(n: NewWorkspace): Workspace {
     media: [],
     templates: [],
     hashtagSets: [],
+    ideas: [],
+    keyDates: [],
     audit: [],
     notices: [],
     brandScope: null,
     signedIn: true,
   }
 }
+
+/** Fills in lists added after a workspace was saved (an older snapshot or browser save). */
+export const withDefaults = (ws: Workspace): Workspace => ({ ...ws, ideas: ws.ideas ?? [], keyDates: ws.keyDates ?? [] })
 
 const DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?Z$/
 const DATE = /^\d{4}-\d{2}-\d{2}$/
