@@ -587,24 +587,24 @@
  ],
  "FAQ": [
   [
-   "Enviam para o meu país?",
-   "Enviamos para toda a UE a partir de stock na UE. Os prazos de entrega são confirmados quando o contactarmos sobre a sua pré-encomenda."
+   "Como faço uma encomenda?",
+   "Adicione os produtos ao carrinho e carregue em \"Registar encomenda\". Só pedimos o seu nome e telefone."
   ],
   [
    "Tenho de pagar agora?",
-   "Não. A finalização regista apenas uma pré-encomenda. A nossa equipa contacta-o para confirmar disponibilidade, total e entrega."
+   "Não. Depois de registar a encomenda, ligamos-lhe para a confirmar e combinar o pagamento."
+  ],
+  [
+   "Qual é o prazo de entrega?",
+   "Entregamos em todo o Portugal. Artigos em stock: entrega imediata. Artigos sem stock imediato: até 3 semanas."
   ],
   [
    "A embalagem é discreta?",
-   "Sim. Todas as encomendas são enviadas em embalagem simples, sem marca."
+   "Sim. Todas as encomendas são enviadas em embalagem simples, sem marca nem indicação do conteúdo."
   ],
   [
    "Há descontos por quantidade?",
-   "Compre 5 unidades de um produto e tenha 5% de desconto, ou 10 unidades para 10% de desconto, aplicado automaticamente no carrinho."
-  ],
-  [
-   "Qual é a política de devoluções?",
-   "Contacte o apoio ao cliente até 14 dias após a entrega se algo chegar danificado ou incorreto."
+   "Sim: 5% a partir de 5 unidades do mesmo produto e 10% a partir de 10 unidades, aplicados automaticamente."
   ]
  ]
 }/*END*/;

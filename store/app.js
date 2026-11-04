@@ -28,14 +28,23 @@
   const save = () => { try { localStorage.setItem("forge-cart", JSON.stringify(cart)); } catch {} };
   const bulk = window.bulkRate;
 
-  // stock: null = not tracked (unlimited)
-  const maxQty = p => (p && p.stock !== null && p.stock !== undefined ? p.stock : 999);
-  const soldOut = p => maxQty(p) <= 0;
+  // stock: null = not tracked. Products without stock can still be ordered: delivery up to 3 weeks.
+  const tracked = p => p && p.stock !== null && p.stock !== undefined;
+  const maxQty = () => 999;
+  const soldOut = () => false;
+  const inStock = p => tracked(p) ? Math.max(0, p.stock) : Infinity;
   const stockBadge = p => {
-    if (!p || p.stock === null || p.stock === undefined) return "";
-    if (p.stock <= 0) return `<span class="stock out">Esgotado</span>`;
-    if (p.stock <= (p.lowStock ?? 5)) return `<span class="stock low">Últimas ${p.stock} unidade${p.stock === 1 ? "" : "s"}</span>`;
-    return `<span class="stock ok">Em stock</span>`;
+    if (!tracked(p)) return "";
+    if (p.stock <= 0) return `<span class="stock bo">Por encomenda · até 3 semanas</span>`;
+    if (p.stock <= (p.lowStock ?? 5)) return `<span class="stock low">Últimas ${p.stock} em stock · entrega imediata</span>`;
+    return `<span class="stock ok">Em stock · entrega imediata</span>`;
+  };
+  // delivery box on the product page
+  const deliveryBox = p => {
+    const line = !tracked(p) ? "Entrega em Portugal: imediata se houver stock, caso contrário até 3 semanas."
+      : p.stock > 0 ? `Entrega imediata em Portugal (${p.stock} em stock). Quantidades acima do stock: até 3 semanas.`
+      : "Sem stock imediato: entrega em Portugal até 3 semanas.";
+    return `<div class="delivery"><p>🚚 ${line}</p><p>📦 Enviado sempre em embalagem discreta.</p><p>📞 Registe a encomenda com nome e telefone — ligamos-lhe para combinar o pagamento.</p></div>`;
   };
   function addToCart(id, qty = 1) {
     const p = P.find(x => x.id === id), max = maxQty(p), have = cart[id] || 0;
@@ -55,7 +64,8 @@
       const line = finalPrice(p) * q, d = line * bulk(q);
       total += line - d; disc += d; count += q;
       return `<div class="ci"><div class="th">${art(p, "")}</div>
-        <div class="info"><b>${esc(p.name)}</b><small>${eur(finalPrice(p))} cada${bulk(q) ? ` · −${bulk(q) * 100}% por quantidade` : ""}</small></div>
+        <div class="info"><b>${esc(p.name)}</b><small>${eur(finalPrice(p))} cada${bulk(q) ? ` · −${bulk(q) * 100}% por quantidade` : ""}</small>
+          ${q > inStock(p) ? `<small class="bo-note">${inStock(p) ? `${inStock(p)} entrega imediata · ${q - inStock(p)} até 3 semanas` : "Por encomenda · até 3 semanas"}</small>` : ""}</div>
         <div class="qty"><button data-q="-1" data-id="${id}">−</button><span>${q}</span><button data-q="1" data-id="${id}" ${q >= maxQty(p) ? "disabled" : ""}>+</button></div></div>`;
     }).join("") : `<p class="muted" style="text-align:center;padding:40px 0">O seu carrinho está vazio.</p>`;
     $("#cartTotal").textContent = eur(total);
@@ -85,19 +95,20 @@
     $("#formErr").textContent = ""; btn.disabled = true; btn.textContent = "A enviar…";
     try {
       const r = await fetch(window.Brand.url("api/orders"), { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer: f, notes: f.notes, items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
+        body: JSON.stringify({ customer: { name: f.name, phone: f.phone }, items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
       const d = await r.json().catch(() => ({}));
       if (r.status === 409) refreshProducts();
-      if (!r.ok) throw new Error(d.error || "Não foi possível enviar a pré-encomenda");
+      if (!r.ok) throw new Error(d.error || "Não foi possível registar a encomenda");
       cart = {}; save(); renderCart(); form.reset();
-      done.innerHTML = `<div class="tick">✓</div><h3>Pré-encomenda recebida</h3><p>A sua referência é <b>${esc(d.number)}</b>.</p>
-        <p class="muted">Total estimado: ${eur(d.total)}. Entraremos em contacto para confirmar — não foi efetuado qualquer pagamento.</p>
+      done.innerHTML = `<div class="tick">✓</div><h3>Encomenda registada</h3><p>A sua referência é <b>${esc(d.number)}</b>.</p>
+        <p class="muted">Total: ${eur(d.total)}. Vamos ligar-lhe para o número <b>${esc(f.phone)}</b> para confirmar e combinar o pagamento. Nada foi cobrado.</p>
+        <p class="muted">${d.backorder ? "Alguns artigos não têm stock imediato: entrega em até 3 semanas." : "Entrega imediata em Portugal."} Embalagem sempre discreta.</p>
         <button class="btn-orange" id="doneClose">Continuar a comprar</button>`;
       showStep("done");
       $("#doneClose").onclick = () => { openCart(false); showStep("cart"); };
     } catch (err) {
-      $("#formErr").textContent = location.protocol === "file:" ? "Abra a loja através do servidor web (não como ficheiro local) para enviar pré-encomendas." : err.message;
-    } finally { btn.disabled = false; btn.textContent = "Enviar pré-encomenda"; }
+      $("#formErr").textContent = location.protocol === "file:" ? "Abra a loja através do servidor web (não como ficheiro local) para registar encomendas." : err.message;
+    } finally { btn.disabled = false; btn.textContent = "Registar encomenda"; }
   };
 
   let tt;
@@ -110,7 +121,7 @@
       <div class="body">
         <a class="name" href="${purl(p.id)}">${esc(p.name)}</a><span class="sub">${esc(p.sub)}</span>
         <div class="pr"><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
-        <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Stock UE</span></div>
+        <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Entrega PT</span></div>
         ${stockBadge(p)}
         <button class="add" data-add="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
       </div>
@@ -233,8 +244,8 @@
       <div class="hero-img${p.imageUrl ? " has-img" : ""}">${art(p)}</div>
       <div>
         <h1>${esc(p.name)}</h1>
-        <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Stock UE</span></div>
-        <p>${esc(p.sub)}. Categoria: ${catName(p.cat)}. Enviado de forma discreta a partir de stock na UE, com entrega rastreada.</p>
+        <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Entrega PT</span></div>
+        <p>${esc(p.sub)}. Categoria: ${catName(p.cat)}.</p>
         <small class="muted">Opções de quantidade</small>
         <div class="opts"><span class="opt on">1 unidade</span><span class="opt">5 unidades · −5%</span><span class="opt">10 unidades · −10%</span></div>
         <div class="buyrow">
@@ -242,10 +253,11 @@
           <div class="qty"><button data-dq="-1">−</button><span id="dQty">1</span><button data-dq="1">+</button></div>
         </div>
         ${stockBadge(p)}
+        ${deliveryBox(p)}
         <button class="btn-orange" data-dadd="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
         <details class="acc" open><summary>Detalhes</summary><div>${p.description ? `<p>${esc(firstPara(p.description))}</p><a href="#pinfo" class="more-link" data-scroll="#pinfo">Ver descrição completa ↓</a>` : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
-        <details class="acc"><summary>Envio</summary><div>Embalagem discreta, envio rastreado a partir de stock na UE.</div></details>
+        <details class="acc"><summary>Entrega e pagamento</summary><div><p>Entregamos em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata. Sem stock imediato: até 3 semanas.</p><p>Registe a encomenda com o seu nome e telefone. Ligamos-lhe para confirmar e combinar o pagamento.</p></div></details>
       </div>${infoBlock(p)}${verifyBlock(p)}
       <div class="reviews-block" id="detailReviews">
         <h3>Avaliações de clientes ${p.reviews ? `<small>${starRow(Math.round(p.rating))} ${num1(p.rating)} de 5 · ${p.reviews} avaliaç${p.reviews === 1 ? "ão" : "ões"}</small>` : ""}</h3>

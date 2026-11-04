@@ -245,6 +245,14 @@ img.pimg { position: absolute !important; inset: 0; width: 100% !important; heig
 .rv-form .btn-orange { align-self: flex-start; width: auto; padding: 12px 22px; }
 @media (max-width: 560px) { .rv-item { grid-template-columns: 1fr; } }
 
+/* ---------- delivery / backorder ---------- */
+.stock.bo { background: #eef2ff; color: #3730a3; }
+.delivery { background: #f6f4f2; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; line-height: 1.5; }
+.delivery p { margin: 3px 0; color: #444; }
+.ship-note { font-size: 12px !important; color: var(--muted); line-height: 1.5; margin: 0 0 12px !important; font-weight: 400; }
+.bo-note { color: #3730a3 !important; }
+.preorder .fl { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
+
 /* ---------- pagination ---------- */
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
 .pg-info { color: var(--muted); font-size: 13px; }

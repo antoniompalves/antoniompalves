@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
   <title>Forge Labs</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -30,7 +31,7 @@
       <div class="hero-top">
         <h1>Soluções<br>Inovadoras de<br>Performance</h1>
         <div class="hero-side">
-          <p>Compostos testados em laboratório, com stock na UE, enviados de forma discreta, com entrega garantida e descontos por quantidade em todas as encomendas.</p>
+          <p>Compostos testados em laboratório, entregues em todo o Portugal, sempre em embalagem discreta, com descontos por quantidade em todas as encomendas.</p>
           <a href="#collection" class="btn-dark">Começar <span>→</span></a>
         </div>
       </div>
@@ -59,7 +60,7 @@
     </div>
     <div class="stat"><b>5+</b><small>Anos Online</small></div>
     <div class="stat"><b>4K</b><small>Clientes Satisfeitos</small></div>
-    <div class="stat"><b>UE</b><small>Stock e Envios</small></div>
+    <div class="stat"><b>PT</b><small>Entregas em Portugal</small></div>
   </section>
 
   <!-- PROMO CARDS -->
@@ -143,21 +144,17 @@
     <div class="drawer-foot">
       <div class="row"><span>Desconto por quantidade</span><span id="cartDisc">0,00 €</span></div>
       <div class="row total"><span>Total</span><span id="cartTotal">0,00 €</span></div>
-      <button class="btn-orange" id="checkout">Pré-encomendar — sem pagamento agora</button>
+      <p class="ship-note">🚚 Entrega em Portugal: imediata para artigos em stock, até 3 semanas para os restantes.<br>📦 Embalagem sempre discreta.</p>
+      <button class="btn-orange" id="checkout">Registar encomenda</button>
     </div>
     <form class="preorder" id="preorder" hidden>
       <button type="button" class="back" id="backToCart">← Voltar ao carrinho</button>
       <h4>Os seus dados</h4>
-      <p class="muted">Registamos a sua pré-encomenda e entramos em contacto para confirmar stock, total e entrega. Nada é cobrado.</p>
-      <input name="name" placeholder="Nome completo *" required maxlength="120">
-      <input name="email" type="email" placeholder="Email *" required maxlength="160">
-      <input name="phone" placeholder="Telefone" maxlength="40">
-      <input name="address" placeholder="Morada" maxlength="300">
-      <div class="two"><input name="postcode" placeholder="Código postal" maxlength="20"><input name="city" placeholder="Localidade" maxlength="80"></div>
-      <input name="country" placeholder="País" maxlength="60">
-      <textarea name="notes" placeholder="Observações (opcional)" maxlength="1000" rows="3"></textarea>
+      <p class="muted">Só precisamos do seu nome e telefone. Ligamos-lhe para confirmar a encomenda e combinar o pagamento — nada é cobrado agora.</p>
+      <label class="fl">Nome<input name="name" placeholder="O seu nome" required maxlength="120" autocomplete="name"></label>
+      <label class="fl">Telefone<input name="phone" type="tel" placeholder="9xx xxx xxx" required maxlength="40" autocomplete="tel" inputmode="tel" pattern="[+0-9 ().-]{9,}"></label>
       <p class="form-err" id="formErr"></p>
-      <button class="btn-orange" type="submit" id="submitOrder">Enviar pré-encomenda</button>
+      <button class="btn-orange" type="submit" id="submitOrder">Registar encomenda</button>
     </form>
     <div class="done" id="orderDone" hidden></div>
   </aside>

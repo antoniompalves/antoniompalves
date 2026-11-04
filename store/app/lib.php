@@ -168,6 +168,7 @@ function json_out(int $code, $data): never
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
     header('X-Content-Type-Options: nosniff');
+    header('X-Robots-Tag: noindex, nofollow');
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
@@ -454,9 +455,52 @@ function stock_settings(string $id, array $in, bool $creating): void
 }
 
 // Returns (+1) or takes (−1) the units of an order, inside the caller's transaction.
-function stock_for_order(array $o, int $sign, string $reason, string $by): void
+// Takes up to $qty units of a product from stock, never below zero, inside the caller's transaction.
+// Returns [taken, tracked]. Units that could not be taken are a backorder (delivery up to 3 weeks).
+function stock_take(string $pid, int $qty, string $reason, ?string $order, string $by): array
 {
-    foreach ($o['items'] as $it) stock_apply($it['id'], $sign * (int) $it['qty'], $reason, $o['number'] ?? null, $by);
+    $pdo = db();
+    $sel = $pdo->prepare('SELECT stock FROM ' . t('products') . ' WHERE id = ?');
+    $up = $pdo->prepare('UPDATE ' . t('products') . ' SET stock = stock - ? WHERE id = ? AND stock >= ?');
+    for ($try = 0; $try < 5; $try++) {
+        $sel->execute([$pid]);
+        $s = $sel->fetchColumn();
+        if ($s === false || $s === null) return [0, false];           // unknown or untracked product
+        $take = min($qty, max(0, (int) $s));
+        if ($take === 0) return [0, true];
+        $up->execute([$take, $pid, $take]);                            // conditional: safe with concurrent orders
+        if ($up->rowCount() === 1) {
+            $sel->execute([$pid]);
+            stock_log($pid, -$take, (int) $sel->fetchColumn(), $reason, $order, $by, $take < $qty ? ($qty - $take) . ' por encomenda' : '');
+            return [$take, true];
+        }
+    }
+    throw new HttpError(409, 'O stock mudou durante a encomenda. Tente novamente.');
+}
+
+// Reserves stock for every item and records, per item, how many came from stock and how many are backordered.
+function order_take_stock(array &$o, string $reason, string $by): void
+{
+    foreach ($o['items'] as &$it) {
+        [$taken, $tracked] = stock_take($it['id'], (int) $it['qty'], $reason, $o['number'] ?? null, $by);
+        $it['fromStock'] = $taken;
+        $it['backorder'] = $tracked ? (int) $it['qty'] - $taken : 0;
+    }
+    unset($it);
+}
+
+// Returns the units that were taken from stock (orders created before backorders existed took all units).
+function order_return_stock(array $o, string $reason, string $by): void
+{
+    foreach ($o['items'] as $it) {
+        $n = array_key_exists('fromStock', $it) ? (int) $it['fromStock'] : (int) $it['qty'];
+        if ($n > 0) stock_apply($it['id'], $n, $reason, $o['number'] ?? null, $by);
+    }
+}
+function order_has_backorder(array $o): bool
+{
+    foreach ($o['items'] as $it) if (($it['backorder'] ?? 0) > 0) return true;
+    return false;
 }
 
 function products_list(bool $includeInactive = false): array
@@ -630,7 +674,10 @@ function build_order(array $b, string $source): array
         'postcode' => str_in($c['postcode'] ?? '', 20), 'country' => str_in($c['country'] ?? '', 60),
     ];
     if ($customer['name'] === '') throw new HttpError(400, 'O nome é obrigatório');
-    if (!filter_var($customer['email'], FILTER_VALIDATE_EMAIL)) throw new HttpError(400, 'É necessário um email válido');
+    // the customer is called to arrange payment: a phone number is required, email is optional
+    $digits = preg_replace('/\D/', '', $customer['phone']);
+    if (strlen($digits) < 9 || strlen($digits) > 15 || !preg_match('/^\+?[\d\s().-]+$/', $customer['phone'])) throw new HttpError(400, 'Indique um número de telefone válido');
+    if ($customer['email'] !== '' && !filter_var($customer['email'], FILTER_VALIDATE_EMAIL)) throw new HttpError(400, 'O email não é válido');
     $items = $b['items'] ?? null;
     if (!is_array($items) || !$items) throw new HttpError(400, 'A encomenda não tem artigos');
     if (count($items) > 100) throw new HttpError(400, 'Demasiados artigos');
@@ -675,10 +722,12 @@ function insert_order(array $o): array
         json_encode($o['items'], JSON_UNESCAPED_UNICODE), json_encode($o['history'], JSON_UNESCAPED_UNICODE), $o['subtotal'], $o['discount'], $o['total']]);
     $seq = (int) $pdo->lastInsertId();
     $o['number'] = 'FL-' . (1000 + $seq);
-    $pdo->prepare('UPDATE ' . t('orders') . ' SET number = ? WHERE seq = ?')->execute([$o['number'], $seq]);
-    try { stock_for_order($o, -1, 'encomenda', $o['source']); }
-    catch (Throwable $e) { $pdo->rollBack(); throw $e; }
-    $pdo->commit();
+    try {
+        order_take_stock($o, 'encomenda', $o['source']);
+        $o['backorder'] = order_has_backorder($o);
+        $pdo->prepare('UPDATE ' . t('orders') . ' SET number = ?, items = ? WHERE seq = ?')->execute([$o['number'], json_encode($o['items'], JSON_UNESCAPED_UNICODE), $seq]);
+        $pdo->commit();
+    } catch (Throwable $e) { $pdo->rollBack(); throw $e; }
     return $o;
 }
 
@@ -693,18 +742,19 @@ function order_update(string $id, array $b): array
         if (array_key_exists('status', $b)) {
             if (!in_array($b['status'], STATUSES, true)) throw new HttpError(400, 'Estado inválido');
             if ($b['status'] !== $o['status']) {
-                if ($b['status'] === 'cancelled') stock_for_order($o, +1, 'cancelamento', 'admin');
-                elseif ($o['status'] === 'cancelled') stock_for_order($o, -1, 'reativação', 'admin');
+                if ($b['status'] === 'cancelled') order_return_stock($o, 'cancelamento', 'admin');
+                elseif ($o['status'] === 'cancelled') order_take_stock($o, 'reativação', 'admin'); // backorder recalculated
                 $o['status'] = $b['status'];
                 $o['history'][] = ['at' => $now, 'status' => $b['status'], 'by' => 'admin'];
             }
         }
         if (array_key_exists('internalNote', $b)) $o['internalNote'] = str_in($b['internalNote'], 2000);
         $o['updatedAt'] = $now;
-        $pdo->prepare('UPDATE ' . t('orders') . ' SET status = ?, internal_note = ?, history = ?, updated_at = ? WHERE id = ?')
-            ->execute([$o['status'], $o['internalNote'], json_encode($o['history'], JSON_UNESCAPED_UNICODE), $now, $o['id']]);
+        $pdo->prepare('UPDATE ' . t('orders') . ' SET status = ?, internal_note = ?, history = ?, items = ?, updated_at = ? WHERE id = ?')
+            ->execute([$o['status'], $o['internalNote'], json_encode($o['history'], JSON_UNESCAPED_UNICODE), json_encode($o['items'], JSON_UNESCAPED_UNICODE), $now, $o['id']]);
         $pdo->commit();
     } catch (Throwable $e) { $pdo->rollBack(); throw $e; }
+    $o['backorder'] = order_has_backorder($o);
     return $o;
 }
 
@@ -715,7 +765,7 @@ function order_delete(string $id): void
     $o = row_to_order(find_order($id));
     $pdo = db(); $pdo->beginTransaction();
     try {
-        if ($o['status'] !== 'cancelled') stock_for_order($o, +1, 'encomenda eliminada', 'admin');
+        if ($o['status'] !== 'cancelled') order_return_stock($o, 'encomenda eliminada', 'admin');
         $pdo->prepare('DELETE FROM ' . t('orders') . ' WHERE id = ?')->execute([$id]);
         $pdo->commit();
     } catch (Throwable $e) { $pdo->rollBack(); throw $e; }
@@ -723,7 +773,9 @@ function order_delete(string $id): void
 
 function row_to_order(array $r): array
 {
+    $items = json_decode($r['items'], true) ?: [];
     return [
+        'backorder' => (bool) array_filter($items, fn ($it) => ($it['backorder'] ?? 0) > 0),
         'id' => $r['id'], 'number' => $r['number'], 'createdAt' => $r['created_at'], 'updatedAt' => $r['updated_at'],
         'status' => $r['status'], 'source' => $r['source'],
         'customer' => ['name' => $r['customer_name'], 'email' => $r['customer_email'], 'phone' => $r['customer_phone'],

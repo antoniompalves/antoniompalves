@@ -36,7 +36,7 @@ try {
     if ($route === 'orders' && $method === 'POST' && !has_token_header()) {
         if (rate_limited('order', 10, 60)) throw new HttpError(429, 'Demasiados pedidos, tente novamente dentro de um minuto');
         $o = insert_order(build_order(body_json(), 'storefront'));
-        json_out(201, ['number' => $o['number'], 'total' => $o['total']]);
+        json_out(201, ['number' => $o['number'], 'total' => $o['total'], 'backorder' => $o['backorder']]);
     }
 
     if ($route === 'login' && $method === 'POST') {
@@ -68,11 +68,11 @@ try {
         header('Content-Disposition: attachment; filename="pre-encomendas.csv"');
         header('Cache-Control: no-store');
         echo "\xEF\xBB\xBF"; // BOM para o Excel reconhecer UTF-8
-        echo implode(',', ['numero', 'data', 'estado', 'origem', 'nome', 'email', 'telefone', 'morada', 'localidade', 'codigo_postal', 'pais', 'artigos', 'subtotal', 'desconto', 'total', 'observacoes']) . "\n";
+        echo implode(',', ['numero', 'data', 'estado', 'origem', 'entrega', 'nome', 'telefone', 'email', 'morada', 'localidade', 'codigo_postal', 'pais', 'artigos', 'subtotal', 'desconto', 'total', 'observacoes']) . "\n";
         foreach (db()->query('SELECT * FROM ' . t('orders') . ' ORDER BY seq') as $r) {
             $o = row_to_order($r); $c = $o['customer'];
             $items = implode('; ', array_map(fn ($i) => $i['qty'] . 'x ' . $i['name'], $o['items']));
-            echo implode(',', array_map($cell, [$o['number'], $o['createdAt'], $o['status'], $o['source'], $c['name'], $c['email'], $c['phone'],
+            echo implode(',', array_map($cell, [$o['number'], $o['createdAt'], $o['status'], $o['source'], $o['backorder'] ? 'até 3 semanas' : 'imediata', $c['name'], $c['phone'], $c['email'],
                 $c['address'], $c['city'], $c['postcode'], $c['country'], $items, $o['subtotal'], $o['discount'], $o['total'], $o['notes']])) . "\n";
         }
         exit;

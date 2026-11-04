@@ -2,6 +2,8 @@
   const $ = (s, el = document) => el.querySelector(s);
   const eur = n => new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(+n);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // WhatsApp needs the international number: Portuguese 9-digit numbers get the 351 prefix
+  const waNum = ph => { const d = String(ph || "").replace(/\D/g, "").replace(/^00/, ""); return d.length === 9 ? "351" + d : d; };
   const fmtDate = iso => new Date(iso).toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short" });
   const STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
   const LABEL = { all: "Todas", pending: "Pendente", confirmed: "Confirmada", shipped: "Enviada", delivered: "Entregue", cancelled: "Cancelada", storefront: "loja", backoffice: "backoffice", admin: "admin" };
@@ -89,9 +91,9 @@
     $("#empty").textContent = orders.length ? "Nenhuma encomenda corresponde a este filtro." : "Ainda não há pré-encomendas.";
     $("#rows").innerHTML = list.map(o => `
       <tr data-id="${o.id}" class="${selected === o.id ? "sel" : ""}">
-        <td><b>${esc(o.number)}</b>${o.source === "backoffice" ? '<span class="src">manual</span>' : ""}</td>
+        <td><b>${esc(o.number)}</b>${o.source === "backoffice" ? '<span class="src">manual</span>' : ""}${o.backorder && o.status !== "cancelled" ? '<span class="src bo" title="Tem artigos sem stock: entrega até 3 semanas">até 3 sem.</span>' : ""}</td>
         <td>${fmtDate(o.createdAt)}</td>
-        <td>${esc(o.customer.name)}<small>${esc(o.customer.email)}</small></td>
+        <td>${esc(o.customer.name)}<small>${esc(o.customer.phone || o.customer.email)}</small></td>
         <td>${o.items.reduce((s, i) => s + i.qty, 0)} unid.<small>${esc(o.items.map(i => i.name).slice(0, 2).join(", "))}${o.items.length > 2 ? "…" : ""}</small></td>
         <td class="r"><b>${eur(o.total)}</b></td>
         <td><span class="badge s-${o.status}">${L(o.status)}</span></td>
@@ -109,9 +111,10 @@
       <div class="panel-head"><div><h3>${esc(o.number)}</h3><small class="muted">${fmtDate(o.createdAt)} · ${L(o.source)}</small></div>
         <button class="ghost" id="closePanel">✕</button></div>
       <div><h4>Estado</h4><select id="statusSel">${STATUSES.map(s => `<option value="${s}" ${s === o.status ? "selected" : ""}>${L(s)}</option>`).join("")}</select></div>
-      <div><h4>Cliente</h4><p><b>${esc(c.name)}</b><br><a href="mailto:${esc(c.email)}">${esc(c.email)}</a>${c.phone ? "<br>" + esc(c.phone) : ""}</p>
+      <div><h4>Cliente</h4><p><b>${esc(c.name)}</b>${c.phone ? `<br><a href="tel:${esc(c.phone.replace(/[^+\d]/g, ""))}">📞 ${esc(c.phone)}</a> · <a target="_blank" rel="noopener" href="https://wa.me/${waNum(c.phone)}">WhatsApp</a>` : ""}${c.email ? `<br><a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</p>
+        <p class="call-hint">Ligar ao cliente para confirmar a encomenda e combinar o pagamento.</p>
         ${c.address || c.city ? `<p>${esc(c.address)}<br>${esc(c.postcode)} ${esc(c.city)}<br>${esc(c.country)}</p>` : ""}</div>
-      <div><h4>Artigos</h4>${o.items.map(i => `<div class="li"><span>${i.qty} × ${esc(i.name)}<br><small class="muted">${esc(i.sub)} · ${eur(i.unit)}${i.discount ? ` · −${eur(i.discount)} quantidade` : ""}</small></span><b>${eur(i.total)}</b></div>`).join("")}
+      <div><h4>Artigos</h4>${o.items.map(i => `<div class="li"><span>${i.qty} × ${esc(i.name)}${(i.backorder || 0) > 0 ? `<br><small class="bo-tag">${i.qty - i.backorder} em stock · ${i.backorder} por encomenda (até 3 semanas)</small>` : ""}<br><small class="muted">${esc(i.sub)} · ${eur(i.unit)}${i.discount ? ` · −${eur(i.discount)} quantidade` : ""}</small></span><b>${eur(i.total)}</b></div>`).join("")}
         <div class="tot"><span>Subtotal</span><span>${eur(o.subtotal)}</span></div>
         <div class="tot"><span>Desconto por quantidade</span><span>−${eur(o.discount)}</span></div>
         <div class="tot big"><span>Total</span><span>${eur(o.total)}</span></div></div>
@@ -132,8 +135,8 @@
         const body = `Olá ${o.customer.name.split(" ")[0]},\n\nObrigado pela sua encomenda ${o.number}. Gostaríamos muito de saber a sua opinião sobre os produtos:\n\n${url}\n\nObrigado,\n${store}`;
         $("#reviewLink").innerHTML = `<input readonly value="${esc(url)}" id="rlUrl">
           <div class="row2"><button type="button" class="btn sm" id="rlCopy">Copiar link</button>
-          <a class="ghost" href="mailto:${encodeURIComponent(o.customer.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}">Enviar por email</a>
-          ${o.customer.phone ? `<a class="ghost" target="_blank" rel="noopener" href="https://wa.me/${o.customer.phone.replace(/\D/g, "")}?text=${encodeURIComponent(body)}">WhatsApp</a>` : ""}</div>`;
+          ${o.customer.email ? `<a class="ghost" href="mailto:${encodeURIComponent(o.customer.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}">Enviar por email</a>` : ""}
+          ${o.customer.phone ? `<a class="ghost" target="_blank" rel="noopener" href="https://wa.me/${waNum(o.customer.phone)}?text=${encodeURIComponent(body)}">WhatsApp</a>` : ""}</div>`;
         $("#rlCopy").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("Link copiado"); } catch { $("#rlUrl").select(); document.execCommand("copy"); toast("Link copiado"); } };
       } catch (err) { toast(err.message); }
     };
@@ -165,7 +168,7 @@
   const lines = {};
   function renderProdSel() {
     $("#prodSel").innerHTML = CATEGORIES.map(c => `<optgroup label="${esc(c.name)}">${PRODUCTS.filter(p => p.cat === c.id && p.active !== false)
-      .map(p => `<option value="${p.id}" ${p.trackStock && p.stock <= 0 ? "disabled" : ""}>${esc(p.name)} — ${esc(p.sub)} (${eur(unitPrice(p))})${p.trackStock ? ` · stock ${p.stock}` : ""}</option>`).join("")}</optgroup>`).join("");
+      .map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.sub)} (${eur(unitPrice(p))})${p.trackStock ? (p.stock > 0 ? ` · stock ${p.stock}` : " · sem stock (até 3 semanas)") : ""}</option>`).join("")}</optgroup>`).join("");
   }
   renderProdSel();
   $("#addLine").onclick = () => {

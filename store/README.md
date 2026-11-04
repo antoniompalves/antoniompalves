@@ -27,9 +27,13 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 - **Avaliações de clientes reais:** link privado por encomenda entregue, uma avaliação por produto, moderação
   (publicar/rejeitar/responder), "Compra verificada", média e contagem reais na loja
 - **Testemunhos:** mensagens reais de clientes com foto opcional, origem e data; publicadas na página inicial
+- **Uso interno, sem indexação:** meta robots `noindex, nofollow` em todas as páginas, `X-Robots-Tag` em todas
+  as respostas e `robots.txt` com `Disallow: /`
+- **Encomenda só com nome e telefone:** o cliente é contactado para pagar; email opcional no backoffice
+- **Entregas e stock:** em stock = entrega imediata; sem stock = por encomenda (até 3 semanas); encomendas acima do
+  stock são divididas por artigo (`fromStock`/`backorder`); embalagem discreta sempre indicada
 - **Página própria por produto:** `/produto/<id>` (gerada por `produto.php` a partir do `index.html`), com
-  título/descrição/imagem para Google e redes sociais, caminho de navegação, produtos relacionados, 404 para
-  produtos inexistentes ou inativos, e `sitemap.xml`
+  caminho de navegação, produtos relacionados e 404 para produtos inexistentes ou inativos
 - **Importar conteúdo:** ficheiros .md/.txt ou texto colado → especificações (tabela) + descrição formatada
   (Markdown simples, sempre escapado), associação pelo título com pré-visualização
 - **Imagens em massa:** várias imagens de uma vez, associadas pelo nome do ficheiro (com confirmação)
@@ -48,7 +52,8 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 | `api/brand.css` | Cor da marca gerada pelo servidor e carregada no `<head>`: a página é pintada logo com a cor certa |
 | `products.js` | FAQ e catálogo/categorias iniciais (importados para as tabelas `products` e `categories` na primeira utilização; depois editam-se no backoffice) |
 | `admin/` | Backoffice |
-| `produto.php`, `sitemap.php` | Página de cada produto (`/produto/<id>`) e `sitemap.xml` |
+| `produto.php` | Página de cada produto (`/produto/<id>`) |
+| `robots.txt` | Bloqueia todos os motores de busca |
 | `api.php` | API (`/api/...` via `.htaccess`). Só usa GET/POST, compatível com mod_security |
 | `app/lib.php` | Base de dados, encomendas, marca, autenticação, limites de tentativas |
 | `install.php` | Assistente: testa a ligação, cria as tabelas, escreve `app/config.php`, bloqueia-se depois |

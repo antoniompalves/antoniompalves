@@ -76,10 +76,11 @@ eliminar se quiser manter o histórico.
 
 Os preços das encomendas são sempre calculados no servidor a partir da base de dados.
 Stock: no formulário do produto, marque "Controlar stock deste produto" e indique o stock inicial
-e o limite de alerta. Cada pré-encomenda retira as unidades; não é possível encomendar mais do que
-o disponível. Cancelar uma encomenda (ou eliminá-la sem estar cancelada) devolve as unidades.
+e o limite de alerta. Cada encomenda retira as unidades disponíveis (nunca abaixo de zero); o resto
+fica por encomenda (até 3 semanas). Cancelar uma encomenda (ou eliminá-la sem estar cancelada)
+devolve as unidades que tinham sido retiradas.
 Registe entradas de mercadoria, saídas e acertos de inventário no próprio produto — todos os
-movimentos ficam no histórico. Na loja aparece "Últimas N unidades" ou "Esgotado". Produtos sem
+movimentos ficam no histórico. Na loja aparece "Em stock · entrega imediata", "Últimas N em stock" ou "Por encomenda · até 3 semanas". Produtos sem
 controlo de stock podem ser sempre encomendados. Filtros "Stock baixo" e "Esgotados" na lista.
 
 Verificação e embalagem: no formulário do produto, a secção "Verificação e embalagem" permite
@@ -95,11 +96,22 @@ estrelas passa a ser calculada só com avaliações reais aprovadas.
 
 Tamanho do logótipo: em "Marca", ajuste "Tamanho do logótipo no cabeçalho" (28 a 96 px).
 
-Páginas de produto: cada produto tem a sua própria página, em  https://o-seu-dominio.pt/produto/<id>
-(ex.: /produto/boldenone). Os cartões da homepage abrem essa página. Cada página tem título, descrição
-e imagem próprios para o Google e para partilhas, caminho de navegação e produtos relacionados.
-No backoffice, "Ver página ↗" no editor do produto abre-a. Lista de páginas para o Google:
-https://o-seu-dominio.pt/sitemap.xml (pode submetê-la no Google Search Console).
+Uso interno — sem indexação: o site não aparece em motores de busca. Todas as páginas têm
+"noindex, nofollow", o servidor envia X-Robots-Tag em todas as respostas (páginas, imagens, API) e o
+robots.txt bloqueia tudo. Não há sitemap.
+
+Encomendas: o cliente adiciona produtos ao carrinho e carrega em "Registar encomenda", indicando só o
+nome e o telefone. A encomenda fica em "Pré-encomendas" no backoffice, com botões para ligar ou abrir
+o WhatsApp; ligue ao cliente para confirmar e combinar o pagamento.
+
+Entregas: em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata.
+Sem stock imediato: o produto continua disponível com "Por encomenda · até 3 semanas". Numa encomenda
+acima do stock, as unidades disponíveis saem do stock e as restantes ficam "por encomenda"; o
+backoffice mostra, por artigo, quantas são de entrega imediata e quantas até 3 semanas (etiqueta
+"até 3 sem." na lista e coluna "entrega" no CSV). Cancelar devolve ao stock só as unidades retiradas.
+
+Páginas de produto: cada produto tem a sua própria página, em  /produto/<id>  (ex.: /produto/boldenone).
+Os cartões da homepage abrem essa página. No backoffice, "Ver página ↗" no editor do produto abre-a.
 
 Importar conteúdo: em "Produtos" → "⇪ Importar conteúdo", carregue ficheiros .md/.txt (vários de
 uma vez) ou cole o texto. Formato:

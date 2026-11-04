@@ -6,6 +6,5 @@ if (preg_match('~^/api/(.*)$~', $path, $m)) { $_GET['route'] = $m[1]; require $r
 if (preg_match('~^/(app/|uploads/.*\.(php|html?|svg|js)$)~', $path) || preg_match('~/\.~', $path)) { http_response_code(403); echo 'Proibido'; return true; }
 if ($path === '/install.php') { require $root . '/install.php'; return true; }
 if (preg_match('~^/produto/([a-z0-9-]+)/?$~', $path, $m)) { $_GET['id'] = $m[1]; $_SERVER['SCRIPT_NAME'] = '/produto.php'; require $root . '/produto.php'; return true; }
-if ($path === '/sitemap.xml') { require $root . '/sitemap.php'; return true; }
 if (preg_match('~/$~', $path) && is_file($root . $path . 'index.html')) { header('Content-Type: text/html; charset=utf-8'); readfile($root . $path . 'index.html'); return true; }
 return false;

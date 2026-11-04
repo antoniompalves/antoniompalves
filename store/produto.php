@@ -1,7 +1,8 @@
 <?php
 // Página própria de cada produto: /produto/<id>  (o .htaccess reescreve para produto.php?id=<id>).
 // Reutiliza o index.html (cabeçalho, carrinho, rodapé) sem as secções da homepage, e preenche no
-// servidor o título, a descrição e a imagem para motores de busca e partilhas. O app.js desenha a ficha.
+// servidor o título, a descrição e a imagem de pré-visualização de links. O site não é indexado
+// (meta robots herdado do index.html + X-Robots-Tag no .htaccess). O app.js desenha a ficha.
 declare(strict_types=1);
 require __DIR__ . '/app/lib.php';
 
@@ -49,7 +50,6 @@ if ($product) {
     $cat = $cats[$product['cat']] ?? '';
     $head = '<title>' . $h($title) . '</title>'
         . "\n  <meta name=\"description\" content=\"" . $h($desc) . '">'
-        . "\n  <link rel=\"canonical\" href=\"" . $h($url) . '">'
         . "\n  <meta property=\"og:type\" content=\"product\"><meta property=\"og:title\" content=\"" . $h($title) . '">'
         . '<meta property="og:description" content="' . $h($desc) . '"><meta property="og:url" content="' . $h($url) . '">'
         . ($img ? '<meta property="og:image" content="' . $h($img) . '">' : '');
@@ -77,5 +77,6 @@ $html = str_replace('<!--PAGE-SLOT-->', $slot, $html);
 $html = str_replace('<script src="app.js', '<script>window.PAGE = ' . json_encode($page, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ";</script>\n  <script src=\"app.js", $html);
 
 header('Content-Type: text/html; charset=utf-8');
+header('X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex');
 header('Cache-Control: no-cache');
 echo $html;

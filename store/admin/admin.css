@@ -149,6 +149,10 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .bulk-progress i { display: block; height: 100%; width: 0; background: var(--orange); transition: width .2s; }
 .bulk-progress span { font-size: 12px; color: var(--muted); }
 
+.bo-tag { color: #3730a3; font-weight: 600; }
+.call-hint { font-size: 12px; color: var(--muted); margin-top: 4px !important; }
+.src.bo { color: #3730a3; border-color: #c7d2fe; background: #eef2ff; }
+
 /* ---------- reviews ---------- */
 .nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #c62828; color: #fff; font-size: 11px; font-weight: 700; margin-left: 4px; }
 .rv-admin { display: flex; flex-direction: column; gap: 10px; }
