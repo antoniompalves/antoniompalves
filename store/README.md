@@ -22,6 +22,8 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 - **Registar encomenda:** pedidos recebidos por telefone/email
 - **Produtos:** editar preço, promoção, descrição, imagem, ordem, categoria e estado; criar e eliminar
 - **Categorias:** criar, renomear, ordenar, ocultar (esconde os produtos) e eliminar movendo os produtos
+- **Verificação e embalagem:** por produto, imagem do código de proteção, texto "Como funciona", link de
+  verificação (só https) e imagem dos tamanhos da embalagem, numa secção da página do produto
 - **Testemunhos:** mensagens reais de clientes com foto opcional, origem e data; publicadas na página inicial
 - **Imagens em massa:** várias imagens de uma vez, associadas pelo nome do ficheiro (com confirmação)
 - **Stock:** controlo opcional por produto; as encomendas retiram stock de forma atómica (sem vendas acima do

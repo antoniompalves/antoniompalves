@@ -102,6 +102,9 @@ try {
     if ($route === 'products/all' && $method === 'GET') json_out(200, products_list(true));
     if ($route === 'products' && $method === 'POST') json_out(201, product_create(body_json()));
     if (preg_match('~^products/([a-z0-9-]{1,64})/stock$~', $route, $m) && $method === 'GET') json_out(200, stock_history($m[1]));
+    if (preg_match('~^products/([a-z0-9-]{1,64})/image/(security|package)(/delete)?$~', $route, $m) && $method === 'POST') {
+        json_out(200, empty($m[3]) ? product_image_upload($m[1], $_FILES['file'] ?? null, $m[2]) : product_image_remove($m[1], $m[2]));
+    }
     if (preg_match('~^products/([a-z0-9-]{1,64})/(update|delete|image|image/delete|stock)$~', $route, $m) && $method === 'POST') {
         switch ($m[2]) {
             case 'stock': json_out(200, stock_adjust($m[1], body_json()));

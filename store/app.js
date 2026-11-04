@@ -165,6 +165,22 @@
     setFilter(el.dataset.filter); $("#collection").scrollIntoView({ behavior: "smooth" });
   }));
 
+  // optional "protection code" + "package sizes" block, filled per product in the backoffice
+  function verifyBlock(p) {
+    const sec = p.securityImageUrl || p.securityText || p.verifyUrl, pack = p.packageImageUrl;
+    if (!sec && !pack) return "";
+    const img = (u, alt) => `<img src="${esc(window.Brand.url(u))}" alt="${esc(alt)}" loading="lazy">`;
+    return `<div class="verify ${sec && pack ? "" : "single"}">
+      ${sec ? `<div class="v-sec">
+        <h3>Código de proteção</h3>
+        ${p.securityImageUrl ? `<div class="v-img">${img(p.securityImageUrl, "Código de proteção de " + p.name)}</div>` : ""}
+        ${p.securityText || p.verifyUrl ? `<h4>Como funciona</h4>${paras(p.securityText)}` : ""}
+        ${p.verifyUrl ? `<a class="v-link" href="${esc(p.verifyUrl)}" target="_blank" rel="noopener noreferrer nofollow">Verificar a autenticidade do produto ↗</a>` : ""}
+      </div>` : ""}
+      ${pack ? `<div class="v-pack"><h3>Tamanhos da embalagem</h3><div class="v-img v-diagram">${img(p.packageImageUrl, "Dimensões da embalagem de " + p.name)}</div></div>` : ""}
+    </div>`;
+  }
+
   // ---------- detail ----------
   let dQty = 1;
   function renderDetail(id) {
@@ -186,7 +202,7 @@
         <details class="acc" open><summary>Detalhes</summary><div>${p.description ? paras(p.description) : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
         <details class="acc"><summary>Envio</summary><div>Embalagem discreta, envio rastreado a partir de stock na UE.</div></details>
-      </div>`;
+      </div>${verifyBlock(p)}`;
     $("#detail .opts").onclick = e => {
       const o = e.target.closest(".opt"); if (!o) return;
       [...$("#detail .opts").children].forEach(x => x.classList.toggle("on", x === o));

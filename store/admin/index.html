@@ -135,6 +135,31 @@
               <label>Ordem<input name="position" type="number" step="1"></label>
             </div>
             <fieldset class="stock-box">
+              <legend>Verificação e embalagem</legend>
+              <p class="hint" style="margin:0">Opcional. Aparece numa secção própria no fim da página do produto.</p>
+              <div class="xi-grid">
+                <div class="xi" data-kind="security">
+                  <span class="xi-label">Código de proteção</span>
+                  <div class="preview xi-prev"></div>
+                  <div class="upload-actions">
+                    <label class="btn sm file-btn">Carregar<input type="file" class="xi-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden></label>
+                    <button type="button" class="ghost xi-remove">Remover</button>
+                  </div>
+                </div>
+                <div class="xi" data-kind="package">
+                  <span class="xi-label">Tamanhos da embalagem</span>
+                  <div class="preview xi-prev"></div>
+                  <div class="upload-actions">
+                    <label class="btn sm file-btn">Carregar<input type="file" class="xi-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden></label>
+                    <button type="button" class="ghost xi-remove">Remover</button>
+                  </div>
+                </div>
+              </div>
+              <p class="hint xi-hint" id="xiHint"></p>
+              <label>Como funciona (texto da verificação)<textarea name="securityText" rows="4" maxlength="2000" placeholder="ex.: Raspe a película para ver o código e confirme-o no site do fabricante."></textarea></label>
+              <label>Link de verificação<input name="verifyUrl" type="url" maxlength="300" placeholder="https://…"></label>
+            </fieldset>
+            <fieldset class="stock-box">
               <legend>Stock</legend>
               <label class="chk"><input type="checkbox" name="trackStock" id="trackStock"> Controlar stock deste produto</label>
               <p class="hint" id="stockOffHint">Sem controlo: o produto pode ser sempre encomendado.</p>

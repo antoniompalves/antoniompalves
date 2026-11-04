@@ -82,6 +82,11 @@ Registe entradas de mercadoria, saídas e acertos de inventário no próprio pro
 movimentos ficam no histórico. Na loja aparece "Últimas N unidades" ou "Esgotado". Produtos sem
 controlo de stock podem ser sempre encomendados. Filtros "Stock baixo" e "Esgotados" na lista.
 
+Verificação e embalagem: no formulário do produto, a secção "Verificação e embalagem" permite
+carregar uma imagem do código de proteção (selo/código de segurança), uma imagem com os tamanhos
+da embalagem, um texto "Como funciona" e um link de verificação (https://). Aparecem numa secção
+própria no fim da página do produto, só quando preenchidos.
+
 Imagens em massa: em "Produtos" → "⬆ Imagens em massa", selecione várias imagens de uma vez.
 Cada ficheiro é associado ao produto com o mesmo nome (ex.: "Testosterone Enanthate.jpg"; maiúsculas
 e acentos não contam). Confirme ou corrija cada associação antes de carregar.

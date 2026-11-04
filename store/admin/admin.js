@@ -266,7 +266,32 @@
     $("#pformFinal").textContent = isFinite(price) ? `Preço na loja: ${eur(unitPrice({ price, promo }))}${promo ? ` (−${promo}% sobre ${eur(price)})` : ""} · 5 un.: −5% · 10 un.: −10%` : "";
   }
   pf.price.oninput = pf.promo.oninput = updateFinal;
+  function renderExtraImages(p) {
+    const canUpload = !!p && !pCreating;
+    document.querySelectorAll("#pform .xi").forEach(box => {
+      const url = p && (box.dataset.kind === "security" ? p.securityImageUrl : p.packageImageUrl);
+      box.querySelector(".xi-prev").innerHTML = url ? `<img src="${esc(window.Brand.url(url))}" alt="">` : "Sem imagem";
+      box.querySelector(".xi-remove").disabled = !url;
+      const f = box.querySelector(".xi-file"); f.disabled = !canUpload; f.parentElement.style.opacity = canUpload ? "" : ".5";
+    });
+    $("#xiHint").textContent = canUpload ? "PNG, JPG, WebP ou GIF até 3 MB." : "Guarde o produto primeiro para poder carregar estas imagens.";
+  }
+  document.querySelectorAll("#pform .xi").forEach(box => {
+    const kind = box.dataset.kind, label = kind === "security" ? "Imagem do código de proteção" : "Imagem dos tamanhos da embalagem";
+    box.querySelector(".xi-file").onchange = async e => {
+      const file = e.target.files[0]; e.target.value = ""; if (!file || !pSel) return;
+      const fd = new FormData(); fd.append("file", file);
+      try { const p = await api(`api/products/${pSel}/image/${kind}`, { method: "POST", body: fd }); PRODUCTS[PRODUCTS.findIndex(x => x.id === p.id)] = p; renderExtraImages(p); toast(label + " atualizada"); }
+      catch (err) { toast(err.message); }
+    };
+    box.querySelector(".xi-remove").onclick = async () => {
+      if (!pSel || !confirm("Remover esta imagem?")) return;
+      try { const p = await api(`api/products/${pSel}/image/${kind}/delete`, { method: "POST" }); PRODUCTS[PRODUCTS.findIndex(x => x.id === p.id)] = p; renderExtraImages(p); toast(label + " removida"); }
+      catch (err) { toast(err.message); }
+    };
+  });
   function renderPImage(p) {
+    renderExtraImages(p);
     $("#pimgPrev").innerHTML = p && p.imageUrl ? `<img src="${esc(window.Brand.url(p.imageUrl))}" alt="">` : "Sem imagem — é mostrado o frasco desenhado";
     $("#pimgRemove").disabled = !(p && p.imageUrl);
     const canUpload = !!p && !pCreating;
@@ -292,6 +317,7 @@
     pf.reviews.value = p.reviews; pf.position.value = p.position;
     pf.active.checked = p.active; pf.best.checked = p.best; pf.fresh.checked = p.fresh;
     pf.trackStock.checked = p.trackStock; pf.lowStock.value = p.lowStock; pf.initialStock.value = 0;
+    pf.securityText.value = p.securityText || ""; pf.verifyUrl.value = p.verifyUrl || "";
     renderStock(p);
     $("#pdelete").disabled = false; $("#pformErr").textContent = "";
     updateFinal(); renderPImage(p); showForm(true);
@@ -308,7 +334,7 @@
   pf.onsubmit = async e => {
     e.preventDefault(); $("#pformErr").textContent = "";
     const body = { name: pf.name.value, sub: pf.sub.value, cat: pf.cat.value, price: pf.price.value, promo: pf.promo.value || 0,
-      description: pf.description.value, reviews: pf.reviews.value || 0, active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
+      description: pf.description.value, reviews: pf.reviews.value || 0, securityText: pf.securityText.value, verifyUrl: pf.verifyUrl.value.trim(), active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
     if (pf.position.value !== "") body.position = pf.position.value;
     body.trackStock = pf.trackStock.checked; body.lowStock = pf.lowStock.value || 0;
     const cur = PRODUCTS.find(x => x.id === pSel);

@@ -133,14 +133,15 @@ function products_schema(string $driver, string $prefix): string
         return "CREATE TABLE IF NOT EXISTS {$prefix}products (id TEXT PRIMARY KEY, position INTEGER NOT NULL DEFAULT 0, name TEXT NOT NULL, sub TEXT,
           cat TEXT NOT NULL, price REAL NOT NULL, promo INTEGER NOT NULL DEFAULT 0, reviews INTEGER NOT NULL DEFAULT 0, best INTEGER NOT NULL DEFAULT 0,
           fresh INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, description TEXT, image TEXT, updated_at TEXT,
-          stock INTEGER NULL, low_stock INTEGER NOT NULL DEFAULT 5)";
+          stock INTEGER NULL, low_stock INTEGER NOT NULL DEFAULT 5, image_security TEXT NULL, image_package TEXT NULL, security_text TEXT NULL, verify_url TEXT NULL)";
     }
     return "CREATE TABLE IF NOT EXISTS {$prefix}products (
       id VARCHAR(64) NOT NULL PRIMARY KEY, position INT NOT NULL DEFAULT 0, name VARCHAR(120) NOT NULL, sub VARCHAR(160) NULL,
       cat VARCHAR(40) NOT NULL, price DECIMAL(10,2) NOT NULL, promo TINYINT UNSIGNED NOT NULL DEFAULT 0, reviews INT UNSIGNED NOT NULL DEFAULT 0,
       best TINYINT(1) NOT NULL DEFAULT 0, fresh TINYINT(1) NOT NULL DEFAULT 0, active TINYINT(1) NOT NULL DEFAULT 1,
       description TEXT NULL, image VARCHAR(100) NULL, updated_at VARCHAR(32) NULL,
-      stock INT NULL, low_stock INT NOT NULL DEFAULT 5, KEY pos_idx (position)
+      stock INT NULL, low_stock INT NOT NULL DEFAULT 5, image_security VARCHAR(100) NULL, image_package VARCHAR(100) NULL,
+      security_text TEXT NULL, verify_url VARCHAR(300) NULL, KEY pos_idx (position)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 }
 
@@ -306,7 +307,8 @@ function ensure_products(): void
     $pdo->exec(products_schema($driver, config()['prefix'] ?? ''));
     $pdo->exec(stock_schema($driver, config()['prefix'] ?? ''));
     // upgrade older installs: add the stock columns when missing
-    foreach (['stock' => 'INT NULL', 'low_stock' => 'INT NOT NULL DEFAULT 5'] as $col => $def) {
+    foreach (['stock' => 'INT NULL', 'low_stock' => 'INT NOT NULL DEFAULT 5', 'image_security' => 'VARCHAR(100) NULL',
+              'image_package' => 'VARCHAR(100) NULL', 'security_text' => 'TEXT NULL', 'verify_url' => 'VARCHAR(300) NULL'] as $col => $def) {
         try { $pdo->query("SELECT $col FROM " . t('products') . ' LIMIT 1'); }
         catch (PDOException $e) { $pdo->exec('ALTER TABLE ' . t('products') . " ADD COLUMN $col $def"); }
     }
@@ -331,6 +333,9 @@ function row_to_product(array $r): array
         'best' => (bool) $r['best'], 'fresh' => (bool) $r['fresh'], 'active' => (bool) $r['active'],
         'description' => (string) $r['description'], 'imageUrl' => $r['image'] ? 'uploads/products/' . $r['image'] : null,
         'updatedAt' => $r['updated_at'],
+        'securityImageUrl' => !empty($r['image_security']) ? 'uploads/products/' . $r['image_security'] : null,
+        'packageImageUrl' => !empty($r['image_package']) ? 'uploads/products/' . $r['image_package'] : null,
+        'securityText' => (string) ($r['security_text'] ?? ''), 'verifyUrl' => (string) ($r['verify_url'] ?? ''),
         'trackStock' => $r['stock'] !== null, 'stock' => $r['stock'] === null ? null : (int) $r['stock'], 'lowStock' => (int) $r['low_stock'],
     ];
 }
@@ -488,6 +493,12 @@ function product_fields(array $in, bool $creating): array
     if ($creating && !array_key_exists('active', $in)) $f['active'] = 1;
     if ($creating || array_key_exists('description', $in)) $f['description'] = str_in($in['description'] ?? '', 10000);
     if (array_key_exists('position', $in) && is_numeric($in['position'])) $f['position'] = (int) $in['position'];
+    if ($creating || array_key_exists('securityText', $in)) $f['security_text'] = str_in($in['securityText'] ?? '', 2000);
+    if ($creating || array_key_exists('verifyUrl', $in)) {
+        $u = str_in($in['verifyUrl'] ?? '', 300);
+        if ($u !== '' && (!filter_var($u, FILTER_VALIDATE_URL) || !preg_match('~^https?://~i', $u))) throw new HttpError(400, 'Link de verificação inválido (deve começar por https://)');
+        $f['verify_url'] = $u;
+    }
     return $f;
 }
 
@@ -527,7 +538,7 @@ function product_update(string $id, array $in): array
 function product_delete(string $id): void
 {
     $r = find_product($id);
-    product_image_unlink($r['image']);
+    foreach (PRODUCT_IMAGE_KINDS as $k) product_image_unlink($r[$k['col']] ?? null);
     db()->prepare('DELETE FROM ' . t('products') . ' WHERE id = ?')->execute([$id]);
 }
 
@@ -537,27 +548,32 @@ function product_dir(): string
     if (!is_dir($d) && !mkdir($d, 0755, true)) throw new HttpError(500, 'Não foi possível criar a pasta uploads/products');
     return $d;
 }
+// Product pictures: main photo, security/protection code photo and package-size diagram.
+const PRODUCT_IMAGE_KINDS = ['main' => ['col' => 'image', 'prefix' => 'p'], 'security' => ['col' => 'image_security', 'prefix' => 'ps'],
+    'package' => ['col' => 'image_package', 'prefix' => 'pp']];
 function product_image_unlink(?string $name): void
 {
-    if ($name && preg_match('/^p-[a-f0-9]{16}\.(png|jpg|webp|gif)$/', $name)) @unlink(product_dir() . '/' . $name);
+    if ($name && preg_match('/^p[sp]?-[a-f0-9]{16}\.(png|jpg|webp|gif)$/', $name)) @unlink(product_dir() . '/' . $name);
 }
-function product_image_upload(string $id, ?array $file): array
+function product_image_upload(string $id, ?array $file, string $kind = 'main'): array
 {
+    $k = PRODUCT_IMAGE_KINDS[$kind] ?? throw new HttpError(400, 'Tipo de imagem inválido');
     $r = find_product($id);
     $ext = validate_upload($file, 3 * 1024 * 1024);
     if ($ext === 'ico') throw new HttpError(400, 'Use PNG, JPG, WebP ou GIF para imagens de produto.');
-    $name = 'p-' . bin2hex(random_bytes(8)) . '.' . $ext;
+    $name = $k['prefix'] . '-' . bin2hex(random_bytes(8)) . '.' . $ext;
     if (!move_uploaded_file($file['tmp_name'], product_dir() . '/' . $name)) throw new HttpError(500, 'Não foi possível guardar o ficheiro');
     @chmod(product_dir() . '/' . $name, 0644);
-    product_image_unlink($r['image']);
-    db()->prepare('UPDATE ' . t('products') . ' SET image = ?, updated_at = ? WHERE id = ?')->execute([$name, now_iso(), $id]);
+    product_image_unlink($r[$k['col']] ?? null);
+    db()->prepare('UPDATE ' . t('products') . " SET {$k['col']} = ?, updated_at = ? WHERE id = ?")->execute([$name, now_iso(), $id]);
     return row_to_product(find_product($id));
 }
-function product_image_remove(string $id): array
+function product_image_remove(string $id, string $kind = 'main'): array
 {
+    $k = PRODUCT_IMAGE_KINDS[$kind] ?? throw new HttpError(400, 'Tipo de imagem inválido');
     $r = find_product($id);
-    product_image_unlink($r['image']);
-    db()->prepare('UPDATE ' . t('products') . ' SET image = NULL, updated_at = ? WHERE id = ?')->execute([now_iso(), $id]);
+    product_image_unlink($r[$k['col']] ?? null);
+    db()->prepare('UPDATE ' . t('products') . " SET {$k['col']} = NULL, updated_at = ? WHERE id = ?")->execute([now_iso(), $id]);
     return row_to_product(find_product($id));
 }
 
