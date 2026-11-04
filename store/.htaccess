@@ -11,6 +11,8 @@ DirectoryIndex index.html index.php
   RewriteRule ^api/(.*)$ api.php?route=$1 [QSA,L]
   # /produto/<id>  ->  página própria do produto
   RewriteRule ^produto/([a-z0-9-]+)/?$ produto.php?id=$1 [QSA,L]
+  # /produtos  ->  página com promoções, mais vendidos, novidades e catálogo completo
+  RewriteRule ^produtos/?$ produtos.php [QSA,L]
 </IfModule>
 
 # Ficheiros que nunca devem ser servidos

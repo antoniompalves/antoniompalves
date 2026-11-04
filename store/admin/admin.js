@@ -6,7 +6,7 @@
   const waNum = ph => { const d = String(ph || "").replace(/\D/g, "").replace(/^00/, ""); return d.length === 9 ? "351" + d : d; };
   const fmtDate = iso => new Date(iso).toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short" });
   const STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
-  const LABEL = { all: "Todas", pending: "Pendente", confirmed: "Confirmada", shipped: "Enviada", delivered: "Entregue", cancelled: "Cancelada", storefront: "loja", backoffice: "backoffice", admin: "admin" };
+  const LABEL = { all: "Todas", pending: "Pendente", confirmed: "Pagamento validado", shipped: "Enviada", delivered: "Entregue", cancelled: "Cancelada", storefront: "loja", backoffice: "backoffice", admin: "admin" };
   const L = k => LABEL[k] || k;
   const { unitPrice, bulkRate } = window;
   let CATEGORIES = window.CATEGORIES.slice(); // replaced by the database list after sign-in
@@ -71,7 +71,7 @@
     const count = s => orders.filter(o => o.status === s).length;
     const today = new Date().toDateString();
     $("#stats").innerHTML = [
-      ["Pendentes", count("pending"), "hl"], ["Confirmadas", count("confirmed")], ["Hoje", orders.filter(o => new Date(o.createdAt).toDateString() === today).length],
+      ["Pendentes", count("pending"), "hl"], ["Pagamento validado", count("confirmed")], ["Hoje", orders.filter(o => new Date(o.createdAt).toDateString() === today).length],
       ["Total de pré-encomendas", orders.length], ["Valor (excl. canceladas)", eur(active.reduce((s, o) => s + o.total, 0))],
     ].map(([l, v, c]) => `<div class="stat ${c || ""}"><small>${l}</small><b>${v}</b></div>`).join("");
   }
@@ -112,7 +112,7 @@
         <button class="ghost" id="closePanel">✕</button></div>
       <div><h4>Estado</h4><select id="statusSel">${STATUSES.map(s => `<option value="${s}" ${s === o.status ? "selected" : ""}>${L(s)}</option>`).join("")}</select></div>
       <div><h4>Cliente</h4><p><b>${esc(c.name)}</b>${c.phone ? `<br><a href="tel:${esc(c.phone.replace(/[^+\d]/g, ""))}">📞 ${esc(c.phone)}</a> · <a target="_blank" rel="noopener" href="https://wa.me/${waNum(c.phone)}">WhatsApp</a>` : ""}${c.email ? `<br><a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</p>
-        <p class="call-hint">Ligar ao cliente para confirmar a encomenda e combinar o pagamento.</p>
+        <p class="call-hint">Ligar ao cliente para confirmar a encomenda e fazer o pagamento. Só processar/enviar depois de mudar o estado para "Pagamento validado".</p>
         ${c.address || c.city ? `<p>${esc(c.address)}<br>${esc(c.postcode)} ${esc(c.city)}<br>${esc(c.country)}</p>` : ""}</div>
       <div><h4>Artigos</h4>${o.items.map(i => `<div class="li"><span>${i.qty} × ${esc(i.name)}${(i.backorder || 0) > 0 ? `<br><small class="bo-tag">${i.qty - i.backorder} em stock · ${i.backorder} por encomenda (até 3 semanas)</small>` : ""}<br><small class="muted">${esc(i.sub)} · ${eur(i.unit)}${i.discount ? ` · −${eur(i.discount)} quantidade` : ""}</small></span><b>${eur(i.total)}</b></div>`).join("")}
         <div class="tot"><span>Subtotal</span><span>${eur(o.subtotal)}</span></div>
@@ -843,6 +843,7 @@
     const b = window.BRAND || window.Brand.DEFAULTS;
     bf.storeName.value = b.storeName; bf.logoText.value = b.logoText || ""; bf.logoSub.value = b.logoSub || "";
     bf.primaryColor.value = b.primaryColor; bf.primaryHex.value = b.primaryColor; bf.supportEmail.value = b.supportEmail || "";
+    bf.resellerInfo.value = b.resellerInfo || "";
     bf.logoHeight.value = b.logoHeight || 52; $("#logoHVal").textContent = bf.logoHeight.value;
     contrastHint(b.primaryColor); renderBrandMedia(); $("#brandErr").textContent = "";
   }
@@ -854,7 +855,7 @@
     e.preventDefault(); $("#brandErr").textContent = "";
     const f = Object.fromEntries(new FormData(bf));
     try {
-      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail, logoHeight: +f.logoHeight }) });
+      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail, logoHeight: +f.logoHeight, resellerInfo: f.resellerInfo }) });
       window.Brand.apply(b, { titleSuffix: "Backoffice" }); fillBrandForm(); toast("Marca atualizada");
     } catch (err) { $("#brandErr").textContent = err.message; previewBrand(); }
   };

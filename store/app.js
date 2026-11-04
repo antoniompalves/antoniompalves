@@ -39,12 +39,14 @@
     if (p.stock <= (p.lowStock ?? 5)) return `<span class="stock low">Últimas ${p.stock} em stock · entrega imediata</span>`;
     return `<span class="stock ok">Em stock · entrega imediata</span>`;
   };
+  const resellerHint = () => String((window.BRAND || {}).resellerInfo || "").trim()
+    ? ' Em alternativa, <a href="./#resellers" data-goto="#resellers">contacte um revendedor oficial</a>.' : " Em alternativa, pode contactar um revendedor oficial.";
   // delivery box on the product page
   const deliveryBox = p => {
     const line = !tracked(p) ? "Entrega em Portugal: imediata se houver stock, caso contrário até 3 semanas."
       : p.stock > 0 ? `Entrega imediata em Portugal (${p.stock} em stock). Quantidades acima do stock: até 3 semanas.`
       : "Sem stock imediato: entrega em Portugal até 3 semanas.";
-    return `<div class="delivery"><p>🚚 ${line}</p><p>📦 Enviado sempre em embalagem discreta.</p><p>📞 Registe a encomenda com nome e telefone — ligamos-lhe para combinar o pagamento.</p></div>`;
+    return `<div class="delivery"><p>🚚 ${line}</p><p>📦 Enviado sempre em embalagem discreta.</p><p>💳 A encomenda é processada após a validação do pagamento: ligamos-lhe para a confirmar e fazer o pagamento.${resellerHint()}</p></div>`;
   };
   function addToCart(id, qty = 1) {
     const p = P.find(x => x.id === id), max = maxQty(p), have = cart[id] || 0;
@@ -101,7 +103,8 @@
       if (!r.ok) throw new Error(d.error || "Não foi possível registar a encomenda");
       cart = {}; save(); renderCart(); form.reset();
       done.innerHTML = `<div class="tick">✓</div><h3>Encomenda registada</h3><p>A sua referência é <b>${esc(d.number)}</b>.</p>
-        <p class="muted">Total: ${eur(d.total)}. Vamos ligar-lhe para o número <b>${esc(f.phone)}</b> para confirmar e combinar o pagamento. Nada foi cobrado.</p>
+        <p class="muted">Total: ${eur(d.total)}. Vamos ligar-lhe para o número <b>${esc(f.phone)}</b> para confirmar a encomenda e fazer o pagamento. Nada foi cobrado.</p>
+        <p class="muted"><b>A encomenda só é processada após a validação do pagamento.</b></p>
         <p class="muted">${d.backorder ? "Alguns artigos não têm stock imediato: entrega em até 3 semanas." : "Entrega imediata em Portugal."} Embalagem sempre discreta.</p>
         <button class="btn-orange" id="doneClose">Continuar a comprar</button>`;
       showStep("done");
@@ -146,7 +149,7 @@
   let filter = "all", query = "", page = 1;
   const PER_PAGE = 12;
   function renderChips() {
-    const all = [{ id: "all", name: "Todos", count: P.length }, { id: "new", name: "Novidades", count: P.filter(p => p.fresh).length }, { id: "promo", name: "Promoções", count: P.filter(p => p.promo).length },
+    const all = [{ id: "all", name: "Todos", count: P.length }, { id: "best", name: "Mais vendidos", count: P.filter(p => p.best).length }, { id: "new", name: "Novidades", count: P.filter(p => p.fresh).length }, { id: "promo", name: "Promoções", count: P.filter(p => p.promo).length },
       ...C.map(c => ({ ...c, count: P.filter(p => p.cat === c.id).length })).filter(c => c.count)];
     if (!$("#chips")) return;
     $("#chips").innerHTML = all.map(c => `<button class="chip ${filter === c.id ? "on" : ""}" data-chip="${c.id}">${c.name}<small>${c.count}</small></button>`).join("");
@@ -154,7 +157,7 @@
   function renderGrid() {
     if (!$("#grid")) return;
     const q = query.toLowerCase();
-    const list = P.filter(p => (filter === "all" || p.cat === filter || (filter === "new" && p.fresh) || (filter === "promo" && p.promo))
+    const list = P.filter(p => (filter === "all" || p.cat === filter || (filter === "new" && p.fresh) || (filter === "promo" && p.promo) || (filter === "best" && p.best))
       && (!q || (p.name + " " + p.sub + " " + catName(p.cat)).toLowerCase().includes(q)));
     const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
     page = Math.min(Math.max(1, page), pages);
@@ -257,7 +260,7 @@
         <button class="btn-orange" data-dadd="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
         <details class="acc" open><summary>Detalhes</summary><div>${p.description ? `<p>${esc(firstPara(p.description))}</p><a href="#pinfo" class="more-link" data-scroll="#pinfo">Ver descrição completa ↓</a>` : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
-        <details class="acc"><summary>Entrega e pagamento</summary><div><p>Entregamos em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata. Sem stock imediato: até 3 semanas.</p><p>Registe a encomenda com o seu nome e telefone. Ligamos-lhe para confirmar e combinar o pagamento.</p></div></details>
+        <details class="acc"><summary>Pagamento e entrega</summary><div><p>Registe a encomenda com o seu nome e telefone. Ligamos-lhe para confirmar a encomenda e fazer o pagamento. A encomenda só é processada após a validação do pagamento.${resellerHint()}</p><p>Entregamos em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata. Sem stock imediato: até 3 semanas.</p></div></details>
       </div>${infoBlock(p)}${verifyBlock(p)}
       <div class="reviews-block" id="detailReviews">
         <h3>Avaliações de clientes ${p.reviews ? `<small>${starRow(Math.round(p.rating))} ${num1(p.rating)} de 5 · ${p.reviews} avaliaç${p.reviews === 1 ? "ão" : "ões"}</small>` : ""}</h3>
@@ -274,6 +277,8 @@
 
   document.addEventListener("click", e => {
     const add = e.target.closest("[data-add]"); if (add) return addToCart(add.dataset.add);
+    const gt = e.target.closest("[data-goto]");
+    if (gt && $(gt.dataset.goto)) { e.preventDefault(); openCart(false); $(gt.dataset.goto).scrollIntoView({ behavior: "smooth" }); return; }
     // in-page anchors on product pages (a <base> is set, so plain "#x" links would go to the home page)
     const sc = e.target.closest("[data-scroll]");
     if (sc) { e.preventDefault(); const t = $(sc.dataset.scroll); if (t) t.scrollIntoView({ behavior: "smooth" }); return; }
@@ -338,12 +343,31 @@
     box.hidden = !list.length;
     $("#relatedGrid").innerHTML = list.map(card).join("");
   }
+  // products page: promotions / best sellers / new arrivals shelves above the full catalogue
+  const SHELVES = [["promos", p => p.promo, "promo", "Promoções"], ["bestsellers", p => p.best, "best", "Mais vendidos"], ["newin", p => p.fresh, "new", "Novidades"]];
+  function renderShelves() {
+    const jump = [];
+    for (const [id, test, f, label] of SHELVES) {
+      const box = $("#" + id); if (!box) continue;
+      const list = P.filter(test);
+      box.hidden = !list.length;
+      $("#" + id + "Track").innerHTML = list.map(card).join("");
+      if (list.length) jump.push(`<button type="button" class="chip" data-scroll="#${id}">${label}<small>${list.length}</small></button>`);
+    }
+    if ($("#jump")) $("#jump").innerHTML = jump.join("") + `<button type="button" class="chip" data-scroll="#collection">Todos os produtos<small>${P.length}</small></button>`;
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-show]"); if (!b || !$("#grid")) return;
+    setFilter(b.dataset.show); $("#collection").scrollIntoView({ behavior: "smooth" });
+  });
   function renderPage() {
     if (isProduct) { renderDetail(PAGE.id); renderRelated(); }
+    else if (PAGE.type === "products") { renderShelves(); renderChips(); renderGrid(); }
     else { if ($("#prodCount")) $("#prodCount").textContent = P.length; renderChips(); renderGrid(); }
     renderCart();
   }
   renderPage();
+  if (catParam && $("#collection")) setTimeout(() => $("#collection").scrollIntoView(), 0);
 
   // category tiles on the home page follow the first two categories that have products
   function renderTiles() {
@@ -353,7 +377,7 @@
       el.hidden = !c;
       if (!c) return;
       const min = Math.min(...P.filter(p => p.cat === c.id).map(finalPrice));
-      el.dataset.filter = c.id;
+      el.href = window.Brand.url("produtos?cat=" + encodeURIComponent(c.id));
       el.querySelector("h4").textContent = c.name;
       el.querySelector("small").textContent = "desde " + eur(min);
     });
@@ -369,12 +393,15 @@
       if (!Array.isArray(list) || !Array.isArray(cats)) return;
       C.splice(0, C.length, ...cats);
       P.splice(0, P.length, ...list);
-      if (filter !== "all" && filter !== "new" && filter !== "promo" && !C.some(c => c.id === filter)) filter = "all";
+      if (!["all", "new", "promo", "best"].includes(filter) && !C.some(c => c.id === filter)) filter = "all";
       renderTiles(); renderFeatured(); renderPage();
     } catch {}
   }
   refreshProducts();
   // re-render product art once the configured brand is known
-  document.addEventListener("brand:applied", () => document.querySelectorAll(".vial[data-label]").forEach(v => { if (v.dataset.label) v.dataset.label = brandLabel(); }));
-  window.Brand.load(isProduct ? { titlePrefix: PAGE.name } : PAGE.type === "notfound" ? { titlePrefix: "Produto não encontrado" } : {});
+  document.addEventListener("brand:applied", () => {
+    document.querySelectorAll(".vial[data-label]").forEach(v => { if (v.dataset.label) v.dataset.label = brandLabel(); });
+    if (isProduct) renderDetail(PAGE.id); // reseller hint depends on the brand settings
+  });
+  window.Brand.load(isProduct ? { titlePrefix: PAGE.name } : PAGE.type === "products" ? { titlePrefix: "Produtos" } : PAGE.type === "notfound" ? { titlePrefix: "Produto não encontrado" } : {});
 })();

@@ -591,8 +591,12 @@
    "Adicione os produtos ao carrinho e carregue em \"Registar encomenda\". Só pedimos o seu nome e telefone."
   ],
   [
-   "Tenho de pagar agora?",
-   "Não. Depois de registar a encomenda, ligamos-lhe para a confirmar e combinar o pagamento."
+   "Quando é feito o pagamento?",
+   "Depois de registar a encomenda, ligamos-lhe para a confirmar e fazer o pagamento. A encomenda só é processada após a validação do pagamento."
+  ],
+  [
+   "Posso comprar através de um revendedor?",
+   "Sim. Em alternativa à encomenda no site, pode contactar um revendedor oficial."
   ],
   [
    "Qual é o prazo de entrega?",

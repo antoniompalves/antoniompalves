@@ -19,7 +19,7 @@
         <a class="logo" href="./" data-brand-logo><span>FORGE</span><small>LABS</small></a>
         <nav class="pills" id="navPills">
           <a href="./" class="active">Início</a>
-          <a href="./#collection">Produtos</a>
+          <a href="produtos">Produtos</a>
           <a href="./#about">Sobre Nós</a>
           <a href="./#contact">Contactos</a>
         </nav>
@@ -32,7 +32,7 @@
         <h1>Soluções<br>Inovadoras de<br>Performance</h1>
         <div class="hero-side">
           <p>Compostos testados em laboratório, entregues em todo o Portugal, sempre em embalagem discreta, com descontos por quantidade em todas as encomendas.</p>
-          <a href="#collection" class="btn-dark">Começar <span>→</span></a>
+          <a href="produtos" class="btn-dark">Ver produtos <span>→</span></a>
         </div>
       </div>
 
@@ -69,16 +69,16 @@
       <small>Novidades</small>
       <h2>Descubra péptidos<br>inovadores para a vida.</h2>
       <div class="vial vial-md l"></div><div class="vial vial-md r"></div>
-      <a href="#collection" class="btn-dark sm" data-filter="peptides">Saber Mais</a>
+      <a href="produtos?cat=peptides" class="btn-dark sm" data-cat-link="peptides">Saber Mais</a>
     </div>
-    <div class="promo-tile" data-filter="injectable" data-tile="0">
+    <a class="promo-tile" href="produtos?cat=injectable" data-tile="0">
       <h4>Injetáveis</h4><small>desde 29 €</small>
       <div class="vial-group"><div class="vial vial-sm"></div><div class="vial vial-sm"></div><div class="vial vial-sm"></div></div>
-    </div>
-    <div class="promo-tile" data-filter="oral" data-tile="1">
+    </a>
+    <a class="promo-tile" href="produtos?cat=oral" data-tile="1">
       <h4>Compostos<br>orais</h4><small>desde 21 €</small>
       <div class="vial-group"><div class="vial vial-sm"></div></div>
-    </div>
+    </a>
   </section>
 
   <!-- BEST SELLING -->
@@ -89,18 +89,9 @@
       <div class="track" id="bestTrack"></div>
       <button class="arrow right" data-dir="1">›</button>
     </div>
+    <div class="see-all"><a href="produtos" class="btn-dark">Ver todos os produtos <span>→</span></a></div>
   </section>
 
-  <!-- COLLECTION -->
-  <section class="container" id="collection">
-    <div class="col-head">
-      <h2 class="section-title left">Produtos</h2>
-      <input type="search" id="search" placeholder="Pesquisar produtos…">
-    </div>
-    <div class="chips" id="chips"></div>
-    <div class="grid" id="grid"></div>
-    <nav class="pager" id="pager" aria-label="Paginação"></nav>
-  </section>
 
   <!--/HOME-ONLY-->
   <!--PAGE-SLOT-->
@@ -127,6 +118,10 @@
         <div data-brand-email-wrap><i></i><b>Envie-nos um Email</b><small data-brand-email>support@forgelabs.example</small></div>
       </div>
       <div id="faqList"></div>
+      <div class="resellers" id="resellers" hidden>
+        <h4>Revendedores oficiais</h4>
+        <div class="md" id="resellerInfo"></div>
+      </div>
     </div>
   </section>
 
@@ -144,15 +139,19 @@
     <div class="drawer-foot">
       <div class="row"><span>Desconto por quantidade</span><span id="cartDisc">0,00 €</span></div>
       <div class="row total"><span>Total</span><span id="cartTotal">0,00 €</span></div>
-      <p class="ship-note">🚚 Entrega em Portugal: imediata para artigos em stock, até 3 semanas para os restantes.<br>📦 Embalagem sempre discreta.</p>
+      <p class="ship-note">💳 A encomenda só é processada após a validação do pagamento — ligamos-lhe para confirmar e pagar.<br>🚚 Entrega em Portugal: imediata para artigos em stock, até 3 semanas para os restantes.<br>📦 Embalagem sempre discreta.</p>
       <button class="btn-orange" id="checkout">Registar encomenda</button>
     </div>
     <form class="preorder" id="preorder" hidden>
       <button type="button" class="back" id="backToCart">← Voltar ao carrinho</button>
       <h4>Os seus dados</h4>
-      <p class="muted">Só precisamos do seu nome e telefone. Ligamos-lhe para confirmar a encomenda e combinar o pagamento — nada é cobrado agora.</p>
+      <div class="pay-info">
+        <p><b>Como funciona:</b> registe a encomenda com o seu nome e telefone. Ligamos-lhe para <b>confirmar a encomenda e fazer o pagamento</b>.</p>
+        <p>A encomenda só é processada <b>após a validação do pagamento</b>. Nada é cobrado agora.</p>
+        <p>Em alternativa, pode contactar um revendedor oficial.<span data-reseller-link hidden> <a href="./#resellers" data-goto="#resellers">Ver revendedores oficiais</a></span></p>
+      </div>
       <label class="fl">Nome<input name="name" placeholder="O seu nome" required maxlength="120" autocomplete="name"></label>
-      <label class="fl">Telefone<input name="phone" type="tel" placeholder="9xx xxx xxx" required maxlength="40" autocomplete="tel" inputmode="tel" pattern="[+0-9 ().-]{9,}"></label>
+      <label class="fl">Telefone<input name="phone" type="tel" placeholder="9xx xxx xxx" required maxlength="40" autocomplete="tel" inputmode="tel" minlength="9"></label>
       <p class="form-err" id="formErr"></p>
       <button class="btn-orange" type="submit" id="submitOrder">Registar encomenda</button>
     </form>

@@ -29,7 +29,9 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 - **Testemunhos:** mensagens reais de clientes com foto opcional, origem e data; publicadas na página inicial
 - **Uso interno, sem indexação:** meta robots `noindex, nofollow` em todas as páginas, `X-Robots-Tag` em todas
   as respostas e `robots.txt` com `Disallow: /`
-- **Encomenda só com nome e telefone:** o cliente é contactado para pagar; email opcional no backoffice
+- **Encomenda só com nome e telefone:** processada após validação do pagamento; o cliente é contactado para
+  confirmar e pagar, ou pode contactar um revendedor oficial (lista em Marca); estado "Pagamento validado"
+- **Página Produtos (`/produtos`):** promoções, mais vendidos, novidades e catálogo completo com filtros
 - **Entregas e stock:** em stock = entrega imediata; sem stock = por encomenda (até 3 semanas); encomendas acima do
   stock são divididas por artigo (`fromStock`/`backorder`); embalagem discreta sempre indicada
 - **Página própria por produto:** `/produto/<id>` (gerada por `produto.php` a partir do `index.html`), com
@@ -52,7 +54,7 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 | `api/brand.css` | Cor da marca gerada pelo servidor e carregada no `<head>`: a página é pintada logo com a cor certa |
 | `products.js` | FAQ e catálogo/categorias iniciais (importados para as tabelas `products` e `categories` na primeira utilização; depois editam-se no backoffice) |
 | `admin/` | Backoffice |
-| `produto.php` | Página de cada produto (`/produto/<id>`) |
+| `produto.php`, `produtos.php`, `app/page.php` | Página de cada produto (`/produto/<id>`), página Produtos (`/produtos`) e o gerador comum que reutiliza o `index.html` |
 | `robots.txt` | Bloqueia todos os motores de busca |
 | `api.php` | API (`/api/...` via `.htaccess`). Só usa GET/POST, compatível com mod_security |
 | `app/lib.php` | Base de dados, encomendas, marca, autenticação, limites de tentativas |

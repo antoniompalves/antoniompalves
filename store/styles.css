@@ -89,13 +89,13 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 
 /* ---------- promo ---------- */
 .promo { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 32px; }
-.promo > div { border-radius: 12px; min-height: 190px; padding: 18px; position: relative; overflow: hidden; }
+.promo > div, .promo > a { border-radius: 12px; min-height: 190px; padding: 18px; position: relative; overflow: hidden; }
 .promo-main { background: linear-gradient(120deg, var(--cream), #fbefe4 60%, #f3dccb); text-align: center; }
 .promo-main small { font-size: 11px; color: var(--muted); }
 .promo-main h2 { font-size: 24px; font-weight: 500; margin: 8px 0 20px; }
 .promo-main .vial { position: absolute; bottom: 14px; }
 .promo-main .l { left: 30px; } .promo-main .r { right: 30px; }
-.promo-tile { background: #f4ece6; cursor: pointer; transition: transform .2s; }
+.promo-tile { display: block; color: inherit; background: #f4ece6; cursor: pointer; transition: transform .2s; }
 .promo-tile:hover { transform: translateY(-3px); }
 .promo-tile h4 { margin: 0; font-size: 14px; font-weight: 600; }
 .promo-tile small { color: var(--muted); font-size: 12px; }
@@ -252,6 +252,29 @@ img.pimg { position: absolute !important; inset: 0; width: 100% !important; heig
 .ship-note { font-size: 12px !important; color: var(--muted); line-height: 1.5; margin: 0 0 12px !important; font-weight: 400; }
 .bo-note { color: #3730a3 !important; }
 .preorder .fl { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
+
+/* ---------- payment info / resellers ---------- */
+.pay-info { background: #f6f4f2; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.pay-info p { margin: 0 !important; font-size: 12.5px !important; line-height: 1.5; color: #444; }
+.pay-info a, .delivery a, .acc a { color: var(--orange); font-weight: 600; }
+.resellers { margin-top: 22px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; scroll-margin-top: 20px; }
+.resellers h4 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.resellers .md { font-size: 13px; }
+
+/* ---------- products page (produtos.php) ---------- */
+.page-head { margin-top: 22px; }
+.page-head .crumbs { margin-top: 0; }
+.page-head h1 { font-size: clamp(30px, 5vw, 48px); font-weight: 500; letter-spacing: -.02em; margin: 14px 0 6px; }
+.jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.shelf { margin-top: 48px; scroll-margin-top: 20px; }
+.shelf-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
+.shelf-head .section-title { margin: 0; } .shelf-head p { margin: 4px 0 0; font-size: 13px; }
+.link-btn { color: var(--orange); font-weight: 600; font-size: 14px; white-space: nowrap; }
+.shelf-track { grid-auto-columns: calc((100% - 30px) / 4); }
+#collection { scroll-margin-top: 20px; margin-top: 56px; }
+.see-all { text-align: center; margin-top: 22px; }
+@media (max-width: 900px) { .shelf-track { grid-auto-columns: calc((100% - 10px) / 2); } }
+@media (max-width: 680px) { .shelf-track { grid-auto-columns: 78%; } }
 
 /* ---------- pagination ---------- */
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }

@@ -7,10 +7,10 @@ OUT=dist/loja-cpanel.zip
 STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
 
-for f in index.html avaliar.html avaliar.js styles.css app.js brand.js products.js favicon.svg api.php install.php produto.php robots.txt .htaccess; do cp "$SRC/$f" "$STAGE/"; done
+for f in index.html avaliar.html avaliar.js styles.css app.js brand.js products.js favicon.svg api.php install.php produto.php produtos.php robots.txt .htaccess; do cp "$SRC/$f" "$STAGE/"; done
 mkdir -p "$STAGE/admin" "$STAGE/app" "$STAGE/uploads/brand"
 cp "$SRC"/admin/{index.html,admin.css,admin.js} "$STAGE/admin/"
-cp "$SRC/app/lib.php" "$SRC/app/.htaccess" "$STAGE/app/"          # config.php e dev-router.php ficam de fora
+cp "$SRC/app/lib.php" "$SRC/app/page.php" "$SRC/app/.htaccess" "$STAGE/app/"          # config.php e dev-router.php ficam de fora
 cp "$SRC/uploads/.htaccess" "$STAGE/uploads/"
 mkdir -p "$STAGE/uploads/products"
 cp "$SRC/uploads/brand/.keep" "$STAGE/uploads/brand/"

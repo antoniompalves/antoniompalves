@@ -101,8 +101,17 @@ Uso interno — sem indexação: o site não aparece em motores de busca. Todas 
 robots.txt bloqueia tudo. Não há sitemap.
 
 Encomendas: o cliente adiciona produtos ao carrinho e carrega em "Registar encomenda", indicando só o
-nome e o telefone. A encomenda fica em "Pré-encomendas" no backoffice, com botões para ligar ou abrir
-o WhatsApp; ligue ao cliente para confirmar e combinar o pagamento.
+nome e o telefone. A loja informa que a encomenda só é processada após a validação do pagamento, que
+o cliente será contactado para confirmar a encomenda e fazer o pagamento e que, em alternativa, pode
+contactar um revendedor oficial. A encomenda fica em "Pré-encomendas" no backoffice, com botões para
+ligar ou abrir o WhatsApp. Depois de receber o pagamento, mude o estado para "Pagamento validado".
+
+Revendedores oficiais: em "Marca" → "Revendedores oficiais" (uma linha por revendedor, ex.:
+"- **Nome** — Lisboa — 912 345 678"). Aparecem na secção de contactos e no carrinho; vazio = oculto.
+
+Página "Produtos": /produtos mostra as Promoções, os Mais vendidos e as Novidades, e o catálogo
+completo com pesquisa, filtros e paginação. /produtos?cat=<id> abre uma categoria. O menu "Produtos",
+os destaques de categoria da homepage e o caminho de navegação das fichas levam para esta página.
 
 Entregas: em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata.
 Sem stock imediato: o produto continua disponível com "Por encomenda · até 3 semanas". Numa encomenda
