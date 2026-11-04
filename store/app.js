@@ -92,19 +92,28 @@
   };
   $("#checkout").onclick = () => { if (!Object.keys(cart).length) return toast("O seu carrinho está vazio"); showStep("form"); };
   $("#backToCart").onclick = () => showStep("cart");
+  // optional reseller code: a link that opens the text field
+  const setCodeBox = open => {
+    $("#codeBox").hidden = !open; $("#codeToggle").setAttribute("aria-expanded", String(open));
+    $("#codeToggle").innerHTML = open ? '<span aria-hidden="true">−</span> Não tenho código' : '<span aria-hidden="true">＋</span> Tenho um código de revendedor';
+    if (open) setTimeout(() => form.resellerCode.focus(), 50); else form.resellerCode.value = "";
+  };
+  $("#codeToggle").onclick = () => setCodeBox($("#codeBox").hidden);
   form.onsubmit = async e => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(form)), btn = $("#submitOrder");
     $("#formErr").textContent = ""; btn.disabled = true; btn.textContent = "A enviar…";
     try {
       const r = await fetch(window.Brand.url("api/orders"), { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer: { name: f.name, email: f.email, phone: f.phone }, items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
+        body: JSON.stringify({ customer: { name: f.name, email: f.email, phone: f.phone }, resellerCode: $("#codeBox").hidden ? "" : (f.resellerCode || "").trim(), items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
       const d = await r.json().catch(() => ({}));
       if (r.status === 409) refreshProducts();
       if (!r.ok) throw new Error(d.error || "Não foi possível registar a encomenda");
       cart = {}; save(); renderCart(); form.reset();
+      setTimeout(() => setCodeBox(false), 0); // after the confirmation text was built
       done.innerHTML = `<div class="tick">✓</div><h3>Encomenda registada</h3><p>A sua referência é <b>${esc(d.number)}</b>.</p>
         <p class="muted">Total: ${eur(d.total)}. Vai receber uma mensagem em <b>${esc(f.email)}</b> ou por WhatsApp (<b>${esc(f.phone)}</b>) para confirmar a encomenda e fazer o pagamento. Depois recebe a confirmação do pagamento e o tracking do envio. Nada foi cobrado.</p>
+        ${!$("#codeBox").hidden && (f.resellerCode || "").trim() ? `<p class="muted">Código de revendedor: <b>${esc(f.resellerCode.trim().toUpperCase())}</b></p>` : ""}
         <p class="muted"><b>A encomenda só é processada após a validação do pagamento.</b></p>
         <p class="muted">${d.backorder ? "Alguns artigos não têm stock imediato: entrega em até 3 semanas." : "Entrega imediata em Portugal."} Embalagem sempre discreta.</p>
         <button class="btn-orange" id="doneClose">Continuar a comprar</button>`;

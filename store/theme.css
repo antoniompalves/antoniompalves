@@ -142,9 +142,17 @@ blockquote { border-radius: var(--r-lg); }
 .pay-info { background: rgba(255,255,255,.6); }
 .toast { background: rgba(18,21,43,.88); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); box-shadow: var(--glass-shadow-lg); }
 
+/* reseller code (checkout) */
+.code-toggle { align-self: flex-start; color: var(--orange); font-weight: 600; font-size: 14px; padding: 4px 0; display: inline-flex; gap: 6px; align-items: center; }
+.code-box { display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,.55); border: 1px dashed color-mix(in srgb, var(--orange) 45%, transparent); border-radius: var(--r-sm); padding: 10px 12px; }
+.code-box input { text-transform: uppercase; letter-spacing: .04em; }
+.code-box input::placeholder { text-transform: none; letter-spacing: 0; }
+.code-hint { margin: 0 !important; font-size: 12px !important; color: var(--muted); }
+
 /* layering: cart sheet and menu above the fixed bars; toast always on top */
 .overlay { z-index: 44; } .drawer { z-index: 45; }
-.toast { z-index: 60; }
+.toast { z-index: 60; opacity: 0; pointer-events: none; transition: transform .3s, opacity .25s; }
+.toast.show { opacity: 1; }
 body.cart-open .tabbar, body.cart-open .buybar, body.menu-open .tabbar, body.menu-open .buybar { opacity: 0; pointer-events: none; transform: translateY(30px); }
 .tabbar, .buybar { transition: opacity .2s ease, transform .25s ease; }
 

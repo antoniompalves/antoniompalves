@@ -339,6 +339,7 @@ function ensure_products(): void
         add_column_if_missing('products', $col, $def);
     }
     add_column_if_missing('orders', 'tracking', 'VARCHAR(120) NULL'); // shipping tracking number
+    add_column_if_missing('orders', 'reseller_code', 'VARCHAR(40) NULL'); // optional code given at checkout
     if ((int) $pdo->query('SELECT COUNT(*) FROM ' . t('products'))->fetchColumn() === 0) {
         $ins = $pdo->prepare('INSERT INTO ' . t('products') . ' (id, position, name, sub, cat, price, promo, reviews, best, fresh, active, description, image, updated_at)
             VALUES (?,?,?,?,?,?,?,?,?,?,1,?,NULL,?)');
@@ -713,7 +714,7 @@ function build_order(array $b, string $source): array
     $now = now_iso();
     return [
         'id' => uuid4(), 'createdAt' => $now, 'updatedAt' => $now, 'status' => 'pending', 'source' => $source,
-        'customer' => $customer, 'notes' => str_in($b['notes'] ?? '', 1000), 'internalNote' => '', 'items' => $lines,
+        'customer' => $customer, 'resellerCode' => reseller_code_in($b['resellerCode'] ?? ''), 'notes' => str_in($b['notes'] ?? '', 1000), 'internalNote' => '', 'items' => $lines,
         'subtotal' => round($subtotal, 2), 'discount' => round($discount, 2), 'total' => round($subtotal - $discount, 2),
         'history' => [['at' => $now, 'status' => 'pending', 'by' => $source]],
     ];
@@ -724,12 +725,12 @@ function insert_order(array $o): array
     $pdo = db();
     $pdo->beginTransaction();
     $st = $pdo->prepare('INSERT INTO ' . t('orders') . ' (id, created_at, updated_at, status, source, customer_name, customer_email, customer_phone,
-        customer_address, customer_city, customer_postcode, customer_country, notes, internal_note, items, history, subtotal, discount, total)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+        customer_address, customer_city, customer_postcode, customer_country, notes, internal_note, items, history, subtotal, discount, total, reseller_code)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
     $c = $o['customer'];
     $st->execute([$o['id'], $o['createdAt'], $o['updatedAt'], $o['status'], $o['source'], $c['name'], $c['email'], $c['phone'],
         $c['address'], $c['city'], $c['postcode'], $c['country'], $o['notes'], $o['internalNote'],
-        json_encode($o['items'], JSON_UNESCAPED_UNICODE), json_encode($o['history'], JSON_UNESCAPED_UNICODE), $o['subtotal'], $o['discount'], $o['total']]);
+        json_encode($o['items'], JSON_UNESCAPED_UNICODE), json_encode($o['history'], JSON_UNESCAPED_UNICODE), $o['subtotal'], $o['discount'], $o['total'], $o['resellerCode'] !== '' ? $o['resellerCode'] : null]);
     $seq = (int) $pdo->lastInsertId();
     $o['number'] = 'FL-' . (1000 + $seq);
     try {
@@ -791,7 +792,7 @@ function row_to_order(array $r): array
         'status' => $r['status'], 'source' => $r['source'],
         'customer' => ['name' => $r['customer_name'], 'email' => $r['customer_email'], 'phone' => $r['customer_phone'],
             'address' => $r['customer_address'], 'city' => $r['customer_city'], 'postcode' => $r['customer_postcode'], 'country' => $r['customer_country']],
-        'notes' => $r['notes'] ?? '', 'internalNote' => $r['internal_note'] ?? '', 'tracking' => (string) ($r['tracking'] ?? ''),
+        'notes' => $r['notes'] ?? '', 'internalNote' => $r['internal_note'] ?? '', 'tracking' => (string) ($r['tracking'] ?? ''), 'resellerCode' => (string) ($r['reseller_code'] ?? ''),
         'items' => json_decode($r['items'], true) ?: [], 'history' => json_decode($r['history'], true) ?: [],
         'subtotal' => (float) $r['subtotal'], 'discount' => (float) $r['discount'], 'total' => (float) $r['total'],
     ];
@@ -1314,5 +1315,13 @@ function goals_save(array $rows): array
         if ($keep !== $g) $up->execute([json_encode($keep), $p['id']]);
     }
     return $out;
+}
+
+// Optional reseller code typed by the customer at checkout: letters, digits, spaces, - and _ (stored upper-case).
+function reseller_code_in($v): string
+{
+    $code = mb_strtoupper(preg_replace('/\s+/', ' ', str_in(is_string($v) ? $v : '', 40)));
+    if ($code !== '' && !preg_match('/^[\p{L}\p{N} _-]{2,40}$/u', $code)) throw new HttpError(400, 'Código de revendedor inválido (use apenas letras, números e -)');
+    return $code;
 }
 

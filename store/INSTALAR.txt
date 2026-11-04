@@ -104,7 +104,9 @@ Encomendas: o cliente adiciona produtos ao carrinho e carrega em "Registar encom
 nome, o email e o telemóvel/WhatsApp. A loja informa que vai receber mensagens por email ou WhatsApp
 para confirmar a encomenda e fazer o pagamento, receber a confirmação do pagamento e o tracking do
 envio; que a encomenda só é processada após a validação do pagamento; e que, em alternativa, pode
-contactar um revendedor oficial.
+contactar um revendedor oficial. No formulário, "Tenho um código de revendedor" abre um campo
+opcional para o código; fica guardado na encomenda (lista, painel, pesquisa e coluna
+"codigo_revendedor" no CSV).
 
 No backoffice, cada encomenda tem "Mensagens ao cliente" prontas a enviar por Email ou WhatsApp:
   1. Confirmar encomenda   2. Pedido de pagamento   3. Pagamento confirmado   4. Envio e tracking

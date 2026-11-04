@@ -100,7 +100,7 @@
 
   function filtered() {
     return orders.filter(o => (statusFilter === "all" || o.status === statusFilter) && (!query ||
-      [o.number, o.customer.name, o.customer.email, o.customer.phone, ...o.items.map(i => i.name)].join(" ").toLowerCase().includes(query)));
+      [o.number, o.customer.name, o.customer.email, o.customer.phone, o.resellerCode || "", ...o.items.map(i => i.name)].join(" ").toLowerCase().includes(query)));
   }
   function renderRows() {
     const list = filtered();
@@ -108,7 +108,7 @@
     $("#empty").textContent = orders.length ? "Nenhuma encomenda corresponde a este filtro." : "Ainda não há pré-encomendas.";
     $("#rows").innerHTML = list.map(o => `
       <tr data-id="${o.id}" class="${selected === o.id ? "sel" : ""}">
-        <td><b>${esc(o.number)}</b>${o.source === "backoffice" ? '<span class="src">manual</span>' : ""}${o.backorder && o.status !== "cancelled" ? '<span class="src bo" title="Tem artigos sem stock: entrega até 3 semanas">até 3 sem.</span>' : ""}</td>
+        <td><b>${esc(o.number)}</b>${o.source === "backoffice" ? '<span class="src">manual</span>' : ""}${o.backorder && o.status !== "cancelled" ? '<span class="src bo" title="Tem artigos sem stock: entrega até 3 semanas">até 3 sem.</span>' : ""}${o.resellerCode ? `<span class="src rc" title="Código de revendedor">${esc(o.resellerCode)}</span>` : ""}</td>
         <td>${fmtDate(o.createdAt)}</td>
         <td>${esc(o.customer.name)}<small>${esc(o.customer.phone || o.customer.email)}</small></td>
         <td>${o.items.reduce((s, i) => s + i.qty, 0)} unid.<small>${esc(o.items.map(i => i.name).slice(0, 2).join(", "))}${o.items.length > 2 ? "…" : ""}</small></td>
@@ -136,6 +136,7 @@
         <div class="tot"><span>Desconto por quantidade</span><span>−${eur(o.discount)}</span></div>
         <div class="tot big"><span>Total</span><span>${eur(o.total)}</span></div></div>
       ${o.notes ? `<div><h4>Observações do cliente</h4><p>${esc(o.notes)}</p></div>` : ""}
+      ${o.resellerCode ? `<div><h4>Código de revendedor</h4><p class="rc-big">${esc(o.resellerCode)}</p></div>` : ""}
       <div><h4>Mensagens ao cliente</h4>
         <div class="msgs">${MSGS.map((m, i) => `<div class="msg"><span>${m.label}</span><span class="msg-btns">
           ${o.customer.email ? `<a class="ghost" data-msg="${i}" data-via="email" href="#">Email</a>` : ""}
@@ -225,7 +226,7 @@
     e.preventDefault(); $("#newErr").textContent = "";
     const f = Object.fromEntries(new FormData(e.target));
     try {
-      const o = await api("api/orders", { method: "POST", body: JSON.stringify({ customer: f, notes: f.notes, items: Object.entries(lines).map(([id, qty]) => ({ id, qty })) }) });
+      const o = await api("api/orders", { method: "POST", body: JSON.stringify({ customer: f, notes: f.notes, resellerCode: f.resellerCode || "", items: Object.entries(lines).map(([id, qty]) => ({ id, qty })) }) });
       Object.keys(lines).forEach(k => delete lines[k]); e.target.reset(); renderLines();
       orders.unshift(o); selected = o.id; render();
       document.querySelector('[data-view="orders"]').click();

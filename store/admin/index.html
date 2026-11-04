@@ -46,7 +46,7 @@
       <section id="view-orders">
         <div class="stats" id="stats"></div>
         <div class="toolbar">
-          <input type="search" id="q" placeholder="Pesquisar por número, nome, email, produto…">
+          <input type="search" id="q" placeholder="Pesquisar por número, nome, email, código, produto…">
           <div class="chips" id="statusChips"></div>
           <button class="ghost" id="refresh">↻ Atualizar</button>
           <button class="ghost" id="exportCsv">⬇ Exportar CSV</button>
@@ -72,6 +72,7 @@
               <input name="name" placeholder="Nome completo *" required maxlength="120">
               <input name="phone" type="tel" placeholder="Telefone *" required maxlength="40">
               <input name="email" type="email" placeholder="Email (opcional)" maxlength="160">
+              <input name="resellerCode" placeholder="Código de revendedor (opcional)" maxlength="40" style="text-transform:uppercase">
               <input name="country" placeholder="País" maxlength="60">
               <input name="address" placeholder="Morada" maxlength="300" class="span2">
               <input name="postcode" placeholder="Código postal" maxlength="20">

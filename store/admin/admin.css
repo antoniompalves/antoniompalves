@@ -170,6 +170,9 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .goal-list button { width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 11px; }
 .goal-list .gdel { color: #c62828; }
 
+.src.rc { color: #7c2d12; border-color: #fed7aa; background: #fff7ed; font-weight: 600; }
+.rc-big { font-size: 16px; font-weight: 700; letter-spacing: .04em; margin: 0; }
+
 /* ---------- reviews ---------- */
 .nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #c62828; color: #fff; font-size: 11px; font-weight: 700; margin-left: 4px; }
 .rv-admin { display: flex; flex-direction: column; gap: 10px; }

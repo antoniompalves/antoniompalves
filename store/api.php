@@ -69,11 +69,11 @@ try {
         header('Content-Disposition: attachment; filename="pre-encomendas.csv"');
         header('Cache-Control: no-store');
         echo "\xEF\xBB\xBF"; // BOM para o Excel reconhecer UTF-8
-        echo implode(',', ['numero', 'data', 'estado', 'origem', 'entrega', 'tracking', 'nome', 'telefone', 'email', 'morada', 'localidade', 'codigo_postal', 'pais', 'artigos', 'subtotal', 'desconto', 'total', 'observacoes']) . "\n";
+        echo implode(',', ['numero', 'data', 'estado', 'origem', 'entrega', 'tracking', 'codigo_revendedor', 'nome', 'telefone', 'email', 'morada', 'localidade', 'codigo_postal', 'pais', 'artigos', 'subtotal', 'desconto', 'total', 'observacoes']) . "\n";
         foreach (db()->query('SELECT * FROM ' . t('orders') . ' ORDER BY seq') as $r) {
             $o = row_to_order($r); $c = $o['customer'];
             $items = implode('; ', array_map(fn ($i) => $i['qty'] . 'x ' . $i['name'], $o['items']));
-            echo implode(',', array_map($cell, [$o['number'], $o['createdAt'], $o['status'], $o['source'], $o['backorder'] ? 'até 3 semanas' : 'imediata', $o['tracking'], $c['name'], $c['phone'], $c['email'],
+            echo implode(',', array_map($cell, [$o['number'], $o['createdAt'], $o['status'], $o['source'], $o['backorder'] ? 'até 3 semanas' : 'imediata', $o['tracking'], $o['resellerCode'], $c['name'], $c['phone'], $c['email'],
                 $c['address'], $c['city'], $c['postcode'], $c['country'], $items, $o['subtotal'], $o['discount'], $o['total'], $o['notes']])) . "\n";
         }
         exit;
