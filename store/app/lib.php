@@ -335,7 +335,7 @@ function ensure_products(): void
     $pdo->exec(stock_schema($driver, config()['prefix'] ?? ''));
     // upgrade older installs: add the stock columns when missing
     foreach (['stock' => 'INT NULL', 'low_stock' => 'INT NOT NULL DEFAULT 5', 'image_security' => 'VARCHAR(100) NULL',
-              'image_package' => 'VARCHAR(100) NULL', 'security_text' => 'TEXT NULL', 'verify_url' => 'VARCHAR(300) NULL', 'specs' => 'TEXT NULL'] as $col => $def) {
+              'image_package' => 'VARCHAR(100) NULL', 'security_text' => 'TEXT NULL', 'verify_url' => 'VARCHAR(300) NULL', 'specs' => 'TEXT NULL', 'goals' => 'TEXT NULL'] as $col => $def) {
         add_column_if_missing('products', $col, $def);
     }
     add_column_if_missing('orders', 'tracking', 'VARCHAR(120) NULL'); // shipping tracking number
@@ -366,6 +366,7 @@ function row_to_product(array $r): array
         'packageImageUrl' => !empty($r['image_package']) ? 'uploads/products/' . $r['image_package'] : null,
         'securityText' => (string) ($r['security_text'] ?? ''), 'verifyUrl' => (string) ($r['verify_url'] ?? ''),
         'specs' => (is_array($sp = json_decode((string) ($r['specs'] ?? ''), true)) ? $sp : []),
+        'goals' => (is_array($gl = json_decode((string) ($r['goals'] ?? ''), true)) ? array_values(array_filter($gl, 'is_string')) : []),
         'trackStock' => $r['stock'] !== null, 'stock' => $r['stock'] === null ? null : (int) $r['stock'], 'lowStock' => (int) $r['low_stock'],
     ];
 }
@@ -565,6 +566,12 @@ function product_fields(array $in, bool $creating): array
     foreach (['best', 'fresh', 'active'] as $k) if ($creating || array_key_exists($k, $in)) $f[$k] = empty($in[$k]) ? 0 : 1;
     if ($creating && !array_key_exists('active', $in)) $f['active'] = 1;
     if ($creating || array_key_exists('description', $in)) $f['description'] = str_in($in['description'] ?? '', 20000);
+    // goals ("Objetivos") the product is listed under — ids from goals_list()
+    if ($creating || array_key_exists('goals', $in)) {
+        $ids = array_column(goals_list(), 'id');
+        $g = is_array($in['goals'] ?? null) ? $in['goals'] : [];
+        $f['goals'] = json_encode(array_values(array_unique(array_filter($g, fn ($x) => is_string($x) && in_array($x, $ids, true)))));
+    }
     // specifications table: list of [label, value]
     if ($creating || array_key_exists('specs', $in)) {
         $rows = $in['specs'] ?? [];
@@ -1265,5 +1272,49 @@ function review_delete(int $id): void
 {
     ensure_reviews();
     db()->prepare('DELETE FROM ' . t('reviews') . ' WHERE id = ?')->execute([$id]);
+}
+
+// ---------- goals ("Objetivos") ----------
+// A second way to browse products (menu column next to the categories). Stored as a setting:
+// ordered list of {id, name}. Products reference goal ids in products.goals.
+const DEFAULT_GOALS = ['Crescimento muscular', 'Aumento de força', 'Redução de gordura', 'Terapia pós-ciclo', 'Recuperação',
+    'Antienvelhecimento', 'Bronzeamento', 'Volume', 'Definição', 'Recomposição', 'Controlo de estrogénio',
+    'Controlo de prolactina', 'Estimulação de GH', 'Energia'];
+
+function goals_list(): array
+{
+    $raw = setting_all()['goals'] ?? null;
+    $list = $raw !== null ? json_decode($raw, true) : null;
+    if (!is_array($list)) $list = array_map(fn ($n) => ['id' => slugify($n), 'name' => $n], DEFAULT_GOALS);
+    return array_values(array_filter($list, fn ($g) => is_array($g) && !empty($g['id']) && !empty($g['name'])));
+}
+
+// Saves the full ordered list. Existing ids are kept (renaming keeps the products' assignments);
+// rows without an id get one from the name. Removed goals are dropped from every product.
+function goals_save(array $rows): array
+{
+    if (count($rows) > 60) throw new HttpError(400, 'Demasiados objetivos (máx. 60)');
+    $out = []; $seen = [];
+    foreach ($rows as $r) {
+        if (!is_array($r)) continue;
+        $name = str_in($r['name'] ?? '', 40);
+        if ($name === '') continue;
+        $id = is_string($r['id'] ?? null) && preg_match('/^[a-z0-9-]{1,50}$/', $r['id']) ? $r['id'] : slugify($name);
+        $base = $id; $n = 2;
+        while (isset($seen[$id])) $id = $base . '-' . $n++;
+        $seen[$id] = true;
+        $out[] = ['id' => $id, 'name' => $name];
+    }
+    setting_set(['goals' => json_encode($out, JSON_UNESCAPED_UNICODE)]);
+    // drop removed goals from products
+    ensure_products();
+    $valid = array_column($out, 'id');
+    $up = db()->prepare('UPDATE ' . t('products') . ' SET goals = ? WHERE id = ?');
+    foreach (db()->query('SELECT id, goals FROM ' . t('products') . " WHERE goals IS NOT NULL AND goals <> '[]'") as $p) {
+        $g = json_decode((string) $p['goals'], true) ?: [];
+        $keep = array_values(array_intersect($g, $valid));
+        if ($keep !== $g) $up->execute([json_encode($keep), $p['id']]);
+    }
+    return $out;
 }
 

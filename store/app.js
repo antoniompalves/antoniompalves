@@ -1,5 +1,6 @@
 (() => {
   const P = window.PRODUCTS, C = window.CATEGORIES;
+  const G = [];                                         // goals ("Objetivos"), loaded from the API
   const PAGE = window.PAGE || { type: "home" };          // set by produto.php on product pages
   const isProduct = PAGE.type === "product";
   const $ = (s, el = document) => el.querySelector(s);
@@ -152,12 +153,14 @@
     const all = [{ id: "all", name: "Todos", count: P.length }, { id: "best", name: "Mais vendidos", count: P.filter(p => p.best).length }, { id: "new", name: "Novidades", count: P.filter(p => p.fresh).length }, { id: "promo", name: "Promoções", count: P.filter(p => p.promo).length },
       ...C.map(c => ({ ...c, count: P.filter(p => p.cat === c.id).length })).filter(c => c.count)];
     if (!$("#chips")) return;
+    if (filter.startsWith("goal:")) { const g = G.find(x => x.id === filter.slice(5)); all.push({ id: filter, name: "Objetivo: " + (g ? g.name : filter.slice(5)), count: P.filter(p => (p.goals || []).includes(filter.slice(5))).length }); }
     $("#chips").innerHTML = all.map(c => `<button class="chip ${filter === c.id ? "on" : ""}" data-chip="${c.id}">${c.name}<small>${c.count}</small></button>`).join("");
   }
   function renderGrid() {
     if (!$("#grid")) return;
     const q = query.toLowerCase();
-    const list = P.filter(p => (filter === "all" || p.cat === filter || (filter === "new" && p.fresh) || (filter === "promo" && p.promo) || (filter === "best" && p.best))
+    const goal = filter.startsWith("goal:") ? filter.slice(5) : null;
+    const list = P.filter(p => (filter === "all" || p.cat === filter || (filter === "new" && p.fresh) || (filter === "promo" && p.promo) || (filter === "best" && p.best) || (goal && (p.goals || []).includes(goal)))
       && (!q || (p.name + " " + p.sub + " " + catName(p.cat)).toLowerCase().includes(q)));
     const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
     page = Math.min(Math.max(1, page), pages);
@@ -180,8 +183,10 @@
   }
   const setFilter = f => { filter = f; page = 1; renderChips(); renderGrid(); };
   // ?cat=<id> opens the home page with that category selected (used by the product breadcrumbs)
-  const catParam = new URLSearchParams(location.search).get("cat");
+  const params = new URLSearchParams(location.search);
+  const catParam = params.get("cat") || (params.get("goal") ? "goal:" + params.get("goal") : null);
   if (catParam) filter = catParam;
+  if (params.get("q") && $("#search")) { query = params.get("q"); $("#search").value = query; }
   if ($("#grid")) {
   $("#pager").addEventListener("click", e => {
     const b = e.target.closest("[data-pg]"); if (!b || b.disabled) return;
@@ -327,7 +332,61 @@
   if ($("#faqList")) $("#faqList").innerHTML = window.FAQ.map(([q, a]) => `<details class="acc"><summary>${q}</summary><div>${a}</div></details>`).join("");
 
   // ---------- nav ----------
-  $("#burger").onclick = () => $("#navPills").classList.toggle("open");
+  // ---------- side menu: search, categories (expandable) and goals ----------
+  const DOTS = ["#9ff0f5", "#ffd29a", "#a5b1f0", "#b6f3a0", "#f5a3a3", "#f3f59a", "#d8b4fe", "#fbcfe8", "#99f6e4", "#fde68a"];
+  const menu = $("#menu");
+  const setMenu = open => {
+    document.body.classList.toggle("menu-open", open);
+    menu.setAttribute("aria-hidden", String(!open)); $("#menuOpen").setAttribute("aria-expanded", String(open));
+    if (open) { renderMenu(); setTimeout(() => $("#menuSearch").focus(), 250); }
+  };
+  function renderMenu() {
+    if (!menu) return;
+    const cats = C.map((c, i) => ({ ...c, color: DOTS[i % DOTS.length], items: P.filter(p => p.cat === c.id) })).filter(c => c.items.length);
+    $("#menuCats").innerHTML = cats.map(c => `<li data-mc="${esc(c.id)}">
+      <div class="mc-row"><a href="produtos?cat=${encodeURIComponent(c.id)}"><span class="mc-dot" style="background:${c.color}"></span>${esc(c.name)} <small>${c.items.length}</small></a>
+        <button type="button" class="mc-tog" aria-label="Ver produtos de ${esc(c.name)}" aria-expanded="false">›</button></div>
+      <ul class="mc-sub">${c.items.map(p => `<li><a href="${purl(p.id)}">${esc(p.name)}<span>${eur(finalPrice(p))}</span></a></li>`).join("")}
+        <li class="all"><a href="produtos?cat=${encodeURIComponent(c.id)}">Ver todos em ${esc(c.name)} →</a></li></ul></li>`).join("");
+    const goals = G.map(g => ({ ...g, n: P.filter(p => (p.goals || []).includes(g.id)).length })).filter(g => g.n);
+    $("#menuGoalsCol").hidden = !goals.length;
+    $("#menuGoals").innerHTML = goals.map(g => `<li><a href="produtos?goal=${encodeURIComponent(g.id)}">${esc(g.name)} <small>${g.n}</small></a></li>`).join("");
+  }
+  if (menu) {
+    $("#menuOpen").onclick = () => setMenu(true);
+    $("#burger").onclick = () => setMenu(true);
+    $("#menuClose").onclick = $("#menuOverlay").onclick = () => setMenu(false);
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && document.body.classList.contains("menu-open")) setMenu(false); });
+    $("#menuCats").addEventListener("click", e => {
+      const t = e.target.closest(".mc-tog"); if (!t) return;
+      const li = t.closest("li"); const open = !li.classList.contains("open");
+      li.classList.toggle("open", open); t.setAttribute("aria-expanded", String(open));
+    });
+    // in-menu links to sections of the current page just close the menu and scroll
+    menu.addEventListener("click", e => {
+      const a = e.target.closest("a[href]"); if (!a) return;
+      const u = new URL(a.href, location.href);
+      if (u.pathname === location.pathname && u.search === location.search && u.hash && $(u.hash)) { e.preventDefault(); setMenu(false); $(u.hash).scrollIntoView({ behavior: "smooth" }); }
+    });
+    let kb = -1;
+    const results = () => [...$("#menuResults").querySelectorAll("a")];
+    $("#menuSearch").addEventListener("input", () => {
+      const q = $("#menuSearch").value.trim().toLowerCase(); kb = -1;
+      const box = $("#menuResults");
+      if (!q) { box.hidden = true; box.innerHTML = ""; return; }
+      const found = P.filter(p => (p.name + " " + p.sub + " " + catName(p.cat)).toLowerCase().includes(q));
+      box.hidden = false;
+      box.innerHTML = found.length ? found.slice(0, 8).map(p => `<a href="${purl(p.id)}"><span class="rt">${p.imageUrl ? `<img src="${esc(window.Brand.url(p.imageUrl))}" alt="">` : "<i></i>"}</span>
+          <span>${esc(p.name)}<small>${esc(p.sub || catName(p.cat))}</small></span><b>${eur(finalPrice(p))}</b></a>`).join("")
+          + (found.length > 8 ? `<a href="produtos?q=${encodeURIComponent(q)}"><span></span><span>Ver os ${found.length} resultados →</span><b></b></a>` : "")
+        : `<div class="none">Sem resultados para “${esc(q)}”.</div>`;
+    });
+    $("#menuSearch").addEventListener("keydown", e => {
+      const list = results(); if (!list.length) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); kb = (kb + (e.key === "ArrowDown" ? 1 : -1) + list.length) % list.length; list.forEach((x, i) => x.classList.toggle("kb", i === kb)); }
+      if (e.key === "Enter") { e.preventDefault(); (list[kb] || list[0]).click(); }
+    });
+  }
   $("#navPills").addEventListener("click", e => {
     const a = e.target.closest("a"); if (!a) return;
     [...$("#navPills").children].forEach(x => x.classList.toggle("active", x === a));
@@ -367,7 +426,7 @@
     renderCart();
   }
   renderPage();
-  if (catParam && $("#collection")) setTimeout(() => $("#collection").scrollIntoView(), 0);
+  if ((catParam || params.get("q")) && $("#collection")) setTimeout(() => $("#collection").scrollIntoView(), 0);
 
   // category tiles on the home page follow the first two categories that have products
   function renderTiles() {
@@ -387,14 +446,15 @@
   // products.js is only the fallback when the page is opened without the server.
   async function refreshProducts() {
     try {
-      const [rc, r] = await Promise.all([fetch(window.Brand.url("api/categories"), { cache: "no-store" }), fetch(window.Brand.url("api/products"), { cache: "no-store" })]);
+      const [rc, r, rg] = await Promise.all([fetch(window.Brand.url("api/categories"), { cache: "no-store" }), fetch(window.Brand.url("api/products"), { cache: "no-store" }), fetch(window.Brand.url("api/goals"), { cache: "no-store" })]);
       if (!r.ok || !rc.ok) return;
-      const [cats, list] = await Promise.all([rc.json(), r.json()]);
+      const [cats, list, goals] = await Promise.all([rc.json(), r.json(), rg.ok ? rg.json() : []]);
       if (!Array.isArray(list) || !Array.isArray(cats)) return;
+      if (Array.isArray(goals)) G.splice(0, G.length, ...goals);
       C.splice(0, C.length, ...cats);
       P.splice(0, P.length, ...list);
-      if (!["all", "new", "promo", "best"].includes(filter) && !C.some(c => c.id === filter)) filter = "all";
-      renderTiles(); renderFeatured(); renderPage();
+      if (!["all", "new", "promo", "best"].includes(filter) && !filter.startsWith("goal:") && !C.some(c => c.id === filter)) filter = "all";
+      renderTiles(); renderFeatured(); renderPage(); renderMenu();
     } catch {}
   }
   refreshProducts();

@@ -25,6 +25,7 @@ try {
             json_out(201, review_submit($m[1], body_json()));
         }
     }
+    if ($route === 'goals' && $method === 'GET') json_out(200, goals_list());
     if ($route === 'categories' && $method === 'GET') {
         json_out(200, array_map(fn ($c) => ['id' => $c['id'], 'name' => $c['name']], categories_list()));
     }
@@ -100,6 +101,9 @@ try {
         if ($m[2] === 'image/delete') json_out(200, testimonial_image_remove((int) $m[1]));
         json_out(200, testimonial_update((int) $m[1], body_json()));
     }
+
+    // ----- goals -----
+    if ($route === 'goals' && $method === 'POST') json_out(200, goals_save(body_json()['goals'] ?? []));
 
     // ----- categories -----
     if ($route === 'categories/all' && $method === 'GET') json_out(200, categories_list(true));

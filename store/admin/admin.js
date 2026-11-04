@@ -26,6 +26,7 @@
   const L = k => LABEL[k] || k;
   const { unitPrice, bulkRate } = window;
   let CATEGORIES = window.CATEGORIES.slice(); // replaced by the database list after sign-in
+  let GOALS = [];
   let PRODUCTS = window.PRODUCTS.slice(); // replaced by the database list after sign-in
 
   let token = "";
@@ -248,7 +249,8 @@
   renderCatSelects();
   async function loadProducts() {
     try {
-      [CATEGORIES, PRODUCTS] = await Promise.all([api("api/categories/all"), api("api/products/all")]);
+      [CATEGORIES, PRODUCTS, GOALS] = await Promise.all([api("api/categories/all"), api("api/products/all"), api("api/goals")]);
+      renderGoalList();
       renderCatSelects(); renderProducts(); renderProdSel(); renderLines(); renderCats();
     } catch (e) { toast(e.message); }
   }
@@ -367,7 +369,7 @@
     pSel = id; pCreating = false; revealProduct(id); renderProducts();
     $("#pformTitle").textContent = "Editar produto";
     $("#pview").hidden = false; $("#pview").href = window.Brand.url("produto/" + encodeURIComponent(p.id));
-    pf.name.value = p.name; pf.sub.value = p.sub; pf.cat.value = p.cat;
+    pf.name.value = p.name; pf.sub.value = p.sub; pf.cat.value = p.cat; renderGoalPick(p.goals || []);
     pf.price.value = String(p.price).replace(".", ","); pf.promo.value = p.promo || ""; pf.description.value = p.description || "";
     pf.specs.value = (p.specs || []).map(([k, v]) => `${k}: ${v}`).join("\n");
     pf.reviewsInfo.value = p.reviews ? `${p.reviews} · média ${String(p.rating).replace(".", ",")} ★` : "Sem avaliações"; pf.position.value = p.position;
@@ -383,14 +385,14 @@
     pSel = null; pCreating = true; renderProducts(); pf.reset();
     pf.active.checked = true; pf.cat.value = $("#pcat").value || (CATEGORIES[0] || {}).id || "";
     pf.trackStock.checked = false; pf.lowStock.value = 5; pf.initialStock.value = 0; renderStock(null);
-    $("#pformTitle").textContent = "Novo produto"; $("#pview").hidden = true; $("#pdelete").disabled = true; $("#pformErr").textContent = "";
+    $("#pformTitle").textContent = "Novo produto"; $("#pview").hidden = true; renderGoalPick([]); $("#pdelete").disabled = true; $("#pformErr").textContent = "";
     updateFinal(); renderPImage(null); showForm(true); pf.name.focus();
   };
   $("#pclose").onclick = () => { pSel = null; pCreating = false; showForm(false); renderProducts(); };
   pf.onsubmit = async e => {
     e.preventDefault(); $("#pformErr").textContent = "";
     const body = { name: pf.name.value, sub: pf.sub.value, cat: pf.cat.value, price: pf.price.value, promo: pf.promo.value || 0,
-      description: pf.description.value, specs: parseSpecLines(pf.specs.value), securityText: pf.securityText.value, verifyUrl: pf.verifyUrl.value.trim(), active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
+      description: pf.description.value, specs: parseSpecLines(pf.specs.value), goals: [...document.querySelectorAll("#pformGoals input:checked")].map(x => x.value), securityText: pf.securityText.value, verifyUrl: pf.verifyUrl.value.trim(), active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
     if (pf.position.value !== "") body.position = pf.position.value;
     body.trackStock = pf.trackStock.checked; body.lowStock = pf.lowStock.value || 0;
     const cur = PRODUCTS.find(x => x.id === pSel);
@@ -776,6 +778,40 @@
     if (!tSel || !confirm("Eliminar este testemunho? Esta ação não pode ser anulada.")) return;
     try { await api("api/testimonials/" + tSel + "/delete", { method: "POST" }); tSel = null; showTForm(false); await loadTestimonials(); toast("Testemunho eliminado"); }
     catch (err) { toast(err.message); }
+  };
+
+  // ---------- goals (Objetivos) ----------
+  function renderGoalPick(sel) {
+    $("#pformGoals").innerHTML = GOALS.length ? GOALS.map(g => `<label><input type="checkbox" value="${esc(g.id)}" ${sel.includes(g.id) ? "checked" : ""}>${esc(g.name)}</label>`).join("")
+      : '<span class="hint" style="margin:0">Crie objetivos em Categorias → Objetivos.</span>';
+  }
+  let goalDraft = [];
+  function renderGoalList(draft) {
+    goalDraft = draft || GOALS.map(g => ({ ...g }));
+    $("#goalList").innerHTML = goalDraft.map((g, i) => `<li data-gi="${i}">
+      <span><button type="button" data-gm="-1" ${i ? "" : "disabled"}>▲</button><button type="button" data-gm="1" ${i < goalDraft.length - 1 ? "" : "disabled"}>▼</button></span>
+      <input value="${esc(g.name)}" maxlength="40" data-gn>
+      <span class="n">${g.id ? PRODUCTS.filter(p => (p.goals || []).includes(g.id)).length + " prod." : "novo"}</span>
+      <button type="button" class="gdel" data-gd aria-label="Remover">✕</button></li>`).join("");
+  }
+  $("#goalList").addEventListener("input", e => { if (e.target.matches("[data-gn]")) goalDraft[+e.target.closest("li").dataset.gi].name = e.target.value; });
+  $("#goalList").addEventListener("click", e => {
+    const li = e.target.closest("li"); if (!li) return; const i = +li.dataset.gi;
+    const mv = e.target.closest("[data-gm]");
+    if (mv && !mv.disabled) { const j = i + +mv.dataset.gm; [goalDraft[i], goalDraft[j]] = [goalDraft[j], goalDraft[i]]; renderGoalList(goalDraft); }
+    if (e.target.closest("[data-gd]")) {
+      const n = goalDraft[i].id ? PRODUCTS.filter(p => (p.goals || []).includes(goalDraft[i].id)).length : 0;
+      if (n && !confirm(`Remover "${goalDraft[i].name}"? Deixa de estar associado a ${n} produto(s).`)) return;
+      goalDraft.splice(i, 1); renderGoalList(goalDraft);
+    }
+  });
+  const addGoal = () => { const v = $("#goalNew").value.trim(); if (!v) return; goalDraft.push({ name: v }); $("#goalNew").value = ""; renderGoalList(goalDraft); };
+  $("#goalAdd").onclick = addGoal;
+  $("#goalNew").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addGoal(); } });
+  $("#goalSave").onclick = async () => {
+    $("#goalErr").textContent = "";
+    try { GOALS = await api("api/goals", { method: "POST", body: JSON.stringify({ goals: goalDraft }) }); await loadProducts(); toast("Objetivos guardados"); }
+    catch (err) { $("#goalErr").textContent = err.message; }
   };
 
   // ---------- categories ----------

@@ -23,6 +23,7 @@
           <a href="./#about">Sobre Nós</a>
           <a href="./#contact">Contactos</a>
         </nav>
+        <button class="menu-btn" id="menuOpen" aria-label="Abrir menu" aria-controls="menu" aria-expanded="false"><span class="mb-ico">☰</span><span class="mb-txt">Menu</span></button>
         <button class="cart-btn" id="openCart">Carrinho <span class="cart-ico"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg><b id="cartCount">0</b></span></button>
         <button class="burger" id="burger" aria-label="Menu">☰</button>
       </header>
@@ -130,6 +131,33 @@
     <p class="muted">Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</p>
     <small class="muted">© 2026 <span data-brand-name>Forge Labs</span></small>
   </footer>
+
+  <!-- MENU (categorias, objetivos, pesquisa) -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <aside class="menu" id="menu" aria-label="Menu" aria-hidden="true">
+    <div class="menu-head">
+      <button type="button" class="menu-sq" id="menuClose" aria-label="Fechar menu">✕</button>
+      <a class="logo" href="./" data-brand-logo><span>FORGE</span><small>LABS</small></a>
+      <a class="menu-sq" href="produtos" aria-label="Todos os produtos">▦</a>
+    </div>
+    <div class="menu-body">
+      <label class="menu-search"><input type="search" id="menuSearch" placeholder="Pesquisar" autocomplete="off" aria-label="Pesquisar produtos">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></label>
+      <div class="menu-results" id="menuResults" hidden></div>
+      <ul class="menu-cats" id="menuCats"></ul>
+      <div class="menu-cols">
+        <div><h4>Loja</h4><ul class="menu-links">
+          <li><a href="produtos">Todos os produtos</a></li>
+          <li><a href="produtos#promos">Promoções</a></li>
+          <li><a href="produtos#bestsellers">Mais vendidos</a></li>
+          <li><a href="produtos#newin">Novidades</a></li>
+          <li><a href="./#about">Sobre Nós</a></li>
+          <li><a href="./#contact">Contactos</a></li>
+        </ul></div>
+        <div id="menuGoalsCol" hidden><h4>Objetivos</h4><ul class="menu-links" id="menuGoals"></ul></div>
+      </div>
+    </div>
+  </aside>
 
   <!-- CART DRAWER -->
   <div class="overlay" id="overlay"></div>

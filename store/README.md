@@ -33,6 +33,8 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
   mensagens por email/WhatsApp (confirmação, pagamento, pagamento confirmado, tracking) — modelos prontos no
   painel da encomenda, dados de pagamento privados em Marca, nº de seguimento por encomenda; alternativa:
   revendedor oficial (lista em Marca); estado "Pagamento validado"
+- **Menu lateral:** pesquisa instantânea, categorias com contagem e lista de produtos, atalhos e "Objetivos"
+  (lista gerida em Categorias, associada a cada produto; filtro `/produtos?goal=<id>`; `?q=` para pesquisa)
 - **Página Produtos (`/produtos`):** promoções, mais vendidos, novidades e catálogo completo com filtros
 - **Entregas e stock:** em stock = entrega imediata; sem stock = por encomenda (até 3 semanas); encomendas acima do
   stock são divididas por artigo (`fromStock`/`backorder`); embalagem discreta sempre indicada

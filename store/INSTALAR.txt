@@ -116,6 +116,13 @@ na encomenda antes de enviar a mensagem 4. Depois de receber o pagamento, mude o
 Revendedores oficiais: em "Marca" → "Revendedores oficiais" (uma linha por revendedor, ex.:
 "- **Nome** — Lisboa — 912 345 678"). Aparecem na secção de contactos e no carrinho; vazio = oculto.
 
+Menu: o botão "Menu" no cabeçalho (☰ no telemóvel) abre um painel lateral com pesquisa (resultados
+ao escrever, Enter abre o produto), as categorias com o número de produtos (a seta mostra os produtos
+de cada uma), atalhos da loja e os "Objetivos". Os objetivos são uma segunda forma de agrupar produtos:
+gerem-se em "Categorias" → cartão "Objetivos" (criar, renomear, ordenar, remover — renomear mantém
+os produtos associados) e marcam-se em cada produto no editor. Só aparecem no menu os objetivos que
+têm produtos. Cada objetivo abre /produtos?goal=<id>.
+
 Página "Produtos": /produtos mostra as Promoções, os Mais vendidos e as Novidades, e o catálogo
 completo com pesquisa, filtros e paginação. /produtos?cat=<id> abre uma categoria. O menu "Produtos",
 os destaques de categoria da homepage e o caminho de navegação das fichas levam para esta página.

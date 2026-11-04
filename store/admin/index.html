@@ -126,6 +126,7 @@
             <label>Nome *<input name="name" required maxlength="120"></label>
             <label>Subtítulo<input name="sub" maxlength="160" placeholder="ex.: Éster de ação rápida"></label>
             <label>Categoria<select name="cat" id="pformCat"></select></label>
+            <div class="goal-pick"><span class="xi-label">Objetivos <span class="hint" style="font-weight:400">(menu da loja)</span></span><div class="goal-chips" id="pformGoals"></div></div>
             <div class="grid2">
               <label>Preço (€) *<input name="price" inputmode="decimal" required placeholder="0,00"></label>
               <label>Promoção (%)<input name="promo" type="number" min="0" max="90" step="1" placeholder="0"></label>
@@ -242,6 +243,14 @@
               <p class="err" id="cErr"></p>
               <button class="btn">Criar categoria</button>
             </form>
+            <div class="card" id="goalsCard">
+              <h2>Objetivos</h2>
+              <p class="hint" style="margin:0">Segunda forma de navegar no menu da loja, ao lado das categorias. Marque os objetivos de cada produto no editor do produto. Só aparecem na loja os objetivos com produtos.</p>
+              <ul class="goal-list" id="goalList"></ul>
+              <div class="inline-edit"><input id="goalNew" maxlength="40" placeholder="Novo objetivo"><button type="button" class="ghost" id="goalAdd">Adicionar</button></div>
+              <p class="err" id="goalErr"></p>
+              <button type="button" class="btn" id="goalSave">Guardar objetivos</button>
+            </div>
             <div class="card hint-card">
               <h2>Como funciona</h2>
               <p class="hint">A ordem aqui é a ordem dos filtros na loja. As duas primeiras categorias com produtos aparecem em destaque na página inicial.</p>
