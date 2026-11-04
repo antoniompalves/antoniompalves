@@ -73,6 +73,7 @@
     $("#cartTotal").textContent = eur(total);
     $("#cartDisc").textContent = "−" + eur(disc);
     $("#cartCount").textContent = count;
+    if ($("#tabCount")) { $("#tabCount").textContent = count; $("#tabCount").dataset.n = count; }
   }
   $("#cartItems").addEventListener("click", e => {
     const b = e.target.closest("[data-q]"); if (!b) return;
@@ -244,7 +245,7 @@
   }
 
   // ---------- detail ----------
-  let dQty = 1;
+  let dQty = 1, detailObserver = null;
   function renderDetail(id) {
     const p = P.find(x => x.id === id); if (!p || !$("#detail")) return; dQty = 1;
     $("#detail").innerHTML = `
@@ -265,13 +266,23 @@
         <details class="acc" open><summary>Detalhes</summary><div>${p.description ? `<p>${esc(firstPara(p.description))}</p><a href="#pinfo" class="more-link" data-scroll="#pinfo">Ver descrição completa ↓</a>` : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
         <details class="acc"><summary>Pagamento e entrega</summary><div><p>Registe a encomenda com o seu nome, email e telemóvel. Vai receber uma mensagem por email ou WhatsApp para confirmar a encomenda e fazer o pagamento, depois a confirmação do pagamento e, quando a encomenda for enviada, o número de seguimento (tracking).</p><p>A encomenda só é processada após a validação do pagamento.${resellerHint()}</p><p>Entregamos em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata. Sem stock imediato: até 3 semanas.</p></div></details>
-      </div>${infoBlock(p)}${verifyBlock(p)}
+      </div>
+      <div class="buybar" id="buybar"><div class="bb-p"><b>${eur(finalPrice(p))}</b><small>${esc(p.name)}${p.promo ? ` · −${p.promo}%` : ""}</small></div>
+        <button class="btn-orange" data-dadd="${p.id}">Adicionar</button></div>${infoBlock(p)}${verifyBlock(p)}
       <div class="reviews-block" id="detailReviews">
         <h3>Avaliações de clientes ${p.reviews ? `<small>${starRow(Math.round(p.rating))} ${num1(p.rating)} de 5 · ${p.reviews} avaliaç${p.reviews === 1 ? "ão" : "ões"}</small>` : ""}</h3>
         ${p.reviews ? '<div class="rv-list"></div><button type="button" class="ghost-btn rv-more" hidden>Ver mais avaliações</button>'
           : '<p class="muted">Ainda não há avaliações. Só clientes com uma encomenda entregue podem avaliar este produto.</p>'}
       </div>`;
     loadProductReviews(p);
+    // mobile buy bar: hidden while the main "Adicionar ao carrinho" button is on screen
+    document.body.classList.add("has-buybar");
+    const main = $("#detail .btn-orange[data-dadd]:not(#buybar *)"), bar = $("#buybar");
+    if (window.IntersectionObserver && main && bar) {
+      if (detailObserver) detailObserver.disconnect();
+      detailObserver = new IntersectionObserver(([en]) => bar.classList.toggle("away", en.isIntersecting), { rootMargin: "0px 0px -80px 0px" });
+      detailObserver.observe(main);
+    }
     $("#detail .opts").onclick = e => {
       const o = e.target.closest(".opt"); if (!o) return;
       [...$("#detail .opts").children].forEach(x => x.classList.toggle("on", x === o));
@@ -350,6 +361,13 @@
     const goals = G.map(g => ({ ...g, n: P.filter(p => (p.goals || []).includes(g.id)).length })).filter(g => g.n);
     $("#menuGoalsCol").hidden = !goals.length;
     $("#menuGoals").innerHTML = goals.map(g => `<li><a href="produtos?goal=${encodeURIComponent(g.id)}">${esc(g.name)} <small>${g.n}</small></a></li>`).join("");
+  }
+  // mobile tab bar
+  if ($("#tabbar")) {
+    const tab = isProduct || PAGE.type === "products" || PAGE.type === "notfound" ? "products" : "home";
+    const cur = $(`#tabbar [data-tab="${tab}"]`); if (cur) cur.classList.add("on");
+    $("#tabSearch").onclick = () => setMenu(true);
+    $("#tabCart").onclick = () => openCart(true);
   }
   if (menu) {
     $("#menuOpen").onclick = () => setMenu(true);
