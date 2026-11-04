@@ -96,7 +96,8 @@
   });
 
   // ---------- collection ----------
-  let filter = "all", query = "";
+  let filter = "all", query = "", page = 1;
+  const PER_PAGE = 12;
   function renderChips() {
     const all = [{ id: "all", name: "Todos", count: P.length }, { id: "new", name: "Novidades", count: P.filter(p => p.fresh).length }, { id: "promo", name: "Promoções", count: P.filter(p => p.promo).length },
       ...C.map(c => ({ ...c, count: P.filter(p => p.cat === c.id).length })).filter(c => c.count)];
@@ -106,11 +107,33 @@
     const q = query.toLowerCase();
     const list = P.filter(p => (filter === "all" || p.cat === filter || (filter === "new" && p.fresh) || (filter === "promo" && p.promo))
       && (!q || (p.name + " " + p.sub + " " + catName(p.cat)).toLowerCase().includes(q)));
-    $("#grid").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">Sem resultados</div>`;
+    const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    page = Math.min(Math.max(1, page), pages);
+    const start = (page - 1) * PER_PAGE, shown = list.slice(start, start + PER_PAGE);
+    $("#grid").innerHTML = shown.length ? shown.map(card).join("") : `<div class="empty">Sem resultados</div>`;
+    renderPager(list.length, pages, start, shown.length);
   }
-  const setFilter = f => { filter = f; renderChips(); renderGrid(); };
+  function renderPager(total, pages, start, n) {
+    const el = $("#pager");
+    if (pages <= 1) { el.innerHTML = total ? `<span class="pg-info">${total} produtos</span>` : ""; return; }
+    // compact range: 1 … p-1 p p+1 … last
+    const nums = [];
+    for (let i = 1; i <= pages; i++) if (i === 1 || i === pages || Math.abs(i - page) <= 1) nums.push(i); else if (nums[nums.length - 1] !== "…") nums.push("…");
+    el.innerHTML = `<span class="pg-info">${start + 1}–${start + n} de ${total} produtos</span>
+      <div class="pg-btns">
+        <button data-pg="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Página anterior">‹</button>
+        ${nums.map(x => x === "…" ? `<span class="pg-gap">…</span>` : `<button data-pg="${x}" class="${x === page ? "on" : ""}" ${x === page ? 'aria-current="page"' : ""}>${x}</button>`).join("")}
+        <button data-pg="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Página seguinte">›</button>
+      </div>`;
+  }
+  const setFilter = f => { filter = f; page = 1; renderChips(); renderGrid(); };
+  $("#pager").addEventListener("click", e => {
+    const b = e.target.closest("[data-pg]"); if (!b || b.disabled) return;
+    page = +b.dataset.pg; renderGrid();
+    $("#collection").scrollIntoView({ behavior: "smooth" });
+  });
   $("#chips").addEventListener("click", e => { const c = e.target.closest("[data-chip]"); if (c) setFilter(c.dataset.chip); });
-  $("#search").addEventListener("input", e => { query = e.target.value; renderGrid(); });
+  $("#search").addEventListener("input", e => { query = e.target.value; page = 1; renderGrid(); });
   document.querySelectorAll("[data-filter]").forEach(el => el.addEventListener("click", () => {
     setFilter(el.dataset.filter); $("#collection").scrollIntoView({ behavior: "smooth" });
   }));

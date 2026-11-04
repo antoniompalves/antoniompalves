@@ -123,6 +123,17 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .empty { grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px; }
 
+/* ---------- pagination ---------- */
+.pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.pg-info { color: var(--muted); font-size: 13px; }
+.pg-btns { display: flex; gap: 6px; align-items: center; }
+.pg-btns button { min-width: 36px; height: 36px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font-size: 14px; }
+.pg-btns button:hover:not(:disabled) { border-color: var(--ink); }
+.pg-btns button.on { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
+.pg-btns button:disabled { opacity: .35; cursor: default; }
+.pg-gap { color: var(--muted); padding: 0 2px; }
+@media (max-width: 680px) { .pager { justify-content: center; } }
+
 /* ---------- detail ---------- */
 .detail { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; margin-top: 80px; scroll-margin-top: 20px; }
 .detail .hero-img { border-radius: 4px; min-height: 360px; background: radial-gradient(circle at 50% 10%, #4b4f56, #111 70%); display: grid; place-items: center; }
