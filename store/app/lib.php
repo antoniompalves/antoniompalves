@@ -726,6 +726,41 @@ function brand_update(array $in): void
     setting_set($kv);
 }
 
+// ---------- brand stylesheet ----------
+// Served as a render-blocking <link> so the page is painted with the brand colour from the first frame
+// (no flash of the default orange while JavaScript loads the settings).
+function shade_hex(string $hex, float $amt): string
+{
+    $out = '#';
+    foreach (str_split(substr($hex, 1), 2) as $h) {
+        $v = hexdec($h);
+        $v = $amt > 0 ? $v + (255 - $v) * $amt : $v + $v * $amt;
+        $out .= str_pad(dechex((int) max(0, min(255, round($v)))), 2, '0', STR_PAD_LEFT);
+    }
+    return $out;
+}
+function brand_css(): never
+{
+    $css = '';
+    try {
+        if (config()) {
+            $c = (string) brand()['primaryColor'];
+            if (preg_match('/^#[0-9a-f]{6}$/i', $c)) {
+                $c = strtolower($c);
+                $css = ":root{--orange:$c;--orange-2:" . shade_hex($c, 0.18) . ';--orange-dark:' . shade_hex($c, -0.08) . ";}\n";
+            }
+        }
+    } catch (Throwable $e) { /* not installed / DB down: fall back to the defaults in styles.css */ }
+    $etag = '"' . md5($css) . '"';
+    header('Content-Type: text/css; charset=utf-8');
+    header('Cache-Control: no-cache'); // always revalidate (cheap 304) so a new colour shows on the next load
+    header('ETag: ' . $etag);
+    header('X-Content-Type-Options: nosniff');
+    if (trim($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag) { http_response_code(304); exit; }
+    echo "/* Cor da marca — definida no backoffice (Marca) */\n" . $css;
+    exit;
+}
+
 // Raster images only, identified by magic bytes (the declared type is not trusted). SVG is refused: it can carry scripts.
 function sniff_image(string $head): ?string
 {

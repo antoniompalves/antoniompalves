@@ -33,7 +33,8 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 | Ficheiro | Função |
 |---|---|
 | `index.html`, `styles.css`, `app.js` | Loja |
-| `brand.js` | Lê `api/settings` e aplica nome, logótipo, favicon e cor (loja e backoffice) |
+| `brand.js` | Lê `api/settings` e aplica nome, logótipo e favicon (com cópia local para não piscar) |
+| `api/brand.css` | Cor da marca gerada pelo servidor e carregada no `<head>`: a página é pintada logo com a cor certa |
 | `products.js` | FAQ e catálogo/categorias iniciais (importados para as tabelas `products` e `categories` na primeira utilização; depois editam-se no backoffice) |
 | `admin/` | Backoffice |
 | `api.php` | API (`/api/...` via `.htaccess`). Só usa GET/POST, compatível com mod_security |

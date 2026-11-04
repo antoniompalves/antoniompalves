@@ -16,10 +16,12 @@
     b = { ...DEFAULTS, ...b };
     if (b.logoUrl) b.logoUrl = url(b.logoUrl);
     if (b.faviconUrl) b.faviconUrl = url(b.faviconUrl);
-    const root = document.documentElement.style;
-    root.setProperty("--orange", b.primaryColor);
-    root.setProperty("--orange-2", shade(b.primaryColor, 0.18));
-    root.setProperty("--orange-dark", shade(b.primaryColor, -0.08));
+    if (!opts.skipColor) {
+      const root = document.documentElement.style;
+      root.setProperty("--orange", b.primaryColor);
+      root.setProperty("--orange-2", shade(b.primaryColor, 0.18));
+      root.setProperty("--orange-dark", shade(b.primaryColor, -0.08));
+    }
 
     document.title = opts.titleSuffix ? `${b.storeName} ${opts.titleSuffix}` : b.storeName;
 
@@ -38,11 +40,20 @@
     document.querySelectorAll("[data-brand-email]").forEach(el => { el.textContent = b.supportEmail; el.closest("[data-brand-email-wrap]")?.toggleAttribute("hidden", !b.supportEmail); });
     document.querySelectorAll("[data-brand-label]").forEach(el => { el.dataset.label = (b.logoText || b.storeName).toUpperCase().slice(0, 12); });
     window.BRAND = b;
+    if (!opts.preview) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(b)); } catch {} }
     document.dispatchEvent(new CustomEvent("brand:applied", { detail: b }));
     return b;
   }
 
+  // Apply the last known brand immediately (name, logo, favicon) so returning visitors see no flicker;
+  // the colour itself comes from the render-blocking api/brand.css.
+  const CACHE_KEY = "brand-cache";
+  function applyCached(opts) {
+    try { const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c && c.storeName) apply(c, { ...opts, preview: true, skipColor: true }); } catch {}
+  }
+
   async function load(opts) {
+    applyCached(opts);
     try {
       const r = await fetch(url("api/settings"), { cache: "no-store" });
       if (r.ok) return apply(await r.json(), opts);

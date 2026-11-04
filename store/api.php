@@ -7,6 +7,8 @@ require __DIR__ . '/app/lib.php';
 $route = trim((string) ($_GET['route'] ?? ($_SERVER['PATH_INFO'] ?? '')), '/');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+if ($route === 'brand.css' && $method === 'GET') brand_css();
+
 try {
     // ----- public -----
     if ($route === 'settings' && $method === 'GET') json_out(200, brand_public());
