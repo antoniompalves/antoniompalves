@@ -28,6 +28,7 @@
       <nav class="pills">
         <button data-view="orders" class="on">Pré-encomendas</button>
         <button data-view="new">Registar encomenda</button>
+        <button data-view="products">Produtos</button>
         <button data-view="brand">Marca</button>
       </nav>
       <div class="top-actions">
@@ -88,6 +89,57 @@
           </div>
         </form>
       </section>
+      <!-- PRODUCTS VIEW -->
+      <section id="view-products" hidden>
+        <div class="toolbar">
+          <input type="search" id="pq" placeholder="Pesquisar produtos…">
+          <select id="pcat" class="sel-sm"><option value="">Todas as categorias</option></select>
+          <select id="pstate" class="sel-sm"><option value="">Todos</option><option value="on">Ativos</option><option value="off">Inativos</option></select>
+          <button class="btn sm" id="newProduct">+ Novo produto</button>
+        </div>
+        <div class="layout" id="plLayout">
+          <div class="table-wrap">
+            <table class="ptable">
+              <thead><tr><th></th><th>Produto</th><th>Categoria</th><th class="r">Preço</th><th class="r">Promo</th><th>Estado</th></tr></thead>
+              <tbody id="prows"></tbody>
+            </table>
+            <p class="empty" id="pempty" hidden>Nenhum produto encontrado.</p>
+          </div>
+          <form class="panel pform" id="pform" hidden>
+            <div class="panel-head"><h3 id="pformTitle">Editar produto</h3><button type="button" class="ghost" id="pclose">✕</button></div>
+            <div class="pimg-box">
+              <div class="preview pimg-prev" id="pimgPrev"></div>
+              <div class="upload-actions">
+                <label class="btn sm file-btn">Carregar imagem<input type="file" id="pimgFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden></label>
+                <button type="button" class="ghost" id="pimgRemove">Remover</button>
+              </div>
+              <p class="hint" id="pimgHint">PNG, JPG, WebP ou GIF, até 3 MB. Ideal: quadrada ou 4:3, ≥ 800 px.</p>
+            </div>
+            <label>Nome *<input name="name" required maxlength="120"></label>
+            <label>Subtítulo<input name="sub" maxlength="160" placeholder="ex.: Éster de ação rápida"></label>
+            <label>Categoria<select name="cat" id="pformCat"></select></label>
+            <div class="grid2">
+              <label>Preço (€) *<input name="price" inputmode="decimal" required placeholder="0,00"></label>
+              <label>Promoção (%)<input name="promo" type="number" min="0" max="90" step="1" placeholder="0"></label>
+            </div>
+            <p class="hint" id="pformFinal"></p>
+            <label>Descrição<textarea name="description" rows="8" maxlength="10000" placeholder="Texto mostrado em &quot;Detalhes&quot; na página do produto. Deixe uma linha em branco para separar parágrafos."></textarea></label>
+            <div class="grid2">
+              <label>Avaliações<input name="reviews" type="number" min="0" step="1"></label>
+              <label>Ordem<input name="position" type="number" step="1"></label>
+            </div>
+            <div class="checks">
+              <label class="chk"><input type="checkbox" name="active"> Ativo (visível na loja)</label>
+              <label class="chk"><input type="checkbox" name="best"> Mais vendido</label>
+              <label class="chk"><input type="checkbox" name="fresh"> Novidade</label>
+            </div>
+            <p class="err" id="pformErr"></p>
+            <button class="btn" id="psave">Guardar produto</button>
+            <button type="button" class="danger" id="pdelete">Eliminar produto</button>
+          </form>
+        </div>
+      </section>
+
       <!-- BRAND VIEW -->
       <section id="view-brand" hidden>
         <div class="brand-layout">

@@ -126,6 +126,15 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .empty { grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px; }
 
+/* ---------- uploaded product images ---------- */
+.pimg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card .img:has(.pimg) { background: #f4f1ee; }
+.feat-card .thumb .pimg { border-radius: 12px; }
+.detail .hero-img.has-img { background: #f4f1ee; overflow: hidden; }
+.detail .hero-img.has-img .pimg { max-height: 520px; object-fit: contain; }
+.ci .th .pimg { border-radius: 8px; }
+.acc div p { margin: 0 0 10px; } .acc div p:last-child { margin-bottom: 0; }
+
 /* ---------- pagination ---------- */
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
 .pg-info { color: var(--muted); font-size: 13px; }

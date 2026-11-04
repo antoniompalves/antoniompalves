@@ -20,6 +20,7 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 - **Pré-encomendas:** pesquisa, filtro por estado, indicadores, detalhe com estado
   (pendente → confirmada → enviada → entregue / cancelada), nota interna, histórico, eliminar, exportar CSV
 - **Registar encomenda:** pedidos recebidos por telefone/email
+- **Produtos:** editar preço, promoção, descrição, imagem, ordem, categoria e estado; criar e eliminar
 - **Marca:** nome da loja, logótipo, favicon, cor principal (com aviso de contraste), email de apoio,
   pré-visualização ao vivo, alteração da palavra-passe
 
@@ -29,12 +30,12 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 |---|---|
 | `index.html`, `styles.css`, `app.js` | Loja |
 | `brand.js` | Lê `api/settings` e aplica nome, logótipo, favicon e cor (loja e backoffice) |
-| `products.js` | Catálogo — bloco JSON lido pelo browser **e** pelo PHP (preços sempre recalculados no servidor) |
+| `products.js` | Categorias, FAQ e catálogo inicial (importado para a tabela `products` na primeira utilização; depois edita-se no backoffice) |
 | `admin/` | Backoffice |
 | `api.php` | API (`/api/...` via `.htaccess`). Só usa GET/POST, compatível com mod_security |
 | `app/lib.php` | Base de dados, encomendas, marca, autenticação, limites de tentativas |
 | `install.php` | Assistente: testa a ligação, cria as tabelas, escreve `app/config.php`, bloqueia-se depois |
-| `uploads/brand/` | Logótipo/favicon carregados (só imagens raster validadas pelo conteúdo; nada é executado) |
+| `uploads/brand/`, `uploads/products/` | Logótipo, favicon e imagens de produtos carregados (só imagens raster validadas pelo conteúdo; nada é executado) |
 
 Segurança: palavra-passe com `password_hash`, sessões com token aleatório guardado como hash,
 limite de tentativas de login e de pré-encomendas por IP, `app/` inacessível pela web,

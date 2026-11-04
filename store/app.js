@@ -6,6 +6,10 @@
   const catName = id => (C.find(c => c.id === id) || {}).name || id;
   const brandLabel = () => ((window.BRAND && (window.BRAND.logoText || window.BRAND.storeName)) || "FORGE").toUpperCase().slice(0, 12);
   const vial = (label = brandLabel()) => `<div class="vial" data-label="${label}"></div>`;
+  // product picture: uploaded image when available, otherwise the drawn bottle
+  const art = (p, label) => p && p.imageUrl ? `<img class="pimg" src="${esc(window.Brand.url(p.imageUrl))}" alt="${esc(p.name)}" loading="lazy">` : vial(label);
+  // plain-text description → paragraphs (always escaped, no HTML from the database)
+  const paras = t => String(t || "").trim().split(/\n\s*\n/).map(x => `<p>${esc(x.trim()).replace(/\n/g, "<br>")}</p>`).join("");
   const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // ---------- cart (localStorage, guarded) ----------
@@ -25,7 +29,7 @@
       const p = P.find(x => x.id === id), q = cart[id];
       const line = finalPrice(p) * q, d = line * bulk(q);
       total += line - d; disc += d; count += q;
-      return `<div class="ci"><div class="th">${vial("")}</div>
+      return `<div class="ci"><div class="th">${art(p, "")}</div>
         <div class="info"><b>${esc(p.name)}</b><small>${eur(finalPrice(p))} cada${bulk(q) ? ` · −${bulk(q) * 100}% por quantidade` : ""}</small></div>
         <div class="qty"><button data-q="-1" data-id="${id}">−</button><span>${q}</span><button data-q="1" data-id="${id}">+</button></div></div>`;
     }).join("") : `<p class="muted" style="text-align:center;padding:40px 0">O seu carrinho está vazio.</p>`;
@@ -75,7 +79,7 @@
   // ---------- cards ----------
   const card = (p, i) => `
     <article class="card">
-      <div class="img v${i % 3}" data-open="${p.id}">${p.promo ? `<span class="badge">−${p.promo}%</span>` : ""}${vial()}</div>
+      <div class="img v${i % 3}" data-open="${p.id}">${p.promo ? `<span class="badge">−${p.promo}%</span>` : ""}${art(p)}</div>
       <div class="body">
         <span class="name">${esc(p.name)}</span><span class="sub">${esc(p.sub)}</span>
         <div class="pr"><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
@@ -85,13 +89,17 @@
     </article>`;
 
   // featured hero card
-  const feat = P.find(p => p.best && p.promo) || P[0];
-  $("#featCard").innerHTML = `<div class="thumb"><span class="tag">Mais vendido</span>${vial()}</div>
-    <h3>${esc(feat.name)}</h3><div class="price">${eur(finalPrice(feat))}</div>
-    <small>${esc(feat.sub)}${feat.promo ? ` • −${feat.promo}% sobre ${eur(feat.price)}` : ""}</small>`;
-  $("#featCard").dataset.open = feat.id;
-
-  $("#bestTrack").innerHTML = P.filter(p => p.best).map(card).join("");
+  let feat;
+  function renderFeatured() {
+    feat = P.find(p => p.best && p.promo) || P.find(p => p.best) || P[0];
+    if (!feat) return;
+    $("#featCard").innerHTML = `<div class="thumb"><span class="tag">Mais vendido</span>${art(feat)}</div>
+      <h3>${esc(feat.name)}</h3><div class="price">${eur(finalPrice(feat))}</div>
+      <small>${esc(feat.sub)}${feat.promo ? ` • −${feat.promo}% sobre ${eur(feat.price)}` : ""}</small>`;
+    $("#featCard").dataset.open = feat.id;
+    $("#bestTrack").innerHTML = P.filter(p => p.best).map(card).join("");
+  }
+  renderFeatured();
   document.querySelectorAll(".arrow").forEach(a => a.onclick = () => {
     const t = $("#bestTrack"); t.scrollBy({ left: +a.dataset.dir * t.clientWidth / 1.5, behavior: "smooth" });
   });
@@ -144,7 +152,7 @@
   function renderDetail(id) {
     const p = P.find(x => x.id === id) || P[0]; dQty = 1;
     $("#detail").innerHTML = `
-      <div class="hero-img">${vial()}</div>
+      <div class="hero-img${p.imageUrl ? " has-img" : ""}">${art(p)}</div>
       <div>
         <h2>${esc(p.name)}</h2>
         <div class="meta"><span>⚗ Testado em lab.</span><span>★ ${p.reviews} avaliações</span><span>⛟ Stock UE</span></div>
@@ -156,7 +164,7 @@
           <div class="qty"><button data-dq="-1">−</button><span id="dQty">1</span><button data-dq="1">+</button></div>
         </div>
         <button class="btn-orange" data-dadd="${p.id}">Adicionar ao carrinho</button>
-        <details class="acc" open><summary>Detalhes</summary><div>${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.</div></details>
+        <details class="acc" open><summary>Detalhes</summary><div>${p.description ? paras(p.description) : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
         <details class="acc"><summary>Envio</summary><div>Embalagem discreta, envio rastreado a partir de stock na UE.</div></details>
       </div>`;
@@ -196,7 +204,21 @@
   });
 
   $("#prodCount").textContent = P.length;
-  renderChips(); renderGrid(); renderDetail(feat.id); renderCart();
+  renderChips(); renderGrid(); if (feat) renderDetail(feat.id); renderCart();
+
+  // products edited in the backoffice (prices, descriptions, images) come from the API;
+  // products.js is only the fallback when the page is opened without the server.
+  (async () => {
+    try {
+      const r = await fetch(window.Brand.url("api/products"), { cache: "no-store" });
+      if (!r.ok) return;
+      const list = await r.json();
+      if (!Array.isArray(list) || !list.length) return;
+      P.splice(0, P.length, ...list);
+      $("#prodCount").textContent = P.length;
+      renderFeatured(); renderChips(); renderGrid(); if (feat) renderDetail(feat.id); renderCart();
+    } catch {}
+  })();
   // re-render product art once the configured brand is known
   document.addEventListener("brand:applied", () => document.querySelectorAll(".vial[data-label]").forEach(v => { if (v.dataset.label) v.dataset.label = brandLabel(); }));
   window.Brand.load();

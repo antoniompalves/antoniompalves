@@ -75,6 +75,22 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 80px); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-size: 13px; transition: .3s; z-index: 20; }
 .toast.show { transform: translate(-50%, 0); }
 
+/* ---------- products ---------- */
+.sel-sm { width: auto; border-radius: 999px; padding: 8px 12px; font-size: 13px; }
+.ptable td { vertical-align: middle; }
+.ptable .thumb { width: 44px; height: 44px; border-radius: 8px; background: #f4f1ee; display: grid; place-items: center; overflow: hidden; }
+.ptable .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.ptable .thumb i { width: 14px; height: 24px; border-radius: 3px; background: linear-gradient(90deg, #3b281a, #6a4630, #3b281a); }
+.ptable tr.off td { opacity: .5; }
+.ptable s { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.pform label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
+.pform textarea { resize: vertical; line-height: 1.5; }
+.pimg-prev { height: 190px; overflow: hidden; } .pimg-prev img { width: 100%; height: 100%; object-fit: contain; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.chk { flex-direction: row !important; align-items: center; font-weight: 500 !important; gap: 6px !important; }
+.chk input { width: auto; }
+.pform .danger:disabled { display: none; }
+
 /* ---------- brand ---------- */
 .brand-layout { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 16px; align-items: start; }
 .card label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }

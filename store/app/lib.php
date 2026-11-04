@@ -63,6 +63,7 @@ function schema(string $driver, string $prefix): array
             "CREATE TABLE IF NOT EXISTS {$prefix}sessions (token_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL)",
             "CREATE TABLE IF NOT EXISTS {$prefix}attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, ip TEXT NOT NULL, at INTEGER NOT NULL)",
             "CREATE INDEX IF NOT EXISTS {$prefix}attempts_lookup ON {$prefix}attempts(kind, ip, at)",
+            products_schema('sqlite', $prefix),
         ];
     }
     $tail = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
@@ -80,7 +81,23 @@ function schema(string $driver, string $prefix): array
         "CREATE TABLE IF NOT EXISTS {$prefix}sessions (token_hash CHAR(64) NOT NULL PRIMARY KEY, expires_at INT UNSIGNED NOT NULL) $tail",
         "CREATE TABLE IF NOT EXISTS {$prefix}attempts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, kind VARCHAR(20) NOT NULL,
           ip VARCHAR(45) NOT NULL, at INT UNSIGNED NOT NULL, KEY lookup_idx (kind, ip, at)) $tail",
+        products_schema('mysql', $prefix),
     ];
+}
+
+function products_schema(string $driver, string $prefix): string
+{
+    if ($driver === 'sqlite') {
+        return "CREATE TABLE IF NOT EXISTS {$prefix}products (id TEXT PRIMARY KEY, position INTEGER NOT NULL DEFAULT 0, name TEXT NOT NULL, sub TEXT,
+          cat TEXT NOT NULL, price REAL NOT NULL, promo INTEGER NOT NULL DEFAULT 0, reviews INTEGER NOT NULL DEFAULT 0, best INTEGER NOT NULL DEFAULT 0,
+          fresh INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, description TEXT, image TEXT, updated_at TEXT)";
+    }
+    return "CREATE TABLE IF NOT EXISTS {$prefix}products (
+      id VARCHAR(64) NOT NULL PRIMARY KEY, position INT NOT NULL DEFAULT 0, name VARCHAR(120) NOT NULL, sub VARCHAR(160) NULL,
+      cat VARCHAR(40) NOT NULL, price DECIMAL(10,2) NOT NULL, promo TINYINT UNSIGNED NOT NULL DEFAULT 0, reviews INT UNSIGNED NOT NULL DEFAULT 0,
+      best TINYINT(1) NOT NULL DEFAULT 0, fresh TINYINT(1) NOT NULL DEFAULT 0, active TINYINT(1) NOT NULL DEFAULT 1,
+      description TEXT NULL, image VARCHAR(100) NULL, updated_at VARCHAR(32) NULL, KEY pos_idx (position)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 }
 
 // ---------- http helpers ----------
@@ -121,19 +138,178 @@ function uuid4(): string
 
 function client_ip(): string { return substr($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0', 0, 45); }
 
-// ---------- catalog (single source of truth: products.js) ----------
-function catalog(): array
+// ---------- catalog ----------
+// products.js holds categories, FAQ and the initial product list. Products live in the database once
+// installed (editable in the backoffice); the table is created and seeded on first use.
+function static_catalog(): array
 {
-    static $byId = null;
-    if ($byId !== null) return $byId;
+    static $data = null;
+    if ($data !== null) return $data;
     $src = file_get_contents(WEB_ROOT . '/products.js');
     if (!preg_match('~/\*CATALOG\*/(.*)/\*END\*/~s', (string) $src, $m)) throw new HttpError(500, 'Catálogo inválido');
     $data = json_decode($m[1], true);
-    if (!is_array($data) || !isset($data['PRODUCTS'])) throw new HttpError(500, 'Catálogo inválido (JSON)');
-    $byId = [];
-    foreach ($data['PRODUCTS'] as $p) $byId[$p['id']] = $p;
+    if (!is_array($data) || !isset($data['PRODUCTS'], $data['CATEGORIES'])) throw new HttpError(500, 'Catálogo inválido (JSON)');
+    return $data;
+}
+function category_ids(): array { return array_column(static_catalog()['CATEGORIES'], 'id'); }
+
+function ensure_products(): void
+{
+    static $ok = false;
+    if ($ok) return;
+    $pdo = db();
+    $pdo->exec(products_schema($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), config()['prefix'] ?? ''));
+    if ((int) $pdo->query('SELECT COUNT(*) FROM ' . t('products'))->fetchColumn() === 0) {
+        $ins = $pdo->prepare('INSERT INTO ' . t('products') . ' (id, position, name, sub, cat, price, promo, reviews, best, fresh, active, description, image, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,1,?,NULL,?)');
+        $pdo->beginTransaction();
+        foreach (static_catalog()['PRODUCTS'] as $i => $p) {
+            $ins->execute([$p['id'], ($i + 1) * 10, $p['name'], $p['sub'] ?? '', $p['cat'], $p['price'], (int) ($p['promo'] ?? 0), (int) ($p['reviews'] ?? 0),
+                empty($p['best']) ? 0 : 1, empty($p['fresh']) ? 0 : 1, $p['description'] ?? '', now_iso()]);
+        }
+        $pdo->commit();
+    }
+    $ok = true;
+}
+
+function row_to_product(array $r): array
+{
+    return [
+        'id' => $r['id'], 'position' => (int) $r['position'], 'name' => $r['name'], 'sub' => (string) $r['sub'], 'cat' => $r['cat'],
+        'price' => (float) $r['price'], 'promo' => (int) $r['promo'], 'reviews' => (int) $r['reviews'],
+        'best' => (bool) $r['best'], 'fresh' => (bool) $r['fresh'], 'active' => (bool) $r['active'],
+        'description' => (string) $r['description'], 'imageUrl' => $r['image'] ? 'uploads/products/' . $r['image'] : null,
+        'updatedAt' => $r['updated_at'],
+    ];
+}
+
+function products_list(bool $includeInactive = false): array
+{
+    ensure_products();
+    $sql = 'SELECT * FROM ' . t('products') . ($includeInactive ? '' : ' WHERE active = 1') . ' ORDER BY position, name';
+    return array_map('row_to_product', db()->query($sql)->fetchAll());
+}
+
+// Active products by id — used to price orders. Prices are never taken from the browser.
+function catalog(): array
+{
+    static $byId = null;
+    if ($byId === null) { $byId = []; foreach (products_list() as $p) $byId[$p['id']] = $p; }
     return $byId;
 }
+
+function find_product(string $id): array
+{
+    ensure_products();
+    $st = db()->prepare('SELECT * FROM ' . t('products') . ' WHERE id = ?');
+    $st->execute([$id]);
+    $r = $st->fetch();
+    if (!$r) throw new HttpError(404, 'Produto não encontrado');
+    return $r;
+}
+
+function product_fields(array $in, bool $creating): array
+{
+    $f = [];
+    if ($creating || array_key_exists('name', $in)) { $f['name'] = str_in($in['name'] ?? '', 120); if ($f['name'] === '') throw new HttpError(400, 'O nome do produto é obrigatório'); }
+    if ($creating || array_key_exists('sub', $in)) $f['sub'] = str_in($in['sub'] ?? '', 160);
+    if ($creating || array_key_exists('cat', $in)) {
+        $f['cat'] = (string) ($in['cat'] ?? '');
+        if (!in_array($f['cat'], category_ids(), true)) throw new HttpError(400, 'Categoria inválida');
+    }
+    if ($creating || array_key_exists('price', $in)) {
+        $p = $in['price'] ?? null;
+        if (is_string($p)) $p = str_replace(',', '.', trim($p));
+        if (!is_numeric($p) || (float) $p < 0 || (float) $p > 100000) throw new HttpError(400, 'Preço inválido');
+        $f['price'] = round((float) $p, 2);
+    }
+    if ($creating || array_key_exists('promo', $in)) {
+        $v = $in['promo'] ?? 0;
+        if ($v === '' || $v === null) $v = 0;
+        if (!is_numeric($v) || (int) $v < 0 || (int) $v > 90) throw new HttpError(400, 'Promoção inválida (0 a 90%)');
+        $f['promo'] = (int) $v;
+    }
+    if ($creating || array_key_exists('reviews', $in)) {
+        $v = $in['reviews'] ?? 0;
+        if ($v === '' || $v === null) $v = 0;
+        if (!is_numeric($v) || (int) $v < 0) throw new HttpError(400, 'Número de avaliações inválido');
+        $f['reviews'] = (int) $v;
+    }
+    foreach (['best', 'fresh', 'active'] as $k) if ($creating || array_key_exists($k, $in)) $f[$k] = empty($in[$k]) ? 0 : 1;
+    if ($creating && !array_key_exists('active', $in)) $f['active'] = 1;
+    if ($creating || array_key_exists('description', $in)) $f['description'] = str_in($in['description'] ?? '', 10000);
+    if (array_key_exists('position', $in) && is_numeric($in['position'])) $f['position'] = (int) $in['position'];
+    return $f;
+}
+
+function slugify(string $s): string
+{
+    $s = strtolower(trim((string) preg_replace('~[^a-zA-Z0-9]+~', '-', iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s) ?: $s), '-'));
+    return substr($s !== '' ? $s : 'produto', 0, 50);
+}
+
+function product_create(array $in): array
+{
+    ensure_products();
+    $f = product_fields($in, true);
+    $base = slugify($f['name']); $id = $base; $n = 2;
+    $exists = db()->prepare('SELECT 1 FROM ' . t('products') . ' WHERE id = ?');
+    while (true) { $exists->execute([$id]); if (!$exists->fetchColumn()) break; $id = $base . '-' . $n++; }
+    if (!isset($f['position'])) $f['position'] = (int) db()->query('SELECT COALESCE(MAX(position), 0) + 10 FROM ' . t('products'))->fetchColumn();
+    $f['id'] = $id; $f['updated_at'] = now_iso();
+    $cols = array_keys($f);
+    db()->prepare('INSERT INTO ' . t('products') . ' (' . implode(',', $cols) . ') VALUES (' . implode(',', array_fill(0, count($cols), '?')) . ')')->execute(array_values($f));
+    return row_to_product(find_product($id));
+}
+
+function product_update(string $id, array $in): array
+{
+    find_product($id);
+    $f = product_fields($in, false);
+    if (!$f) return row_to_product(find_product($id));
+    $f['updated_at'] = now_iso();
+    $set = implode(', ', array_map(fn ($k) => "$k = ?", array_keys($f)));
+    db()->prepare('UPDATE ' . t('products') . " SET $set WHERE id = ?")->execute([...array_values($f), $id]);
+    return row_to_product(find_product($id));
+}
+
+function product_delete(string $id): void
+{
+    $r = find_product($id);
+    product_image_unlink($r['image']);
+    db()->prepare('DELETE FROM ' . t('products') . ' WHERE id = ?')->execute([$id]);
+}
+
+function product_dir(): string
+{
+    $d = WEB_ROOT . '/uploads/products';
+    if (!is_dir($d) && !mkdir($d, 0755, true)) throw new HttpError(500, 'Não foi possível criar a pasta uploads/products');
+    return $d;
+}
+function product_image_unlink(?string $name): void
+{
+    if ($name && preg_match('/^p-[a-f0-9]{16}\.(png|jpg|webp|gif)$/', $name)) @unlink(product_dir() . '/' . $name);
+}
+function product_image_upload(string $id, ?array $file): array
+{
+    $r = find_product($id);
+    $ext = validate_upload($file, 3 * 1024 * 1024);
+    if ($ext === 'ico') throw new HttpError(400, 'Use PNG, JPG, WebP ou GIF para imagens de produto.');
+    $name = 'p-' . bin2hex(random_bytes(8)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], product_dir() . '/' . $name)) throw new HttpError(500, 'Não foi possível guardar o ficheiro');
+    @chmod(product_dir() . '/' . $name, 0644);
+    product_image_unlink($r['image']);
+    db()->prepare('UPDATE ' . t('products') . ' SET image = ?, updated_at = ? WHERE id = ?')->execute([$name, now_iso(), $id]);
+    return row_to_product(find_product($id));
+}
+function product_image_remove(string $id): array
+{
+    $r = find_product($id);
+    product_image_unlink($r['image']);
+    db()->prepare('UPDATE ' . t('products') . ' SET image = NULL, updated_at = ? WHERE id = ?')->execute([now_iso(), $id]);
+    return row_to_product(find_product($id));
+}
+
 function unit_price(array $p): float { return round(!empty($p['promo']) ? $p['price'] * (1 - $p['promo'] / 100) : (float) $p['price'], 2); }
 function bulk_rate(int $q): float { return $q >= 10 ? 0.10 : ($q >= 5 ? 0.05 : 0.0); }
 
@@ -290,15 +466,20 @@ function brand_dir(): string
     if (!is_dir($d) && !mkdir($d, 0755, true)) throw new HttpError(500, 'Não foi possível criar a pasta uploads/brand');
     return $d;
 }
-function brand_upload(string $kind, ?array $file): void
+// Validates an uploaded image and returns its real extension (by magic bytes).
+function validate_upload(?array $file, int $max): string
 {
     if (!$file || !isset($file['error'])) throw new HttpError(400, 'Nenhum ficheiro enviado');
     if ($file['error'] === UPLOAD_ERR_INI_SIZE || $file['error'] === UPLOAD_ERR_FORM_SIZE) throw new HttpError(413, 'Ficheiro demasiado grande para o servidor');
     if ($file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) throw new HttpError(400, 'Falha no envio do ficheiro');
-    $max = BRAND_LIMITS[$kind];
     if ($file['size'] > $max) throw new HttpError(413, 'Ficheiro demasiado grande (máx. ' . ($max >= 1048576 ? ($max / 1048576) . ' MB' : ($max / 1024) . ' KB') . ')');
     $ext = sniff_image((string) file_get_contents($file['tmp_name'], false, null, 0, 12));
     if (!$ext) throw new HttpError(400, 'Formato não suportado. Use PNG, JPG, WebP, GIF ou ICO.');
+    return $ext;
+}
+function brand_upload(string $kind, ?array $file): void
+{
+    $ext = validate_upload($file, BRAND_LIMITS[$kind]);
     $name = $kind . '-' . bin2hex(random_bytes(8)) . '.' . $ext; // new name each time = automatic cache-busting
     if (!move_uploaded_file($file['tmp_name'], brand_dir() . '/' . $name)) throw new HttpError(500, 'Não foi possível guardar o ficheiro');
     @chmod(brand_dir() . '/' . $name, 0644);

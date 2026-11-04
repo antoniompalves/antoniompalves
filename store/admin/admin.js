@@ -6,7 +6,8 @@
   const STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
   const LABEL = { all: "Todas", pending: "Pendente", confirmed: "Confirmada", shipped: "Enviada", delivered: "Entregue", cancelled: "Cancelada", storefront: "loja", backoffice: "backoffice", admin: "admin" };
   const L = k => LABEL[k] || k;
-  const { PRODUCTS, CATEGORIES, unitPrice, bulkRate } = window;
+  const { CATEGORIES, unitPrice, bulkRate } = window;
+  let PRODUCTS = window.PRODUCTS.slice(); // replaced by the database list after sign-in
 
   let token = "";
   try { token = sessionStorage.getItem("forge-admin") || ""; } catch {}
@@ -41,13 +42,13 @@
 
   async function start() {
     $("#login").hidden = true; $("#app").hidden = false;
-    await load();
+    await Promise.all([load(), loadProducts()]);
   }
 
   // ---------- views ----------
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => {
     document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("on", x === b));
-    ["orders", "new", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
+    ["orders", "new", "products", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
     if (b.dataset.view === "brand") fillBrandForm();
   });
 
@@ -140,8 +141,11 @@
 
   // ---------- register order manually ----------
   const lines = {};
-  $("#prodSel").innerHTML = CATEGORIES.map(c => `<optgroup label="${esc(c.name)}">${PRODUCTS.filter(p => p.cat === c.id)
-    .map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.sub)} (${eur(unitPrice(p))})</option>`).join("")}</optgroup>`).join("");
+  function renderProdSel() {
+    $("#prodSel").innerHTML = CATEGORIES.map(c => `<optgroup label="${esc(c.name)}">${PRODUCTS.filter(p => p.cat === c.id && p.active !== false)
+      .map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.sub)} (${eur(unitPrice(p))})</option>`).join("")}</optgroup>`).join("");
+  }
+  renderProdSel();
   $("#addLine").onclick = () => {
     const id = $("#prodSel").value, q = Math.max(1, Math.min(999, parseInt($("#prodQty").value) || 1));
     lines[id] = (lines[id] || 0) + q; $("#prodQty").value = 1; renderLines();
@@ -149,7 +153,9 @@
   function renderLines() {
     let sub = 0, disc = 0;
     $("#lines").innerHTML = Object.entries(lines).map(([id, q]) => {
-      const p = PRODUCTS.find(x => x.id === id), g = unitPrice(p) * q, d = g * bulkRate(q);
+      const p = PRODUCTS.find(x => x.id === id);
+      if (!p) { delete lines[id]; return ""; }
+      const g = unitPrice(p) * q, d = g * bulkRate(q);
       sub += g; disc += d;
       return `<tr><td>${q} × ${esc(p.name)}<small class="muted"> ${esc(p.sub)}</small></td><td class="r">${eur(g - d)}</td><td><button type="button" data-rm="${id}">✕</button></td></tr>`;
     }).join("") || `<tr><td class="muted">Ainda não foram adicionados artigos.</td></tr>`;
@@ -168,6 +174,105 @@
     } catch (err) { $("#newErr").textContent = err.message; }
   };
   renderLines();
+
+  // ---------- products ----------
+  let pSel = null, pCreating = false;
+  const pf = $("#pform");
+  const catLabel = id => (CATEGORIES.find(c => c.id === id) || {}).name || id;
+  $("#pcat").innerHTML += CATEGORIES.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  $("#pformCat").innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  async function loadProducts() {
+    try { PRODUCTS = await api("api/products/all"); renderProducts(); renderProdSel(); renderLines(); } catch (e) { toast(e.message); }
+  }
+  const thumb = p => p.imageUrl ? `<img src="${esc(window.Brand.url(p.imageUrl))}" alt="">` : "<i></i>";
+  function renderProducts() {
+    const q = $("#pq").value.toLowerCase(), cat = $("#pcat").value, st = $("#pstate").value;
+    const list = PRODUCTS.filter(p => (!cat || p.cat === cat) && (!st || (st === "on") === p.active) &&
+      (!q || (p.name + " " + p.sub + " " + p.id).toLowerCase().includes(q)));
+    $("#pempty").hidden = !!list.length;
+    $("#prows").innerHTML = list.map(p => `
+      <tr data-pid="${p.id}" class="${p.active ? "" : "off"} ${pSel === p.id ? "sel" : ""}">
+        <td><div class="thumb">${thumb(p)}</div></td>
+        <td><b>${esc(p.name)}</b><small>${esc(p.sub)}</small></td>
+        <td>${esc(catLabel(p.cat))}</td>
+        <td class="r"><b>${eur(unitPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</td>
+        <td class="r">${p.promo ? "−" + p.promo + "%" : "—"}</td>
+        <td><span class="badge ${p.active ? "s-delivered" : "s-cancelled"}">${p.active ? "Ativo" : "Inativo"}</span>${p.best ? ' <span class="src">top</span>' : ""}${p.fresh ? ' <span class="src">novo</span>' : ""}</td>
+      </tr>`).join("");
+  }
+  ["pq", "pcat", "pstate"].forEach(id => $("#" + id).addEventListener("input", renderProducts));
+  $("#prows").onclick = e => { const tr = e.target.closest("tr[data-pid]"); if (tr) openProduct(tr.dataset.pid); };
+  function showForm(show) { pf.hidden = !show; $("#plLayout").classList.toggle("with-panel", show); }
+  function updateFinal() {
+    const price = parseFloat(String(pf.price.value).replace(",", ".")), promo = parseInt(pf.promo.value) || 0;
+    $("#pformFinal").textContent = isFinite(price) ? `Preço na loja: ${eur(unitPrice({ price, promo }))}${promo ? ` (−${promo}% sobre ${eur(price)})` : ""} · 5 un.: −5% · 10 un.: −10%` : "";
+  }
+  pf.price.oninput = pf.promo.oninput = updateFinal;
+  function renderPImage(p) {
+    $("#pimgPrev").innerHTML = p && p.imageUrl ? `<img src="${esc(window.Brand.url(p.imageUrl))}" alt="">` : "Sem imagem — é mostrado o frasco desenhado";
+    $("#pimgRemove").disabled = !(p && p.imageUrl);
+    const canUpload = !!p && !pCreating;
+    $("#pimgFile").disabled = !canUpload;
+    $("#pimgFile").parentElement.style.opacity = canUpload ? "" : ".5";
+    $("#pimgHint").textContent = canUpload ? "PNG, JPG, WebP ou GIF, até 3 MB. Ideal: quadrada ou 4:3, ≥ 800 px." : "Guarde o produto primeiro para poder carregar a imagem.";
+  }
+  function openProduct(id) {
+    const p = PRODUCTS.find(x => x.id === id); if (!p) return;
+    pSel = id; pCreating = false; renderProducts();
+    $("#pformTitle").textContent = "Editar produto";
+    pf.name.value = p.name; pf.sub.value = p.sub; pf.cat.value = p.cat;
+    pf.price.value = String(p.price).replace(".", ","); pf.promo.value = p.promo || ""; pf.description.value = p.description || "";
+    pf.reviews.value = p.reviews; pf.position.value = p.position;
+    pf.active.checked = p.active; pf.best.checked = p.best; pf.fresh.checked = p.fresh;
+    $("#pdelete").disabled = false; $("#pformErr").textContent = "";
+    updateFinal(); renderPImage(p); showForm(true);
+  }
+  $("#newProduct").onclick = () => {
+    pSel = null; pCreating = true; renderProducts(); pf.reset();
+    pf.active.checked = true; pf.cat.value = $("#pcat").value || CATEGORIES[0].id;
+    $("#pformTitle").textContent = "Novo produto"; $("#pdelete").disabled = true; $("#pformErr").textContent = "";
+    updateFinal(); renderPImage(null); showForm(true); pf.name.focus();
+  };
+  $("#pclose").onclick = () => { pSel = null; pCreating = false; showForm(false); renderProducts(); };
+  pf.onsubmit = async e => {
+    e.preventDefault(); $("#pformErr").textContent = "";
+    const body = { name: pf.name.value, sub: pf.sub.value, cat: pf.cat.value, price: pf.price.value, promo: pf.promo.value || 0,
+      description: pf.description.value, reviews: pf.reviews.value || 0, active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
+    if (pf.position.value !== "") body.position = pf.position.value;
+    try {
+      const p = pCreating ? await api("api/products", { method: "POST", body: JSON.stringify(body) })
+                          : await api("api/products/" + pSel + "/update", { method: "POST", body: JSON.stringify(body) });
+      const i = PRODUCTS.findIndex(x => x.id === p.id);
+      if (i >= 0) PRODUCTS[i] = p; else PRODUCTS.push(p);
+      PRODUCTS.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+      toast(pCreating ? "Produto criado — já pode carregar a imagem" : "Produto guardado");
+      openProduct(p.id); renderProdSel();
+    } catch (err) { $("#pformErr").textContent = err.message; }
+  };
+  $("#pimgFile").onchange = async e => {
+    const file = e.target.files[0]; e.target.value = "";
+    if (!file || !pSel) return;
+    const fd = new FormData(); fd.append("file", file);
+    try {
+      const p = await api("api/products/" + pSel + "/image", { method: "POST", body: fd });
+      PRODUCTS[PRODUCTS.findIndex(x => x.id === p.id)] = p; renderPImage(p); renderProducts(); toast("Imagem atualizada");
+    } catch (err) { toast(err.message); }
+  };
+  $("#pimgRemove").onclick = async () => {
+    if (!pSel || !confirm("Remover a imagem deste produto?")) return;
+    try {
+      const p = await api("api/products/" + pSel + "/image/delete", { method: "POST" });
+      PRODUCTS[PRODUCTS.findIndex(x => x.id === p.id)] = p; renderPImage(p); renderProducts(); toast("Imagem removida");
+    } catch (err) { toast(err.message); }
+  };
+  $("#pdelete").onclick = async () => {
+    const p = PRODUCTS.find(x => x.id === pSel); if (!p) return;
+    if (!confirm(`Eliminar "${p.name}"? Esta ação não pode ser anulada. (Pode, em alternativa, desativá-lo.)`)) return;
+    try {
+      await api("api/products/" + p.id + "/delete", { method: "POST" });
+      PRODUCTS = PRODUCTS.filter(x => x.id !== p.id); pSel = null; showForm(false); renderProducts(); renderProdSel(); toast("Produto eliminado");
+    } catch (err) { toast(err.message); }
+  };
 
   // ---------- brand ----------
   const bf = $("#brandForm");

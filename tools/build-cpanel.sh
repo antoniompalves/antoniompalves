@@ -12,7 +12,9 @@ mkdir -p "$STAGE/admin" "$STAGE/app" "$STAGE/uploads/brand"
 cp "$SRC"/admin/{index.html,admin.css,admin.js} "$STAGE/admin/"
 cp "$SRC/app/lib.php" "$SRC/app/.htaccess" "$STAGE/app/"          # config.php e dev-router.php ficam de fora
 cp "$SRC/uploads/.htaccess" "$STAGE/uploads/"
+mkdir -p "$STAGE/uploads/products"
 cp "$SRC/uploads/brand/.keep" "$STAGE/uploads/brand/"
+cp "$SRC/uploads/products/.keep" "$STAGE/uploads/products/"
 cp "$SRC/INSTALAR.txt" "$STAGE/"
 
 # Sanity checks: no secrets or local data in the package
