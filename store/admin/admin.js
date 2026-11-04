@@ -332,6 +332,7 @@
     $("#pformTitle").textContent = "Editar produto";
     pf.name.value = p.name; pf.sub.value = p.sub; pf.cat.value = p.cat;
     pf.price.value = String(p.price).replace(".", ","); pf.promo.value = p.promo || ""; pf.description.value = p.description || "";
+    pf.specs.value = (p.specs || []).map(([k, v]) => `${k}: ${v}`).join("\n");
     pf.reviewsInfo.value = p.reviews ? `${p.reviews} · média ${String(p.rating).replace(".", ",")} ★` : "Sem avaliações"; pf.position.value = p.position;
     pf.active.checked = p.active; pf.best.checked = p.best; pf.fresh.checked = p.fresh;
     pf.trackStock.checked = p.trackStock; pf.lowStock.value = p.lowStock; pf.initialStock.value = 0;
@@ -352,7 +353,7 @@
   pf.onsubmit = async e => {
     e.preventDefault(); $("#pformErr").textContent = "";
     const body = { name: pf.name.value, sub: pf.sub.value, cat: pf.cat.value, price: pf.price.value, promo: pf.promo.value || 0,
-      description: pf.description.value, securityText: pf.securityText.value, verifyUrl: pf.verifyUrl.value.trim(), active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
+      description: pf.description.value, specs: parseSpecLines(pf.specs.value), securityText: pf.securityText.value, verifyUrl: pf.verifyUrl.value.trim(), active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
     if (pf.position.value !== "") body.position = pf.position.value;
     body.trackStock = pf.trackStock.checked; body.lowStock = pf.lowStock.value || 0;
     const cur = PRODUCTS.find(x => x.id === pSel);
@@ -428,6 +429,130 @@
       $("#adjQty").value = ""; $("#adjNote").value = "";
       renderStock(p); renderProducts(); renderProdSel(); toast(`Stock atualizado: ${p.stock}`);
     } catch (err) { toast(err.message); }
+  };
+
+  // "Rótulo: Valor" per line → [[label, value]]
+  function parseSpecLines(t) {
+    return String(t || "").split("\n").map(l => l.replace(/^[-*•]\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean)
+      .map(l => { const i = l.indexOf(":"); return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 1).trim()] : null; }).filter(r => r && r[0] && r[1]);
+  }
+
+  // ---------- content import (Markdown/text → description + specifications) ----------
+  let IMP = [];
+  const stripMdLinks = s => s.replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+  function parseDoc(text, fileName) {
+    const lines = String(text).replace(/\r/g, "").replace(/^\uFEFF/, "").split("\n");
+    let title = "", section = null, specs = [], out = [], beforeFirst = true;
+    for (const raw of lines) {
+      const line = raw.replace(/\s+$/, ""), t = line.trim();
+      let m;
+      if (!title && (m = t.match(/^#\s+(.+)$/))) { title = m[1].trim(); continue; }
+      if ((m = t.match(/^(#{2,6})\s+(.+)$/))) {
+        const h = m[2].replace(/\*\*/g, "").trim();
+        beforeFirst = false;
+        if (/^especifica[çc][õo]es|^specifications/i.test(h)) { section = "specs"; continue; }
+        if (/^imagens?$|^images?$|^fotos?$/i.test(h)) { section = "skip"; continue; }
+        section = "desc";
+        if (/^descri[çc][ãa]o( do produto)?$/i.test(h)) continue;  // redundant: the page section is already "Descrição"
+        out.push("", "## " + h); continue;
+      }
+      if (/^\**\s*fonte\s*:?/i.test(t)) continue;                 // source line is never imported
+      if (section === "skip") continue;
+      if (section === "specs") {
+        const s = t.replace(/^[-*•]\s*/, "").replace(/\*\*/g, "");
+        const i = s.indexOf(":");
+        if (i > 0) specs.push([s.slice(0, i).trim(), s.slice(i + 1).trim()]);
+        continue;
+      }
+      if (beforeFirst && t && !/^[-*•]/.test(t) && t.length < 40) continue; // short tag line under the title (e.g. "Injetável")
+      if (/^!\[/.test(t)) continue;                                  // inline images are not imported
+      out.push(stripMdLinks(line.trim()));
+    }
+    const description = out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    return { title: title || fileName.replace(/\.[^.]+$/, ""), specs: specs.filter(r => r[0] && r[1]).slice(0, 40), description };
+  }
+  function matchTitle(title) {
+    const f = slug(title), words = new Set(f.split("-").filter(w => w.length > 1));
+    let best = null, bestScore = 0, ties = 0;
+    for (const p of PRODUCTS) {
+      const k = slug(p.name), kw = k.split("-").filter(w => w.length > 1);
+      let score = 0;
+      if (k === f || p.id === f) score = 100;
+      else if (k.length >= 3 && (f.includes(k) || k.includes(f))) score = 50 + k.length;
+      else { const common = kw.filter(w => words.has(w)).length; if (common) score = 40 * common / Math.max(kw.length, words.size); }
+      if (score > bestScore) { best = p; bestScore = score; ties = 1; } else if (score === bestScore && score > 0) ties++;
+    }
+    if (!best || bestScore < 15) return { id: "", state: "no", note: "Sem correspondência — escolha o produto" };
+    return { id: best.id, state: bestScore === 100 && ties === 1 ? "ok" : "warn", note: bestScore === 100 ? (ties > 1 ? "Vários produtos com este nome" : "Nome igual") : "Nome parecido — confirme" };
+  }
+  function addDocs(docs) {
+    for (const d of docs) {
+      const parsed = parseDoc(d.text, d.name);
+      IMP.push({ ...parsed, file: d.name, ...matchTitle(parsed.title), useDesc: !!parsed.description, useSpecs: parsed.specs.length > 0, open: false, result: null });
+    }
+    renderImp();
+  }
+  function renderImp() {
+    const counts = {}; IMP.forEach(it => { if (it.id) counts[it.id] = (counts[it.id] || 0) + 1; });
+    $("#impList").innerHTML = IMP.map((it, i) => {
+      const p = PRODUCTS.find(x => x.id === it.id), words = it.description ? it.description.split(/\s+/).length : 0;
+      const flag = it.result ? `<span class="bulk-flag ${it.result === "ok" ? "done" : "err"}">${it.result === "ok" ? "Aplicado" : esc(it.result)}</span>`
+        : counts[it.id] > 1 ? '<span class="bulk-flag warn">Mesmo produto noutra linha</span>'
+        : `<span class="bulk-flag ${it.state}">${esc(it.note)}${p && (p.description || (p.specs || []).length) ? " · substitui o conteúdo atual" : ""}</span>`;
+      return `<div class="imp-row" data-ii="${i}">
+        <div class="t"><b>${esc(it.title)}</b><small>${esc(it.file)} · ${it.specs.length} especificações · ${words} palavras</small></div>
+        <div><select data-ip="${i}" ${it.result ? "disabled" : ""}>${productOptions(it.id)}</select><div style="margin-top:6px">${flag}</div></div>
+        <div class="opts2">
+          <label><input type="checkbox" data-iu="desc" ${it.useDesc ? "checked" : ""} ${!it.description || it.result ? "disabled" : ""}> Descrição</label>
+          <label><input type="checkbox" data-iu="specs" ${it.useSpecs ? "checked" : ""} ${!it.specs.length || it.result ? "disabled" : ""}> Especificações</label>
+          <button type="button" class="ghost" data-iprev>${it.open ? "Ocultar" : "Pré-visualizar"}</button>
+          <button type="button" class="rm" data-irm title="Remover da lista" ${it.result ? "disabled" : ""}>✕</button>
+        </div>
+        ${it.open ? `<div class="prev">
+          <div>${it.specs.length ? `<table>${it.specs.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</table>` : '<span class="hint">Sem especificações</span>'}</div>
+          <div class="md">${window.Md.render(it.description) || '<span class="hint">Sem descrição</span>'}</div></div>` : ""}
+      </div>`;
+    }).join("");
+    const n = IMP.filter(it => it.id && !it.result && (it.useDesc || it.useSpecs)).length;
+    $("#impSummary").textContent = IMP.length ? `${IMP.length} texto(s) · ${n} para aplicar` : "Ainda não carregou nenhum texto.";
+    $("#impGo").disabled = !n; $("#impGo").textContent = n ? `Aplicar a ${n} produto${n === 1 ? "" : "s"}` : "Aplicar";
+  }
+  $("#importOpen").onclick = () => { IMP = []; $("#impProgress").hidden = true; $("#impText").value = ""; renderImp(); $("#imp").hidden = false; };
+  $("#impClose").onclick = $("#impCancel").onclick = () => { $("#imp").hidden = true; IMP = []; loadProducts(); };
+  $("#impFiles").onchange = async e => {
+    const files = [...e.target.files].filter(f => f.size < 200000); e.target.value = "";
+    addDocs(await Promise.all(files.map(async f => ({ name: f.name, text: await f.text() }))));
+  };
+  $("#impAddText").onclick = () => {
+    const t = $("#impText").value.trim(); if (!t) return;
+    addDocs([{ name: "texto colado", text: t }]); $("#impText").value = ""; $(".imp-paste").open = false;
+  };
+  $("#impList").addEventListener("change", e => {
+    const row = e.target.closest("[data-ii]"); if (!row) return;
+    const it = IMP[+row.dataset.ii];
+    if (e.target.matches("[data-ip]")) { it.id = e.target.value; it.state = "ok"; it.note = "Escolhido manualmente"; }
+    if (e.target.matches("[data-iu]")) it[e.target.dataset.iu === "desc" ? "useDesc" : "useSpecs"] = e.target.checked;
+    renderImp();
+  });
+  $("#impList").addEventListener("click", e => {
+    const row = e.target.closest("[data-ii]"); if (!row) return;
+    const i = +row.dataset.ii;
+    if (e.target.closest("[data-iprev]")) { IMP[i].open = !IMP[i].open; renderImp(); }
+    if (e.target.closest("[data-irm]")) { IMP.splice(i, 1); renderImp(); }
+  });
+  $("#impGo").onclick = async () => {
+    const seen = new Set(), todo = IMP.filter(it => it.id && !it.result && (it.useDesc || it.useSpecs) && !seen.has(it.id) && seen.add(it.id));
+    if (!todo.length) return;
+    $("#impGo").disabled = true; $("#impProgress").hidden = false;
+    let done = 0, ok = 0;
+    for (const it of todo) {
+      const body = {}; if (it.useDesc) body.description = it.description; if (it.useSpecs) body.specs = it.specs;
+      try { const p = await api("api/products/" + it.id + "/update", { method: "POST", body: JSON.stringify(body) }); PRODUCTS[PRODUCTS.findIndex(x => x.id === p.id)] = p; it.result = "ok"; ok++; }
+      catch (err) { it.result = err.message; }
+      done++; $("#impBar").style.width = (done / todo.length * 100) + "%"; $("#impPct").textContent = `${done}/${todo.length}`;
+      renderImp();
+    }
+    renderProducts(); toast(`Conteúdo aplicado a ${ok} de ${todo.length} produtos`);
   };
 
   // ---------- bulk product images ----------

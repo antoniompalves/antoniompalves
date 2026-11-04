@@ -63,4 +63,23 @@
   }
 
   window.Brand = { apply, load, shade, url, DEFAULTS };
+
+  // Minimal, safe Markdown for product texts (store + backoffice preview):
+  // "## title", "- item", "**bold**", blank line = new paragraph. Everything is escaped first.
+  const inlineMd = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  function render(t) {
+    let html = "", list = null, para = [];
+    const flushP = () => { if (para.length) { html += `<p>${para.map(inlineMd).join("<br>")}</p>`; para = []; } };
+    const flushL = () => { if (list) { html += `<ul>${list.map(x => `<li>${inlineMd(x)}</li>`).join("")}</ul>`; list = null; } };
+    for (const raw of String(t || "").replace(/\r/g, "").split("\n")) {
+      const l = raw.trim(); let m;
+      if (!l) { flushP(); flushL(); continue; }
+      if ((m = l.match(/^#{1,6}\s+(.*)$/))) { flushP(); flushL(); html += `<h4>${inlineMd(m[1])}</h4>`; continue; }
+      if ((m = l.match(/^[-*•]\s+(.*)$/))) { flushP(); (list ||= []).push(m[1]); continue; }
+      flushL(); para.push(l);
+    }
+    flushP(); flushL();
+    return html;
+  }
+  window.Md = { render };
 })();

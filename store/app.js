@@ -9,6 +9,9 @@
   // product picture: uploaded image when available, otherwise the drawn bottle
   const art = (p, label) => p && p.imageUrl ? `<img class="pimg" src="${esc(window.Brand.url(p.imageUrl))}" alt="${esc(p.name)}" loading="lazy">` : vial(label);
   // plain-text description → paragraphs (always escaped, no HTML from the database)
+  const md = t => window.Md.render(t);
+  // first paragraph of the description (without markdown) for the short "Detalhes" box
+  const firstPara = t => (String(t || "").replace(/\r/g, "").split(/\n\s*\n/).map(x => x.trim()).find(x => x && !/^#{1,6}\s/.test(x) && !/^[-*•]\s/.test(x)) || "").replace(/\*\*/g, "");
   const paras = t => String(t || "").trim().split(/\n\s*\n/).map(x => `<p>${esc(x.trim()).replace(/\n/g, "<br>")}</p>`).join("");
   // real reviews from verified buyers (count + average come from the API)
   const num1 = n => String(n).replace(".", ",");
@@ -187,6 +190,16 @@
     } catch {}
   }
 
+  // full-width product information: specifications table + formatted description
+  function infoBlock(p) {
+    const specs = (p.specs || []).filter(r => r && r[0] && r[1]);
+    if (!specs.length && !(p.description && md(p.description))) return "";
+    return `<section class="pinfo ${specs.length ? "" : "no-specs"}" id="pinfo">
+      ${specs.length ? `<div class="pi-specs"><h3>Especificações</h3><table>${specs.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</table></div>` : ""}
+      ${p.description ? `<div class="pi-desc"><h3>Descrição</h3><div class="md">${md(p.description)}</div></div>` : ""}
+    </section>`;
+  }
+
   // optional "protection code" + "package sizes" block, filled per product in the backoffice
   function verifyBlock(p) {
     const sec = p.securityImageUrl || p.securityText || p.verifyUrl, pack = p.packageImageUrl;
@@ -221,10 +234,10 @@
         </div>
         ${stockBadge(p)}
         <button class="btn-orange" data-dadd="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
-        <details class="acc" open><summary>Detalhes</summary><div>${p.description ? paras(p.description) : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
+        <details class="acc" open><summary>Detalhes</summary><div>${p.description ? `<p>${esc(firstPara(p.description))}</p><a href="#pinfo" class="more-link">Ver descrição completa ↓</a>` : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
         <details class="acc"><summary>Envio</summary><div>Embalagem discreta, envio rastreado a partir de stock na UE.</div></details>
-      </div>${verifyBlock(p)}
+      </div>${infoBlock(p)}${verifyBlock(p)}
       <div class="reviews-block" id="detailReviews">
         <h3>Avaliações de clientes ${p.reviews ? `<small>${starRow(Math.round(p.rating))} ${num1(p.rating)} de 5 · ${p.reviews} avaliaç${p.reviews === 1 ? "ão" : "ões"}</small>` : ""}</h3>
         ${p.reviews ? '<div class="rv-list"></div><button type="button" class="ghost-btn rv-more" hidden>Ver mais avaliações</button>'

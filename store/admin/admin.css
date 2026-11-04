@@ -166,6 +166,24 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .review-link .row2 { display: flex; gap: 6px; flex-wrap: wrap; }
 .btn-ok { background: #2e7d32; color: #fff; border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; }
 
+/* ---------- content import ---------- */
+.modal-box.imp-box { width: min(980px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
+.imp-in { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.imp-paste { flex: 1; min-width: 260px; } .imp-paste summary { cursor: pointer; font-size: 13px; padding: 8px 0; }
+.imp-paste textarea { margin: 6px 0; font-family: ui-monospace, monospace; font-size: 12px; }
+.imp-list { display: flex; flex-direction: column; gap: 8px; }
+.imp-row { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: 1fr 1.2fr auto; gap: 10px; align-items: center; }
+.imp-row .t b { display: block; font-size: 14px; } .imp-row .t small { color: var(--muted); font-size: 12px; }
+.imp-row select { padding: 7px 10px; }
+.imp-row .opts2 { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; } .imp-row .opts2 label { display: flex; gap: 4px; align-items: center; font-weight: 500; }
+.imp-row .opts2 input { width: auto; }
+.imp-row .prev { grid-column: 1 / -1; border-top: 1px dashed var(--line); padding-top: 10px; display: grid; grid-template-columns: 1fr 2fr; gap: 16px; font-size: 13px; }
+.imp-row .prev table { width: 100%; border-collapse: collapse; font-size: 12px; } .imp-row .prev td, .imp-row .prev th { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
+.imp-row .prev th { color: var(--muted); font-weight: 500; width: 45%; }
+.imp-row .prev .md { max-height: 320px; overflow: auto; line-height: 1.55; } .imp-row .prev .md h4 { margin: 12px 0 4px; font-size: 13px; } .imp-row .prev .md p, .imp-row .prev .md ul { margin: 0 0 8px; }
+.imp-row .rm { color: #c62828; font-size: 18px; }
+@media (max-width: 760px) { .imp-row, .imp-row .prev { grid-template-columns: 1fr; } }
+
 /* ---------- testimonials ---------- */
 .tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; align-content: start; }
 .tcard { background: var(--card); border-radius: 14px; overflow: hidden; cursor: pointer; border: 2px solid transparent; display: flex; flex-direction: column; }

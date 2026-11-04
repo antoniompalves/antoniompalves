@@ -27,6 +27,8 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 - **Avaliações de clientes reais:** link privado por encomenda entregue, uma avaliação por produto, moderação
   (publicar/rejeitar/responder), "Compra verificada", média e contagem reais na loja
 - **Testemunhos:** mensagens reais de clientes com foto opcional, origem e data; publicadas na página inicial
+- **Importar conteúdo:** ficheiros .md/.txt ou texto colado → especificações (tabela) + descrição formatada
+  (Markdown simples, sempre escapado), associação pelo título com pré-visualização
 - **Imagens em massa:** várias imagens de uma vez, associadas pelo nome do ficheiro (com confirmação)
 - **Stock:** controlo opcional por produto; as encomendas retiram stock de forma atómica (sem vendas acima do
   disponível, mesmo com pedidos simultâneos), cancelar devolve; entradas/saídas/acertos com nota; histórico de

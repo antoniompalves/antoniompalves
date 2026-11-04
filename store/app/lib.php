@@ -334,7 +334,7 @@ function ensure_products(): void
     $pdo->exec(stock_schema($driver, config()['prefix'] ?? ''));
     // upgrade older installs: add the stock columns when missing
     foreach (['stock' => 'INT NULL', 'low_stock' => 'INT NOT NULL DEFAULT 5', 'image_security' => 'VARCHAR(100) NULL',
-              'image_package' => 'VARCHAR(100) NULL', 'security_text' => 'TEXT NULL', 'verify_url' => 'VARCHAR(300) NULL'] as $col => $def) {
+              'image_package' => 'VARCHAR(100) NULL', 'security_text' => 'TEXT NULL', 'verify_url' => 'VARCHAR(300) NULL', 'specs' => 'TEXT NULL'] as $col => $def) {
         add_column_if_missing('products', $col, $def);
     }
     if ((int) $pdo->query('SELECT COUNT(*) FROM ' . t('products'))->fetchColumn() === 0) {
@@ -363,6 +363,7 @@ function row_to_product(array $r): array
         'securityImageUrl' => !empty($r['image_security']) ? 'uploads/products/' . $r['image_security'] : null,
         'packageImageUrl' => !empty($r['image_package']) ? 'uploads/products/' . $r['image_package'] : null,
         'securityText' => (string) ($r['security_text'] ?? ''), 'verifyUrl' => (string) ($r['verify_url'] ?? ''),
+        'specs' => (is_array($sp = json_decode((string) ($r['specs'] ?? ''), true)) ? $sp : []),
         'trackStock' => $r['stock'] !== null, 'stock' => $r['stock'] === null ? null : (int) $r['stock'], 'lowStock' => (int) $r['low_stock'],
     ];
 }
@@ -518,7 +519,19 @@ function product_fields(array $in, bool $creating): array
     }
     foreach (['best', 'fresh', 'active'] as $k) if ($creating || array_key_exists($k, $in)) $f[$k] = empty($in[$k]) ? 0 : 1;
     if ($creating && !array_key_exists('active', $in)) $f['active'] = 1;
-    if ($creating || array_key_exists('description', $in)) $f['description'] = str_in($in['description'] ?? '', 10000);
+    if ($creating || array_key_exists('description', $in)) $f['description'] = str_in($in['description'] ?? '', 20000);
+    // specifications table: list of [label, value]
+    if ($creating || array_key_exists('specs', $in)) {
+        $rows = $in['specs'] ?? [];
+        if (!is_array($rows) || count($rows) > 40) throw new HttpError(400, 'Especificações inválidas (máx. 40 linhas)');
+        $clean = [];
+        foreach ($rows as $row) {
+            if (!is_array($row) || count($row) < 2) continue;
+            $label = str_in((string) $row[0], 60); $value = str_in((string) $row[1], 200);
+            if ($label !== '' && $value !== '') $clean[] = [$label, $value];
+        }
+        $f['specs'] = json_encode($clean, JSON_UNESCAPED_UNICODE);
+    }
     if (array_key_exists('position', $in) && is_numeric($in['position'])) $f['position'] = (int) $in['position'];
     if ($creating || array_key_exists('securityText', $in)) $f['security_text'] = str_in($in['securityText'] ?? '', 2000);
     if ($creating || array_key_exists('verifyUrl', $in)) {

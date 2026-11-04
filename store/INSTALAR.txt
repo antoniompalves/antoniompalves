@@ -95,6 +95,18 @@ estrelas passa a ser calculada só com avaliações reais aprovadas.
 
 Tamanho do logótipo: em "Marca", ajuste "Tamanho do logótipo no cabeçalho" (28 a 96 px).
 
+Importar conteúdo: em "Produtos" → "⇪ Importar conteúdo", carregue ficheiros .md/.txt (vários de
+uma vez) ou cole o texto. Formato:
+  # Nome do produto
+  ## Especificações
+  - Rótulo: Valor
+  ## Qualquer título
+  Parágrafos e listas (- item), **negrito**
+Cada texto é associado ao produto pelo título (confirme na lista). As especificações vão para a tabela
+do produto e o resto para a descrição; linhas "Fonte" e a secção "Imagens" são ignoradas (as imagens
+nunca são descarregadas). Pré-visualize antes de aplicar. Na página do produto, "Detalhes" mostra o
+primeiro parágrafo e a secção "Especificações / Descrição" mostra o conteúdo completo.
+
 Imagens em massa: em "Produtos" → "⬆ Imagens em massa", selecione várias imagens de uma vez.
 Cada ficheiro é associado ao produto com o mesmo nome (ex.: "Testosterone Enanthate.jpg"; maiúsculas
 e acentos não contam). Confirme ou corrija cada associação antes de carregar.
