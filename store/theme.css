@@ -437,3 +437,19 @@ button:active, .btn-dark:active, .btn-orange:active, .add:active, .icon-btn:acti
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .menu, .drawer, .tabbar, .buybar { background-color: #f7f8fc; }
 }
+
+/* ---------- typography: Plus Jakarta Sans (text) + Sora (display) ---------- */
+:root { --font-display: "Sora", "Plus Jakarta Sans", system-ui, sans-serif; }
+body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+h1, h2, h3, .section-title, .hero h1, .page-head h1, .mp-head h3, .feat-link h3, .card .pr b, .price, .buybar .bb-p b, .drawer h2, .t-num { font-family: var(--font-display); }
+.hero h1 { font-weight: 600; letter-spacing: -.045em; }
+.section-title, .page-head h1, .crumbs + .detail h1 { font-weight: 600; letter-spacing: -.035em; }
+.card .name { font-weight: 700; letter-spacing: -.005em; }
+.card .pr b, .price, .buybar .bb-p b { font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.chip, .pill-btn, .btn-orange, .add, .tabbar { letter-spacing: -.005em; }
+.mc-open .mc-name { font-family: var(--font-display); font-weight: 500; letter-spacing: -.02em; }
+body { word-spacing: .06em; }
+h1, h2, h3, .section-title { word-spacing: .02em; }
+.card .add { display: flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
+.card .add svg { flex: none; }
+@media (max-width: 680px) { .card .add .add-x { display: none; } }

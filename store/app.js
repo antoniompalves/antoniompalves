@@ -54,7 +54,7 @@
     const add = Math.min(qty, max - have);
     cart[id] = have + add;
     save(); renderCart();
-    toast(add < qty ? `Adicionadas ${add} — limite de stock atingido` : "Adicionado! Precisa de mais?");
+    toast(add < qty ? `Adicionadas ${add} — limite de stock atingido` : "Adicionado ao carrinho");
   }
   function renderCart() {
     // drop unknown products and clamp quantities to what is in stock
@@ -136,7 +136,7 @@
         <div class="pr"><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
         <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Entrega PT</span></div>
         ${stockBadge(p)}
-        <button class="add" data-add="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
+        <button class="add" data-add="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3.5h2.6l2.4 11.6h11.2l2-8H6.3"/></svg><span>Adicionar<span class="add-x"> ao carrinho</span></span>`}</button>
       </div>
     </article>`;
 
