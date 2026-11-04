@@ -134,11 +134,12 @@
   <div class="menu-overlay" id="menuOverlay"></div>
   <aside class="menu" id="menu" aria-label="Menu" aria-hidden="true">
     <div class="menu-head">
-      <button type="button" class="menu-sq" id="menuClose" aria-label="Fechar menu">✕</button>
+      <button type="button" class="icon-btn" id="menuClose" aria-label="Fechar menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <a class="logo" href="./" data-brand-logo><span>FORGE</span><small>LABS</small></a>
-      <a class="menu-sq" href="produtos" aria-label="Todos os produtos">▦</a>
+      <a class="icon-btn" href="produtos" aria-label="Todos os produtos"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></a>
     </div>
-    <div class="menu-body">
+    <div class="mpanels" id="mpanels">
+    <section class="mpanel mp-root menu-body" id="mpRoot">
       <label class="menu-search"><input type="search" id="menuSearch" placeholder="Pesquisar" autocomplete="off" aria-label="Pesquisar produtos">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></label>
       <div class="menu-results" id="menuResults" hidden></div>
@@ -154,6 +155,18 @@
         </ul></div>
         <div id="menuGoalsCol" hidden><h4>Objetivos</h4><ul class="menu-links" id="menuGoals"></ul></div>
       </div>
+    </section>
+    <!-- second level: products of a category or goal (slides in from the right) -->
+    <section class="mpanel mp-sub" id="mpSub" aria-hidden="true">
+      <div class="mp-head">
+        <button type="button" class="pill-btn" id="mpBack"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 6-6 6 6 6"/></svg>Voltar</button>
+        <h3 id="mpTitle"></h3>
+        <button type="button" class="icon-btn" id="mpFind" aria-label="Filtrar lista"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+      </div>
+      <label class="mp-filter" id="mpFilterWrap" hidden><input type="search" id="mpFilter" placeholder="Filtrar…" autocomplete="off" aria-label="Filtrar produtos"></label>
+      <ul class="mp-list" id="mpList"></ul>
+      <a class="mp-all" id="mpAll" href="produtos">Ver todos na página Produtos <svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></a>
+    </section>
     </div>
   </aside>
 

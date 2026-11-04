@@ -357,37 +357,74 @@
   const setMenu = open => {
     document.body.classList.toggle("menu-open", open);
     menu.setAttribute("aria-hidden", String(!open)); $("#menuOpen").setAttribute("aria-expanded", String(open));
-    if (open) { renderMenu(); setTimeout(() => $("#menuSearch").focus(), 250); }
+    if (open) { renderMenu(); menu.classList.remove("in"); void menu.offsetWidth; menu.classList.add("in"); if (matchMedia("(hover: hover)").matches) setTimeout(() => $("#menuSearch").focus(), 280); }
+    else setTimeout(() => { menu.classList.remove("sub-open", "in"); $("#mpSub").setAttribute("aria-hidden", "true"); $("#mpRoot").setAttribute("aria-hidden", "false"); }, 320);
   };
   function renderMenu() {
     if (!menu) return;
     const cats = C.map((c, i) => ({ ...c, color: DOTS[i % DOTS.length], items: P.filter(p => p.cat === c.id) })).filter(c => c.items.length);
-    $("#menuCats").innerHTML = cats.map(c => `<li data-mc="${esc(c.id)}">
-      <div class="mc-row"><a href="produtos?cat=${encodeURIComponent(c.id)}"><span class="mc-dot" style="background:${c.color}"></span>${esc(c.name)} <small>${c.items.length}</small></a>
-        <button type="button" class="mc-tog" aria-label="Ver produtos de ${esc(c.name)}" aria-expanded="false">›</button></div>
-      <ul class="mc-sub">${c.items.map(p => `<li><a href="${purl(p.id)}">${esc(p.name)}<span>${eur(finalPrice(p))}</span></a></li>`).join("")}
-        <li class="all"><a href="produtos?cat=${encodeURIComponent(c.id)}">Ver todos em ${esc(c.name)} →</a></li></ul></li>`).join("");
+    const CHEV = '<svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>';
+    $("#menuCats").innerHTML = cats.map((c, i) => `<li style="--i:${i}"><button type="button" class="mc-open" data-open-cat="${esc(c.id)}">
+      <span class="mc-dot" style="background:${c.color}"></span><span class="mc-name">${esc(c.name)}</span><small>${c.items.length}</small>${CHEV}</button></li>`).join("");
     const goals = G.map(g => ({ ...g, n: P.filter(p => (p.goals || []).includes(g.id)).length })).filter(g => g.n);
     $("#menuGoalsCol").hidden = !goals.length;
-    $("#menuGoals").innerHTML = goals.map(g => `<li><a href="produtos?goal=${encodeURIComponent(g.id)}">${esc(g.name)} <small>${g.n}</small></a></li>`).join("");
+    $("#menuGoals").innerHTML = goals.map(g => `<li><button type="button" class="ml-open" data-open-goal="${esc(g.id)}">${esc(g.name)} <small>${g.n}</small></button></li>`).join("");
   }
   // mobile tab bar
   if ($("#tabbar")) {
     const tab = isProduct || PAGE.type === "products" || PAGE.type === "notfound" ? "products" : "home";
     const cur = $(`#tabbar [data-tab="${tab}"]`); if (cur) cur.classList.add("on");
-    $("#tabSearch").onclick = () => setMenu(true);
+    const ti = [...$("#tabbar").children].indexOf(cur);
+    if (ti >= 0) $("#tabbar").style.setProperty("--ti", ti); else $("#tabbar").classList.add("no-ti");
+    $("#tabSearch").onclick = () => { setMenu(true); setTimeout(() => $("#menuSearch").focus(), 60); };
     $("#tabCart").onclick = () => openCart(true);
   }
   if (menu) {
     $("#menuOpen").onclick = () => setMenu(true);
     $("#burger").onclick = () => setMenu(true);
     $("#menuClose").onclick = $("#menuOverlay").onclick = () => setMenu(false);
-    document.addEventListener("keydown", e => { if (e.key === "Escape" && document.body.classList.contains("menu-open")) setMenu(false); });
-    $("#menuCats").addEventListener("click", e => {
-      const t = e.target.closest(".mc-tog"); if (!t) return;
-      const li = t.closest("li"); const open = !li.classList.contains("open");
-      li.classList.toggle("open", open); t.setAttribute("aria-expanded", String(open));
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Escape" || !document.body.classList.contains("menu-open")) return;
+      if (menu.classList.contains("sub-open")) closeSub(); else setMenu(false);
     });
+    // second level: products of a category / goal, sliding in from the right
+    const CHEV = '<svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>';
+    const openSub = (kind, id) => {
+      const c = kind === "cat" ? C.find(x => x.id === id) : G.find(x => x.id === id); if (!c) return;
+      const items = P.filter(p => kind === "cat" ? p.cat === id : (p.goals || []).includes(id));
+      $("#mpTitle").textContent = c.name;
+      $("#mpList").innerHTML = items.map((p, i) => `<li style="--i:${Math.min(i, 14)}"><a href="${purl(p.id)}">
+          <span class="mp-txt"><small>${esc(kind === "cat" ? c.name : catName(p.cat))}</small>${esc(p.name)}</span><b>${eur(finalPrice(p))}</b>${CHEV}</a></li>`).join("")
+        || '<li class="mp-empty">Sem produtos.</li>';
+      $("#mpAll").href = window.Brand.url("produtos?" + (kind === "cat" ? "cat=" : "goal=") + encodeURIComponent(id));
+      $("#mpFilter").value = ""; $("#mpFilterWrap").hidden = true;
+      $("#mpSub").scrollTop = 0;
+      menu.classList.remove("sub-anim"); void menu.offsetWidth; menu.classList.add("sub-open", "sub-anim");
+      $("#mpSub").setAttribute("aria-hidden", "false"); $("#mpRoot").setAttribute("aria-hidden", "true");
+      setTimeout(() => $("#mpBack").focus({ preventScroll: true }), 320);
+    };
+    const closeSub = () => {
+      menu.classList.remove("sub-open");
+      $("#mpSub").setAttribute("aria-hidden", "true"); $("#mpRoot").setAttribute("aria-hidden", "false");
+    };
+    menu.addEventListener("click", e => {
+      const oc = e.target.closest("[data-open-cat]"), og = e.target.closest("[data-open-goal]");
+      if (oc) openSub("cat", oc.dataset.openCat); else if (og) openSub("goal", og.dataset.openGoal);
+    });
+    $("#mpBack").onclick = closeSub;
+    $("#mpFind").onclick = () => { const w = $("#mpFilterWrap"); w.hidden = !w.hidden; if (!w.hidden) $("#mpFilter").focus(); else { $("#mpFilter").value = ""; $("#mpFilter").dispatchEvent(new Event("input")); } };
+    $("#mpFilter").addEventListener("input", () => {
+      const q = $("#mpFilter").value.trim().toLowerCase();
+      $("#mpList").querySelectorAll("li").forEach(li => { li.hidden = !!q && !li.textContent.toLowerCase().includes(q); });
+    });
+    // swipe right on the second level goes back (mobile)
+    let sx = null, sy = null;
+    $("#mpSub").addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+    $("#mpSub").addEventListener("touchend", e => {
+      if (sx === null) return;
+      const dx = e.changedTouches[0].clientX - sx, dy = Math.abs(e.changedTouches[0].clientY - sy); sx = null;
+      if (dx > 70 && dy < 50) closeSub();
+    }, { passive: true });
     // in-menu links to sections of the current page just close the menu and scroll
     menu.addEventListener("click", e => {
       const a = e.target.closest("a[href]"); if (!a) return;
@@ -450,6 +487,17 @@
     else if (PAGE.type === "products") { renderShelves(); renderChips(); renderGrid(); }
     else { if ($("#prodCount")) $("#prodCount").textContent = P.length; renderChips(); renderGrid(); }
     renderCart();
+  }
+  // cards rise in as they scroll into view (staggered per batch); skipped when motion is reduced
+  if (window.IntersectionObserver && window.MutationObserver && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("js-reveal");
+    const io = new IntersectionObserver(entries => {
+      let n = 0;
+      entries.filter(en => en.isIntersecting).forEach(en => { en.target.style.setProperty("--d", Math.min(n++, 8)); en.target.classList.add("seen"); io.unobserve(en.target); });
+    }, { rootMargin: "0px 0px -6% 0px" });
+    const watch = () => document.querySelectorAll(".card:not(.seen)").forEach(c => io.observe(c));
+    new MutationObserver(watch).observe(document.body, { childList: true, subtree: true });
+    watch();
   }
   renderPage();
   if ((catParam || params.get("q")) && $("#collection")) setTimeout(() => $("#collection").scrollIntoView(), 0);
