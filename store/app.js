@@ -46,7 +46,7 @@
     const line = !tracked(p) ? "Entrega em Portugal: imediata se houver stock, caso contrário até 3 semanas."
       : p.stock > 0 ? `Entrega imediata em Portugal (${p.stock} em stock). Quantidades acima do stock: até 3 semanas.`
       : "Sem stock imediato: entrega em Portugal até 3 semanas.";
-    return `<div class="delivery"><p>🚚 ${line}</p><p>📦 Enviado sempre em embalagem discreta.</p><p>💳 A encomenda é processada após a validação do pagamento: ligamos-lhe para a confirmar e fazer o pagamento.${resellerHint()}</p></div>`;
+    return `<div class="delivery"><p>🚚 ${line}</p><p>📦 Enviado sempre em embalagem discreta.</p><p>💬 Depois de registar, recebe uma mensagem por email ou WhatsApp para confirmar a encomenda e fazer o pagamento; depois, a confirmação do pagamento e o tracking do envio.</p><p>💳 A encomenda só é processada após a validação do pagamento.${resellerHint()}</p></div>`;
   };
   function addToCart(id, qty = 1) {
     const p = P.find(x => x.id === id), max = maxQty(p), have = cart[id] || 0;
@@ -97,13 +97,13 @@
     $("#formErr").textContent = ""; btn.disabled = true; btn.textContent = "A enviar…";
     try {
       const r = await fetch(window.Brand.url("api/orders"), { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer: { name: f.name, phone: f.phone }, items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
+        body: JSON.stringify({ customer: { name: f.name, email: f.email, phone: f.phone }, items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
       const d = await r.json().catch(() => ({}));
       if (r.status === 409) refreshProducts();
       if (!r.ok) throw new Error(d.error || "Não foi possível registar a encomenda");
       cart = {}; save(); renderCart(); form.reset();
       done.innerHTML = `<div class="tick">✓</div><h3>Encomenda registada</h3><p>A sua referência é <b>${esc(d.number)}</b>.</p>
-        <p class="muted">Total: ${eur(d.total)}. Vamos ligar-lhe para o número <b>${esc(f.phone)}</b> para confirmar a encomenda e fazer o pagamento. Nada foi cobrado.</p>
+        <p class="muted">Total: ${eur(d.total)}. Vai receber uma mensagem em <b>${esc(f.email)}</b> ou por WhatsApp (<b>${esc(f.phone)}</b>) para confirmar a encomenda e fazer o pagamento. Depois recebe a confirmação do pagamento e o tracking do envio. Nada foi cobrado.</p>
         <p class="muted"><b>A encomenda só é processada após a validação do pagamento.</b></p>
         <p class="muted">${d.backorder ? "Alguns artigos não têm stock imediato: entrega em até 3 semanas." : "Entrega imediata em Portugal."} Embalagem sempre discreta.</p>
         <button class="btn-orange" id="doneClose">Continuar a comprar</button>`;
@@ -260,7 +260,7 @@
         <button class="btn-orange" data-dadd="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
         <details class="acc" open><summary>Detalhes</summary><div>${p.description ? `<p>${esc(firstPara(p.description))}</p><a href="#pinfo" class="more-link" data-scroll="#pinfo">Ver descrição completa ↓</a>` : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
-        <details class="acc"><summary>Pagamento e entrega</summary><div><p>Registe a encomenda com o seu nome e telefone. Ligamos-lhe para confirmar a encomenda e fazer o pagamento. A encomenda só é processada após a validação do pagamento.${resellerHint()}</p><p>Entregamos em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata. Sem stock imediato: até 3 semanas.</p></div></details>
+        <details class="acc"><summary>Pagamento e entrega</summary><div><p>Registe a encomenda com o seu nome, email e telemóvel. Vai receber uma mensagem por email ou WhatsApp para confirmar a encomenda e fazer o pagamento, depois a confirmação do pagamento e, quando a encomenda for enviada, o número de seguimento (tracking).</p><p>A encomenda só é processada após a validação do pagamento.${resellerHint()}</p><p>Entregamos em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata. Sem stock imediato: até 3 semanas.</p></div></details>
       </div>${infoBlock(p)}${verifyBlock(p)}
       <div class="reviews-block" id="detailReviews">
         <h3>Avaliações de clientes ${p.reviews ? `<small>${starRow(Math.round(p.rating))} ${num1(p.rating)} de 5 · ${p.reviews} avaliaç${p.reviews === 1 ? "ão" : "ões"}</small>` : ""}</h3>

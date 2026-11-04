@@ -588,11 +588,15 @@
  "FAQ": [
   [
    "Como faço uma encomenda?",
-   "Adicione os produtos ao carrinho e carregue em \"Registar encomenda\". Só pedimos o seu nome e telefone."
+   "Adicione os produtos ao carrinho e carregue em \"Registar encomenda\". Pedimos apenas o seu nome, email e telemóvel/WhatsApp."
+  ],
+  [
+   "Como sou contactado?",
+   "Por email ou WhatsApp: para confirmar a encomenda e fazer o pagamento, para confirmar a receção do pagamento e para lhe enviar o número de seguimento (tracking) do envio."
   ],
   [
    "Quando é feito o pagamento?",
-   "Depois de registar a encomenda, ligamos-lhe para a confirmar e fazer o pagamento. A encomenda só é processada após a validação do pagamento."
+   "Depois de registar a encomenda, recebe por email ou WhatsApp as instruções de pagamento. A encomenda só é processada após a validação do pagamento."
   ],
   [
    "Posso comprar através de um revendedor?",
@@ -600,7 +604,7 @@
   ],
   [
    "Qual é o prazo de entrega?",
-   "Entregamos em todo o Portugal. Artigos em stock: entrega imediata. Artigos sem stock imediato: até 3 semanas."
+   "Entregamos em todo o Portugal. Artigos em stock: entrega imediata. Artigos sem stock imediato: até 3 semanas. Recebe o tracking assim que a encomenda for enviada."
   ],
   [
    "A embalagem é discreta?",

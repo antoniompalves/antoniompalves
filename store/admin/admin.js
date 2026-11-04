@@ -2,6 +2,22 @@
   const $ = (s, el = document) => el.querySelector(s);
   const eur = n => new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(+n);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // Ready-made customer messages (email / WhatsApp). Payment details come from Marca → "Dados de pagamento".
+  let PAYMENT_INFO = "";
+  const first = o => String(o.customer.name || "").split(" ")[0] || "";
+  const itemsTxt = o => o.items.map(i => `- ${i.qty} × ${i.name}`).join("\n");
+  const storeNm = () => (window.BRAND && window.BRAND.storeName) || "a loja";
+  const eta = o => o.backorder ? "Alguns artigos não têm stock imediato: a entrega pode demorar até 3 semanas." : "A entrega é imediata, em embalagem discreta.";
+  const MSGS = [
+    { label: "1. Confirmar encomenda", subject: o => `Encomenda ${o.number} — confirmação`,
+      body: o => `Olá ${first(o)},\n\nRecebemos a sua encomenda ${o.number}:\n${itemsTxt(o)}\n\nTotal: ${eur(o.total)}\n${eta(o)}\n\nPode confirmar que está tudo correto? Responda a esta mensagem para avançarmos.\n\nObrigado,\n${storeNm()}` },
+    { label: "2. Pedido de pagamento", subject: o => `Encomenda ${o.number} — pagamento`,
+      body: o => `Olá ${first(o)},\n\nPara concluir a encomenda ${o.number} (${eur(o.total)}), pode efetuar o pagamento da seguinte forma:\n\n${PAYMENT_INFO || "[indique aqui os dados de pagamento]"}\n\nA encomenda é processada após a validação do pagamento. Envie-nos o comprovativo em resposta a esta mensagem.\n\nObrigado,\n${storeNm()}` },
+    { label: "3. Pagamento confirmado", subject: o => `Encomenda ${o.number} — pagamento confirmado`,
+      body: o => `Olá ${first(o)},\n\nConfirmamos a receção do pagamento da encomenda ${o.number}. Vamos preparar o envio em embalagem discreta.\n${eta(o)}\nAssim que for enviada, enviamos-lhe o número de seguimento.\n\nObrigado,\n${storeNm()}` },
+    { label: "4. Envio e tracking", needsTracking: true, subject: o => `Encomenda ${o.number} — enviada`,
+      body: o => `Olá ${first(o)},\n\nA sua encomenda ${o.number} foi enviada em embalagem discreta.\nNúmero de seguimento: ${o.tracking}\n\nObrigado,\n${storeNm()}` },
+  ];
   // WhatsApp needs the international number: Portuguese 9-digit numbers get the 351 prefix
   const waNum = ph => { const d = String(ph || "").replace(/\D/g, "").replace(/^00/, ""); return d.length === 9 ? "351" + d : d; };
   const fmtDate = iso => new Date(iso).toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short" });
@@ -45,7 +61,7 @@
 
   async function start() {
     $("#login").hidden = true; $("#app").hidden = false;
-    await Promise.all([load(), loadProducts(), loadReviews(true)]);
+    await Promise.all([load(), loadProducts(), loadReviews(true), api("api/settings/private").then(d => { PAYMENT_INFO = d.paymentInfo || ""; }).catch(() => {})]);
   }
 
   // ---------- views ----------
@@ -112,13 +128,19 @@
         <button class="ghost" id="closePanel">✕</button></div>
       <div><h4>Estado</h4><select id="statusSel">${STATUSES.map(s => `<option value="${s}" ${s === o.status ? "selected" : ""}>${L(s)}</option>`).join("")}</select></div>
       <div><h4>Cliente</h4><p><b>${esc(c.name)}</b>${c.phone ? `<br><a href="tel:${esc(c.phone.replace(/[^+\d]/g, ""))}">📞 ${esc(c.phone)}</a> · <a target="_blank" rel="noopener" href="https://wa.me/${waNum(c.phone)}">WhatsApp</a>` : ""}${c.email ? `<br><a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</p>
-        <p class="call-hint">Ligar ao cliente para confirmar a encomenda e fazer o pagamento. Só processar/enviar depois de mudar o estado para "Pagamento validado".</p>
+        <p class="call-hint">Contactar o cliente por email ou WhatsApp (mensagens prontas abaixo). Só processar/enviar depois de mudar o estado para "Pagamento validado".</p>
         ${c.address || c.city ? `<p>${esc(c.address)}<br>${esc(c.postcode)} ${esc(c.city)}<br>${esc(c.country)}</p>` : ""}</div>
       <div><h4>Artigos</h4>${o.items.map(i => `<div class="li"><span>${i.qty} × ${esc(i.name)}${(i.backorder || 0) > 0 ? `<br><small class="bo-tag">${i.qty - i.backorder} em stock · ${i.backorder} por encomenda (até 3 semanas)</small>` : ""}<br><small class="muted">${esc(i.sub)} · ${eur(i.unit)}${i.discount ? ` · −${eur(i.discount)} quantidade` : ""}</small></span><b>${eur(i.total)}</b></div>`).join("")}
         <div class="tot"><span>Subtotal</span><span>${eur(o.subtotal)}</span></div>
         <div class="tot"><span>Desconto por quantidade</span><span>−${eur(o.discount)}</span></div>
         <div class="tot big"><span>Total</span><span>${eur(o.total)}</span></div></div>
       ${o.notes ? `<div><h4>Observações do cliente</h4><p>${esc(o.notes)}</p></div>` : ""}
+      <div><h4>Mensagens ao cliente</h4>
+        <div class="msgs">${MSGS.map((m, i) => `<div class="msg"><span>${m.label}</span><span class="msg-btns">
+          ${o.customer.email ? `<a class="ghost" data-msg="${i}" data-via="email" href="#">Email</a>` : ""}
+          ${o.customer.phone ? `<a class="ghost" data-msg="${i}" data-via="wa" href="#">WhatsApp</a>` : ""}</span></div>`).join("")}</div>
+        <p class="hint" style="margin:6px 0 0">Abre o email ou o WhatsApp com a mensagem já escrita; reveja antes de enviar.</p></div>
+      <div><h4>Nº de seguimento (tracking)</h4><div class="track-row"><input id="trackingIn" maxlength="120" value="${esc(o.tracking || "")}" placeholder="ex.: RR123456789PT"><button class="btn sm" id="saveTracking">Guardar</button></div></div>
       <div><h4>Nota interna</h4><textarea id="internalNote" rows="3" placeholder="Visível apenas no backoffice">${esc(o.internalNote || "")}</textarea>
         <button class="btn sm" id="saveNote" style="margin-top:8px">Guardar nota</button></div>
       <div class="hist"><h4>Histórico</h4>${o.history.map(h => `<div>${fmtDate(h.at)} — <b>${L(h.status)}</b> (${L(h.by)})</div>`).join("")}</div>
@@ -143,6 +165,17 @@
     $("#closePanel").onclick = () => { selected = null; renderRows(); renderPanel(); };
     $("#statusSel").onchange = e => patch(o.id, { status: e.target.value }, "Estado atualizado");
     $("#saveNote").onclick = () => patch(o.id, { internalNote: $("#internalNote").value }, "Nota guardada");
+    $("#saveTracking").onclick = () => patch(o.id, { tracking: $("#trackingIn").value.trim() }, "Tracking guardado");
+    $("#panel .msgs").onclick = e => {
+      const b = e.target.closest("[data-msg]"); if (!b) return;
+      e.preventDefault();
+      const m = MSGS[+b.dataset.msg];
+      if (m.needsTracking && !(o.tracking || $("#trackingIn").value.trim())) { toast("Guarde primeiro o número de seguimento"); $("#trackingIn").focus(); return; }
+      const text = m.body({ ...o, tracking: o.tracking || $("#trackingIn").value.trim() });
+      const url = b.dataset.via === "wa" ? `https://wa.me/${waNum(o.customer.phone)}?text=${encodeURIComponent(text)}`
+        : `mailto:${encodeURIComponent(o.customer.email)}?subject=${encodeURIComponent(m.subject(o))}&body=${encodeURIComponent(text)}`;
+      window.open(url, "_blank", "noopener");
+    };
     $("#delOrder").onclick = async () => {
       if (!confirm(`Eliminar ${o.number}? Esta ação não pode ser anulada.`)) return;
       try { await api("api/orders/" + o.id + "/delete", { method: "POST" }); orders = orders.filter(x => x.id !== o.id); selected = null; render(); toast("Encomenda eliminada"); loadProducts(); } catch (e) { toast(e.message); }
@@ -844,6 +877,7 @@
     bf.storeName.value = b.storeName; bf.logoText.value = b.logoText || ""; bf.logoSub.value = b.logoSub || "";
     bf.primaryColor.value = b.primaryColor; bf.primaryHex.value = b.primaryColor; bf.supportEmail.value = b.supportEmail || "";
     bf.resellerInfo.value = b.resellerInfo || "";
+    bf.paymentInfo.value = PAYMENT_INFO;
     bf.logoHeight.value = b.logoHeight || 52; $("#logoHVal").textContent = bf.logoHeight.value;
     contrastHint(b.primaryColor); renderBrandMedia(); $("#brandErr").textContent = "";
   }
@@ -855,7 +889,8 @@
     e.preventDefault(); $("#brandErr").textContent = "";
     const f = Object.fromEntries(new FormData(bf));
     try {
-      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail, logoHeight: +f.logoHeight, resellerInfo: f.resellerInfo }) });
+      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail, logoHeight: +f.logoHeight, resellerInfo: f.resellerInfo, paymentInfo: f.paymentInfo }) });
+      PAYMENT_INFO = f.paymentInfo || "";
       window.Brand.apply(b, { titleSuffix: "Backoffice" }); fillBrandForm(); toast("Marca atualizada");
     } catch (err) { $("#brandErr").textContent = err.message; previewBrand(); }
   };

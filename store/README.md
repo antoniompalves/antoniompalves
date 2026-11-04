@@ -29,8 +29,10 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 - **Testemunhos:** mensagens reais de clientes com foto opcional, origem e data; publicadas na página inicial
 - **Uso interno, sem indexação:** meta robots `noindex, nofollow` em todas as páginas, `X-Robots-Tag` em todas
   as respostas e `robots.txt` com `Disallow: /`
-- **Encomenda só com nome e telefone:** processada após validação do pagamento; o cliente é contactado para
-  confirmar e pagar, ou pode contactar um revendedor oficial (lista em Marca); estado "Pagamento validado"
+- **Encomenda com nome, email e telemóvel/WhatsApp:** processada após validação do pagamento; o cliente recebe
+  mensagens por email/WhatsApp (confirmação, pagamento, pagamento confirmado, tracking) — modelos prontos no
+  painel da encomenda, dados de pagamento privados em Marca, nº de seguimento por encomenda; alternativa:
+  revendedor oficial (lista em Marca); estado "Pagamento validado"
 - **Página Produtos (`/produtos`):** promoções, mais vendidos, novidades e catálogo completo com filtros
 - **Entregas e stock:** em stock = entrega imediata; sem stock = por encomenda (até 3 semanas); encomendas acima do
   stock são divididas por artigo (`fromStock`/`backorder`); embalagem discreta sempre indicada

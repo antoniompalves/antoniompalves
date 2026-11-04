@@ -100,11 +100,18 @@ Uso interno — sem indexação: o site não aparece em motores de busca. Todas 
 "noindex, nofollow", o servidor envia X-Robots-Tag em todas as respostas (páginas, imagens, API) e o
 robots.txt bloqueia tudo. Não há sitemap.
 
-Encomendas: o cliente adiciona produtos ao carrinho e carrega em "Registar encomenda", indicando só o
-nome e o telefone. A loja informa que a encomenda só é processada após a validação do pagamento, que
-o cliente será contactado para confirmar a encomenda e fazer o pagamento e que, em alternativa, pode
-contactar um revendedor oficial. A encomenda fica em "Pré-encomendas" no backoffice, com botões para
-ligar ou abrir o WhatsApp. Depois de receber o pagamento, mude o estado para "Pagamento validado".
+Encomendas: o cliente adiciona produtos ao carrinho e carrega em "Registar encomenda", indicando o
+nome, o email e o telemóvel/WhatsApp. A loja informa que vai receber mensagens por email ou WhatsApp
+para confirmar a encomenda e fazer o pagamento, receber a confirmação do pagamento e o tracking do
+envio; que a encomenda só é processada após a validação do pagamento; e que, em alternativa, pode
+contactar um revendedor oficial.
+
+No backoffice, cada encomenda tem "Mensagens ao cliente" prontas a enviar por Email ou WhatsApp:
+  1. Confirmar encomenda   2. Pedido de pagamento   3. Pagamento confirmado   4. Envio e tracking
+O botão abre o email/WhatsApp com o texto já escrito (reveja antes de enviar). A mensagem 2 usa os
+"Dados de pagamento" definidos em Marca (privados, nunca aparecem na loja). Guarde o "Nº de seguimento"
+na encomenda antes de enviar a mensagem 4. Depois de receber o pagamento, mude o estado para
+"Pagamento validado". O CSV inclui as colunas "entrega" e "tracking".
 
 Revendedores oficiais: em "Marca" → "Revendedores oficiais" (uma linha por revendedor, ex.:
 "- **Nome** — Lisboa — 912 345 678"). Aparecem na secção de contactos e no carrinho; vazio = oculto.

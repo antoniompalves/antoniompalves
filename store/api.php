@@ -68,11 +68,11 @@ try {
         header('Content-Disposition: attachment; filename="pre-encomendas.csv"');
         header('Cache-Control: no-store');
         echo "\xEF\xBB\xBF"; // BOM para o Excel reconhecer UTF-8
-        echo implode(',', ['numero', 'data', 'estado', 'origem', 'entrega', 'nome', 'telefone', 'email', 'morada', 'localidade', 'codigo_postal', 'pais', 'artigos', 'subtotal', 'desconto', 'total', 'observacoes']) . "\n";
+        echo implode(',', ['numero', 'data', 'estado', 'origem', 'entrega', 'tracking', 'nome', 'telefone', 'email', 'morada', 'localidade', 'codigo_postal', 'pais', 'artigos', 'subtotal', 'desconto', 'total', 'observacoes']) . "\n";
         foreach (db()->query('SELECT * FROM ' . t('orders') . ' ORDER BY seq') as $r) {
             $o = row_to_order($r); $c = $o['customer'];
             $items = implode('; ', array_map(fn ($i) => $i['qty'] . 'x ' . $i['name'], $o['items']));
-            echo implode(',', array_map($cell, [$o['number'], $o['createdAt'], $o['status'], $o['source'], $o['backorder'] ? 'até 3 semanas' : 'imediata', $c['name'], $c['phone'], $c['email'],
+            echo implode(',', array_map($cell, [$o['number'], $o['createdAt'], $o['status'], $o['source'], $o['backorder'] ? 'até 3 semanas' : 'imediata', $o['tracking'], $c['name'], $c['phone'], $c['email'],
                 $c['address'], $c['city'], $c['postcode'], $c['country'], $items, $o['subtotal'], $o['discount'], $o['total'], $o['notes']])) . "\n";
         }
         exit;
@@ -133,6 +133,8 @@ try {
     }
 
     if ($route === 'settings' && $method === 'POST') { brand_update(body_json()); json_out(200, brand_public()); }
+    // admin-only settings (never exposed on the public /api/settings)
+    if ($route === 'settings/private' && $method === 'GET') json_out(200, ['paymentInfo' => (string) (setting_all()['paymentInfo'] ?? '')]);
     if (preg_match('~^settings/(logo|favicon)$~', $route, $m) && $method === 'POST') { brand_upload($m[1], $_FILES['file'] ?? null); json_out(200, brand_public()); }
     if (preg_match('~^settings/(logo|favicon)/delete$~', $route, $m) && $method === 'POST') { brand_remove($m[1]); json_out(200, brand_public()); }
 

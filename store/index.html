@@ -139,19 +139,21 @@
     <div class="drawer-foot">
       <div class="row"><span>Desconto por quantidade</span><span id="cartDisc">0,00 €</span></div>
       <div class="row total"><span>Total</span><span id="cartTotal">0,00 €</span></div>
-      <p class="ship-note">💳 A encomenda só é processada após a validação do pagamento — ligamos-lhe para confirmar e pagar.<br>🚚 Entrega em Portugal: imediata para artigos em stock, até 3 semanas para os restantes.<br>📦 Embalagem sempre discreta.</p>
+      <p class="ship-note">💳 A encomenda só é processada após a validação do pagamento. Recebe as instruções por email ou WhatsApp.<br>🚚 Entrega em Portugal: imediata para artigos em stock, até 3 semanas para os restantes.<br>📦 Embalagem sempre discreta.</p>
       <button class="btn-orange" id="checkout">Registar encomenda</button>
     </div>
     <form class="preorder" id="preorder" hidden>
       <button type="button" class="back" id="backToCart">← Voltar ao carrinho</button>
       <h4>Os seus dados</h4>
       <div class="pay-info">
-        <p><b>Como funciona:</b> registe a encomenda com o seu nome e telefone. Ligamos-lhe para <b>confirmar a encomenda e fazer o pagamento</b>.</p>
+        <p><b>Como funciona:</b> depois de registar a encomenda, vai receber uma mensagem por <b>email ou WhatsApp</b> para:</p>
+        <ul><li>confirmar a encomenda e fazer o pagamento;</li><li>receber a confirmação do pagamento;</li><li>receber o número de seguimento (tracking) do envio.</li></ul>
         <p>A encomenda só é processada <b>após a validação do pagamento</b>. Nada é cobrado agora.</p>
         <p>Em alternativa, pode contactar um revendedor oficial.<span data-reseller-link hidden> <a href="./#resellers" data-goto="#resellers">Ver revendedores oficiais</a></span></p>
       </div>
       <label class="fl">Nome<input name="name" placeholder="O seu nome" required maxlength="120" autocomplete="name"></label>
-      <label class="fl">Telefone<input name="phone" type="tel" placeholder="9xx xxx xxx" required maxlength="40" autocomplete="tel" inputmode="tel" minlength="9"></label>
+      <label class="fl">Email<input name="email" type="email" placeholder="nome@exemplo.pt" required maxlength="160" autocomplete="email"></label>
+      <label class="fl">Telemóvel / WhatsApp<input name="phone" type="tel" placeholder="9xx xxx xxx" required maxlength="40" autocomplete="tel" inputmode="tel" minlength="9"></label>
       <p class="form-err" id="formErr"></p>
       <button class="btn-orange" type="submit" id="submitOrder">Registar encomenda</button>
     </form>

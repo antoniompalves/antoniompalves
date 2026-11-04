@@ -329,6 +329,8 @@
             <label>Email de apoio<input name="supportEmail" type="email" maxlength="160" placeholder="apoio@exemplo.pt"></label>
             <label>Revendedores oficiais<textarea name="resellerInfo" rows="5" maxlength="2000" placeholder="- **Nome do revendedor** — Lisboa — 912 345 678&#10;- **Outro revendedor** — Porto — revendedor@exemplo.pt"></textarea></label>
             <p class="hint">Mostrado na secção de contactos e indicado no carrinho como alternativa à encomenda no site. Use "- " para cada revendedor e **negrito** para o nome. Deixe vazio para não mostrar.</p>
+            <label>Dados de pagamento <span class="hint" style="margin:0;font-weight:400">privado — só usado nas mensagens</span><textarea name="paymentInfo" rows="4" maxlength="1000" placeholder="MB WAY: 9xx xxx xxx&#10;IBAN: PT50 …&#10;Titular: …"></textarea></label>
+            <p class="hint">Inserido na mensagem "Pedido de pagamento" enviada ao cliente. Nunca aparece na loja.</p>
             <p class="err" id="brandErr"></p>
             <button class="btn">Guardar alterações</button>
           </form>

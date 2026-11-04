@@ -338,6 +338,7 @@ function ensure_products(): void
               'image_package' => 'VARCHAR(100) NULL', 'security_text' => 'TEXT NULL', 'verify_url' => 'VARCHAR(300) NULL', 'specs' => 'TEXT NULL'] as $col => $def) {
         add_column_if_missing('products', $col, $def);
     }
+    add_column_if_missing('orders', 'tracking', 'VARCHAR(120) NULL'); // shipping tracking number
     if ((int) $pdo->query('SELECT COUNT(*) FROM ' . t('products'))->fetchColumn() === 0) {
         $ins = $pdo->prepare('INSERT INTO ' . t('products') . ' (id, position, name, sub, cat, price, promo, reviews, best, fresh, active, description, image, updated_at)
             VALUES (?,?,?,?,?,?,?,?,?,?,1,?,NULL,?)');
@@ -674,9 +675,11 @@ function build_order(array $b, string $source): array
         'postcode' => str_in($c['postcode'] ?? '', 20), 'country' => str_in($c['country'] ?? '', 60),
     ];
     if ($customer['name'] === '') throw new HttpError(400, 'O nome é obrigatório');
-    // the customer is called to arrange payment: a phone number is required, email is optional
+    // the customer is contacted by email or WhatsApp: both are required on the store; email is optional
+    // only for orders typed in the backoffice (e.g. taken by phone)
     $digits = preg_replace('/\D/', '', $customer['phone']);
     if (strlen($digits) < 9 || strlen($digits) > 15 || !preg_match('/^\+?[\d\s().-]+$/', $customer['phone'])) throw new HttpError(400, 'Indique um número de telefone válido');
+    if ($source === 'storefront' && $customer['email'] === '') throw new HttpError(400, 'Indique o seu email');
     if ($customer['email'] !== '' && !filter_var($customer['email'], FILTER_VALIDATE_EMAIL)) throw new HttpError(400, 'O email não é válido');
     $items = $b['items'] ?? null;
     if (!is_array($items) || !$items) throw new HttpError(400, 'A encomenda não tem artigos');
@@ -749,9 +752,10 @@ function order_update(string $id, array $b): array
             }
         }
         if (array_key_exists('internalNote', $b)) $o['internalNote'] = str_in($b['internalNote'], 2000);
+        if (array_key_exists('tracking', $b)) $o['tracking'] = str_in($b['tracking'], 120);
         $o['updatedAt'] = $now;
-        $pdo->prepare('UPDATE ' . t('orders') . ' SET status = ?, internal_note = ?, history = ?, items = ?, updated_at = ? WHERE id = ?')
-            ->execute([$o['status'], $o['internalNote'], json_encode($o['history'], JSON_UNESCAPED_UNICODE), json_encode($o['items'], JSON_UNESCAPED_UNICODE), $now, $o['id']]);
+        $pdo->prepare('UPDATE ' . t('orders') . ' SET status = ?, internal_note = ?, tracking = ?, history = ?, items = ?, updated_at = ? WHERE id = ?')
+            ->execute([$o['status'], $o['internalNote'], $o['tracking'], json_encode($o['history'], JSON_UNESCAPED_UNICODE), json_encode($o['items'], JSON_UNESCAPED_UNICODE), $now, $o['id']]);
         $pdo->commit();
     } catch (Throwable $e) { $pdo->rollBack(); throw $e; }
     $o['backorder'] = order_has_backorder($o);
@@ -780,7 +784,7 @@ function row_to_order(array $r): array
         'status' => $r['status'], 'source' => $r['source'],
         'customer' => ['name' => $r['customer_name'], 'email' => $r['customer_email'], 'phone' => $r['customer_phone'],
             'address' => $r['customer_address'], 'city' => $r['customer_city'], 'postcode' => $r['customer_postcode'], 'country' => $r['customer_country']],
-        'notes' => $r['notes'] ?? '', 'internalNote' => $r['internal_note'] ?? '',
+        'notes' => $r['notes'] ?? '', 'internalNote' => $r['internal_note'] ?? '', 'tracking' => (string) ($r['tracking'] ?? ''),
         'items' => json_decode($r['items'], true) ?: [], 'history' => json_decode($r['history'], true) ?: [],
         'subtotal' => (float) $r['subtotal'], 'discount' => (float) $r['discount'], 'total' => (float) $r['total'],
     ];
@@ -844,6 +848,7 @@ function brand_update(array $in): void
         $kv['primaryColor'] = strtolower($in['primaryColor']);
     }
     if (array_key_exists('resellerInfo', $in)) $kv['resellerInfo'] = str_in((string) $in['resellerInfo'], 2000);
+    if (array_key_exists('paymentInfo', $in)) $kv['paymentInfo'] = str_in((string) $in['paymentInfo'], 1000); // admin-only
     if (array_key_exists('logoHeight', $in)) {
         $h = $in['logoHeight'];
         if (!is_numeric($h) || (int) $h < 28 || (int) $h > 96) throw new HttpError(400, 'Tamanho do logótipo inválido (28 a 96 px)');
