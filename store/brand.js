@@ -1,7 +1,7 @@
 // Applies the brand configured in the backoffice (name, logo, favicon, colour, support email).
 // Used by the storefront and the backoffice. Works without a server: defaults stay in place.
 (function () {
-  const DEFAULTS = { storeName: "Forge Labs", logoText: "FORGE", logoSub: "LABS", primaryColor: "#f26b1d", supportEmail: "support@forgelabs.example", logoUrl: null, faviconUrl: null };
+  const DEFAULTS = { logoHeight: 52, storeName: "Forge Labs", logoText: "FORGE", logoSub: "LABS", primaryColor: "#f26b1d", supportEmail: "support@forgelabs.example", logoUrl: null, faviconUrl: null };
   // Base URL of the site, derived from where brand.js is served (works in a subfolder too).
   const BASE = (document.currentScript && document.currentScript.src) ? document.currentScript.src.replace(/brand\.js(\?.*)?$/, "") : "./";
   const url = p => (/^(https?:|data:|blob:)/.test(p) ? p : BASE + String(p).replace(/^\//, ""));
@@ -21,6 +21,7 @@
       root.setProperty("--orange", b.primaryColor);
       root.setProperty("--orange-2", shade(b.primaryColor, 0.18));
       root.setProperty("--orange-dark", shade(b.primaryColor, -0.08));
+      root.setProperty("--logo-h", (+b.logoHeight || 52) + "px");
     }
 
     document.title = opts.titleSuffix ? `${b.storeName} ${opts.titleSuffix}` : b.storeName;

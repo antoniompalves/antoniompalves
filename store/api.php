@@ -16,6 +16,15 @@ try {
         json_out(200, array_map(fn ($t) => ['author' => $t['author'], 'location' => $t['location'], 'text' => $t['text'], 'rating' => $t['rating'],
             'source' => TESTIMONIAL_SOURCES[$t['source']] ?? '', 'receivedAt' => $t['receivedAt'], 'imageUrl' => $t['imageUrl']], testimonials_list()));
     }
+    // ----- verified-buyer reviews -----
+    if (preg_match('~^products/([a-z0-9-]{1,64})/reviews$~', $route, $m) && $method === 'GET') json_out(200, product_reviews($m[1]));
+    if (preg_match('~^review/([a-f0-9]{40})$~', $route, $m)) {
+        if ($method === 'GET') json_out(200, review_page($m[1]));
+        if ($method === 'POST') {
+            if (rate_limited('review', 20, 3600)) throw new HttpError(429, 'Demasiados pedidos, tente mais tarde');
+            json_out(201, review_submit($m[1], body_json()));
+        }
+    }
     if ($route === 'categories' && $method === 'GET') {
         json_out(200, array_map(fn ($c) => ['id' => $c['id'], 'name' => $c['name']], categories_list()));
     }
@@ -73,6 +82,14 @@ try {
         if ($m[2] === 'delete') { order_delete($m[1]); json_out(200, ['ok' => true]); }
         json_out(200, order_update($m[1], body_json()));
     }
+
+    // ----- reviews (admin) -----
+    if ($route === 'reviews/all' && $method === 'GET') json_out(200, reviews_admin_list());
+    if (preg_match('~^reviews/(\d{1,10})/(update|delete)$~', $route, $m) && $method === 'POST') {
+        if ($m[2] === 'delete') { review_delete((int) $m[1]); json_out(200, ['ok' => true]); }
+        json_out(200, review_moderate((int) $m[1], body_json()));
+    }
+    if (preg_match('~^orders/([0-9a-f-]{36})/review-link$~', $route, $m) && $method === 'POST') json_out(200, ['token' => order_review_token($m[1])]);
 
     // ----- testimonials -----
     if ($route === 'testimonials/all' && $method === 'GET') json_out(200, testimonials_list(true));

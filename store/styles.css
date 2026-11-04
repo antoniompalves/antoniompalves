@@ -40,6 +40,16 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .logo small { font-size: 7px; letter-spacing: .35em; color: var(--orange); font-weight: 700; }
 .logo.has-img { padding: 5px 14px; background: #fff; }
 .logo img { display: block; height: 30px; width: auto; max-width: 170px; object-fit: contain; }
+/* header logo: size set in the backoffice (Marca → Tamanho do logótipo), default 52px */
+.nav .logo { padding: calc(var(--logo-h, 52px) * .16) calc(var(--logo-h, 52px) * .42); border-radius: calc(var(--logo-h, 52px) * .5); }
+.nav .logo.has-img img { height: var(--logo-h, 52px); max-width: calc(var(--logo-h, 52px) * 5.5); }
+.nav .logo span { font-size: calc(var(--logo-h, 52px) * .42); }
+.nav .logo small { font-size: calc(var(--logo-h, 52px) * .17); }
+.footer .logo.has-img img { height: 40px; max-width: 220px; }
+@media (max-width: 680px) {
+  .nav .logo.has-img img { height: min(var(--logo-h, 52px), 42px); max-width: 180px; }
+  .nav .logo span { font-size: min(calc(var(--logo-h, 52px) * .42), 18px); }
+}
 .footer .logo.has-img { background: #fff; border: 1px solid var(--line); }
 .pills { display: flex; gap: 4px; background: rgba(255,255,255,.92); border-radius: 999px; padding: 4px; }
 .pills a { color: var(--muted); font-size: 13px; padding: 7px 16px; border-radius: 999px; }
@@ -129,8 +139,11 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 /* ---------- uploaded product images ---------- */
 /* The picture is laid over a frame of fixed proportions, so any image size or orientation
    (portrait packshots, wide photos) fits without stretching the card. Shown whole (contain). */
-.card .img, .feat-card .thumb, .ci .th, .detail .hero-img { position: relative; overflow: hidden; }
-.pimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+.card .img, .feat-card .thumb, .ci .th, .detail .hero-img { position: relative; overflow: hidden; min-width: 0; min-height: 0; }
+.card .img { aspect-ratio: 4 / 3; height: auto; }
+img.pimg { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; max-width: none; object-fit: contain; display: block; }
+.feat-card { overflow: hidden; }
+.card .img .badge, .feat-card .tag { z-index: 2; }
 .card .img:has(.pimg), .feat-card .thumb:has(.pimg), .ci .th:has(.pimg) { background: #fff; }
 .card .img .pimg { padding: 10px; }
 .feat-card .thumb .pimg { padding: 8px; }
@@ -161,6 +174,44 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .v-link { display: inline-flex; gap: 6px; color: var(--orange); font-weight: 600; font-size: 14px; margin-top: 4px; }
 .v-link:hover { text-decoration: underline; }
 @media (max-width: 900px) { .verify { grid-template-columns: 1fr; } }
+
+/* ---------- reviews ---------- */
+.rating { color: #e09a00; white-space: nowrap; }
+.reviews-block { grid-column: 1 / -1; margin-top: 12px; padding-top: 28px; border-top: 1px solid var(--line); }
+.reviews-block h3 { font-size: 18px; font-weight: 500; margin: 0 0 6px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.reviews-block h3 small { font-size: 14px; color: var(--muted); font-weight: 400; }
+.rv-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 16px; }
+.rv-card { border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.rv-card p { margin: 0; line-height: 1.55; color: #333; white-space: pre-line; }
+.rv-card .who { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+.rv-card .who b { color: var(--ink); }
+.verified { font-size: 11px; font-weight: 600; color: #2e7d32; background: #e8f5e9; border-radius: 999px; padding: 2px 8px; align-self: flex-start; }
+.rv-reply { background: #f6f4f2; border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+.rv-reply b { display: block; font-size: 12px; margin-bottom: 2px; }
+.rv-more { margin-top: 14px; border: 1px solid var(--line); border-radius: 999px; padding: 9px 18px; background: #fff; font-size: 13px; }
+
+/* review page (avaliar.html) */
+.rv-top { padding-top: 24px; } .rv-top .logo { background: var(--ink); color: #fff; } .rv-top .logo.has-img { background: #fff; border: 1px solid var(--line); }
+.rv-main { max-width: 760px; padding-bottom: 60px; }
+.rv-main h1 { font-size: clamp(26px, 5vw, 36px); font-weight: 500; letter-spacing: -.02em; margin: 28px 0 8px; }
+.rv-main > p { line-height: 1.55; }
+.rv-item { display: grid; grid-template-columns: 96px 1fr; gap: 18px; border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-top: 16px; }
+.rv-item.done { background: #fbfaf9; }
+.rv-thumb { width: 96px; height: 96px; border-radius: 12px; background: #f4f1ee; display: grid; place-items: center; overflow: hidden; position: relative; }
+.rv-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.rv-item h3 { margin: 0; font-size: 16px; font-weight: 600; } .rv-item .muted { margin: 2px 0 0; font-size: 13px; }
+.rv-form { display: flex; flex-direction: column; gap: 10px; }
+.rv-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
+.rv-form textarea, .rv-form input[name=name] { border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font: inherit; font-size: 14px; resize: vertical; }
+.rv-form textarea:focus, .rv-form input:focus { outline: 2px solid var(--orange); border-color: transparent; }
+.rv-stars { border: 0; padding: 0; margin: 4px 0 0; display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: 2px; }
+.rv-stars input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.rv-stars label { font-size: 30px; color: #d8d3ce; cursor: pointer; line-height: 1; }
+.rv-stars input:checked ~ label, .rv-stars label:hover, .rv-stars label:hover ~ label { color: #f5a623; }
+.rv-stars input:focus-visible + label { outline: 2px solid var(--orange); border-radius: 4px; }
+.rv-ok { color: #2e7d32; font-weight: 600; font-size: 14px; margin: 8px 0 0; }
+.rv-form .btn-orange { align-self: flex-start; width: auto; padding: 12px 22px; }
+@media (max-width: 560px) { .rv-item { grid-template-columns: 1fr; } }
 
 /* ---------- pagination ---------- */
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }

@@ -87,6 +87,14 @@ carregar uma imagem do código de proteção (selo/código de segurança), uma i
 da embalagem, um texto "Como funciona" e um link de verificação (https://). Aparecem numa secção
 própria no fim da página do produto, só quando preenchidos.
 
+Avaliações de clientes: quando uma encomenda está "entregue", abra-a em Pré-encomendas e carregue
+em "Pedir avaliação". Copie o link ou envie-o por email/WhatsApp. O cliente avalia cada produto da
+encomenda (estrelas e texto, uma vez por produto). As avaliações ficam pendentes em "Avaliações" até
+as publicar; pode responder publicamente. Na loja aparecem com "Compra verificada" e a média de
+estrelas passa a ser calculada só com avaliações reais aprovadas.
+
+Tamanho do logótipo: em "Marca", ajuste "Tamanho do logótipo no cabeçalho" (28 a 96 px).
+
 Imagens em massa: em "Produtos" → "⬆ Imagens em massa", selecione várias imagens de uma vez.
 Cada ficheiro é associado ao produto com o mesmo nome (ex.: "Testosterone Enanthate.jpg"; maiúsculas
 e acentos não contam). Confirme ou corrija cada associação antes de carregar.

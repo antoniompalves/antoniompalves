@@ -7,7 +7,7 @@
   <title>Forge Backoffice</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="../favicon.svg">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=dev">
   <link rel="stylesheet" href="../api/brand.css">
 </head>
 <body>
@@ -32,6 +32,7 @@
         <button data-view="products">Produtos</button>
         <button data-view="categories">Categorias</button>
         <button data-view="testimonials">Testemunhos</button>
+        <button data-view="reviews">Avaliações <span class="nav-badge" id="rvBadge" hidden></span></button>
         <button data-view="brand">Marca</button>
       </nav>
       <div class="top-actions">
@@ -131,7 +132,7 @@
             <p class="hint" id="pformFinal"></p>
             <label>Descrição<textarea name="description" rows="8" maxlength="10000" placeholder="Texto mostrado em &quot;Detalhes&quot; na página do produto. Deixe uma linha em branco para separar parágrafos."></textarea></label>
             <div class="grid2">
-              <label>Avaliações<input name="reviews" type="number" min="0" step="1"></label>
+              <label>Avaliações<input name="reviewsInfo" readonly tabindex="-1" class="ro" title="Calculado a partir das avaliações aprovadas"></label>
               <label>Ordem<input name="position" type="number" step="1"></label>
             </div>
             <fieldset class="stock-box">
@@ -239,6 +240,15 @@
         </div>
       </section>
 
+      <!-- REVIEWS VIEW -->
+      <section id="view-reviews" hidden>
+        <div class="toolbar">
+          <div class="chips" id="rvChips"></div>
+          <span class="hint" style="margin:0">Só clientes com encomenda entregue podem avaliar, através do link que lhes envia (Pré-encomendas → encomenda entregue → "Pedir avaliação").</span>
+        </div>
+        <div class="rv-admin" id="rvAdmin"></div>
+      </section>
+
       <!-- TESTIMONIALS VIEW -->
       <section id="view-testimonials" hidden>
         <div class="toolbar">
@@ -289,6 +299,8 @@
               <label>Subtítulo do logótipo<input name="logoSub" maxlength="24" placeholder="ex.: LABS"></label>
             </div>
             <p class="hint">Mostrado no cabeçalho quando não há imagem de logótipo, e sempre nos rótulos dos frascos.</p>
+            <label>Tamanho do logótipo no cabeçalho <span class="hint" style="margin:0;font-weight:400"><b id="logoHVal">52</b> px de altura</span>
+              <input type="range" name="logoHeight" min="28" max="96" step="2" value="52"></label>
             <label>Cor principal
               <span class="color-row"><input type="color" name="primaryColor"><input name="primaryHex" maxlength="7" pattern="#[0-9a-fA-F]{6}"></span>
             </label>
@@ -344,8 +356,8 @@
   </div>
   <div class="toast" id="toast"></div>
 
-  <script src="../brand.js"></script>
-  <script src="../products.js"></script>
-  <script src="admin.js"></script>
+  <script src="../brand.js?v=dev"></script>
+  <script src="../products.js?v=dev"></script>
+  <script src="admin.js?v=dev"></script>
 </body>
 </html>

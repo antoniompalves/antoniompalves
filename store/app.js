@@ -10,6 +10,10 @@
   const art = (p, label) => p && p.imageUrl ? `<img class="pimg" src="${esc(window.Brand.url(p.imageUrl))}" alt="${esc(p.name)}" loading="lazy">` : vial(label);
   // plain-text description → paragraphs (always escaped, no HTML from the database)
   const paras = t => String(t || "").trim().split(/\n\s*\n/).map(x => `<p>${esc(x.trim()).replace(/\n/g, "<br>")}</p>`).join("");
+  // real reviews from verified buyers (count + average come from the API)
+  const num1 = n => String(n).replace(".", ",");
+  const ratingMeta = p => p.reviews ? `<span class="rating">★ ${num1(p.rating)}</span><span>${p.reviews} avaliaç${p.reviews === 1 ? "ão" : "ões"}</span>` : "<span>Sem avaliações</span>";
+  const starRow = r => `<span class="rating" aria-label="${r} de 5 estrelas">${"★".repeat(r)}<span style="color:#ddd">${"★".repeat(5 - r)}</span></span>`;
   const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // ---------- cart (localStorage, guarded) ----------
@@ -100,7 +104,7 @@
       <div class="body">
         <span class="name">${esc(p.name)}</span><span class="sub">${esc(p.sub)}</span>
         <div class="pr"><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
-        <div class="meta"><span>⚗ Testado em lab.</span><span>★ ${p.reviews} avaliações</span><span>⛟ Stock UE</span></div>
+        <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Stock UE</span></div>
         ${stockBadge(p)}
         <button class="add" data-add="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
       </div>
@@ -165,6 +169,24 @@
     setFilter(el.dataset.filter); $("#collection").scrollIntoView({ behavior: "smooth" });
   }));
 
+  // real reviews from verified buyers (count + average come from the API)
+  async function loadProductReviews(p) {
+    const box = $("#detailReviews"); if (!box || !p.reviews) return;
+    try {
+      const r = await fetch(window.Brand.url(`api/products/${encodeURIComponent(p.id)}/reviews`), { cache: "no-store" });
+      if (!r.ok) return;
+      const list = await r.json();
+      if ($("#detailReviews") !== box) return; // user opened another product meanwhile
+      const card = v => `<article class="rv-card">${starRow(v.rating)}<p>${esc(v.text)}</p>
+        <div class="who"><span><b>${esc(v.author)}</b></span><span>${esc(String(v.createdAt).slice(0, 10).split("-").reverse().join("/"))}</span></div>
+        <span class="verified">✓ Compra verificada</span>
+        ${v.reply ? `<div class="rv-reply"><b>Resposta da loja</b>${esc(v.reply)}</div>` : ""}</article>`;
+      const show = n => { box.querySelector(".rv-list").innerHTML = list.slice(0, n).map(card).join("");
+        const more = box.querySelector(".rv-more"); more.hidden = list.length <= n; more.onclick = () => show(n + 6); };
+      show(6);
+    } catch {}
+  }
+
   // optional "protection code" + "package sizes" block, filled per product in the backoffice
   function verifyBlock(p) {
     const sec = p.securityImageUrl || p.securityText || p.verifyUrl, pack = p.packageImageUrl;
@@ -189,7 +211,7 @@
       <div class="hero-img${p.imageUrl ? " has-img" : ""}">${art(p)}</div>
       <div>
         <h2>${esc(p.name)}</h2>
-        <div class="meta"><span>⚗ Testado em lab.</span><span>★ ${p.reviews} avaliações</span><span>⛟ Stock UE</span></div>
+        <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Stock UE</span></div>
         <p>${esc(p.sub)}. Categoria: ${catName(p.cat)}. Enviado de forma discreta a partir de stock na UE, com entrega rastreada.</p>
         <small class="muted">Opções de quantidade</small>
         <div class="opts"><span class="opt on">1 unidade</span><span class="opt">5 unidades · −5%</span><span class="opt">10 unidades · −10%</span></div>
@@ -202,7 +224,13 @@
         <details class="acc" open><summary>Detalhes</summary><div>${p.description ? paras(p.description) : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
         <details class="acc"><summary>Envio</summary><div>Embalagem discreta, envio rastreado a partir de stock na UE.</div></details>
-      </div>${verifyBlock(p)}`;
+      </div>${verifyBlock(p)}
+      <div class="reviews-block" id="detailReviews">
+        <h3>Avaliações de clientes ${p.reviews ? `<small>${starRow(Math.round(p.rating))} ${num1(p.rating)} de 5 · ${p.reviews} avaliaç${p.reviews === 1 ? "ão" : "ões"}</small>` : ""}</h3>
+        ${p.reviews ? '<div class="rv-list"></div><button type="button" class="ghost-btn rv-more" hidden>Ver mais avaliações</button>'
+          : '<p class="muted">Ainda não há avaliações. Só clientes com uma encomenda entregue podem avaliar este produto.</p>'}
+      </div>`;
+    loadProductReviews(p);
     $("#detail .opts").onclick = e => {
       const o = e.target.closest(".opt"); if (!o) return;
       [...$("#detail .opts").children].forEach(x => x.classList.toggle("on", x === o));

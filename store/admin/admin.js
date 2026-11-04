@@ -43,15 +43,16 @@
 
   async function start() {
     $("#login").hidden = true; $("#app").hidden = false;
-    await Promise.all([load(), loadProducts()]);
+    await Promise.all([load(), loadProducts(), loadReviews(true)]);
   }
 
   // ---------- views ----------
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => {
     document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("on", x === b));
-    ["orders", "new", "products", "categories", "testimonials", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
+    ["orders", "new", "products", "categories", "testimonials", "reviews", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
     if (b.dataset.view === "brand") fillBrandForm();
     if (b.dataset.view === "testimonials") loadTestimonials();
+    if (b.dataset.view === "reviews") loadReviews();
     if (b.dataset.view === "products" || b.dataset.view === "new") loadProducts(); // stock changes with every order
   });
 
@@ -118,7 +119,24 @@
       <div><h4>Nota interna</h4><textarea id="internalNote" rows="3" placeholder="Visível apenas no backoffice">${esc(o.internalNote || "")}</textarea>
         <button class="btn sm" id="saveNote" style="margin-top:8px">Guardar nota</button></div>
       <div class="hist"><h4>Histórico</h4>${o.history.map(h => `<div>${fmtDate(h.at)} — <b>${L(h.status)}</b> (${L(h.by)})</div>`).join("")}</div>
+      ${o.status === "delivered" ? `<div><h4>Avaliação do cliente</h4><div class="review-link" id="reviewLink">
+        <p class="hint" style="margin:0">Envie ao cliente um link privado para avaliar os produtos desta encomenda.</p>
+        <button type="button" class="btn sm" id="getReviewLink">Pedir avaliação</button></div></div>` : ""}
       <button class="danger" id="delOrder">Eliminar encomenda</button>`;
+    if (o.status === "delivered") $("#getReviewLink").onclick = async () => {
+      try {
+        const { token } = await api("api/orders/" + o.id + "/review-link", { method: "POST" });
+        const url = new URL(window.Brand.url("avaliar.html?t=" + token), location.href).href;
+        const store = (window.BRAND && window.BRAND.storeName) || "a loja";
+        const subject = `Avalie a sua encomenda ${o.number}`;
+        const body = `Olá ${o.customer.name.split(" ")[0]},\n\nObrigado pela sua encomenda ${o.number}. Gostaríamos muito de saber a sua opinião sobre os produtos:\n\n${url}\n\nObrigado,\n${store}`;
+        $("#reviewLink").innerHTML = `<input readonly value="${esc(url)}" id="rlUrl">
+          <div class="row2"><button type="button" class="btn sm" id="rlCopy">Copiar link</button>
+          <a class="ghost" href="mailto:${encodeURIComponent(o.customer.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}">Enviar por email</a>
+          ${o.customer.phone ? `<a class="ghost" target="_blank" rel="noopener" href="https://wa.me/${o.customer.phone.replace(/\D/g, "")}?text=${encodeURIComponent(body)}">WhatsApp</a>` : ""}</div>`;
+        $("#rlCopy").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("Link copiado"); } catch { $("#rlUrl").select(); document.execCommand("copy"); toast("Link copiado"); } };
+      } catch (err) { toast(err.message); }
+    };
     $("#closePanel").onclick = () => { selected = null; renderRows(); renderPanel(); };
     $("#statusSel").onchange = e => patch(o.id, { status: e.target.value }, "Estado atualizado");
     $("#saveNote").onclick = () => patch(o.id, { internalNote: $("#internalNote").value }, "Nota guardada");
@@ -314,7 +332,7 @@
     $("#pformTitle").textContent = "Editar produto";
     pf.name.value = p.name; pf.sub.value = p.sub; pf.cat.value = p.cat;
     pf.price.value = String(p.price).replace(".", ","); pf.promo.value = p.promo || ""; pf.description.value = p.description || "";
-    pf.reviews.value = p.reviews; pf.position.value = p.position;
+    pf.reviewsInfo.value = p.reviews ? `${p.reviews} · média ${String(p.rating).replace(".", ",")} ★` : "Sem avaliações"; pf.position.value = p.position;
     pf.active.checked = p.active; pf.best.checked = p.best; pf.fresh.checked = p.fresh;
     pf.trackStock.checked = p.trackStock; pf.lowStock.value = p.lowStock; pf.initialStock.value = 0;
     pf.securityText.value = p.securityText || ""; pf.verifyUrl.value = p.verifyUrl || "";
@@ -334,7 +352,7 @@
   pf.onsubmit = async e => {
     e.preventDefault(); $("#pformErr").textContent = "";
     const body = { name: pf.name.value, sub: pf.sub.value, cat: pf.cat.value, price: pf.price.value, promo: pf.promo.value || 0,
-      description: pf.description.value, reviews: pf.reviews.value || 0, securityText: pf.securityText.value, verifyUrl: pf.verifyUrl.value.trim(), active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
+      description: pf.description.value, securityText: pf.securityText.value, verifyUrl: pf.verifyUrl.value.trim(), active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
     if (pf.position.value !== "") body.position = pf.position.value;
     body.trackStock = pf.trackStock.checked; body.lowStock = pf.lowStock.value || 0;
     const cur = PRODUCTS.find(x => x.id === pSel);
@@ -474,6 +492,52 @@
     }
     $("#bulkCancel").disabled = false; $("#bulkCancel").textContent = "Fechar";
     renderProducts(); toast(`${ok} de ${todo.length} imagens carregadas`);
+  };
+
+  // ---------- product reviews (moderation) ----------
+  let REVIEWS = [], rvFilter = "pending";
+  const RV_LABEL = { pending: "Pendentes", approved: "Publicadas", rejected: "Rejeitadas", all: "Todas" };
+  const pname = id => (PRODUCTS.find(p => p.id === id) || {}).name || id;
+  async function loadReviews(quiet) {
+    try { REVIEWS = await api("api/reviews/all"); renderReviews(); } catch (e) { if (!quiet) toast(e.message); }
+  }
+  function renderReviews() {
+    const pending = REVIEWS.filter(r => r.status === "pending").length;
+    $("#rvBadge").hidden = !pending; $("#rvBadge").textContent = pending;
+    $("#rvChips").innerHTML = ["pending", "approved", "rejected", "all"].map(s =>
+      `<button class="chip ${rvFilter === s ? "on" : ""}" data-rvs="${s}">${RV_LABEL[s]} ${s === "all" ? REVIEWS.length : REVIEWS.filter(r => r.status === s).length}</button>`).join("");
+    const list = REVIEWS.filter(r => rvFilter === "all" || r.status === rvFilter);
+    $("#rvAdmin").innerHTML = list.length ? list.map(r => `
+      <article class="rva st-${r.status}" data-rid="${r.id}">
+        <div>
+          <span class="stars">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</span> <b>${esc(pname(r.productId))}</b>
+          <p>${esc(r.text)}</p>
+          <div class="meta">${esc(r.author)} · ${fmtDate(r.createdAt)} · encomenda ${esc(r.orderNumber || "")} · <span class="badge s-${r.status === "approved" ? "delivered" : r.status === "rejected" ? "cancelled" : "pending"}">${RV_LABEL[r.status].replace(/s$/, "").replace(/Pendente$/, "Pendente")}</span></div>
+        </div>
+        <div class="acts">
+          ${r.status !== "approved" ? '<button type="button" class="btn-ok" data-rva="approved">Publicar</button>' : ""}
+          ${r.status !== "rejected" ? '<button type="button" class="ghost" data-rva="rejected">Rejeitar</button>' : ""}
+          <button type="button" class="ghost danger-ghost" data-rva="delete">Eliminar</button>
+        </div>
+        <div class="reply"><textarea rows="1" maxlength="1000" placeholder="Resposta pública da loja (opcional)">${esc(r.reply)}</textarea><button type="button" class="ghost" data-rva="reply">Guardar resposta</button></div>
+      </article>`).join("") : `<p class="empty" style="background:#fff;border-radius:14px">${rvFilter === "pending" ? "Não há avaliações à espera de revisão." : "Nada para mostrar."}</p>`;
+  }
+  $("#rvChips").onclick = e => { const b = e.target.closest("[data-rvs]"); if (b) { rvFilter = b.dataset.rvs; renderReviews(); } };
+  $("#rvAdmin").onclick = async e => {
+    const b = e.target.closest("[data-rva]"); if (!b) return;
+    const art = b.closest("[data-rid]"), id = art.dataset.rid, act = b.dataset.rva;
+    try {
+      if (act === "delete") {
+        if (!confirm("Eliminar esta avaliação? O cliente não poderá voltar a avaliar este produto com o mesmo link.")) return;
+        await api("api/reviews/" + id + "/delete", { method: "POST" }); REVIEWS = REVIEWS.filter(r => r.id !== +id); toast("Avaliação eliminada");
+      } else {
+        const body = act === "reply" ? { reply: art.querySelector("textarea").value } : { status: act };
+        const r = await api("api/reviews/" + id + "/update", { method: "POST", body: JSON.stringify(body) });
+        REVIEWS[REVIEWS.findIndex(x => x.id === r.id)] = r;
+        toast(act === "approved" ? "Avaliação publicada" : act === "rejected" ? "Avaliação rejeitada" : "Resposta guardada");
+      }
+      renderReviews(); loadProducts();
+    } catch (err) { toast(err.message); }
   };
 
   // ---------- testimonials ----------
@@ -633,7 +697,7 @@
   }
   function previewBrand(extra = {}) {
     const f = Object.fromEntries(new FormData(bf));
-    window.Brand.apply({ ...window.BRAND, storeName: f.storeName || window.BRAND.storeName, logoText: f.logoText, logoSub: f.logoSub,
+    window.Brand.apply({ ...window.BRAND, storeName: f.storeName || window.BRAND.storeName, logoText: f.logoText, logoSub: f.logoSub, logoHeight: +f.logoHeight,
       primaryColor: /^#[0-9a-f]{6}$/i.test(f.primaryColor) ? f.primaryColor : window.BRAND.primaryColor, ...extra,
       logoUrl: window.BRAND.logoUrl, faviconUrl: window.BRAND.faviconUrl }, { titleSuffix: "Backoffice", preview: true });
     renderBrandMedia();
@@ -650,16 +714,18 @@
     const b = window.BRAND || window.Brand.DEFAULTS;
     bf.storeName.value = b.storeName; bf.logoText.value = b.logoText || ""; bf.logoSub.value = b.logoSub || "";
     bf.primaryColor.value = b.primaryColor; bf.primaryHex.value = b.primaryColor; bf.supportEmail.value = b.supportEmail || "";
+    bf.logoHeight.value = b.logoHeight || 52; $("#logoHVal").textContent = bf.logoHeight.value;
     contrastHint(b.primaryColor); renderBrandMedia(); $("#brandErr").textContent = "";
   }
   bf.primaryColor.oninput = () => { bf.primaryHex.value = bf.primaryColor.value; contrastHint(bf.primaryColor.value); previewBrand(); };
   bf.primaryHex.oninput = () => { const v = bf.primaryHex.value.trim(); if (/^#[0-9a-f]{6}$/i.test(v)) { bf.primaryColor.value = v; contrastHint(v); previewBrand(); } };
   ["storeName", "logoText", "logoSub"].forEach(n => bf[n].addEventListener("input", () => previewBrand()));
+  bf.logoHeight.addEventListener("input", () => { $("#logoHVal").textContent = bf.logoHeight.value; previewBrand(); });
   bf.onsubmit = async e => {
     e.preventDefault(); $("#brandErr").textContent = "";
     const f = Object.fromEntries(new FormData(bf));
     try {
-      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail }) });
+      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail, logoHeight: +f.logoHeight }) });
       window.Brand.apply(b, { titleSuffix: "Backoffice" }); fillBrandForm(); toast("Marca atualizada");
     } catch (err) { $("#brandErr").textContent = err.message; previewBrand(); }
   };

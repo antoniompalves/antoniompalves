@@ -7,7 +7,7 @@ const SESSION_TTL = 12 * 3600;
 const BRAND_LIMITS = ['logo' => 2 * 1024 * 1024, 'favicon' => 512 * 1024];
 const DEFAULT_SETTINGS = [
     'storeName' => 'Forge Labs', 'logoText' => 'FORGE', 'logoSub' => 'LABS', 'primaryColor' => '#f26b1d',
-    'supportEmail' => 'support@forgelabs.example', 'logo' => null, 'favicon' => null, 'updatedAt' => null,
+    'supportEmail' => 'support@forgelabs.example', 'logo' => null, 'favicon' => null, 'updatedAt' => null, 'logoHeight' => 52,
 ];
 define('WEB_ROOT', dirname(__DIR__));
 
@@ -67,6 +67,7 @@ function schema(string $driver, string $prefix): array
             categories_schema('sqlite', $prefix),
             stock_schema('sqlite', $prefix),
             testimonials_schema('sqlite', $prefix),
+            reviews_schema('sqlite', $prefix),
         ];
     }
     $tail = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
@@ -88,6 +89,7 @@ function schema(string $driver, string $prefix): array
         categories_schema('mysql', $prefix),
         stock_schema('mysql', $prefix),
         testimonials_schema('mysql', $prefix),
+        reviews_schema('mysql', $prefix),
     ];
 }
 
@@ -114,6 +116,20 @@ function testimonials_schema(string $driver, string $prefix): string
       location VARCHAR(80) NULL, body TEXT NOT NULL, rating TINYINT UNSIGNED NULL, source VARCHAR(20) NOT NULL, received_at VARCHAR(10) NOT NULL,
       published TINYINT(1) NOT NULL DEFAULT 1, position INT NOT NULL DEFAULT 0, created_at VARCHAR(32) NOT NULL, updated_at VARCHAR(32) NOT NULL,
       image VARCHAR(100) NULL, KEY pub_idx (published, position)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+}
+
+function reviews_schema(string $driver, string $prefix): string
+{
+    if ($driver === 'sqlite') {
+        return "CREATE TABLE IF NOT EXISTS {$prefix}reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id TEXT NOT NULL, order_id TEXT NOT NULL,
+          order_number TEXT, author TEXT NOT NULL, rating INTEGER NOT NULL, body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending',
+          reply TEXT, created_at TEXT NOT NULL, moderated_at TEXT, ip TEXT, UNIQUE (order_id, product_id))";
+    }
+    return "CREATE TABLE IF NOT EXISTS {$prefix}reviews (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(64) NOT NULL,
+      order_id CHAR(36) NOT NULL, order_number VARCHAR(20) NULL, author VARCHAR(40) NOT NULL, rating TINYINT UNSIGNED NOT NULL, body TEXT NOT NULL,
+      status VARCHAR(10) NOT NULL DEFAULT 'pending', reply TEXT NULL, created_at VARCHAR(32) NOT NULL, moderated_at VARCHAR(32) NULL, ip VARCHAR(45) NULL,
+      UNIQUE KEY order_product (order_id, product_id), KEY product_status (product_id, status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 }
 
@@ -298,6 +314,16 @@ function category_delete(string $id, ?string $moveTo): void
     $pdo->commit();
 }
 
+// Schema upgrade for older installs. Safe when two requests race: if another request added the
+// column first, the "duplicate column" error is ignored.
+function add_column_if_missing(string $table, string $col, string $def): void
+{
+    $pdo = db();
+    try { $pdo->query("SELECT $col FROM " . t($table) . ' LIMIT 1'); return; } catch (PDOException $e) {}
+    try { $pdo->exec('ALTER TABLE ' . t($table) . " ADD COLUMN $col $def"); }
+    catch (PDOException $e) { if (!preg_match('/duplicate column/i', $e->getMessage())) throw $e; }
+}
+
 function ensure_products(): void
 {
     static $ok = false;
@@ -309,8 +335,7 @@ function ensure_products(): void
     // upgrade older installs: add the stock columns when missing
     foreach (['stock' => 'INT NULL', 'low_stock' => 'INT NOT NULL DEFAULT 5', 'image_security' => 'VARCHAR(100) NULL',
               'image_package' => 'VARCHAR(100) NULL', 'security_text' => 'TEXT NULL', 'verify_url' => 'VARCHAR(300) NULL'] as $col => $def) {
-        try { $pdo->query("SELECT $col FROM " . t('products') . ' LIMIT 1'); }
-        catch (PDOException $e) { $pdo->exec('ALTER TABLE ' . t('products') . " ADD COLUMN $col $def"); }
+        add_column_if_missing('products', $col, $def);
     }
     if ((int) $pdo->query('SELECT COUNT(*) FROM ' . t('products'))->fetchColumn() === 0) {
         $ins = $pdo->prepare('INSERT INTO ' . t('products') . ' (id, position, name, sub, cat, price, promo, reviews, best, fresh, active, description, image, updated_at)
@@ -329,7 +354,9 @@ function row_to_product(array $r): array
 {
     return [
         'id' => $r['id'], 'position' => (int) $r['position'], 'name' => $r['name'], 'sub' => (string) $r['sub'], 'cat' => $r['cat'],
-        'price' => (float) $r['price'], 'promo' => (int) $r['promo'], 'reviews' => (int) $r['reviews'],
+        'price' => (float) $r['price'], 'promo' => (int) $r['promo'],
+        // real, approved customer reviews only (the old manual "reviews" column is no longer used)
+        'reviews' => review_stats()[$r['id']]['count'] ?? 0, 'rating' => review_stats()[$r['id']]['avg'] ?? null,
         'best' => (bool) $r['best'], 'fresh' => (bool) $r['fresh'], 'active' => (bool) $r['active'],
         'description' => (string) $r['description'], 'imageUrl' => $r['image'] ? 'uploads/products/' . $r['image'] : null,
         'updatedAt' => $r['updated_at'],
@@ -483,7 +510,7 @@ function product_fields(array $in, bool $creating): array
         if (!is_numeric($v) || (int) $v < 0 || (int) $v > 90) throw new HttpError(400, 'Promoção inválida (0 a 90%)');
         $f['promo'] = (int) $v;
     }
-    if ($creating || array_key_exists('reviews', $in)) {
+    if (false) { // review counts now come from real reviews
         $v = $in['reviews'] ?? 0;
         if ($v === '' || $v === null) $v = 0;
         if (!is_numeric($v) || (int) $v < 0) throw new HttpError(400, 'Número de avaliações inválido');
@@ -731,7 +758,7 @@ function brand_public(): array
     $b = brand();
     return [
         'storeName' => $b['storeName'], 'logoText' => $b['logoText'], 'logoSub' => $b['logoSub'],
-        'primaryColor' => $b['primaryColor'], 'supportEmail' => $b['supportEmail'],
+        'primaryColor' => $b['primaryColor'], 'supportEmail' => $b['supportEmail'], 'logoHeight' => (int) $b['logoHeight'],
         'logoUrl' => $b['logo'] ? 'uploads/brand/' . $b['logo'] : null,
         'faviconUrl' => $b['favicon'] ? 'uploads/brand/' . $b['favicon'] : null,
         'updatedAt' => $b['updatedAt'],
@@ -749,6 +776,11 @@ function brand_update(array $in): void
     if (array_key_exists('primaryColor', $in)) {
         if (!is_string($in['primaryColor']) || !preg_match('/^#[0-9a-f]{6}$/i', $in['primaryColor'])) throw new HttpError(400, 'Cor inválida (use o formato #rrggbb)');
         $kv['primaryColor'] = strtolower($in['primaryColor']);
+    }
+    if (array_key_exists('logoHeight', $in)) {
+        $h = $in['logoHeight'];
+        if (!is_numeric($h) || (int) $h < 28 || (int) $h > 96) throw new HttpError(400, 'Tamanho do logótipo inválido (28 a 96 px)');
+        $kv['logoHeight'] = (int) $h;
     }
     if (array_key_exists('supportEmail', $in)) {
         $kv['supportEmail'] = str_in($in['supportEmail'], 160);
@@ -776,11 +808,15 @@ function brand_css(): never
     $css = '';
     try {
         if (config()) {
-            $c = (string) brand()['primaryColor'];
+            $b = brand();
+            $c = (string) $b['primaryColor'];
+            $h = max(28, min(96, (int) $b['logoHeight']));
+            $vars = "--logo-h:{$h}px;";
             if (preg_match('/^#[0-9a-f]{6}$/i', $c)) {
                 $c = strtolower($c);
-                $css = ":root{--orange:$c;--orange-2:" . shade_hex($c, 0.18) . ';--orange-dark:' . shade_hex($c, -0.08) . ";}\n";
+                $vars .= "--orange:$c;--orange-2:" . shade_hex($c, 0.18) . ';--orange-dark:' . shade_hex($c, -0.08) . ';';
             }
+            $css = ":root{{$vars}}\n";
         }
     } catch (Throwable $e) { /* not installed / DB down: fall back to the defaults in styles.css */ }
     $etag = '"' . md5($css) . '"';
@@ -1010,5 +1046,152 @@ function testimonial_image_remove(int $id): array
     testimonial_image_unlink($r['image'] ?? null);
     db()->prepare('UPDATE ' . t('testimonials') . ' SET image = NULL, updated_at = ? WHERE id = ?')->execute([now_iso(), $id]);
     return row_to_testimonial(find_testimonial($id));
+}
+
+// ---------- product reviews (verified buyers only) ----------
+// A delivered order gets a private review link (random token). Each product of that order can be
+// reviewed once; reviews are published only after the admin approves them.
+const REVIEW_STATUSES = ['pending', 'approved', 'rejected'];
+
+function ensure_reviews(): void
+{
+    static $ok = false;
+    if ($ok) return;
+    $pdo = db();
+    $pdo->exec(reviews_schema($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), config()['prefix'] ?? ''));
+    add_column_if_missing('orders', 'review_token', 'VARCHAR(64) NULL');
+    $ok = true;
+}
+
+function review_stats(bool $refresh = false): array
+{
+    static $stats = null;
+    if ($stats !== null && !$refresh) return $stats;
+    ensure_reviews();
+    $stats = [];
+    foreach (db()->query('SELECT product_id, COUNT(*) AS n, AVG(rating) AS a FROM ' . t('reviews') . " WHERE status = 'approved' GROUP BY product_id") as $r) {
+        $stats[$r['product_id']] = ['count' => (int) $r['n'], 'avg' => round((float) $r['a'], 1)];
+    }
+    return $stats;
+}
+
+// Admin: returns the review link token of a delivered order, creating it on first use.
+function order_review_token(string $orderId): string
+{
+    ensure_reviews();
+    $r = find_order($orderId);
+    if ($r['status'] !== 'delivered') throw new HttpError(400, 'Só é possível pedir avaliação de encomendas entregues');
+    if (!empty($r['review_token'])) return $r['review_token'];
+    // random, unguessable; it only allows reviewing the products of this order, so it is kept
+    // as-is so the backoffice can show the same link again at any time
+    $tok = bin2hex(random_bytes(20));
+    db()->prepare('UPDATE ' . t('orders') . ' SET review_token = ? WHERE id = ?')->execute([$tok, $orderId]);
+    return $tok;
+}
+
+function order_by_review_token(string $token): array
+{
+    ensure_reviews();
+    if (!preg_match('/^[a-f0-9]{40}$/', $token)) throw new HttpError(404, 'Link de avaliação inválido');
+    $st = db()->prepare('SELECT * FROM ' . t('orders') . ' WHERE review_token = ?');
+    $st->execute([$token]);
+    $r = $st->fetch();
+    if (!$r) throw new HttpError(404, 'Link de avaliação inválido ou expirado');
+    if ($r['status'] !== 'delivered') throw new HttpError(403, 'Esta encomenda ainda não pode ser avaliada');
+    return $r;
+}
+
+function default_review_name(string $full): string
+{
+    $parts = preg_split('/\s+/', trim($full)) ?: [];
+    if (!$parts || $parts[0] === '') return 'Cliente';
+    $first = mb_substr($parts[0], 0, 20);
+    return count($parts) > 1 ? $first . ' ' . mb_strtoupper(mb_substr(end($parts), 0, 1)) . '.' : $first;
+}
+
+// Public view of the review page for one order.
+function review_page(string $token): array
+{
+    $r = order_by_review_token($token);
+    $o = row_to_order($r);
+    $done = db()->prepare('SELECT product_id, status FROM ' . t('reviews') . ' WHERE order_id = ?');
+    $done->execute([$o['id']]);
+    $reviewed = array_column($done->fetchAll(), 'status', 'product_id');
+    $byId = [];
+    foreach (products_list(true) as $p) $byId[$p['id']] = $p;
+    $items = [];
+    foreach ($o['items'] as $it) {
+        if (!isset($byId[$it['id']])) continue; // product no longer exists
+        $items[] = ['id' => $it['id'], 'name' => $it['name'], 'sub' => $it['sub'], 'imageUrl' => $byId[$it['id']]['imageUrl'], 'reviewed' => isset($reviewed[$it['id']])];
+    }
+    return ['number' => $o['number'], 'defaultName' => default_review_name($o['customer']['name']), 'items' => $items];
+}
+
+function review_submit(string $token, array $in): array
+{
+    $r = order_by_review_token($token);
+    $o = row_to_order($r);
+    $pid = (string) ($in['productId'] ?? '');
+    if (!in_array($pid, array_column($o['items'], 'id'), true)) throw new HttpError(400, 'Este produto não faz parte da encomenda');
+    $rating = $in['rating'] ?? null;
+    if (!is_numeric($rating) || (int) $rating < 1 || (int) $rating > 5) throw new HttpError(400, 'Escolha de 1 a 5 estrelas');
+    $body = str_in($in['text'] ?? '', 1500);
+    if (mb_strlen($body) < 10) throw new HttpError(400, 'Escreva pelo menos uma frase sobre o produto');
+    $author = str_in($in['name'] ?? '', 40) ?: default_review_name($o['customer']['name']);
+    try {
+        db()->prepare('INSERT INTO ' . t('reviews') . ' (product_id, order_id, order_number, author, rating, body, status, created_at, ip) VALUES (?,?,?,?,?,?,?,?,?)')
+            ->execute([$pid, $o['id'], $o['number'], $author, (int) $rating, $body, 'pending', now_iso(), client_ip()]);
+    } catch (PDOException $e) {
+        throw new HttpError(409, 'Já avaliou este produto. Obrigado!');
+    }
+    return ['ok' => true];
+}
+
+function row_to_review(array $r, bool $admin): array
+{
+    $out = ['id' => (int) $r['id'], 'productId' => $r['product_id'], 'author' => $r['author'], 'rating' => (int) $r['rating'],
+        'text' => $r['body'], 'reply' => (string) ($r['reply'] ?? ''), 'createdAt' => $r['created_at'], 'verified' => true];
+    if ($admin) $out += ['status' => $r['status'], 'orderNumber' => $r['order_number'], 'orderId' => $r['order_id'], 'moderatedAt' => $r['moderated_at']];
+    return $out;
+}
+
+function product_reviews(string $productId): array
+{
+    ensure_reviews();
+    $st = db()->prepare('SELECT * FROM ' . t('reviews') . " WHERE product_id = ? AND status = 'approved' ORDER BY created_at DESC, id DESC LIMIT 200");
+    $st->execute([$productId]);
+    return array_map(fn ($r) => row_to_review($r, false), $st->fetchAll());
+}
+
+function reviews_admin_list(): array
+{
+    ensure_reviews();
+    return array_map(fn ($r) => row_to_review($r, true), db()->query('SELECT * FROM ' . t('reviews') . ' ORDER BY id DESC LIMIT 1000')->fetchAll());
+}
+
+function review_moderate(int $id, array $in): array
+{
+    ensure_reviews();
+    $st = db()->prepare('SELECT * FROM ' . t('reviews') . ' WHERE id = ?');
+    $st->execute([$id]);
+    if (!$st->fetch()) throw new HttpError(404, 'Avaliação não encontrada');
+    $f = [];
+    if (array_key_exists('status', $in)) {
+        if (!in_array($in['status'], REVIEW_STATUSES, true)) throw new HttpError(400, 'Estado inválido');
+        $f['status'] = $in['status']; $f['moderated_at'] = now_iso();
+    }
+    if (array_key_exists('reply', $in)) $f['reply'] = str_in($in['reply'], 1000);
+    if ($f) {
+        $set = implode(', ', array_map(fn ($k) => "$k = ?", array_keys($f)));
+        db()->prepare('UPDATE ' . t('reviews') . " SET $set WHERE id = ?")->execute([...array_values($f), $id]);
+    }
+    $st->execute([$id]);
+    return row_to_review($st->fetch(), true);
+}
+
+function review_delete(int $id): void
+{
+    ensure_reviews();
+    db()->prepare('DELETE FROM ' . t('reviews') . ' WHERE id = ?')->execute([$id]);
 }
 
