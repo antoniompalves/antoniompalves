@@ -462,3 +462,17 @@ h1, h2, h3, .section-title { word-spacing: .02em; }
 .card .sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card .pr { margin-bottom: auto; padding-bottom: 8px; }
 .card .add { margin-top: 8px; flex: none; }
+
+/* horizontal shelves: scroll sideways only (no vertical wobble), vertical swipes scroll the page */
+.track {
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;
+  padding-top: 4px; padding-bottom: 18px; margin-bottom: -14px;   /* room for card shadows inside the clip */
+}
+.track > .card { scroll-snap-align: start; }
+.track .card.seen { animation-name: fadeIn; }                       /* no translateY inside a clipped row */
+@media (hover: hover) { .track .card:hover { transform: none; } }
+
+/* cart bottom sheet: fully hidden when closed (iOS toolbar resizes the viewport) */
+.drawer { visibility: hidden; transition: transform .45s var(--ease), visibility 0s linear .45s; }
+body.cart-open .drawer { visibility: visible; transition: transform .45s var(--ease), visibility 0s; }
