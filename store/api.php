@@ -10,6 +10,9 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 try {
     // ----- public -----
     if ($route === 'settings' && $method === 'GET') json_out(200, brand_public());
+    if ($route === 'categories' && $method === 'GET') {
+        json_out(200, array_map(fn ($c) => ['id' => $c['id'], 'name' => $c['name']], categories_list()));
+    }
     if ($route === 'products' && $method === 'GET') {
         $list = array_map(function ($p) { unset($p['active'], $p['position'], $p['updatedAt']); return $p; }, products_list());
         json_out(200, $list);
@@ -76,6 +79,20 @@ try {
         db()->prepare('UPDATE ' . t('orders') . ' SET status = ?, internal_note = ?, history = ?, updated_at = ? WHERE id = ?')
             ->execute([$o['status'], $o['internalNote'], json_encode($o['history'], JSON_UNESCAPED_UNICODE), $now, $o['id']]);
         json_out(200, $o);
+    }
+
+    // ----- categories -----
+    if ($route === 'categories/all' && $method === 'GET') json_out(200, categories_list(true));
+    if ($route === 'categories' && $method === 'POST') json_out(201, category_create(body_json()));
+    if (preg_match('~^categories/([a-z0-9-]{1,40})/(update|delete|up|down)$~', $route, $m) && $method === 'POST') {
+        switch ($m[2]) {
+            case 'update': json_out(200, category_update($m[1], body_json()));
+            case 'up': case 'down': json_out(200, category_move($m[1], $m[2] === 'up' ? -1 : 1));
+            case 'delete':
+                $to = body_json()['moveTo'] ?? null;
+                category_delete($m[1], is_string($to) && $to !== '' ? $to : null);
+                json_out(200, categories_list(true));
+        }
     }
 
     // ----- products -----

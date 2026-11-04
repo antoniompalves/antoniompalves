@@ -6,7 +6,8 @@
   const STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
   const LABEL = { all: "Todas", pending: "Pendente", confirmed: "Confirmada", shipped: "Enviada", delivered: "Entregue", cancelled: "Cancelada", storefront: "loja", backoffice: "backoffice", admin: "admin" };
   const L = k => LABEL[k] || k;
-  const { CATEGORIES, unitPrice, bulkRate } = window;
+  const { unitPrice, bulkRate } = window;
+  let CATEGORIES = window.CATEGORIES.slice(); // replaced by the database list after sign-in
   let PRODUCTS = window.PRODUCTS.slice(); // replaced by the database list after sign-in
 
   let token = "";
@@ -48,7 +49,7 @@
   // ---------- views ----------
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => {
     document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("on", x === b));
-    ["orders", "new", "products", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
+    ["orders", "new", "products", "categories", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
     if (b.dataset.view === "brand") fillBrandForm();
   });
 
@@ -179,10 +180,20 @@
   let pSel = null, pCreating = false;
   const pf = $("#pform");
   const catLabel = id => (CATEGORIES.find(c => c.id === id) || {}).name || id;
-  $("#pcat").innerHTML += CATEGORIES.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
-  $("#pformCat").innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  function renderCatSelects() {
+    const opts = CATEGORIES.map(c => `<option value="${c.id}">${esc(c.name)}${c.active === false ? " (inativa)" : ""}</option>`).join("");
+    const keepF = $("#pcat").value, keepP = $("#pformCat").value;
+    $("#pcat").innerHTML = '<option value="">Todas as categorias</option>' + opts;
+    $("#pformCat").innerHTML = opts;
+    if (CATEGORIES.some(c => c.id === keepF)) $("#pcat").value = keepF;
+    if (CATEGORIES.some(c => c.id === keepP)) $("#pformCat").value = keepP;
+  }
+  renderCatSelects();
   async function loadProducts() {
-    try { PRODUCTS = await api("api/products/all"); renderProducts(); renderProdSel(); renderLines(); } catch (e) { toast(e.message); }
+    try {
+      [CATEGORIES, PRODUCTS] = await Promise.all([api("api/categories/all"), api("api/products/all")]);
+      renderCatSelects(); renderProducts(); renderProdSel(); renderLines(); renderCats();
+    } catch (e) { toast(e.message); }
   }
   const thumb = p => p.imageUrl ? `<img src="${esc(window.Brand.url(p.imageUrl))}" alt="">` : "<i></i>";
   function renderProducts() {
@@ -229,7 +240,7 @@
   }
   $("#newProduct").onclick = () => {
     pSel = null; pCreating = true; renderProducts(); pf.reset();
-    pf.active.checked = true; pf.cat.value = $("#pcat").value || CATEGORIES[0].id;
+    pf.active.checked = true; pf.cat.value = $("#pcat").value || (CATEGORIES[0] || {}).id || "";
     $("#pformTitle").textContent = "Novo produto"; $("#pdelete").disabled = true; $("#pformErr").textContent = "";
     updateFinal(); renderPImage(null); showForm(true); pf.name.focus();
   };
@@ -272,6 +283,73 @@
       await api("api/products/" + p.id + "/delete", { method: "POST" });
       PRODUCTS = PRODUCTS.filter(x => x.id !== p.id); pSel = null; showForm(false); renderProducts(); renderProdSel(); toast("Produto eliminado");
     } catch (err) { toast(err.message); }
+  };
+
+  // ---------- categories ----------
+  let cEdit = null;
+  const productCount = id => PRODUCTS.filter(p => p.cat === id).length;
+  function renderCats() {
+    $("#cempty").hidden = !!CATEGORIES.length;
+    $("#crows").innerHTML = CATEGORIES.map((c, i) => `
+      <tr data-cid="${c.id}" class="${c.active ? "" : "off"}">
+        <td class="ord"><button type="button" data-cmove="up" ${i === 0 ? "disabled" : ""} aria-label="Subir">▲</button><button type="button" data-cmove="down" ${i === CATEGORIES.length - 1 ? "disabled" : ""} aria-label="Descer">▼</button></td>
+        <td>${cEdit === c.id
+          ? `<div class="inline-edit"><input id="cname" value="${esc(c.name)}" maxlength="60"><button type="button" class="btn sm" data-csave>Guardar</button><button type="button" class="ghost" data-ccancel>Cancelar</button></div>`
+          : `<b>${esc(c.name)}</b><small>${esc(c.id)}</small>`}</td>
+        <td class="r">${productCount(c.id)}</td>
+        <td><label class="switch"><input type="checkbox" data-cactive ${c.active ? "checked" : ""}><span>${c.active ? "Visível" : "Oculta"}</span></label></td>
+        <td class="r actions"><button type="button" class="ghost" data-cedit>Renomear</button><button type="button" class="ghost danger-ghost" data-cdel>Eliminar</button></td>
+      </tr>`).join("");
+    if (cEdit) { const i = $("#cname"); i.focus(); i.select(); }
+  }
+  function setCats(list) { CATEGORIES = list; renderCats(); renderCatSelects(); renderProducts(); renderProdSel(); }
+  $("#cnewForm").onsubmit = async e => {
+    e.preventDefault(); $("#cErr").textContent = "";
+    try {
+      await api("api/categories", { method: "POST", body: JSON.stringify({ name: e.target.cname_new.value }) });
+      e.target.reset(); setCats(await api("api/categories/all")); toast("Categoria criada");
+    } catch (err) { $("#cErr").textContent = err.message; }
+  };
+  $("#crows").addEventListener("keydown", e => { if (e.target.id === "cname" && e.key === "Enter") { e.preventDefault(); $("[data-csave]").click(); } if (e.key === "Escape") { cEdit = null; renderCats(); } });
+  $("#crows").addEventListener("change", async e => {
+    if (!e.target.matches("[data-cactive]")) return;
+    const id = e.target.closest("tr").dataset.cid;
+    try { await api("api/categories/" + id + "/update", { method: "POST", body: JSON.stringify({ active: e.target.checked }) }); setCats(await api("api/categories/all")); toast(e.target.checked ? "Categoria visível na loja" : "Categoria oculta — os seus produtos deixam de aparecer na loja"); }
+    catch (err) { toast(err.message); renderCats(); }
+  });
+  $("#crows").addEventListener("click", async e => {
+    const tr = e.target.closest("tr[data-cid]"); if (!tr) return;
+    const id = tr.dataset.cid, c = CATEGORIES.find(x => x.id === id);
+    try {
+      const mv = e.target.closest("[data-cmove]");
+      if (mv && !mv.disabled) { setCats(await api("api/categories/" + id + "/" + mv.dataset.cmove, { method: "POST" })); return; }
+      if (e.target.closest("[data-cedit]")) { cEdit = id; renderCats(); return; }
+      if (e.target.closest("[data-ccancel]")) { cEdit = null; renderCats(); return; }
+      if (e.target.closest("[data-csave]")) {
+        await api("api/categories/" + id + "/update", { method: "POST", body: JSON.stringify({ name: $("#cname").value }) });
+        cEdit = null; setCats(await api("api/categories/all")); toast("Categoria renomeada"); return;
+      }
+      if (e.target.closest("[data-cdel]")) openCatDelete(c);
+    } catch (err) { toast(err.message); }
+  });
+  function openCatDelete(c) {
+    const n = productCount(c.id), others = CATEGORIES.filter(x => x.id !== c.id);
+    $("#cdelTitle").textContent = `Eliminar "${c.name}"`;
+    $("#cdelMsg").textContent = n ? `Esta categoria tem ${n} produto(s). Escolha para que categoria os quer mover antes de eliminar.` : "Esta categoria não tem produtos. Pode ser eliminada sem afetar a loja.";
+    $("#cdelMoveWrap").hidden = !n;
+    $("#cdelMove").innerHTML = others.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join("");
+    $("#cdelConfirm").disabled = n > 0 && !others.length;
+    $("#cdelErr").textContent = n > 0 && !others.length ? "Crie primeiro outra categoria para onde mover os produtos." : "";
+    $("#cdel").dataset.cid = c.id; $("#cdel").hidden = false;
+  }
+  $("#cdelCancel").onclick = () => { $("#cdel").hidden = true; };
+  $("#cdelConfirm").onclick = async () => {
+    const id = $("#cdel").dataset.cid, n = productCount(id), moveTo = n ? $("#cdelMove").value : null;
+    try {
+      const list = await api("api/categories/" + id + "/delete", { method: "POST", body: JSON.stringify({ moveTo }) });
+      if (n) PRODUCTS.forEach(p => { if (p.cat === id) p.cat = moveTo; });
+      $("#cdel").hidden = true; setCats(list); toast(n ? `Categoria eliminada — ${n} produto(s) movido(s)` : "Categoria eliminada");
+    } catch (err) { $("#cdelErr").textContent = err.message; }
   };
 
   // ---------- brand ----------

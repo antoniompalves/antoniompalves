@@ -206,15 +206,32 @@
   $("#prodCount").textContent = P.length;
   renderChips(); renderGrid(); if (feat) renderDetail(feat.id); renderCart();
 
-  // products edited in the backoffice (prices, descriptions, images) come from the API;
+  // category tiles on the home page follow the first two categories that have products
+  function renderTiles() {
+    const cats = C.filter(c => P.some(p => p.cat === c.id));
+    document.querySelectorAll("[data-tile]").forEach(el => {
+      const c = cats[+el.dataset.tile];
+      el.hidden = !c;
+      if (!c) return;
+      const min = Math.min(...P.filter(p => p.cat === c.id).map(finalPrice));
+      el.dataset.filter = c.id;
+      el.querySelector("h4").textContent = c.name;
+      el.querySelector("small").textContent = "desde " + eur(min);
+    });
+  }
+
+  // products and categories edited in the backoffice come from the API;
   // products.js is only the fallback when the page is opened without the server.
   (async () => {
     try {
-      const r = await fetch(window.Brand.url("api/products"), { cache: "no-store" });
-      if (!r.ok) return;
-      const list = await r.json();
-      if (!Array.isArray(list) || !list.length) return;
+      const [rc, r] = await Promise.all([fetch(window.Brand.url("api/categories"), { cache: "no-store" }), fetch(window.Brand.url("api/products"), { cache: "no-store" })]);
+      if (!r.ok || !rc.ok) return;
+      const [cats, list] = await Promise.all([rc.json(), r.json()]);
+      if (!Array.isArray(list) || !Array.isArray(cats)) return;
+      C.splice(0, C.length, ...cats);
       P.splice(0, P.length, ...list);
+      if (filter !== "all" && filter !== "new" && filter !== "promo" && !C.some(c => c.id === filter)) filter = "all";
+      renderTiles();
       $("#prodCount").textContent = P.length;
       renderFeatured(); renderChips(); renderGrid(); if (feat) renderDetail(feat.id); renderCart();
     } catch {}

@@ -21,6 +21,7 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
   (pendente → confirmada → enviada → entregue / cancelada), nota interna, histórico, eliminar, exportar CSV
 - **Registar encomenda:** pedidos recebidos por telefone/email
 - **Produtos:** editar preço, promoção, descrição, imagem, ordem, categoria e estado; criar e eliminar
+- **Categorias:** criar, renomear, ordenar, ocultar (esconde os produtos) e eliminar movendo os produtos
 - **Marca:** nome da loja, logótipo, favicon, cor principal (com aviso de contraste), email de apoio,
   pré-visualização ao vivo, alteração da palavra-passe
 
@@ -30,7 +31,7 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 |---|---|
 | `index.html`, `styles.css`, `app.js` | Loja |
 | `brand.js` | Lê `api/settings` e aplica nome, logótipo, favicon e cor (loja e backoffice) |
-| `products.js` | Categorias, FAQ e catálogo inicial (importado para a tabela `products` na primeira utilização; depois edita-se no backoffice) |
+| `products.js` | FAQ e catálogo/categorias iniciais (importados para as tabelas `products` e `categories` na primeira utilização; depois editam-se no backoffice) |
 | `admin/` | Backoffice |
 | `api.php` | API (`/api/...` via `.htaccess`). Só usa GET/POST, compatível com mod_security |
 | `app/lib.php` | Base de dados, encomendas, marca, autenticação, limites de tentativas |

@@ -64,6 +64,7 @@ function schema(string $driver, string $prefix): array
             "CREATE TABLE IF NOT EXISTS {$prefix}attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, ip TEXT NOT NULL, at INTEGER NOT NULL)",
             "CREATE INDEX IF NOT EXISTS {$prefix}attempts_lookup ON {$prefix}attempts(kind, ip, at)",
             products_schema('sqlite', $prefix),
+            categories_schema('sqlite', $prefix),
         ];
     }
     $tail = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
@@ -82,7 +83,18 @@ function schema(string $driver, string $prefix): array
         "CREATE TABLE IF NOT EXISTS {$prefix}attempts (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, kind VARCHAR(20) NOT NULL,
           ip VARCHAR(45) NOT NULL, at INT UNSIGNED NOT NULL, KEY lookup_idx (kind, ip, at)) $tail",
         products_schema('mysql', $prefix),
+        categories_schema('mysql', $prefix),
     ];
+}
+
+function categories_schema(string $driver, string $prefix): string
+{
+    if ($driver === 'sqlite') {
+        return "CREATE TABLE IF NOT EXISTS {$prefix}categories (id TEXT PRIMARY KEY, name TEXT NOT NULL, position INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)";
+    }
+    return "CREATE TABLE IF NOT EXISTS {$prefix}categories (id VARCHAR(40) NOT NULL PRIMARY KEY, name VARCHAR(60) NOT NULL,
+      position INT NOT NULL DEFAULT 0, active TINYINT(1) NOT NULL DEFAULT 1, KEY pos_idx (position)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 }
 
 function products_schema(string $driver, string $prefix): string
@@ -151,7 +163,107 @@ function static_catalog(): array
     if (!is_array($data) || !isset($data['PRODUCTS'], $data['CATEGORIES'])) throw new HttpError(500, 'Catálogo inválido (JSON)');
     return $data;
 }
-function category_ids(): array { return array_column(static_catalog()['CATEGORIES'], 'id'); }
+function ensure_categories(): void
+{
+    static $ok = false;
+    if ($ok) return;
+    $pdo = db();
+    $pdo->exec(categories_schema($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), config()['prefix'] ?? ''));
+    if ((int) $pdo->query('SELECT COUNT(*) FROM ' . t('categories'))->fetchColumn() === 0) {
+        $ins = $pdo->prepare('INSERT INTO ' . t('categories') . ' (id, name, position, active) VALUES (?, ?, ?, 1)');
+        $pdo->beginTransaction();
+        foreach (static_catalog()['CATEGORIES'] as $i => $c) $ins->execute([$c['id'], $c['name'], ($i + 1) * 10]);
+        $pdo->commit();
+    }
+    $ok = true;
+}
+
+function categories_list(bool $includeInactive = false): array
+{
+    ensure_categories();
+    ensure_products();
+    $sql = 'SELECT c.*, (SELECT COUNT(*) FROM ' . t('products') . ' p WHERE p.cat = c.id) AS products
+            FROM ' . t('categories') . ' c' . ($includeInactive ? '' : ' WHERE c.active = 1') . ' ORDER BY c.position, c.name';
+    return array_map(fn ($r) => ['id' => $r['id'], 'name' => $r['name'], 'position' => (int) $r['position'],
+        'active' => (bool) $r['active'], 'products' => (int) $r['products']], db()->query($sql)->fetchAll());
+}
+function category_ids(): array { return array_column(categories_list(true), 'id'); }
+
+function find_category(string $id): array
+{
+    ensure_categories();
+    $st = db()->prepare('SELECT * FROM ' . t('categories') . ' WHERE id = ?');
+    $st->execute([$id]);
+    $r = $st->fetch();
+    if (!$r) throw new HttpError(404, 'Categoria não encontrada');
+    return $r;
+}
+function category_by_id(string $id): array
+{
+    foreach (categories_list(true) as $c) if ($c['id'] === $id) return $c;
+    throw new HttpError(404, 'Categoria não encontrada');
+}
+
+function category_create(array $in): array
+{
+    ensure_categories();
+    $name = str_in($in['name'] ?? '', 60);
+    if ($name === '') throw new HttpError(400, 'O nome da categoria é obrigatório');
+    $base = substr(slugify($name), 0, 36); $id = $base; $n = 2;
+    $exists = db()->prepare('SELECT 1 FROM ' . t('categories') . ' WHERE id = ?');
+    while (true) { $exists->execute([$id]); if (!$exists->fetchColumn()) break; $id = $base . '-' . $n++; }
+    $pos = (int) db()->query('SELECT COALESCE(MAX(position), 0) + 10 FROM ' . t('categories'))->fetchColumn();
+    db()->prepare('INSERT INTO ' . t('categories') . ' (id, name, position, active) VALUES (?, ?, ?, ?)')
+        ->execute([$id, $name, $pos, array_key_exists('active', $in) && empty($in['active']) ? 0 : 1]);
+    return category_by_id($id);
+}
+
+function category_update(string $id, array $in): array
+{
+    find_category($id);
+    $f = [];
+    if (array_key_exists('name', $in)) { $f['name'] = str_in($in['name'], 60); if ($f['name'] === '') throw new HttpError(400, 'O nome da categoria é obrigatório'); }
+    if (array_key_exists('active', $in)) $f['active'] = empty($in['active']) ? 0 : 1;
+    if (array_key_exists('position', $in) && is_numeric($in['position'])) $f['position'] = (int) $in['position'];
+    if ($f) {
+        $set = implode(', ', array_map(fn ($k) => "$k = ?", array_keys($f)));
+        db()->prepare('UPDATE ' . t('categories') . " SET $set WHERE id = ?")->execute([...array_values($f), $id]);
+    }
+    return category_by_id($id);
+}
+
+// Moves a category one step up/down by swapping positions with its neighbour.
+function category_move(string $id, int $dir): array
+{
+    $list = categories_list(true);
+    $i = array_search($id, array_column($list, 'id'), true);
+    if ($i === false) throw new HttpError(404, 'Categoria não encontrada');
+    $j = $i + ($dir < 0 ? -1 : 1);
+    if (isset($list[$j])) {
+        $pdo = db(); $pdo->beginTransaction();
+        // renumber everything so positions are unique, then swap the pair
+        foreach ($list as $k => $c) $list[$k]['position'] = ($k + 1) * 10;
+        [$list[$i]['position'], $list[$j]['position']] = [$list[$j]['position'], $list[$i]['position']];
+        $st = $pdo->prepare('UPDATE ' . t('categories') . ' SET position = ? WHERE id = ?');
+        foreach ($list as $c) $st->execute([$c['position'], $c['id']]);
+        $pdo->commit();
+    }
+    return categories_list(true);
+}
+
+function category_delete(string $id, ?string $moveTo): void
+{
+    $c = category_by_id($id);
+    if ($c['products'] > 0) {
+        if (!$moveTo) throw new HttpError(409, "Esta categoria tem {$c['products']} produto(s). Escolha para onde os mover.");
+        if ($moveTo === $id) throw new HttpError(400, 'Escolha uma categoria diferente');
+        find_category($moveTo);
+    }
+    $pdo = db(); $pdo->beginTransaction();
+    if ($c['products'] > 0) $pdo->prepare('UPDATE ' . t('products') . ' SET cat = ?, updated_at = ? WHERE cat = ?')->execute([$moveTo, now_iso(), $id]);
+    $pdo->prepare('DELETE FROM ' . t('categories') . ' WHERE id = ?')->execute([$id]);
+    $pdo->commit();
+}
 
 function ensure_products(): void
 {
@@ -186,7 +298,13 @@ function row_to_product(array $r): array
 function products_list(bool $includeInactive = false): array
 {
     ensure_products();
-    $sql = 'SELECT * FROM ' . t('products') . ($includeInactive ? '' : ' WHERE active = 1') . ' ORDER BY position, name';
+    if ($includeInactive) {
+        $sql = 'SELECT * FROM ' . t('products') . ' ORDER BY position, name';
+    } else { // visible = active product in an active category
+        ensure_categories();
+        $sql = 'SELECT p.* FROM ' . t('products') . ' p JOIN ' . t('categories') . ' c ON c.id = p.cat AND c.active = 1
+                WHERE p.active = 1 ORDER BY p.position, p.name';
+    }
     return array_map('row_to_product', db()->query($sql)->fetchAll());
 }
 

@@ -91,6 +91,27 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .chk input { width: auto; }
 .pform .danger:disabled { display: none; }
 
+/* ---------- categories ---------- */
+.cat-layout { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; }
+.cat-layout .side { display: flex; flex-direction: column; gap: 16px; }
+.ctable tbody tr { cursor: default; } .ctable td { vertical-align: middle; }
+.ctable tr.off td:nth-child(2), .ctable tr.off td:nth-child(3) { opacity: .5; }
+.ord { white-space: nowrap; } .ord button { width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 10px; margin-right: 4px; }
+.ord button:disabled { opacity: .3; cursor: default; }
+.actions { white-space: nowrap; } .actions .ghost { margin-left: 6px; padding: 6px 12px; }
+.danger-ghost { color: #c62828; } .danger-ghost:hover { border-color: #c62828; }
+.inline-edit { display: flex; gap: 6px; align-items: center; } .inline-edit input { max-width: 240px; padding: 7px 10px; }
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+.switch input { width: auto; accent-color: var(--orange); }
+.hint-card .hint { margin: 0; }
+.card label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: grid; place-items: center; z-index: 30; padding: 16px; }
+.modal-box { width: min(440px, 100%); }
+.modal-box p { margin: 0; line-height: 1.5; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.btn:disabled { opacity: .5; cursor: default; }
+@media (max-width: 1000px) { .cat-layout { grid-template-columns: 1fr; } }
+
 /* ---------- brand ---------- */
 .brand-layout { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 16px; align-items: start; }
 .card label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }

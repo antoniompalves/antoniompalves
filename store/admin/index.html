@@ -29,6 +29,7 @@
         <button data-view="orders" class="on">Pré-encomendas</button>
         <button data-view="new">Registar encomenda</button>
         <button data-view="products">Produtos</button>
+        <button data-view="categories">Categorias</button>
         <button data-view="brand">Marca</button>
       </nav>
       <div class="top-actions">
@@ -137,6 +138,42 @@
             <button class="btn" id="psave">Guardar produto</button>
             <button type="button" class="danger" id="pdelete">Eliminar produto</button>
           </form>
+        </div>
+      </section>
+
+      <!-- CATEGORIES VIEW -->
+      <section id="view-categories" hidden>
+        <div class="cat-layout">
+          <div class="table-wrap">
+            <table class="ctable">
+              <thead><tr><th>Ordem</th><th>Categoria</th><th class="r">Produtos</th><th>Na loja</th><th></th></tr></thead>
+              <tbody id="crows"></tbody>
+            </table>
+            <p class="empty" id="cempty" hidden>Ainda não há categorias.</p>
+          </div>
+          <div class="side">
+            <form class="card" id="cnewForm">
+              <h2>Nova categoria</h2>
+              <label>Nome<input name="cname_new" required maxlength="60" placeholder="ex.: Suplementos"></label>
+              <p class="err" id="cErr"></p>
+              <button class="btn">Criar categoria</button>
+            </form>
+            <div class="card hint-card">
+              <h2>Como funciona</h2>
+              <p class="hint">A ordem aqui é a ordem dos filtros na loja. As duas primeiras categorias com produtos aparecem em destaque na página inicial.</p>
+              <p class="hint">Ocultar uma categoria esconde-a da loja, e todos os seus produtos deixam de poder ser encomendados. Nada é apagado.</p>
+              <p class="hint">Para eliminar uma categoria com produtos, escolha para onde movê-los.</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal" id="cdel" hidden>
+          <div class="modal-box card">
+            <h2 id="cdelTitle">Eliminar categoria</h2>
+            <p id="cdelMsg"></p>
+            <label id="cdelMoveWrap">Mover produtos para<select id="cdelMove"></select></label>
+            <p class="err" id="cdelErr"></p>
+            <div class="modal-actions"><button type="button" class="ghost" id="cdelCancel">Cancelar</button><button type="button" class="btn" id="cdelConfirm">Eliminar</button></div>
+          </div>
         </div>
       </section>
 
