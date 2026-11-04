@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forge Labs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- HERO -->
+  <section class="hero-wrap" id="home">
+    <div class="hero">
+      <header class="nav">
+        <a class="logo" href="#home"><span>FORGE</span><small>LABS</small></a>
+        <nav class="pills" id="navPills">
+          <a href="#home" class="active">Home</a>
+          <a href="#collection">Collection</a>
+          <a href="#about">About Us</a>
+          <a href="#contact">Contact Us</a>
+        </nav>
+        <button class="cart-btn" id="openCart">Add To Cart <span class="cart-ico"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg><b id="cartCount">0</b></span></button>
+        <button class="burger" id="burger" aria-label="Menu">☰</button>
+      </header>
+
+      <div class="hero-top">
+        <h1>Innovating<br>Performance<br>Solutions</h1>
+        <div class="hero-side">
+          <p>Lab-tested compounds from EU stock, shipped discreetly with guaranteed delivery and bulk savings on every order.</p>
+          <a href="#collection" class="btn-dark">Get Started <span>→</span></a>
+        </div>
+      </div>
+
+      <div class="hero-stage">
+        <div class="vial vial-xl" data-label="FORGE"></div>
+        <article class="feat-card" id="featCard"></article>
+        <div class="stat-card">
+          <small>Products Available</small>
+          <strong>63</strong>
+          <div class="bar"><i style="width:76%"></i></div>
+          <div class="row"><span>21 Lab-tested batches</span><span>76%</span></div>
+          <small class="muted">Verified quality, every batch</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="container stats" id="about">
+    <div class="synth">
+      <div class="vial vial-sm"></div>
+      <span>Lab<br>Tested</span>
+    </div>
+    <div class="stat"><b>5+</b><small>Years Online</small></div>
+    <div class="stat"><b>4K</b><small>Happy Customers</small></div>
+    <div class="stat"><b>EU</b><small>Stock &amp; Shipping</small></div>
+  </section>
+
+  <!-- PROMO CARDS -->
+  <section class="container promo">
+    <div class="promo-main">
+      <small>New arrivals</small>
+      <h2>Discover innovative<br>peptides for life.</h2>
+      <div class="vial vial-md l"></div><div class="vial vial-md r"></div>
+      <a href="#collection" class="btn-dark sm" data-filter="peptides">Learn More</a>
+    </div>
+    <div class="promo-tile" data-filter="injectable">
+      <h4>Injectable</h4><small>from €29</small>
+      <div class="vial-group"><div class="vial vial-sm"></div><div class="vial vial-sm"></div><div class="vial vial-sm"></div></div>
+    </div>
+    <div class="promo-tile" data-filter="oral">
+      <h4>Oral<br>compounds</h4><small>from €21</small>
+      <div class="vial-group"><div class="vial vial-sm"></div></div>
+    </div>
+  </section>
+
+  <!-- BEST SELLING -->
+  <section class="container" id="best">
+    <h2 class="section-title">Our Best selling Products</h2>
+    <div class="carousel">
+      <button class="arrow left" data-dir="-1">‹</button>
+      <div class="track" id="bestTrack"></div>
+      <button class="arrow right" data-dir="1">›</button>
+    </div>
+  </section>
+
+  <!-- COLLECTION -->
+  <section class="container" id="collection">
+    <div class="col-head">
+      <h2 class="section-title left">Collection</h2>
+      <input type="search" id="search" placeholder="Search products…">
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- DETAIL -->
+  <section class="container detail" id="detail"></section>
+
+  <!-- REVIEWS + FAQ -->
+  <section class="container help" id="contact">
+    <div class="reviews">
+      <div class="reviews-head">
+        <span class="big">02<sup>/03</sup></span>
+        <div><h3>Weekly Customer Reviews</h3><p class="muted">Real feedback from verified buyers, updated every week.</p></div>
+      </div>
+      <blockquote id="quote"></blockquote>
+    </div>
+    <div class="faq">
+      <h3>Have a question?<br>We are here to help.</h3>
+      <p class="muted">Our frequently asked questions. Still need help? Reach out below.</p>
+      <div class="contacts">
+        <div><i></i><b>Live Chat</b><small>Mon–Sat, 9:00–20:00 CET</small></div>
+        <div><i></i><b>Email Us</b><small>support@forgelabs.example</small></div>
+      </div>
+      <div id="faqList"></div>
+    </div>
+  </section>
+
+  <footer class="container footer">
+    <span class="logo"><span>FORGE</span><small>LABS</small></span>
+    <p class="muted">Read the instructions carefully. Do not exceed the recommended dose. Consult your doctor before use.</p>
+    <small class="muted">© 2026 Forge Labs</small>
+  </footer>
+
+  <!-- CART DRAWER -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head"><h3>Your cart</h3><button id="closeCart">✕</button></div>
+    <div id="cartItems"></div>
+    <div class="drawer-foot">
+      <div class="row"><span>Bulk discount</span><span id="cartDisc">€0.00</span></div>
+      <div class="row total"><span>Total</span><span id="cartTotal">€0.00</span></div>
+      <button class="btn-orange" id="checkout">Checkout</button>
+    </div>
+  </aside>
+  <div class="toast" id="toast">Added! Need more?</div>
+
+  <script src="products.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
