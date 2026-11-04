@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-PT">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,20 +15,20 @@
       <header class="nav">
         <a class="logo" href="#home"><span>FORGE</span><small>LABS</small></a>
         <nav class="pills" id="navPills">
-          <a href="#home" class="active">Home</a>
-          <a href="#collection">Collection</a>
-          <a href="#about">About Us</a>
-          <a href="#contact">Contact Us</a>
+          <a href="#home" class="active">Início</a>
+          <a href="#collection">Coleção</a>
+          <a href="#about">Sobre Nós</a>
+          <a href="#contact">Contactos</a>
         </nav>
-        <button class="cart-btn" id="openCart">Add To Cart <span class="cart-ico"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg><b id="cartCount">0</b></span></button>
+        <button class="cart-btn" id="openCart">Carrinho <span class="cart-ico"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg><b id="cartCount">0</b></span></button>
         <button class="burger" id="burger" aria-label="Menu">☰</button>
       </header>
 
       <div class="hero-top">
-        <h1>Innovating<br>Performance<br>Solutions</h1>
+        <h1>Soluções<br>Inovadoras de<br>Performance</h1>
         <div class="hero-side">
-          <p>Lab-tested compounds from EU stock, shipped discreetly with guaranteed delivery and bulk savings on every order.</p>
-          <a href="#collection" class="btn-dark">Get Started <span>→</span></a>
+          <p>Compostos testados em laboratório, com stock na UE, enviados de forma discreta, com entrega garantida e descontos por quantidade em todas as encomendas.</p>
+          <a href="#collection" class="btn-dark">Começar <span>→</span></a>
         </div>
       </div>
 
@@ -36,11 +36,11 @@
         <div class="vial vial-xl" data-label="FORGE"></div>
         <article class="feat-card" id="featCard"></article>
         <div class="stat-card">
-          <small>Products Available</small>
-          <strong>63</strong>
+          <small>Produtos Disponíveis</small>
+          <strong id="prodCount">67</strong>
           <div class="bar"><i style="width:76%"></i></div>
-          <div class="row"><span>21 Lab-tested batches</span><span>76%</span></div>
-          <small class="muted">Verified quality, every batch</small>
+          <div class="row"><span>21 lotes testados em laboratório</span><span>76%</span></div>
+          <small class="muted">Qualidade verificada em cada lote</small>
         </div>
       </div>
     </div>
@@ -50,34 +50,34 @@
   <section class="container stats" id="about">
     <div class="synth">
       <div class="vial vial-sm"></div>
-      <span>Lab<br>Tested</span>
+      <span>Testado em<br>Laboratório</span>
     </div>
-    <div class="stat"><b>5+</b><small>Years Online</small></div>
-    <div class="stat"><b>4K</b><small>Happy Customers</small></div>
-    <div class="stat"><b>EU</b><small>Stock &amp; Shipping</small></div>
+    <div class="stat"><b>5+</b><small>Anos Online</small></div>
+    <div class="stat"><b>4K</b><small>Clientes Satisfeitos</small></div>
+    <div class="stat"><b>UE</b><small>Stock e Envios</small></div>
   </section>
 
   <!-- PROMO CARDS -->
   <section class="container promo">
     <div class="promo-main">
-      <small>New arrivals</small>
-      <h2>Discover innovative<br>peptides for life.</h2>
+      <small>Novidades</small>
+      <h2>Descubra péptidos<br>inovadores para a vida.</h2>
       <div class="vial vial-md l"></div><div class="vial vial-md r"></div>
-      <a href="#collection" class="btn-dark sm" data-filter="peptides">Learn More</a>
+      <a href="#collection" class="btn-dark sm" data-filter="peptides">Saber Mais</a>
     </div>
     <div class="promo-tile" data-filter="injectable">
-      <h4>Injectable</h4><small>from €29</small>
+      <h4>Injetáveis</h4><small>desde 29 €</small>
       <div class="vial-group"><div class="vial vial-sm"></div><div class="vial vial-sm"></div><div class="vial vial-sm"></div></div>
     </div>
     <div class="promo-tile" data-filter="oral">
-      <h4>Oral<br>compounds</h4><small>from €21</small>
+      <h4>Compostos<br>orais</h4><small>desde 21 €</small>
       <div class="vial-group"><div class="vial vial-sm"></div></div>
     </div>
   </section>
 
   <!-- BEST SELLING -->
   <section class="container" id="best">
-    <h2 class="section-title">Our Best selling Products</h2>
+    <h2 class="section-title">Os Nossos Produtos Mais Vendidos</h2>
     <div class="carousel">
       <button class="arrow left" data-dir="-1">‹</button>
       <div class="track" id="bestTrack"></div>
@@ -88,8 +88,8 @@
   <!-- COLLECTION -->
   <section class="container" id="collection">
     <div class="col-head">
-      <h2 class="section-title left">Collection</h2>
-      <input type="search" id="search" placeholder="Search products…">
+      <h2 class="section-title left">Coleção</h2>
+      <input type="search" id="search" placeholder="Pesquisar produtos…">
     </div>
     <div class="chips" id="chips"></div>
     <div class="grid" id="grid"></div>
@@ -103,16 +103,16 @@
     <div class="reviews">
       <div class="reviews-head">
         <span class="big">02<sup>/03</sup></span>
-        <div><h3>Weekly Customer Reviews</h3><p class="muted">Real feedback from verified buyers, updated every week.</p></div>
+        <div><h3>Avaliações Semanais de Clientes</h3><p class="muted">Opiniões reais de compradores verificados, atualizadas todas as semanas.</p></div>
       </div>
       <blockquote id="quote"></blockquote>
     </div>
     <div class="faq">
-      <h3>Have a question?<br>We are here to help.</h3>
-      <p class="muted">Our frequently asked questions. Still need help? Reach out below.</p>
+      <h3>Tem alguma dúvida?<br>Estamos aqui para ajudar.</h3>
+      <p class="muted">As nossas perguntas frequentes. Ainda precisa de ajuda? Contacte-nos abaixo.</p>
       <div class="contacts">
-        <div><i></i><b>Live Chat</b><small>Mon–Sat, 9:00–20:00 CET</small></div>
-        <div><i></i><b>Email Us</b><small>support@forgelabs.example</small></div>
+        <div><i></i><b>Chat ao Vivo</b><small>Seg–Sáb, 9:00–20:00 (hora de Lisboa)</small></div>
+        <div><i></i><b>Envie-nos um Email</b><small>support@forgelabs.example</small></div>
       </div>
       <div id="faqList"></div>
     </div>
@@ -120,22 +120,37 @@
 
   <footer class="container footer">
     <span class="logo"><span>FORGE</span><small>LABS</small></span>
-    <p class="muted">Read the instructions carefully. Do not exceed the recommended dose. Consult your doctor before use.</p>
+    <p class="muted">Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</p>
     <small class="muted">© 2026 Forge Labs</small>
   </footer>
 
   <!-- CART DRAWER -->
   <div class="overlay" id="overlay"></div>
   <aside class="drawer" id="drawer">
-    <div class="drawer-head"><h3>Your cart</h3><button id="closeCart">✕</button></div>
+    <div class="drawer-head"><h3>O seu carrinho</h3><button id="closeCart">✕</button></div>
     <div id="cartItems"></div>
     <div class="drawer-foot">
-      <div class="row"><span>Bulk discount</span><span id="cartDisc">€0.00</span></div>
-      <div class="row total"><span>Total</span><span id="cartTotal">€0.00</span></div>
-      <button class="btn-orange" id="checkout">Checkout</button>
+      <div class="row"><span>Desconto por quantidade</span><span id="cartDisc">0,00 €</span></div>
+      <div class="row total"><span>Total</span><span id="cartTotal">0,00 €</span></div>
+      <button class="btn-orange" id="checkout">Pré-encomendar — sem pagamento agora</button>
     </div>
+    <form class="preorder" id="preorder" hidden>
+      <button type="button" class="back" id="backToCart">← Voltar ao carrinho</button>
+      <h4>Os seus dados</h4>
+      <p class="muted">Registamos a sua pré-encomenda e entramos em contacto para confirmar stock, total e entrega. Nada é cobrado.</p>
+      <input name="name" placeholder="Nome completo *" required maxlength="120">
+      <input name="email" type="email" placeholder="Email *" required maxlength="160">
+      <input name="phone" placeholder="Telefone" maxlength="40">
+      <input name="address" placeholder="Morada" maxlength="300">
+      <div class="two"><input name="postcode" placeholder="Código postal" maxlength="20"><input name="city" placeholder="Localidade" maxlength="80"></div>
+      <input name="country" placeholder="País" maxlength="60">
+      <textarea name="notes" placeholder="Observações (opcional)" maxlength="1000" rows="3"></textarea>
+      <p class="form-err" id="formErr"></p>
+      <button class="btn-orange" type="submit" id="submitOrder">Enviar pré-encomenda</button>
+    </form>
+    <div class="done" id="orderDone" hidden></div>
   </aside>
-  <div class="toast" id="toast">Added! Need more?</div>
+  <div class="toast" id="toast">Adicionado! Precisa de mais?</div>
 
   <script src="products.js"></script>
   <script src="app.js"></script>

@@ -180,6 +180,19 @@ body.cart-open .drawer { transform: none; }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 80px); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-size: 13px; transition: .3s; z-index: 20; }
 .toast.show { transform: translate(-50%, 0); }
 
+[hidden] { display: none !important; }
+.preorder, .done { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.preorder h4 { margin: 4px 0 0; font-size: 16px; } .preorder p { margin: 0; font-size: 12px; line-height: 1.5; }
+.preorder input, .preorder textarea { border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font: inherit; font-size: 14px; width: 100%; resize: vertical; }
+.preorder input:focus, .preorder textarea:focus { outline: 2px solid var(--orange); border-color: transparent; }
+.preorder .two { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+.preorder .back { align-self: flex-start; font-size: 13px; color: var(--muted); }
+.form-err { color: #c62828; font-size: 13px !important; min-height: 1em; }
+.btn-orange:disabled { opacity: .6; cursor: wait; }
+.done { align-items: center; justify-content: center; text-align: center; }
+.done .tick { width: 56px; height: 56px; border-radius: 50%; background: var(--orange); color: #fff; font-size: 28px; display: grid; place-items: center; }
+.done h3 { margin: 4px 0; } .done p { margin: 0; font-size: 14px; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .grid { grid-template-columns: repeat(2, 1fr); }

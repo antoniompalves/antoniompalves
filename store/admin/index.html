@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Forge Backoffice</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <!-- LOGIN -->
+  <section class="login" id="login">
+    <form id="loginForm">
+      <span class="logo"><span>FORGE</span><small>BACKOFFICE</small></span>
+      <h1>Iniciar sessão</h1>
+      <input type="password" name="password" placeholder="Palavra-passe de administrador" required autofocus>
+      <p class="err" id="loginErr"></p>
+      <button class="btn">Entrar</button>
+    </form>
+  </section>
+
+  <!-- APP -->
+  <div class="app" id="app" hidden>
+    <header class="top">
+      <span class="logo"><span>FORGE</span><small>BACKOFFICE</small></span>
+      <nav class="pills">
+        <button data-view="orders" class="on">Pré-encomendas</button>
+        <button data-view="new">Registar encomenda</button>
+      </nav>
+      <div class="top-actions">
+        <a href="/" target="_blank" class="ghost">Ver loja ↗</a>
+        <button class="ghost" id="logout">Terminar sessão</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ORDERS VIEW -->
+      <section id="view-orders">
+        <div class="stats" id="stats"></div>
+        <div class="toolbar">
+          <input type="search" id="q" placeholder="Pesquisar por número, nome, email, produto…">
+          <div class="chips" id="statusChips"></div>
+          <button class="ghost" id="refresh">↻ Atualizar</button>
+          <button class="ghost" id="exportCsv">⬇ Exportar CSV</button>
+        </div>
+        <div class="layout">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Encomenda</th><th>Data</th><th>Cliente</th><th>Artigos</th><th class="r">Total</th><th>Estado</th></tr></thead>
+              <tbody id="rows"></tbody>
+            </table>
+            <p class="empty" id="empty" hidden>Ainda não há pré-encomendas.</p>
+          </div>
+          <aside class="panel" id="panel" hidden></aside>
+        </div>
+      </section>
+
+      <!-- NEW ORDER VIEW -->
+      <section id="view-new" hidden>
+        <form class="new-order" id="newForm">
+          <div class="card">
+            <h2>Cliente</h2>
+            <div class="grid2">
+              <input name="name" placeholder="Nome completo *" required maxlength="120">
+              <input name="email" type="email" placeholder="Email *" required maxlength="160">
+              <input name="phone" placeholder="Telefone" maxlength="40">
+              <input name="country" placeholder="País" maxlength="60">
+              <input name="address" placeholder="Morada" maxlength="300" class="span2">
+              <input name="postcode" placeholder="Código postal" maxlength="20">
+              <input name="city" placeholder="Localidade" maxlength="80">
+              <textarea name="notes" placeholder="Observações" rows="3" maxlength="1000" class="span2"></textarea>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Artigos</h2>
+            <div class="add-line">
+              <select id="prodSel"></select>
+              <input type="number" id="prodQty" min="1" max="999" value="1">
+              <button type="button" class="btn sm" id="addLine">Adicionar</button>
+            </div>
+            <table class="lines"><tbody id="lines"></tbody></table>
+            <div class="sum" id="sum"></div>
+            <p class="err" id="newErr"></p>
+            <button class="btn" id="submitNew">Registar pré-encomenda</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="/products.js"></script>
+  <script src="/admin/admin.js"></script>
+</body>
+</html>

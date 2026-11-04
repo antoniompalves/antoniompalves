@@ -1,8 +1,8 @@
 (() => {
   const P = window.PRODUCTS, C = window.CATEGORIES;
   const $ = (s, el = document) => el.querySelector(s);
-  const eur = n => "€" + n.toFixed(2);
-  const finalPrice = p => p.promo ? p.price * (1 - p.promo / 100) : p.price;
+  const eur = n => new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(n);
+  const finalPrice = window.unitPrice;
   const catName = id => (C.find(c => c.id === id) || {}).name || id;
   const vial = (label = "FORGE") => `<div class="vial" data-label="${label}"></div>`;
   const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -11,11 +11,11 @@
   let cart = {};
   try { cart = JSON.parse(localStorage.getItem("forge-cart")) || {}; } catch { cart = {}; }
   const save = () => { try { localStorage.setItem("forge-cart", JSON.stringify(cart)); } catch {} };
-  const bulk = qty => qty >= 10 ? 0.10 : qty >= 5 ? 0.05 : 0;
+  const bulk = window.bulkRate;
 
   function addToCart(id, qty = 1) {
     cart[id] = (cart[id] || 0) + qty;
-    save(); renderCart(); toast("Added! Need more?");
+    save(); renderCart(); toast("Adicionado! Precisa de mais?");
   }
   function renderCart() {
     const ids = Object.keys(cart).filter(id => cart[id] > 0 && P.find(p => p.id === id));
@@ -25,9 +25,9 @@
       const line = finalPrice(p) * q, d = line * bulk(q);
       total += line - d; disc += d; count += q;
       return `<div class="ci"><div class="th">${vial("")}</div>
-        <div class="info"><b>${esc(p.name)}</b><small>${eur(finalPrice(p))} each${bulk(q) ? ` · ${bulk(q) * 100}% bulk off` : ""}</small></div>
+        <div class="info"><b>${esc(p.name)}</b><small>${eur(finalPrice(p))} cada${bulk(q) ? ` · −${bulk(q) * 100}% por quantidade` : ""}</small></div>
         <div class="qty"><button data-q="-1" data-id="${id}">−</button><span>${q}</span><button data-q="1" data-id="${id}">+</button></div></div>`;
-    }).join("") : `<p class="muted" style="text-align:center;padding:40px 0">Your cart is empty.</p>`;
+    }).join("") : `<p class="muted" style="text-align:center;padding:40px 0">O seu carrinho está vazio.</p>`;
     $("#cartTotal").textContent = eur(total);
     $("#cartDisc").textContent = "−" + eur(disc);
     $("#cartCount").textContent = count;
@@ -40,8 +40,33 @@
   });
   const openCart = v => document.body.classList.toggle("cart-open", v);
   $("#openCart").onclick = () => openCart(true);
-  $("#closeCart").onclick = $("#overlay").onclick = () => openCart(false);
-  $("#checkout").onclick = () => { if (!Object.keys(cart).length) return; cart = {}; save(); renderCart(); openCart(false); toast("Demo store — order not placed."); };
+  $("#closeCart").onclick = $("#overlay").onclick = () => { openCart(false); if (!$("#orderDone").hidden) showStep("cart"); };
+  const form = $("#preorder"), done = $("#orderDone");
+  const showStep = step => {
+    $("#cartItems").hidden = $(".drawer-foot").hidden = step !== "cart";
+    form.hidden = step !== "form"; done.hidden = step !== "done";
+  };
+  $("#checkout").onclick = () => { if (!Object.keys(cart).length) return toast("O seu carrinho está vazio"); showStep("form"); };
+  $("#backToCart").onclick = () => showStep("cart");
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(form)), btn = $("#submitOrder");
+    $("#formErr").textContent = ""; btn.disabled = true; btn.textContent = "A enviar…";
+    try {
+      const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer: f, notes: f.notes, items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Não foi possível enviar a pré-encomenda");
+      cart = {}; save(); renderCart(); form.reset();
+      done.innerHTML = `<div class="tick">✓</div><h3>Pré-encomenda recebida</h3><p>A sua referência é <b>${esc(d.number)}</b>.</p>
+        <p class="muted">Total estimado: ${eur(d.total)}. Entraremos em contacto para confirmar — não foi efetuado qualquer pagamento.</p>
+        <button class="btn-orange" id="doneClose">Continuar a comprar</button>`;
+      showStep("done");
+      $("#doneClose").onclick = () => { openCart(false); showStep("cart"); };
+    } catch (err) {
+      $("#formErr").textContent = location.protocol === "file:" ? "Execute `node server.js` e abra http://localhost:3000 para enviar pré-encomendas." : err.message;
+    } finally { btn.disabled = false; btn.textContent = "Enviar pré-encomenda"; }
+  };
 
   let tt;
   function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 1800); }
@@ -53,16 +78,16 @@
       <div class="body">
         <span class="name">${esc(p.name)}</span><span class="sub">${esc(p.sub)}</span>
         <div class="pr"><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
-        <div class="meta"><span>⚗ Lab tested</span><span>★ ${p.reviews} reviews</span><span>⛟ EU stock</span></div>
-        <button class="add" data-add="${p.id}">Add to cart</button>
+        <div class="meta"><span>⚗ Testado em lab.</span><span>★ ${p.reviews} avaliações</span><span>⛟ Stock UE</span></div>
+        <button class="add" data-add="${p.id}">Adicionar ao carrinho</button>
       </div>
     </article>`;
 
   // featured hero card
-  const feat = P[0];
-  $("#featCard").innerHTML = `<div class="thumb"><span class="tag">Best seller</span>${vial()}</div>
+  const feat = P.find(p => p.best && p.promo) || P[0];
+  $("#featCard").innerHTML = `<div class="thumb"><span class="tag">Mais vendido</span>${vial()}</div>
     <h3>${esc(feat.name)}</h3><div class="price">${eur(finalPrice(feat))}</div>
-    <small>${esc(feat.sub)} • ${feat.promo}% off ${eur(feat.price)}</small>`;
+    <small>${esc(feat.sub)}${feat.promo ? ` • −${feat.promo}% sobre ${eur(feat.price)}` : ""}</small>`;
   $("#featCard").dataset.open = feat.id;
 
   $("#bestTrack").innerHTML = P.filter(p => p.best).map(card).join("");
@@ -73,7 +98,7 @@
   // ---------- collection ----------
   let filter = "all", query = "";
   function renderChips() {
-    const all = [{ id: "all", name: "All", count: P.length }, { id: "new", name: "New arrivals", count: P.filter(p => p.fresh).length }, { id: "promo", name: "Promotions", count: P.filter(p => p.promo).length },
+    const all = [{ id: "all", name: "Todos", count: P.length }, { id: "new", name: "Novidades", count: P.filter(p => p.fresh).length }, { id: "promo", name: "Promoções", count: P.filter(p => p.promo).length },
       ...C.map(c => ({ ...c, count: P.filter(p => p.cat === c.id).length })).filter(c => c.count)];
     $("#chips").innerHTML = all.map(c => `<button class="chip ${filter === c.id ? "on" : ""}" data-chip="${c.id}">${c.name}<small>${c.count}</small></button>`).join("");
   }
@@ -81,7 +106,7 @@
     const q = query.toLowerCase();
     const list = P.filter(p => (filter === "all" || p.cat === filter || (filter === "new" && p.fresh) || (filter === "promo" && p.promo))
       && (!q || (p.name + " " + p.sub + " " + catName(p.cat)).toLowerCase().includes(q)));
-    $("#grid").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">No result</div>`;
+    $("#grid").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">Sem resultados</div>`;
   }
   const setFilter = f => { filter = f; renderChips(); renderGrid(); };
   $("#chips").addEventListener("click", e => { const c = e.target.closest("[data-chip]"); if (c) setFilter(c.dataset.chip); });
@@ -98,18 +123,18 @@
       <div class="hero-img">${vial()}</div>
       <div>
         <h2>${esc(p.name)}</h2>
-        <div class="meta"><span>⚗ Lab tested</span><span>★ ${p.reviews} reviews</span><span>⛟ EU stock</span></div>
-        <p>${esc(p.sub)}. Category: ${catName(p.cat)}. Shipped discreetly from EU stock with tracked delivery.</p>
-        <small class="muted">Bulk options</small>
-        <div class="opts"><span class="opt on">1 unit</span><span class="opt">5 units · −5%</span><span class="opt">10 units · −10%</span></div>
+        <div class="meta"><span>⚗ Testado em lab.</span><span>★ ${p.reviews} avaliações</span><span>⛟ Stock UE</span></div>
+        <p>${esc(p.sub)}. Categoria: ${catName(p.cat)}. Enviado de forma discreta a partir de stock na UE, com entrega rastreada.</p>
+        <small class="muted">Opções de quantidade</small>
+        <div class="opts"><span class="opt on">1 unidade</span><span class="opt">5 unidades · −5%</span><span class="opt">10 unidades · −10%</span></div>
         <div class="buyrow">
           <div><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
           <div class="qty"><button data-dq="-1">−</button><span id="dQty">1</span><button data-dq="1">+</button></div>
         </div>
-        <button class="btn-orange" data-dadd="${p.id}">Add to cart</button>
-        <details class="acc" open><summary>Details</summary><div>${esc(p.name)} — ${esc(p.sub)}. Each batch is lab tested before dispatch.</div></details>
-        <details class="acc"><summary>Usage</summary><div>Read the instructions carefully. Do not exceed the recommended dose. Consult your doctor before use.</div></details>
-        <details class="acc"><summary>Shipping</summary><div>Discreet packaging, tracked shipping from EU stock.</div></details>
+        <button class="btn-orange" data-dadd="${p.id}">Adicionar ao carrinho</button>
+        <details class="acc" open><summary>Detalhes</summary><div>${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.</div></details>
+        <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
+        <details class="acc"><summary>Envio</summary><div>Embalagem discreta, envio rastreado a partir de stock na UE.</div></details>
       </div>`;
     $("#detail .opts").onclick = e => {
       const o = e.target.closest(".opt"); if (!o) return;
@@ -129,9 +154,9 @@
 
   // ---------- reviews + faq ----------
   const quotes = [
-    ["Fast EU delivery and the packaging was completely discreet. Will order again.", "Marco, Italy"],
-    ["Bulk discount made a real difference. Support answered within an hour.", "Lukas, Germany"],
-    ["Arrived in four days, exactly as described. Great experience.", "Sofia, Portugal"],
+    ["Entrega rápida na UE e a embalagem era totalmente discreta. Voltarei a encomendar.", "Marco, Itália"],
+    ["O desconto por quantidade fez mesmo diferença. O apoio respondeu em menos de uma hora.", "Lukas, Alemanha"],
+    ["Chegou em quatro dias, exatamente como descrito. Excelente experiência.", "Sofia, Portugal"],
   ];
   let qi = 1;
   const showQuote = () => { const [t, a] = quotes[qi]; $("#quote").innerHTML = `“${t}”<cite>— ${a}</cite>`; $(".big").innerHTML = `0${qi + 1}<sup>/0${quotes.length}</sup>`; };
@@ -146,5 +171,6 @@
     $("#navPills").classList.remove("open");
   });
 
-  renderChips(); renderGrid(); renderDetail(P[0].id); renderCart();
+  $("#prodCount").textContent = P.length;
+  renderChips(); renderGrid(); renderDetail(feat.id); renderCart();
 })();
