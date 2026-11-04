@@ -135,6 +135,15 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .ci .th .pimg { border-radius: 8px; }
 .acc div p { margin: 0 0 10px; } .acc div p:last-child { margin-bottom: 0; }
 
+/* ---------- stock ---------- */
+.stock { display: inline-block; align-self: flex-start; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 3px 9px; margin-top: 10px; }
+.stock.ok { background: #e8f5e9; color: #2e7d32; }
+.stock.low { background: #fff3e0; color: #b45309; }
+.stock.out { background: #f1f1f1; color: #666; }
+.detail .stock { margin: 0 0 10px; }
+.add:disabled, .btn-orange:disabled { background: #d6d2ce; color: #6b6b6b; cursor: not-allowed; }
+.qty button:disabled { opacity: .3; cursor: not-allowed; }
+
 /* ---------- pagination ---------- */
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
 .pg-info { color: var(--muted); font-size: 13px; }

@@ -91,6 +91,21 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .chk input { width: auto; }
 .pform .danger:disabled { display: none; }
 
+/* ---------- stock ---------- */
+.stock-summary { font-size: 12px; color: var(--muted); }
+.stock-summary b { color: #b45309; }
+.stk { font-weight: 600; } .stk.low { color: #b45309; } .stk.out { color: #c62828; } .stk.na { color: var(--muted); font-weight: 400; }
+.stock-box { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.stock-box legend { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 0 6px; }
+.stock-now { display: flex; align-items: baseline; gap: 10px; }
+.stock-now b { font-size: 26px; } .stock-now span:first-child { color: var(--muted); font-size: 12px; }
+.adjust { display: grid; grid-template-columns: 1.3fr .7fr; gap: 8px; }
+.adjust #adjNote { grid-column: 1 / -1; } .adjust .btn { grid-column: 1 / -1; }
+.moves summary { cursor: pointer; font-size: 13px; font-weight: 600; padding: 4px 0; }
+.mv { display: grid; grid-template-columns: 54px 1fr auto; gap: 8px; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.mv .d { font-weight: 700; text-align: right; } .mv .d.pos { color: #2e7d32; } .mv .d.neg { color: #c62828; }
+.mv small { color: var(--muted); display: block; } .mv .after { color: var(--muted); white-space: nowrap; }
+
 /* ---------- categories ---------- */
 .cat-layout { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; }
 .cat-layout .side { display: flex; flex-direction: column; gap: 16px; }

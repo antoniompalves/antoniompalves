@@ -65,6 +65,7 @@ function schema(string $driver, string $prefix): array
             "CREATE INDEX IF NOT EXISTS {$prefix}attempts_lookup ON {$prefix}attempts(kind, ip, at)",
             products_schema('sqlite', $prefix),
             categories_schema('sqlite', $prefix),
+            stock_schema('sqlite', $prefix),
         ];
     }
     $tail = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
@@ -84,7 +85,20 @@ function schema(string $driver, string $prefix): array
           ip VARCHAR(45) NOT NULL, at INT UNSIGNED NOT NULL, KEY lookup_idx (kind, ip, at)) $tail",
         products_schema('mysql', $prefix),
         categories_schema('mysql', $prefix),
+        stock_schema('mysql', $prefix),
     ];
+}
+
+function stock_schema(string $driver, string $prefix): string
+{
+    if ($driver === 'sqlite') {
+        return "CREATE TABLE IF NOT EXISTS {$prefix}stock_moves (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id TEXT NOT NULL, delta INTEGER NOT NULL,
+          stock_after INTEGER NULL, reason TEXT NOT NULL, note TEXT, order_number TEXT, at TEXT NOT NULL, by_who TEXT NOT NULL)";
+    }
+    return "CREATE TABLE IF NOT EXISTS {$prefix}stock_moves (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(64) NOT NULL,
+      delta INT NOT NULL, stock_after INT NULL, reason VARCHAR(40) NOT NULL, note VARCHAR(200) NULL, order_number VARCHAR(20) NULL,
+      at VARCHAR(32) NOT NULL, by_who VARCHAR(20) NOT NULL, KEY product_idx (product_id, id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 }
 
 function categories_schema(string $driver, string $prefix): string
@@ -102,13 +116,15 @@ function products_schema(string $driver, string $prefix): string
     if ($driver === 'sqlite') {
         return "CREATE TABLE IF NOT EXISTS {$prefix}products (id TEXT PRIMARY KEY, position INTEGER NOT NULL DEFAULT 0, name TEXT NOT NULL, sub TEXT,
           cat TEXT NOT NULL, price REAL NOT NULL, promo INTEGER NOT NULL DEFAULT 0, reviews INTEGER NOT NULL DEFAULT 0, best INTEGER NOT NULL DEFAULT 0,
-          fresh INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, description TEXT, image TEXT, updated_at TEXT)";
+          fresh INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, description TEXT, image TEXT, updated_at TEXT,
+          stock INTEGER NULL, low_stock INTEGER NOT NULL DEFAULT 5)";
     }
     return "CREATE TABLE IF NOT EXISTS {$prefix}products (
       id VARCHAR(64) NOT NULL PRIMARY KEY, position INT NOT NULL DEFAULT 0, name VARCHAR(120) NOT NULL, sub VARCHAR(160) NULL,
       cat VARCHAR(40) NOT NULL, price DECIMAL(10,2) NOT NULL, promo TINYINT UNSIGNED NOT NULL DEFAULT 0, reviews INT UNSIGNED NOT NULL DEFAULT 0,
       best TINYINT(1) NOT NULL DEFAULT 0, fresh TINYINT(1) NOT NULL DEFAULT 0, active TINYINT(1) NOT NULL DEFAULT 1,
-      description TEXT NULL, image VARCHAR(100) NULL, updated_at VARCHAR(32) NULL, KEY pos_idx (position)
+      description TEXT NULL, image VARCHAR(100) NULL, updated_at VARCHAR(32) NULL,
+      stock INT NULL, low_stock INT NOT NULL DEFAULT 5, KEY pos_idx (position)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 }
 
@@ -270,7 +286,14 @@ function ensure_products(): void
     static $ok = false;
     if ($ok) return;
     $pdo = db();
-    $pdo->exec(products_schema($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), config()['prefix'] ?? ''));
+    $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $pdo->exec(products_schema($driver, config()['prefix'] ?? ''));
+    $pdo->exec(stock_schema($driver, config()['prefix'] ?? ''));
+    // upgrade older installs: add the stock columns when missing
+    foreach (['stock' => 'INT NULL', 'low_stock' => 'INT NOT NULL DEFAULT 5'] as $col => $def) {
+        try { $pdo->query("SELECT $col FROM " . t('products') . ' LIMIT 1'); }
+        catch (PDOException $e) { $pdo->exec('ALTER TABLE ' . t('products') . " ADD COLUMN $col $def"); }
+    }
     if ((int) $pdo->query('SELECT COUNT(*) FROM ' . t('products'))->fetchColumn() === 0) {
         $ins = $pdo->prepare('INSERT INTO ' . t('products') . ' (id, position, name, sub, cat, price, promo, reviews, best, fresh, active, description, image, updated_at)
             VALUES (?,?,?,?,?,?,?,?,?,?,1,?,NULL,?)');
@@ -292,7 +315,99 @@ function row_to_product(array $r): array
         'best' => (bool) $r['best'], 'fresh' => (bool) $r['fresh'], 'active' => (bool) $r['active'],
         'description' => (string) $r['description'], 'imageUrl' => $r['image'] ? 'uploads/products/' . $r['image'] : null,
         'updatedAt' => $r['updated_at'],
+        'trackStock' => $r['stock'] !== null, 'stock' => $r['stock'] === null ? null : (int) $r['stock'], 'lowStock' => (int) $r['low_stock'],
     ];
+}
+
+// ---------- stock ----------
+// stock NULL = not tracked (unlimited). Every change is logged in stock_moves.
+function stock_log(string $productId, int $delta, ?int $after, string $reason, ?string $order, string $by, string $note = ''): void
+{
+    db()->prepare('INSERT INTO ' . t('stock_moves') . ' (product_id, delta, stock_after, reason, note, order_number, at, by_who) VALUES (?,?,?,?,?,?,?,?)')
+        ->execute([$productId, $delta, $after, $reason, mb_substr($note, 0, 200), $order, now_iso(), $by]);
+}
+
+// Applies a stock change inside the caller's transaction. Refuses to go below zero.
+function stock_apply(string $productId, int $delta, string $reason, ?string $order, string $by, string $note = ''): void
+{
+    if ($delta === 0) return;
+    $pdo = db();
+    $st = $pdo->prepare('SELECT name, stock FROM ' . t('products') . ' WHERE id = ?');
+    $st->execute([$productId]);
+    $p = $st->fetch();
+    if (!$p || $p['stock'] === null) return; // untracked product
+    $up = $pdo->prepare('UPDATE ' . t('products') . ' SET stock = stock + ? WHERE id = ? AND stock IS NOT NULL AND stock + ? >= 0');
+    $up->execute([$delta, $productId, $delta]);
+    if ($up->rowCount() === 0) {
+        $st->execute([$productId]);
+        $avail = (int) $st->fetch()['stock'];
+        throw new HttpError(409, "Stock insuficiente: {$p['name']} (disponíveis: $avail)");
+    }
+    $st->execute([$productId]);
+    stock_log($productId, $delta, (int) $st->fetch()['stock'], $reason, $order, $by, $note);
+}
+
+function stock_adjust(string $id, array $in): array
+{
+    $r = find_product($id);
+    if ($r['stock'] === null) throw new HttpError(400, 'Ative primeiro o controlo de stock deste produto');
+    $mode = $in['mode'] ?? '';
+    $qty = $in['qty'] ?? null;
+    if (!is_numeric($qty) || (int) $qty < 0 || (int) $qty > 1000000 || (int) $qty != $qty) throw new HttpError(400, 'Quantidade inválida');
+    $qty = (int) $qty;
+    $note = str_in($in['note'] ?? '', 200);
+    $cur = (int) $r['stock'];
+    [$delta, $reason] = match ($mode) {
+        'in' => [$qty, 'entrada'],
+        'out' => [-$qty, 'saída'],
+        'set' => [$qty - $cur, 'acerto'],
+        default => throw new HttpError(400, 'Tipo de movimento inválido'),
+    };
+    if ($mode !== 'set' && $qty === 0) throw new HttpError(400, 'Indique uma quantidade maior que zero');
+    if ($delta !== 0) {
+        $pdo = db(); $pdo->beginTransaction();
+        try { stock_apply($id, $delta, $reason, null, 'admin', $note); $pdo->commit(); }
+        catch (Throwable $e) { $pdo->rollBack(); throw $e; }
+    }
+    return row_to_product(find_product($id));
+}
+
+function stock_history(string $id): array
+{
+    find_product($id);
+    $st = db()->prepare('SELECT delta, stock_after, reason, note, order_number, at, by_who FROM ' . t('stock_moves') . ' WHERE product_id = ? ORDER BY id DESC LIMIT 100');
+    $st->execute([$id]);
+    return array_map(fn ($m) => ['delta' => (int) $m['delta'], 'after' => $m['stock_after'] === null ? null : (int) $m['stock_after'],
+        'reason' => $m['reason'], 'note' => (string) $m['note'], 'order' => $m['order_number'], 'at' => $m['at'], 'by' => $m['by_who']], $st->fetchAll());
+}
+
+// Turns stock tracking on/off and sets the low-stock threshold (used by create/update).
+function stock_settings(string $id, array $in, bool $creating): void
+{
+    if (array_key_exists('lowStock', $in)) {
+        $v = $in['lowStock'];
+        if (!is_numeric($v) || (int) $v < 0 || (int) $v > 100000) throw new HttpError(400, 'Alerta de stock inválido');
+        db()->prepare('UPDATE ' . t('products') . ' SET low_stock = ? WHERE id = ?')->execute([(int) $v, $id]);
+    }
+    if (!array_key_exists('trackStock', $in)) return;
+    $r = find_product($id);
+    $on = !empty($in['trackStock']);
+    if ($on && $r['stock'] === null) {
+        $init = $in['initialStock'] ?? 0;
+        if ($init === '' || $init === null) $init = 0;
+        if (!is_numeric($init) || (int) $init < 0 || (int) $init > 1000000) throw new HttpError(400, 'Stock inicial inválido');
+        db()->prepare('UPDATE ' . t('products') . ' SET stock = ? WHERE id = ?')->execute([(int) $init, $id]);
+        stock_log($id, (int) $init, (int) $init, 'stock inicial', null, 'admin', $creating ? 'Produto criado' : 'Controlo de stock ativado');
+    } elseif (!$on && $r['stock'] !== null) {
+        db()->prepare('UPDATE ' . t('products') . ' SET stock = NULL WHERE id = ?')->execute([$id]);
+        stock_log($id, 0, null, 'controlo desativado', null, 'admin', 'Stock deixou de ser controlado');
+    }
+}
+
+// Returns (+1) or takes (−1) the units of an order, inside the caller's transaction.
+function stock_for_order(array $o, int $sign, string $reason, string $by): void
+{
+    foreach ($o['items'] as $it) stock_apply($it['id'], $sign * (int) $it['qty'], $reason, $o['number'] ?? null, $by);
 }
 
 function products_list(bool $includeInactive = false): array
@@ -377,6 +492,7 @@ function product_create(array $in): array
     $f['id'] = $id; $f['updated_at'] = now_iso();
     $cols = array_keys($f);
     db()->prepare('INSERT INTO ' . t('products') . ' (' . implode(',', $cols) . ') VALUES (' . implode(',', array_fill(0, count($cols), '?')) . ')')->execute(array_values($f));
+    stock_settings($id, $in, true);
     return row_to_product(find_product($id));
 }
 
@@ -384,6 +500,7 @@ function product_update(string $id, array $in): array
 {
     find_product($id);
     $f = product_fields($in, false);
+    stock_settings($id, $in, false);
     if (!$f) return row_to_product(find_product($id));
     $f['updated_at'] = now_iso();
     $set = implode(', ', array_map(fn ($k) => "$k = ?", array_keys($f)));
@@ -487,8 +604,49 @@ function insert_order(array $o): array
     $seq = (int) $pdo->lastInsertId();
     $o['number'] = 'FL-' . (1000 + $seq);
     $pdo->prepare('UPDATE ' . t('orders') . ' SET number = ? WHERE seq = ?')->execute([$o['number'], $seq]);
+    try { stock_for_order($o, -1, 'encomenda', $o['source']); }
+    catch (Throwable $e) { $pdo->rollBack(); throw $e; }
     $pdo->commit();
     return $o;
+}
+
+// Status/note update. Cancelling returns the units to stock; un-cancelling takes them again.
+function order_update(string $id, array $b): array
+{
+    ensure_products(); // runs schema upgrades outside the transaction
+    $o = row_to_order(find_order($id));
+    $now = now_iso();
+    $pdo = db(); $pdo->beginTransaction();
+    try {
+        if (array_key_exists('status', $b)) {
+            if (!in_array($b['status'], STATUSES, true)) throw new HttpError(400, 'Estado inválido');
+            if ($b['status'] !== $o['status']) {
+                if ($b['status'] === 'cancelled') stock_for_order($o, +1, 'cancelamento', 'admin');
+                elseif ($o['status'] === 'cancelled') stock_for_order($o, -1, 'reativação', 'admin');
+                $o['status'] = $b['status'];
+                $o['history'][] = ['at' => $now, 'status' => $b['status'], 'by' => 'admin'];
+            }
+        }
+        if (array_key_exists('internalNote', $b)) $o['internalNote'] = str_in($b['internalNote'], 2000);
+        $o['updatedAt'] = $now;
+        $pdo->prepare('UPDATE ' . t('orders') . ' SET status = ?, internal_note = ?, history = ?, updated_at = ? WHERE id = ?')
+            ->execute([$o['status'], $o['internalNote'], json_encode($o['history'], JSON_UNESCAPED_UNICODE), $now, $o['id']]);
+        $pdo->commit();
+    } catch (Throwable $e) { $pdo->rollBack(); throw $e; }
+    return $o;
+}
+
+// Deleting an order that was not cancelled returns its units to stock.
+function order_delete(string $id): void
+{
+    ensure_products();
+    $o = row_to_order(find_order($id));
+    $pdo = db(); $pdo->beginTransaction();
+    try {
+        if ($o['status'] !== 'cancelled') stock_for_order($o, +1, 'encomenda eliminada', 'admin');
+        $pdo->prepare('DELETE FROM ' . t('orders') . ' WHERE id = ?')->execute([$id]);
+        $pdo->commit();
+    } catch (Throwable $e) { $pdo->rollBack(); throw $e; }
 }
 
 function row_to_order(array $r): array

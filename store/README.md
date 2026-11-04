@@ -22,6 +22,9 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 - **Registar encomenda:** pedidos recebidos por telefone/email
 - **Produtos:** editar preço, promoção, descrição, imagem, ordem, categoria e estado; criar e eliminar
 - **Categorias:** criar, renomear, ordenar, ocultar (esconde os produtos) e eliminar movendo os produtos
+- **Stock:** controlo opcional por produto; as encomendas retiram stock de forma atómica (sem vendas acima do
+  disponível, mesmo com pedidos simultâneos), cancelar devolve; entradas/saídas/acertos com nota; histórico de
+  movimentos (`stock_moves`); alertas de stock baixo; "Últimas N unidades"/"Esgotado" na loja
 - **Marca:** nome da loja, logótipo, favicon, cor principal (com aviso de contraste), email de apoio,
   pré-visualização ao vivo, alteração da palavra-passe
 

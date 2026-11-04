@@ -51,6 +51,7 @@
     document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("on", x === b));
     ["orders", "new", "products", "categories", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
     if (b.dataset.view === "brand") fillBrandForm();
+    if (b.dataset.view === "products" || b.dataset.view === "new") loadProducts(); // stock changes with every order
   });
 
   // ---------- orders list ----------
@@ -122,14 +123,15 @@
     $("#saveNote").onclick = () => patch(o.id, { internalNote: $("#internalNote").value }, "Nota guardada");
     $("#delOrder").onclick = async () => {
       if (!confirm(`Eliminar ${o.number}? Esta ação não pode ser anulada.`)) return;
-      try { await api("api/orders/" + o.id + "/delete", { method: "POST" }); orders = orders.filter(x => x.id !== o.id); selected = null; render(); toast("Encomenda eliminada"); } catch (e) { toast(e.message); }
+      try { await api("api/orders/" + o.id + "/delete", { method: "POST" }); orders = orders.filter(x => x.id !== o.id); selected = null; render(); toast("Encomenda eliminada"); loadProducts(); } catch (e) { toast(e.message); }
     };
   }
   async function patch(id, body, msg) {
     try {
       const upd = await api("api/orders/" + id + "/update", { method: "POST", body: JSON.stringify(body) });
       orders = orders.map(o => o.id === id ? upd : o); render(); toast(msg);
-    } catch (e) { toast(e.message); }
+      if ("status" in body) loadProducts(); // cancelling/reactivating moves stock
+    } catch (e) { toast(e.message); render(); }
   }
 
   $("#exportCsv").onclick = async () => {
@@ -144,7 +146,7 @@
   const lines = {};
   function renderProdSel() {
     $("#prodSel").innerHTML = CATEGORIES.map(c => `<optgroup label="${esc(c.name)}">${PRODUCTS.filter(p => p.cat === c.id && p.active !== false)
-      .map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.sub)} (${eur(unitPrice(p))})</option>`).join("")}</optgroup>`).join("");
+      .map(p => `<option value="${p.id}" ${p.trackStock && p.stock <= 0 ? "disabled" : ""}>${esc(p.name)} — ${esc(p.sub)} (${eur(unitPrice(p))})${p.trackStock ? ` · stock ${p.stock}` : ""}</option>`).join("")}</optgroup>`).join("");
   }
   renderProdSel();
   $("#addLine").onclick = () => {
@@ -171,7 +173,7 @@
       Object.keys(lines).forEach(k => delete lines[k]); e.target.reset(); renderLines();
       orders.unshift(o); selected = o.id; render();
       document.querySelector('[data-view="orders"]').click();
-      toast(`${o.number} registada`);
+      toast(`${o.number} registada`); loadProducts();
     } catch (err) { $("#newErr").textContent = err.message; }
   };
   renderLines();
@@ -198,7 +200,11 @@
   const thumb = p => p.imageUrl ? `<img src="${esc(window.Brand.url(p.imageUrl))}" alt="">` : "<i></i>";
   function renderProducts() {
     const q = $("#pq").value.toLowerCase(), cat = $("#pcat").value, st = $("#pstate").value;
-    const list = PRODUCTS.filter(p => (!cat || p.cat === cat) && (!st || (st === "on") === p.active) &&
+    const isLow = p => p.trackStock && p.stock > 0 && p.stock <= p.lowStock, isOut = p => p.trackStock && p.stock <= 0;
+    const stOk = p => !st || (st === "on" && p.active) || (st === "off" && !p.active) || (st === "low" && isLow(p)) || (st === "out" && isOut(p));
+    const nLow = PRODUCTS.filter(isLow).length, nOut = PRODUCTS.filter(isOut).length;
+    $("#stockSummary").innerHTML = nLow || nOut ? `<b>${nOut}</b> esgotado(s) · <b>${nLow}</b> com stock baixo` : "";
+    const list = PRODUCTS.filter(p => (!cat || p.cat === cat) && stOk(p) &&
       (!q || (p.name + " " + p.sub + " " + p.id).toLowerCase().includes(q)));
     $("#pempty").hidden = !!list.length;
     $("#prows").innerHTML = list.map(p => `
@@ -208,6 +214,7 @@
         <td>${esc(catLabel(p.cat))}</td>
         <td class="r"><b>${eur(unitPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</td>
         <td class="r">${p.promo ? "−" + p.promo + "%" : "—"}</td>
+        <td class="r">${p.trackStock ? `<span class="stk ${isOut(p) ? "out" : isLow(p) ? "low" : ""}">${p.stock}</span>` : '<span class="stk na">∞</span>'}</td>
         <td><span class="badge ${p.active ? "s-delivered" : "s-cancelled"}">${p.active ? "Ativo" : "Inativo"}</span>${p.best ? ' <span class="src">top</span>' : ""}${p.fresh ? ' <span class="src">novo</span>' : ""}</td>
       </tr>`).join("");
   }
@@ -227,6 +234,15 @@
     $("#pimgFile").parentElement.style.opacity = canUpload ? "" : ".5";
     $("#pimgHint").textContent = canUpload ? "PNG, JPG, WebP ou GIF, até 3 MB. Ideal: quadrada ou 4:3, ≥ 800 px." : "Guarde o produto primeiro para poder carregar a imagem.";
   }
+  // re-reads one product so stock shown in the editor is never stale (orders change it in the background)
+  async function refreshOpenProduct() {
+    if (!pSel || pCreating) return;
+    try {
+      const list = await api("api/products/all"), fresh = list.find(x => x.id === pSel);
+      PRODUCTS = list; renderProducts(); renderProdSel();
+      if (fresh && fresh.trackStock && pf.trackStock.checked) renderStock(fresh, true);
+    } catch {}
+  }
   function openProduct(id) {
     const p = PRODUCTS.find(x => x.id === id); if (!p) return;
     pSel = id; pCreating = false; renderProducts();
@@ -235,12 +251,16 @@
     pf.price.value = String(p.price).replace(".", ","); pf.promo.value = p.promo || ""; pf.description.value = p.description || "";
     pf.reviews.value = p.reviews; pf.position.value = p.position;
     pf.active.checked = p.active; pf.best.checked = p.best; pf.fresh.checked = p.fresh;
+    pf.trackStock.checked = p.trackStock; pf.lowStock.value = p.lowStock; pf.initialStock.value = 0;
+    renderStock(p);
     $("#pdelete").disabled = false; $("#pformErr").textContent = "";
     updateFinal(); renderPImage(p); showForm(true);
+    refreshOpenProduct();
   }
   $("#newProduct").onclick = () => {
     pSel = null; pCreating = true; renderProducts(); pf.reset();
     pf.active.checked = true; pf.cat.value = $("#pcat").value || (CATEGORIES[0] || {}).id || "";
+    pf.trackStock.checked = false; pf.lowStock.value = 5; pf.initialStock.value = 0; renderStock(null);
     $("#pformTitle").textContent = "Novo produto"; $("#pdelete").disabled = true; $("#pformErr").textContent = "";
     updateFinal(); renderPImage(null); showForm(true); pf.name.focus();
   };
@@ -250,6 +270,9 @@
     const body = { name: pf.name.value, sub: pf.sub.value, cat: pf.cat.value, price: pf.price.value, promo: pf.promo.value || 0,
       description: pf.description.value, reviews: pf.reviews.value || 0, active: pf.active.checked, best: pf.best.checked, fresh: pf.fresh.checked };
     if (pf.position.value !== "") body.position = pf.position.value;
+    body.trackStock = pf.trackStock.checked; body.lowStock = pf.lowStock.value || 0;
+    const cur = PRODUCTS.find(x => x.id === pSel);
+    if (pf.trackStock.checked && (pCreating || !cur || !cur.trackStock)) body.initialStock = pf.initialStock.value || 0;
     try {
       const p = pCreating ? await api("api/products", { method: "POST", body: JSON.stringify(body) })
                           : await api("api/products/" + pSel + "/update", { method: "POST", body: JSON.stringify(body) });
@@ -282,6 +305,44 @@
     try {
       await api("api/products/" + p.id + "/delete", { method: "POST" });
       PRODUCTS = PRODUCTS.filter(x => x.id !== p.id); pSel = null; showForm(false); renderProducts(); renderProdSel(); toast("Produto eliminado");
+    } catch (err) { toast(err.message); }
+  };
+
+  // ---------- stock ----------
+  const REASON = { "encomenda": "Encomenda", "cancelamento": "Cancelamento", "reativação": "Encomenda reativada", "encomenda eliminada": "Encomenda eliminada",
+    "entrada": "Entrada", "saída": "Saída", "acerto": "Acerto", "stock inicial": "Stock inicial", "controlo desativado": "Controlo desativado" };
+  function renderStock(p, keepMoves = false) {
+    const on = pf.trackStock.checked, tracked = !!(p && p.trackStock);
+    $("#stockOn").hidden = !on; $("#stockOffHint").hidden = on;
+    $("#initWrap").hidden = tracked;             // initial stock only when turning tracking on
+    $("#stockLive").hidden = !tracked || !on;    // adjustments need tracking already saved
+    if (tracked) {
+      $("#stockNow").textContent = p.stock;
+      $("#stockState").innerHTML = p.stock <= 0 ? '<span class="badge s-cancelled">Esgotado</span>' : p.stock <= p.lowStock ? '<span class="badge s-pending">Stock baixo</span>' : '<span class="badge s-delivered">OK</span>';
+      if (!keepMoves) { $("#movesBox").open = false; $("#moves").innerHTML = ""; }
+    }
+  }
+  pf.trackStock.onchange = () => renderStock(PRODUCTS.find(x => x.id === pSel) || null);
+  $("#movesBox").addEventListener("toggle", async () => {
+    if (!$("#movesBox").open || !pSel) return;
+    refreshOpenProduct();
+    $("#moves").innerHTML = '<p class="hint">A carregar…</p>';
+    try {
+      const list = await api("api/products/" + pSel + "/stock");
+      $("#moves").innerHTML = list.length ? list.map(m => `<div class="mv">
+          <span class="d ${m.delta > 0 ? "pos" : m.delta < 0 ? "neg" : ""}">${m.delta > 0 ? "+" : ""}${m.delta}</span>
+          <span>${esc(REASON[m.reason] || m.reason)}${m.order ? " · " + esc(m.order) : ""}<small>${fmtDate(m.at)}${m.note ? " — " + esc(m.note) : ""}</small></span>
+          <span class="after">${m.after === null ? "—" : "→ " + m.after}</span></div>`).join("") : '<p class="hint">Sem movimentos.</p>';
+    } catch (err) { $("#moves").innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+  });
+  $("#adjApply").onclick = async () => {
+    const qty = $("#adjQty").value;
+    if (qty === "") { toast("Indique a quantidade"); return; }
+    try {
+      const p = await api("api/products/" + pSel + "/stock", { method: "POST", body: JSON.stringify({ mode: $("#adjMode").value, qty, note: $("#adjNote").value }) });
+      PRODUCTS[PRODUCTS.findIndex(x => x.id === p.id)] = p;
+      $("#adjQty").value = ""; $("#adjNote").value = "";
+      renderStock(p); renderProducts(); renderProdSel(); toast(`Stock atualizado: ${p.stock}`);
     } catch (err) { toast(err.message); }
   };
 

@@ -95,13 +95,14 @@
         <div class="toolbar">
           <input type="search" id="pq" placeholder="Pesquisar produtos…">
           <select id="pcat" class="sel-sm"><option value="">Todas as categorias</option></select>
-          <select id="pstate" class="sel-sm"><option value="">Todos</option><option value="on">Ativos</option><option value="off">Inativos</option></select>
+          <select id="pstate" class="sel-sm"><option value="">Todos</option><option value="on">Ativos</option><option value="off">Inativos</option><option value="low">Stock baixo</option><option value="out">Esgotados</option></select>
+          <span class="stock-summary" id="stockSummary"></span>
           <button class="btn sm" id="newProduct">+ Novo produto</button>
         </div>
         <div class="layout" id="plLayout">
           <div class="table-wrap">
             <table class="ptable">
-              <thead><tr><th></th><th>Produto</th><th>Categoria</th><th class="r">Preço</th><th class="r">Promo</th><th>Estado</th></tr></thead>
+              <thead><tr><th></th><th>Produto</th><th>Categoria</th><th class="r">Preço</th><th class="r">Promo</th><th class="r">Stock</th><th>Estado</th></tr></thead>
               <tbody id="prows"></tbody>
             </table>
             <p class="empty" id="pempty" hidden>Nenhum produto encontrado.</p>
@@ -129,6 +130,27 @@
               <label>Avaliações<input name="reviews" type="number" min="0" step="1"></label>
               <label>Ordem<input name="position" type="number" step="1"></label>
             </div>
+            <fieldset class="stock-box">
+              <legend>Stock</legend>
+              <label class="chk"><input type="checkbox" name="trackStock" id="trackStock"> Controlar stock deste produto</label>
+              <p class="hint" id="stockOffHint">Sem controlo: o produto pode ser sempre encomendado.</p>
+              <div id="stockOn">
+                <div class="grid2">
+                  <label id="initWrap">Stock inicial<input name="initialStock" type="number" min="0" step="1" value="0"></label>
+                  <label>Alerta de stock baixo<input name="lowStock" type="number" min="0" step="1" value="5"></label>
+                </div>
+                <div id="stockLive">
+                  <div class="stock-now"><span>Em stock</span><b id="stockNow">0</b><span id="stockState"></span></div>
+                  <div class="adjust">
+                    <select id="adjMode"><option value="in">+ Entrada</option><option value="out">− Saída</option><option value="set">= Acertar para</option></select>
+                    <input type="number" id="adjQty" min="0" step="1" placeholder="Qtd.">
+                    <input id="adjNote" maxlength="200" placeholder="Nota (ex.: fatura 123)">
+                    <button type="button" class="btn sm" id="adjApply">Aplicar</button>
+                  </div>
+                  <details class="moves" id="movesBox"><summary>Histórico de movimentos</summary><div id="moves"></div></details>
+                </div>
+              </div>
+            </fieldset>
             <div class="checks">
               <label class="chk"><input type="checkbox" name="active"> Ativo (visível na loja)</label>
               <label class="chk"><input type="checkbox" name="best"> Mais vendido</label>

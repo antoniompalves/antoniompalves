@@ -18,12 +18,27 @@
   const save = () => { try { localStorage.setItem("forge-cart", JSON.stringify(cart)); } catch {} };
   const bulk = window.bulkRate;
 
+  // stock: null = not tracked (unlimited)
+  const maxQty = p => (p && p.stock !== null && p.stock !== undefined ? p.stock : 999);
+  const soldOut = p => maxQty(p) <= 0;
+  const stockBadge = p => {
+    if (!p || p.stock === null || p.stock === undefined) return "";
+    if (p.stock <= 0) return `<span class="stock out">Esgotado</span>`;
+    if (p.stock <= (p.lowStock ?? 5)) return `<span class="stock low">Últimas ${p.stock} unidade${p.stock === 1 ? "" : "s"}</span>`;
+    return `<span class="stock ok">Em stock</span>`;
+  };
   function addToCart(id, qty = 1) {
-    cart[id] = (cart[id] || 0) + qty;
-    save(); renderCart(); toast("Adicionado! Precisa de mais?");
+    const p = P.find(x => x.id === id), max = maxQty(p), have = cart[id] || 0;
+    if (have >= max) return toast(max <= 0 ? "Produto esgotado" : `Só há ${max} unidade${max === 1 ? "" : "s"} em stock`);
+    const add = Math.min(qty, max - have);
+    cart[id] = have + add;
+    save(); renderCart();
+    toast(add < qty ? `Adicionadas ${add} — limite de stock atingido` : "Adicionado! Precisa de mais?");
   }
   function renderCart() {
-    const ids = Object.keys(cart).filter(id => cart[id] > 0 && P.find(p => p.id === id));
+    // drop unknown products and clamp quantities to what is in stock
+    Object.keys(cart).forEach(id => { const p = P.find(x => x.id === id); if (!p || soldOut(p)) delete cart[id]; else if (cart[id] > maxQty(p)) cart[id] = maxQty(p); });
+    const ids = Object.keys(cart).filter(id => cart[id] > 0);
     let total = 0, disc = 0, count = 0;
     $("#cartItems").innerHTML = ids.length ? ids.map(id => {
       const p = P.find(x => x.id === id), q = cart[id];
@@ -31,7 +46,7 @@
       total += line - d; disc += d; count += q;
       return `<div class="ci"><div class="th">${art(p, "")}</div>
         <div class="info"><b>${esc(p.name)}</b><small>${eur(finalPrice(p))} cada${bulk(q) ? ` · −${bulk(q) * 100}% por quantidade` : ""}</small></div>
-        <div class="qty"><button data-q="-1" data-id="${id}">−</button><span>${q}</span><button data-q="1" data-id="${id}">+</button></div></div>`;
+        <div class="qty"><button data-q="-1" data-id="${id}">−</button><span>${q}</span><button data-q="1" data-id="${id}" ${q >= maxQty(p) ? "disabled" : ""}>+</button></div></div>`;
     }).join("") : `<p class="muted" style="text-align:center;padding:40px 0">O seu carrinho está vazio.</p>`;
     $("#cartTotal").textContent = eur(total);
     $("#cartDisc").textContent = "−" + eur(disc);
@@ -39,7 +54,8 @@
   }
   $("#cartItems").addEventListener("click", e => {
     const b = e.target.closest("[data-q]"); if (!b) return;
-    cart[b.dataset.id] = Math.max(0, (cart[b.dataset.id] || 0) + +b.dataset.q);
+    const pp = P.find(x => x.id === b.dataset.id);
+    cart[b.dataset.id] = Math.min(maxQty(pp), Math.max(0, (cart[b.dataset.id] || 0) + +b.dataset.q));
     if (!cart[b.dataset.id]) delete cart[b.dataset.id];
     save(); renderCart();
   });
@@ -61,6 +77,7 @@
       const r = await fetch(window.Brand.url("api/orders"), { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customer: f, notes: f.notes, items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
       const d = await r.json().catch(() => ({}));
+      if (r.status === 409) refreshProducts();
       if (!r.ok) throw new Error(d.error || "Não foi possível enviar a pré-encomenda");
       cart = {}; save(); renderCart(); form.reset();
       done.innerHTML = `<div class="tick">✓</div><h3>Pré-encomenda recebida</h3><p>A sua referência é <b>${esc(d.number)}</b>.</p>
@@ -84,7 +101,8 @@
         <span class="name">${esc(p.name)}</span><span class="sub">${esc(p.sub)}</span>
         <div class="pr"><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
         <div class="meta"><span>⚗ Testado em lab.</span><span>★ ${p.reviews} avaliações</span><span>⛟ Stock UE</span></div>
-        <button class="add" data-add="${p.id}">Adicionar ao carrinho</button>
+        ${stockBadge(p)}
+        <button class="add" data-add="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
       </div>
     </article>`;
 
@@ -163,7 +181,8 @@
           <div><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
           <div class="qty"><button data-dq="-1">−</button><span id="dQty">1</span><button data-dq="1">+</button></div>
         </div>
-        <button class="btn-orange" data-dadd="${p.id}">Adicionar ao carrinho</button>
+        ${stockBadge(p)}
+        <button class="btn-orange" data-dadd="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
         <details class="acc" open><summary>Detalhes</summary><div>${p.description ? paras(p.description) : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
         <details class="acc"><summary>Envio</summary><div>Embalagem discreta, envio rastreado a partir de stock na UE.</div></details>
@@ -180,7 +199,7 @@
     const op = e.target.closest("[data-open]");
     if (op) { renderDetail(op.dataset.open); $("#detail").scrollIntoView({ behavior: "smooth" }); return; }
     const dq = e.target.closest("[data-dq]");
-    if (dq) { dQty = Math.max(1, dQty + +dq.dataset.dq); $("#dQty").textContent = dQty; return; }
+    if (dq) { const dp = P.find(x => x.id === $("[data-dadd]").dataset.dadd); dQty = Math.min(Math.max(1, maxQty(dp)), Math.max(1, dQty + +dq.dataset.dq)); $("#dQty").textContent = dQty; return; }
     const da = e.target.closest("[data-dadd]"); if (da) addToCart(da.dataset.dadd, dQty);
   });
 
@@ -222,7 +241,7 @@
 
   // products and categories edited in the backoffice come from the API;
   // products.js is only the fallback when the page is opened without the server.
-  (async () => {
+  async function refreshProducts() {
     try {
       const [rc, r] = await Promise.all([fetch(window.Brand.url("api/categories"), { cache: "no-store" }), fetch(window.Brand.url("api/products"), { cache: "no-store" })]);
       if (!r.ok || !rc.ok) return;
@@ -235,7 +254,8 @@
       $("#prodCount").textContent = P.length;
       renderFeatured(); renderChips(); renderGrid(); if (feat) renderDetail(feat.id); renderCart();
     } catch {}
-  })();
+  }
+  refreshProducts();
   // re-render product art once the configured brand is known
   document.addEventListener("brand:applied", () => document.querySelectorAll(".vial[data-label]").forEach(v => { if (v.dataset.label) v.dataset.label = brandLabel(); }));
   window.Brand.load();

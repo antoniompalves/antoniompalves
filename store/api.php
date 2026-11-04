@@ -64,21 +64,8 @@ try {
     }
 
     if (preg_match('~^orders/([0-9a-f-]{36})/(update|delete)$~', $route, $m) && $method === 'POST') {
-        $row = find_order($m[1]);
-        if ($m[2] === 'delete') {
-            db()->prepare('DELETE FROM ' . t('orders') . ' WHERE id = ?')->execute([$m[1]]);
-            json_out(200, ['ok' => true]);
-        }
-        $b = body_json(); $o = row_to_order($row); $now = now_iso();
-        if (array_key_exists('status', $b)) {
-            if (!in_array($b['status'], STATUSES, true)) throw new HttpError(400, 'Estado inválido');
-            if ($b['status'] !== $o['status']) { $o['status'] = $b['status']; $o['history'][] = ['at' => $now, 'status' => $b['status'], 'by' => 'admin']; }
-        }
-        if (array_key_exists('internalNote', $b)) $o['internalNote'] = str_in($b['internalNote'], 2000);
-        $o['updatedAt'] = $now;
-        db()->prepare('UPDATE ' . t('orders') . ' SET status = ?, internal_note = ?, history = ?, updated_at = ? WHERE id = ?')
-            ->execute([$o['status'], $o['internalNote'], json_encode($o['history'], JSON_UNESCAPED_UNICODE), $now, $o['id']]);
-        json_out(200, $o);
+        if ($m[2] === 'delete') { order_delete($m[1]); json_out(200, ['ok' => true]); }
+        json_out(200, order_update($m[1], body_json()));
     }
 
     // ----- categories -----
@@ -98,8 +85,10 @@ try {
     // ----- products -----
     if ($route === 'products/all' && $method === 'GET') json_out(200, products_list(true));
     if ($route === 'products' && $method === 'POST') json_out(201, product_create(body_json()));
-    if (preg_match('~^products/([a-z0-9-]{1,64})/(update|delete|image|image/delete)$~', $route, $m) && $method === 'POST') {
+    if (preg_match('~^products/([a-z0-9-]{1,64})/stock$~', $route, $m) && $method === 'GET') json_out(200, stock_history($m[1]));
+    if (preg_match('~^products/([a-z0-9-]{1,64})/(update|delete|image|image/delete|stock)$~', $route, $m) && $method === 'POST') {
         switch ($m[2]) {
+            case 'stock': json_out(200, stock_adjust($m[1], body_json()));
             case 'update': json_out(200, product_update($m[1], body_json()));
             case 'delete': product_delete($m[1]); json_out(200, ['ok' => true]);
             case 'image': json_out(200, product_image_upload($m[1], $_FILES['file'] ?? null));
