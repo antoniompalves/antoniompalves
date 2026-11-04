@@ -198,15 +198,24 @@
     } catch (e) { toast(e.message); }
   }
   const thumb = p => p.imageUrl ? `<img src="${esc(window.Brand.url(p.imageUrl))}" alt="">` : "<i></i>";
-  function renderProducts() {
+  const isLow = p => p.trackStock && p.stock > 0 && p.stock <= p.lowStock, isOut = p => p.trackStock && p.stock <= 0;
+  function filteredProducts() {
     const q = $("#pq").value.toLowerCase(), cat = $("#pcat").value, st = $("#pstate").value;
-    const isLow = p => p.trackStock && p.stock > 0 && p.stock <= p.lowStock, isOut = p => p.trackStock && p.stock <= 0;
     const stOk = p => !st || (st === "on" && p.active) || (st === "off" && !p.active) || (st === "low" && isLow(p)) || (st === "out" && isOut(p));
+    return PRODUCTS.filter(p => (!cat || p.cat === cat) && stOk(p) && (!q || (p.name + " " + p.sub + " " + p.id).toLowerCase().includes(q)));
+  }
+  // pagination (page size remembered per browser)
+  let pPage = 1, pPer = 20;
+  try { pPer = [20, 50, 100].includes(+localStorage.getItem("admin-pper")) ? +localStorage.getItem("admin-pper") : 20; } catch {}
+  function renderProducts() {
     const nLow = PRODUCTS.filter(isLow).length, nOut = PRODUCTS.filter(isOut).length;
     $("#stockSummary").innerHTML = nLow || nOut ? `<b>${nOut}</b> esgotado(s) · <b>${nLow}</b> com stock baixo` : "";
-    const list = PRODUCTS.filter(p => (!cat || p.cat === cat) && stOk(p) &&
-      (!q || (p.name + " " + p.sub + " " + p.id).toLowerCase().includes(q)));
-    $("#pempty").hidden = !!list.length;
+    const all = filteredProducts();
+    const pages = Math.max(1, Math.ceil(all.length / pPer));
+    pPage = Math.min(Math.max(1, pPage), pages);
+    const start = (pPage - 1) * pPer, list = all.slice(start, start + pPer);
+    $("#pempty").hidden = !!all.length;
+    renderPPager(all.length, pages, start, list.length);
     $("#prows").innerHTML = list.map(p => `
       <tr data-pid="${p.id}" class="${p.active ? "" : "off"} ${pSel === p.id ? "sel" : ""}">
         <td><div class="thumb">${thumb(p)}</div></td>
@@ -218,7 +227,37 @@
         <td><span class="badge ${p.active ? "s-delivered" : "s-cancelled"}">${p.active ? "Ativo" : "Inativo"}</span>${p.best ? ' <span class="src">top</span>' : ""}${p.fresh ? ' <span class="src">novo</span>' : ""}</td>
       </tr>`).join("");
   }
-  ["pq", "pcat", "pstate"].forEach(id => $("#" + id).addEventListener("input", renderProducts));
+  function renderPPager(total, pages, start, n) {
+    const el = $("#ppager");
+    if (!total) { el.innerHTML = ""; return; }
+    const nums = [];
+    for (let i = 1; i <= pages; i++) if (i === 1 || i === pages || Math.abs(i - pPage) <= 1) nums.push(i); else if (nums[nums.length - 1] !== "…") nums.push("…");
+    el.innerHTML = `<span class="pg-info">${start + 1}–${start + n} de ${total} produto${total === 1 ? "" : "s"}</span>
+      <label class="pg-per">Por página <select id="pper">${[20, 50, 100].map(v => `<option ${v === pPer ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+      ${pages > 1 ? `<div class="pg-btns">
+        <button type="button" data-ppg="${pPage - 1}" ${pPage === 1 ? "disabled" : ""} aria-label="Página anterior">‹</button>
+        ${nums.map(x => x === "…" ? '<span class="pg-gap">…</span>' : `<button type="button" data-ppg="${x}" class="${x === pPage ? "on" : ""}" ${x === pPage ? 'aria-current="page"' : ""}>${x}</button>`).join("")}
+        <button type="button" data-ppg="${pPage + 1}" ${pPage === pages ? "disabled" : ""} aria-label="Página seguinte">›</button>
+      </div>` : ""}`;
+  }
+  $("#ppager").addEventListener("click", e => {
+    const b = e.target.closest("[data-ppg]"); if (!b || b.disabled) return;
+    pPage = +b.dataset.ppg; renderProducts();
+    $("#view-products").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $("#ppager").addEventListener("change", e => {
+    if (e.target.id !== "pper") return;
+    const first = (pPage - 1) * pPer;           // keep the first visible item on screen
+    pPer = +e.target.value; pPage = Math.floor(first / pPer) + 1;
+    try { localStorage.setItem("admin-pper", pPer); } catch {}
+    renderProducts();
+  });
+  // jump to the page that contains a product (after creating/opening it)
+  function revealProduct(id) {
+    const i = filteredProducts().findIndex(p => p.id === id);
+    if (i >= 0) pPage = Math.floor(i / pPer) + 1;
+  }
+  ["pq", "pcat", "pstate"].forEach(id => $("#" + id).addEventListener("input", () => { pPage = 1; renderProducts(); }));
   $("#prows").onclick = e => { const tr = e.target.closest("tr[data-pid]"); if (tr) openProduct(tr.dataset.pid); };
   function showForm(show) { pf.hidden = !show; $("#plLayout").classList.toggle("with-panel", show); }
   function updateFinal() {
@@ -245,7 +284,7 @@
   }
   function openProduct(id) {
     const p = PRODUCTS.find(x => x.id === id); if (!p) return;
-    pSel = id; pCreating = false; renderProducts();
+    pSel = id; pCreating = false; revealProduct(id); renderProducts();
     $("#pformTitle").textContent = "Editar produto";
     pf.name.value = p.name; pf.sub.value = p.sub; pf.cat.value = p.cat;
     pf.price.value = String(p.price).replace(".", ","); pf.promo.value = p.promo || ""; pf.description.value = p.description || "";
