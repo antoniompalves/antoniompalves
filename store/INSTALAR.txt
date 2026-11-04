@@ -95,6 +95,12 @@ estrelas passa a ser calculada só com avaliações reais aprovadas.
 
 Tamanho do logótipo: em "Marca", ajuste "Tamanho do logótipo no cabeçalho" (28 a 96 px).
 
+Páginas de produto: cada produto tem a sua própria página, em  https://o-seu-dominio.pt/produto/<id>
+(ex.: /produto/boldenone). Os cartões da homepage abrem essa página. Cada página tem título, descrição
+e imagem próprios para o Google e para partilhas, caminho de navegação e produtos relacionados.
+No backoffice, "Ver página ↗" no editor do produto abre-a. Lista de páginas para o Google:
+https://o-seu-dominio.pt/sitemap.xml (pode submetê-la no Google Search Console).
+
 Importar conteúdo: em "Produtos" → "⇪ Importar conteúdo", carregue ficheiros .md/.txt (vários de
 uma vez) ou cole o texto. Formato:
   # Nome do produto

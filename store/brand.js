@@ -24,7 +24,7 @@
       root.setProperty("--logo-h", (+b.logoHeight || 52) + "px");
     }
 
-    document.title = opts.titleSuffix ? `${b.storeName} ${opts.titleSuffix}` : b.storeName;
+    document.title = opts.titlePrefix ? `${opts.titlePrefix} — ${b.storeName}` : opts.titleSuffix ? `${b.storeName} ${opts.titleSuffix}` : b.storeName;
 
     let fav = document.querySelector('link[rel="icon"]');
     if (!fav) { fav = document.createElement("link"); fav.rel = "icon"; document.head.appendChild(fav); }

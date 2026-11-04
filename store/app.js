@@ -1,6 +1,9 @@
 (() => {
   const P = window.PRODUCTS, C = window.CATEGORIES;
+  const PAGE = window.PAGE || { type: "home" };          // set by produto.php on product pages
+  const isProduct = PAGE.type === "product";
   const $ = (s, el = document) => el.querySelector(s);
+  const purl = id => window.Brand.url("produto/" + encodeURIComponent(id));
   const eur = n => new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(n);
   const finalPrice = window.unitPrice;
   const catName = id => (C.find(c => c.id === id) || {}).name || id;
@@ -103,9 +106,9 @@
   // ---------- cards ----------
   const card = (p, i) => `
     <article class="card">
-      <div class="img v${i % 3}" data-open="${p.id}">${p.promo ? `<span class="badge">−${p.promo}%</span>` : ""}${art(p)}</div>
+      <a class="img v${i % 3}" href="${purl(p.id)}" aria-label="${esc(p.name)}">${p.promo ? `<span class="badge">−${p.promo}%</span>` : ""}${art(p)}</a>
       <div class="body">
-        <span class="name">${esc(p.name)}</span><span class="sub">${esc(p.sub)}</span>
+        <a class="name" href="${purl(p.id)}">${esc(p.name)}</a><span class="sub">${esc(p.sub)}</span>
         <div class="pr"><b>${eur(finalPrice(p))}</b>${p.promo ? `<s>${eur(p.price)}</s>` : ""}</div>
         <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Stock UE</span></div>
         ${stockBadge(p)}
@@ -117,11 +120,10 @@
   let feat;
   function renderFeatured() {
     feat = P.find(p => p.best && p.promo) || P.find(p => p.best) || P[0];
-    if (!feat) return;
-    $("#featCard").innerHTML = `<div class="thumb"><span class="tag">Mais vendido</span>${art(feat)}</div>
+    if (!feat || !$("#featCard")) return;
+    $("#featCard").innerHTML = `<a class="feat-link" href="${purl(feat.id)}"><div class="thumb"><span class="tag">Mais vendido</span>${art(feat)}</div>
       <h3>${esc(feat.name)}</h3><div class="price">${eur(finalPrice(feat))}</div>
-      <small>${esc(feat.sub)}${feat.promo ? ` • −${feat.promo}% sobre ${eur(feat.price)}` : ""}</small>`;
-    $("#featCard").dataset.open = feat.id;
+      <small>${esc(feat.sub)}${feat.promo ? ` • −${feat.promo}% sobre ${eur(feat.price)}` : ""}</small></a>`;
     $("#bestTrack").innerHTML = P.filter(p => p.best).map(card).join("");
   }
   renderFeatured();
@@ -135,9 +137,11 @@
   function renderChips() {
     const all = [{ id: "all", name: "Todos", count: P.length }, { id: "new", name: "Novidades", count: P.filter(p => p.fresh).length }, { id: "promo", name: "Promoções", count: P.filter(p => p.promo).length },
       ...C.map(c => ({ ...c, count: P.filter(p => p.cat === c.id).length })).filter(c => c.count)];
+    if (!$("#chips")) return;
     $("#chips").innerHTML = all.map(c => `<button class="chip ${filter === c.id ? "on" : ""}" data-chip="${c.id}">${c.name}<small>${c.count}</small></button>`).join("");
   }
   function renderGrid() {
+    if (!$("#grid")) return;
     const q = query.toLowerCase();
     const list = P.filter(p => (filter === "all" || p.cat === filter || (filter === "new" && p.fresh) || (filter === "promo" && p.promo))
       && (!q || (p.name + " " + p.sub + " " + catName(p.cat)).toLowerCase().includes(q)));
@@ -161,6 +165,10 @@
       </div>`;
   }
   const setFilter = f => { filter = f; page = 1; renderChips(); renderGrid(); };
+  // ?cat=<id> opens the home page with that category selected (used by the product breadcrumbs)
+  const catParam = new URLSearchParams(location.search).get("cat");
+  if (catParam) filter = catParam;
+  if ($("#grid")) {
   $("#pager").addEventListener("click", e => {
     const b = e.target.closest("[data-pg]"); if (!b || b.disabled) return;
     page = +b.dataset.pg; renderGrid();
@@ -171,6 +179,7 @@
   document.querySelectorAll("[data-filter]").forEach(el => el.addEventListener("click", () => {
     setFilter(el.dataset.filter); $("#collection").scrollIntoView({ behavior: "smooth" });
   }));
+  }
 
   // real reviews from verified buyers (count + average come from the API)
   async function loadProductReviews(p) {
@@ -219,11 +228,11 @@
   // ---------- detail ----------
   let dQty = 1;
   function renderDetail(id) {
-    const p = P.find(x => x.id === id) || P[0]; dQty = 1;
+    const p = P.find(x => x.id === id); if (!p || !$("#detail")) return; dQty = 1;
     $("#detail").innerHTML = `
       <div class="hero-img${p.imageUrl ? " has-img" : ""}">${art(p)}</div>
       <div>
-        <h2>${esc(p.name)}</h2>
+        <h1>${esc(p.name)}</h1>
         <div class="meta"><span>⚗ Testado em lab.</span>${ratingMeta(p)}<span>⛟ Stock UE</span></div>
         <p>${esc(p.sub)}. Categoria: ${catName(p.cat)}. Enviado de forma discreta a partir de stock na UE, com entrega rastreada.</p>
         <small class="muted">Opções de quantidade</small>
@@ -234,7 +243,7 @@
         </div>
         ${stockBadge(p)}
         <button class="btn-orange" data-dadd="${p.id}" ${soldOut(p) ? "disabled" : ""}>${soldOut(p) ? "Esgotado" : "Adicionar ao carrinho"}</button>
-        <details class="acc" open><summary>Detalhes</summary><div>${p.description ? `<p>${esc(firstPara(p.description))}</p><a href="#pinfo" class="more-link">Ver descrição completa ↓</a>` : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
+        <details class="acc" open><summary>Detalhes</summary><div>${p.description ? `<p>${esc(firstPara(p.description))}</p><a href="#pinfo" class="more-link" data-scroll="#pinfo">Ver descrição completa ↓</a>` : `${esc(p.name)} — ${esc(p.sub)}. Cada lote é testado em laboratório antes do envio.`}</div></details>
         <details class="acc"><summary>Utilização</summary><div>Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</div></details>
         <details class="acc"><summary>Envio</summary><div>Embalagem discreta, envio rastreado a partir de stock na UE.</div></details>
       </div>${infoBlock(p)}${verifyBlock(p)}
@@ -253,8 +262,9 @@
 
   document.addEventListener("click", e => {
     const add = e.target.closest("[data-add]"); if (add) return addToCart(add.dataset.add);
-    const op = e.target.closest("[data-open]");
-    if (op) { renderDetail(op.dataset.open); $("#detail").scrollIntoView({ behavior: "smooth" }); return; }
+    // in-page anchors on product pages (a <base> is set, so plain "#x" links would go to the home page)
+    const sc = e.target.closest("[data-scroll]");
+    if (sc) { e.preventDefault(); const t = $(sc.dataset.scroll); if (t) t.scrollIntoView({ behavior: "smooth" }); return; }
     const dq = e.target.closest("[data-dq]");
     if (dq) { const dp = P.find(x => x.id === $("[data-dadd]").dataset.dadd); dQty = Math.min(Math.max(1, maxQty(dp)), Math.max(1, dQty + +dq.dataset.dq)); $("#dQty").textContent = dQty; return; }
     const da = e.target.closest("[data-dadd]"); if (da) addToCart(da.dataset.dadd, dQty);
@@ -278,6 +288,7 @@
   }
   const go = i => { ti = (i + tList.length) % tList.length; showQuote(); restart(); };
   function restart() { clearInterval(tTimer); if (tList.length > 1) tTimer = setInterval(() => { ti = (ti + 1) % tList.length; showQuote(); }, 7000); }
+  if ($("#reviews")) {
   $("#tNav").addEventListener("click", e => {
     const d = e.target.closest("[data-tdir]"), dot = e.target.closest("[data-ti]");
     if (d) go(ti + +d.dataset.tdir); else if (dot) go(+dot.dataset.ti);
@@ -295,7 +306,8 @@
       showQuote(); restart();
     } catch {}
   })();
-  $("#faqList").innerHTML = window.FAQ.map(([q, a]) => `<details class="acc"><summary>${q}</summary><div>${a}</div></details>`).join("");
+  }
+  if ($("#faqList")) $("#faqList").innerHTML = window.FAQ.map(([q, a]) => `<details class="acc"><summary>${q}</summary><div>${a}</div></details>`).join("");
 
   // ---------- nav ----------
   $("#burger").onclick = () => $("#navPills").classList.toggle("open");
@@ -305,8 +317,21 @@
     $("#navPills").classList.remove("open");
   });
 
-  $("#prodCount").textContent = P.length;
-  renderChips(); renderGrid(); if (feat) renderDetail(feat.id); renderCart();
+  // related products on a product page: same category first, then best sellers
+  function renderRelated() {
+    const box = $("#related"), p = P.find(x => x.id === PAGE.id);
+    if (!box || !p) return;
+    const same = P.filter(x => x.id !== p.id && x.cat === p.cat), more = P.filter(x => x.id !== p.id && x.cat !== p.cat && x.best);
+    const list = [...same, ...more].slice(0, 4);
+    box.hidden = !list.length;
+    $("#relatedGrid").innerHTML = list.map(card).join("");
+  }
+  function renderPage() {
+    if (isProduct) { renderDetail(PAGE.id); renderRelated(); }
+    else { if ($("#prodCount")) $("#prodCount").textContent = P.length; renderChips(); renderGrid(); }
+    renderCart();
+  }
+  renderPage();
 
   // category tiles on the home page follow the first two categories that have products
   function renderTiles() {
@@ -333,13 +358,11 @@
       C.splice(0, C.length, ...cats);
       P.splice(0, P.length, ...list);
       if (filter !== "all" && filter !== "new" && filter !== "promo" && !C.some(c => c.id === filter)) filter = "all";
-      renderTiles();
-      $("#prodCount").textContent = P.length;
-      renderFeatured(); renderChips(); renderGrid(); if (feat) renderDetail(feat.id); renderCart();
+      renderTiles(); renderFeatured(); renderPage();
     } catch {}
   }
   refreshProducts();
   // re-render product art once the configured brand is known
   document.addEventListener("brand:applied", () => document.querySelectorAll(".vial[data-label]").forEach(v => { if (v.dataset.label) v.dataset.label = brandLabel(); }));
-  window.Brand.load();
+  window.Brand.load(isProduct ? { titlePrefix: PAGE.name } : PAGE.type === "notfound" ? { titlePrefix: "Produto não encontrado" } : {});
 })();

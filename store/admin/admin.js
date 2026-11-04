@@ -330,6 +330,7 @@
     const p = PRODUCTS.find(x => x.id === id); if (!p) return;
     pSel = id; pCreating = false; revealProduct(id); renderProducts();
     $("#pformTitle").textContent = "Editar produto";
+    $("#pview").hidden = false; $("#pview").href = window.Brand.url("produto/" + encodeURIComponent(p.id));
     pf.name.value = p.name; pf.sub.value = p.sub; pf.cat.value = p.cat;
     pf.price.value = String(p.price).replace(".", ","); pf.promo.value = p.promo || ""; pf.description.value = p.description || "";
     pf.specs.value = (p.specs || []).map(([k, v]) => `${k}: ${v}`).join("\n");
@@ -346,7 +347,7 @@
     pSel = null; pCreating = true; renderProducts(); pf.reset();
     pf.active.checked = true; pf.cat.value = $("#pcat").value || (CATEGORIES[0] || {}).id || "";
     pf.trackStock.checked = false; pf.lowStock.value = 5; pf.initialStock.value = 0; renderStock(null);
-    $("#pformTitle").textContent = "Novo produto"; $("#pdelete").disabled = true; $("#pformErr").textContent = "";
+    $("#pformTitle").textContent = "Novo produto"; $("#pview").hidden = true; $("#pdelete").disabled = true; $("#pformErr").textContent = "";
     updateFinal(); renderPImage(null); showForm(true); pf.name.focus();
   };
   $("#pclose").onclick = () => { pSel = null; pCreating = false; showForm(false); renderProducts(); };

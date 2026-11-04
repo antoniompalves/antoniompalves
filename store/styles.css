@@ -161,6 +161,22 @@ img.pimg { position: absolute !important; inset: 0; width: 100% !important; heig
 .add:disabled, .btn-orange:disabled { background: #d6d2ce; color: #6b6b6b; cursor: not-allowed; }
 .qty button:disabled { opacity: .3; cursor: not-allowed; }
 
+/* ---------- product page (produto.php) ---------- */
+.hero-wrap.compact .hero { padding-bottom: 22px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); margin-top: 22px; }
+.crumbs a:hover { color: var(--ink); text-decoration: underline; } .crumbs b { color: var(--ink); font-weight: 500; }
+.hero-wrap.compact + .crumbs + .detail, .crumbs + .detail { margin-top: 18px; }
+.ssr { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; grid-column: 1 / -1; }
+.ssr img { width: 100%; max-height: 480px; object-fit: contain; background: #fff; border: 1px solid var(--line); border-radius: 4px; }
+.ssr-price { font-size: 22px; font-weight: 700; }
+.related { margin-top: 60px; } .related .section-title { margin-bottom: 18px; }
+.crumbs + .detail h1 { font-size: clamp(24px, 3vw, 32px); letter-spacing: -.01em; }
+.notfound { text-align: center; padding: 80px 0; } .notfound h1 { font-weight: 500; }
+.card a.name:hover { text-decoration: underline; }
+.feat-link { display: block; color: inherit; height: 100%; }
+.feat-card { cursor: pointer; }
+@media (max-width: 900px) { .ssr { grid-template-columns: 1fr; } }
+
 /* ---------- product information (specs + description) ---------- */
 .more-link { display: inline-block; margin-top: 8px; color: var(--orange); font-weight: 600; font-size: 13px; }
 .pinfo { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(260px, 1fr) 2fr; gap: 40px; margin-top: 12px; padding-top: 28px; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
@@ -244,7 +260,7 @@ img.pimg { position: absolute !important; inset: 0; width: 100% !important; heig
 .detail { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; margin-top: 80px; scroll-margin-top: 20px; }
 .detail .hero-img { border-radius: 4px; min-height: 360px; background: radial-gradient(circle at 50% 10%, #4b4f56, #111 70%); display: grid; place-items: center; }
 .detail .hero-img .vial { transform: scale(2.4); }
-.detail h2 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+.detail h1, .detail h2 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
 .detail .meta { border: 0; padding: 0; margin: 0 0 14px; }
 .detail p { font-size: 13px; line-height: 1.6; color: #555; }
 .opts { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }

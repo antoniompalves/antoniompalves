@@ -27,6 +27,9 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 - **Avaliações de clientes reais:** link privado por encomenda entregue, uma avaliação por produto, moderação
   (publicar/rejeitar/responder), "Compra verificada", média e contagem reais na loja
 - **Testemunhos:** mensagens reais de clientes com foto opcional, origem e data; publicadas na página inicial
+- **Página própria por produto:** `/produto/<id>` (gerada por `produto.php` a partir do `index.html`), com
+  título/descrição/imagem para Google e redes sociais, caminho de navegação, produtos relacionados, 404 para
+  produtos inexistentes ou inativos, e `sitemap.xml`
 - **Importar conteúdo:** ficheiros .md/.txt ou texto colado → especificações (tabela) + descrição formatada
   (Markdown simples, sempre escapado), associação pelo título com pré-visualização
 - **Imagens em massa:** várias imagens de uma vez, associadas pelo nome do ficheiro (com confirmação)
@@ -45,6 +48,7 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
 | `api/brand.css` | Cor da marca gerada pelo servidor e carregada no `<head>`: a página é pintada logo com a cor certa |
 | `products.js` | FAQ e catálogo/categorias iniciais (importados para as tabelas `products` e `categories` na primeira utilização; depois editam-se no backoffice) |
 | `admin/` | Backoffice |
+| `produto.php`, `sitemap.php` | Página de cada produto (`/produto/<id>`) e `sitemap.xml` |
 | `api.php` | API (`/api/...` via `.htaccess`). Só usa GET/POST, compatível com mod_security |
 | `app/lib.php` | Base de dados, encomendas, marca, autenticação, limites de tentativas |
 | `install.php` | Assistente: testa a ligação, cria as tabelas, escreve `app/config.php`, bloqueia-se depois |

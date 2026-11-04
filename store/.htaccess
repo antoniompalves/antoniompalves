@@ -9,6 +9,10 @@ DirectoryIndex index.html index.php
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
   # /api/<rota>  ->  api.php?route=<rota>
   RewriteRule ^api/(.*)$ api.php?route=$1 [QSA,L]
+  # /produto/<id>  ->  página própria do produto
+  RewriteRule ^produto/([a-z0-9-]+)/?$ produto.php?id=$1 [QSA,L]
+  # /sitemap.xml  ->  lista de páginas para motores de busca
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
 </IfModule>
 
 # Ficheiros que nunca devem ser servidos
