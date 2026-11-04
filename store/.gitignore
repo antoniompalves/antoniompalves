@@ -6,3 +6,5 @@ uploads/brand/*
 uploads/products/*
 !uploads/products/.keep
 error_log
+uploads/testimonials/*
+!uploads/testimonials/.keep

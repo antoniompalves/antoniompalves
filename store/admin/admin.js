@@ -49,8 +49,9 @@
   // ---------- views ----------
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => {
     document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("on", x === b));
-    ["orders", "new", "products", "categories", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
+    ["orders", "new", "products", "categories", "testimonials", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
     if (b.dataset.view === "brand") fillBrandForm();
+    if (b.dataset.view === "testimonials") loadTestimonials();
     if (b.dataset.view === "products" || b.dataset.view === "new") loadProducts(); // stock changes with every order
   });
 
@@ -383,6 +384,146 @@
       $("#adjQty").value = ""; $("#adjNote").value = "";
       renderStock(p); renderProducts(); renderProdSel(); toast(`Stock atualizado: ${p.stock}`);
     } catch (err) { toast(err.message); }
+  };
+
+  // ---------- bulk product images ----------
+  // File name → product: normalise both (lowercase, no accents, words joined by "-") and compare.
+  const slug = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  let bulkItems = [];
+  function matchFile(name) {
+    const f = slug(name.replace(/\.[^.]+$/, ""));
+    const keys = p => [slug(p.name), p.id, slug(p.name + " " + p.sub)];
+    const exact = PRODUCTS.filter(p => keys(p).includes(f));
+    if (exact.length) return { id: exact[0].id, state: exact.length === 1 ? "ok" : "warn", note: exact.length === 1 ? "Nome igual" : `${exact.length} produtos com este nome` };
+    const part = PRODUCTS.map(p => ({ p, k: slug(p.name) })).filter(({ k }) => k.length >= 3 && (f.includes(k) || k.includes(f)));
+    if (!part.length) return { id: "", state: "no", note: "Sem correspondência" };
+    const best = Math.max(...part.map(x => x.k.length)), top = part.filter(x => x.k.length === best);
+    return { id: top[0].p.id, state: "warn", note: top.length === 1 ? "Nome parecido — confirme" : `${top.length} possíveis — confirme` };
+  }
+  const productOptions = sel => '<option value="">— não carregar —</option>' + CATEGORIES.map(c => `<optgroup label="${esc(c.name)}">${PRODUCTS.filter(p => p.cat === c.id)
+    .map(p => `<option value="${p.id}" ${p.id === sel ? "selected" : ""}>${esc(p.name)}${p.sub ? " — " + esc(p.sub) : ""}</option>`).join("")}</optgroup>`).join("");
+  function renderBulk() {
+    const counts = {};
+    bulkItems.forEach(it => { if (it.id) counts[it.id] = (counts[it.id] || 0) + 1; });
+    $("#bulkRows").innerHTML = bulkItems.map((it, i) => {
+      const dup = it.id && counts[it.id] > 1, p = PRODUCTS.find(x => x.id === it.id);
+      const flag = it.result ? `<span class="bulk-flag ${it.result === "ok" ? "done" : "err"}">${it.result === "ok" ? "Carregada" : esc(it.result)}</span>`
+        : dup ? '<span class="bulk-flag warn">Mesmo produto noutra linha</span>'
+        : !it.id ? '<span class="bulk-flag no">Não carregar</span>'
+        : `<span class="bulk-flag ${it.state}">${esc(it.note)}${p && p.imageUrl ? " · substitui a atual" : ""}</span>`;
+      return `<tr><td><img src="${it.preview}" alt=""></td><td class="fn">${esc(it.file.name)}</td>
+        <td><select data-bi="${i}" ${it.result ? "disabled" : ""}>${productOptions(it.id)}</select></td><td>${flag}</td></tr>`;
+    }).join("");
+    const n = bulkItems.filter(it => it.id && !it.result).length;
+    $("#bulkSummary").textContent = `${bulkItems.length} ficheiro(s) · ${n} para carregar`;
+    $("#bulkGo").disabled = !n; $("#bulkGo").textContent = n ? `Carregar ${n} imagem${n === 1 ? "" : "s"}` : "Carregar";
+  }
+  $("#bulkFiles").onchange = e => {
+    // some systems report no MIME type, so also accept by extension (the server checks the real file content)
+    const files = [...e.target.files].filter(f => /^image\/(png|jpeg|webp|gif)$/.test(f.type) || /\.(png|jpe?g|webp|gif)$/i.test(f.name)); e.target.value = "";
+    if (!files.length) return toast("Selecione imagens PNG, JPG, WebP ou GIF");
+    bulkItems.forEach(it => URL.revokeObjectURL(it.preview));
+    bulkItems = files.sort((a, b) => a.name.localeCompare(b.name)).map(file => ({ file, preview: URL.createObjectURL(file), ...matchFile(file.name) }));
+    $("#bulkProgress").hidden = true; $("#bulkBar").style.width = "0"; $("#bulkPct").textContent = "";
+    $("#bulkCancel").textContent = "Cancelar"; $("#bulkCancel").disabled = false;
+    renderBulk(); $("#bulk").hidden = false;
+  };
+  $("#bulkRows").addEventListener("change", e => {
+    const s = e.target.closest("[data-bi]"); if (!s) return;
+    const it = bulkItems[+s.dataset.bi]; it.id = s.value; it.state = "ok"; it.note = "Escolhido manualmente"; renderBulk();
+  });
+  $("#bulkCancel").onclick = () => { $("#bulk").hidden = true; bulkItems.forEach(it => URL.revokeObjectURL(it.preview)); bulkItems = []; loadProducts(); };
+  $("#bulkGo").onclick = async () => {
+    const seen = new Set(), todo = [];
+    bulkItems.forEach(it => { if (it.id && !it.result && !seen.has(it.id)) { seen.add(it.id); todo.push(it); } }); // one image per product
+    if (!todo.length) return;
+    $("#bulkGo").disabled = $("#bulkCancel").disabled = true; $("#bulkProgress").hidden = false;
+    let done = 0, ok = 0;
+    for (const it of todo) {
+      const fd = new FormData(); fd.append("file", it.file);
+      try { const p = await api("api/products/" + it.id + "/image", { method: "POST", body: fd }); PRODUCTS[PRODUCTS.findIndex(x => x.id === p.id)] = p; it.result = "ok"; ok++; }
+      catch (err) { it.result = err.message; }
+      done++; $("#bulkBar").style.width = (done / todo.length * 100) + "%"; $("#bulkPct").textContent = `${done}/${todo.length}`;
+      renderBulk();
+    }
+    $("#bulkCancel").disabled = false; $("#bulkCancel").textContent = "Fechar";
+    renderProducts(); toast(`${ok} de ${todo.length} imagens carregadas`);
+  };
+
+  // ---------- testimonials ----------
+  const SOURCES = { email: "Email", whatsapp: "WhatsApp", phone: "Telefone", sms: "SMS", in_person: "Presencial", other: "Outro" };
+  let TESTI = [], tSel = null, tNew = false;
+  const tf = $("#tform");
+  tf.source.innerHTML = '<option value="">Escolher…</option>' + Object.entries(SOURCES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
+  const today = () => new Date().toISOString().slice(0, 10);
+  const dmy = d => d ? d.split("-").reverse().join("/") : "";
+  async function loadTestimonials() { try { TESTI = await api("api/testimonials/all"); renderTesti(); } catch (e) { toast(e.message); } }
+  function renderTesti() {
+    $("#tgrid").innerHTML = TESTI.length ? TESTI.map(t => `
+      <article class="tcard ${t.published ? "" : "off"} ${tSel === t.id ? "sel" : ""}" data-tid="${t.id}">
+        ${t.imageUrl ? `<div class="tc-img" style="background-image:url('${esc(window.Brand.url(t.imageUrl))}')"></div>` : ""}
+        <div class="tc-body">
+          ${t.rating ? `<span class="stars">${"★".repeat(t.rating)}${"☆".repeat(5 - t.rating)}</span>` : ""}
+          <div class="tc-text">“${esc(t.text)}”</div>
+          <div class="tc-meta"><span><b>${esc(t.author)}</b>${t.location ? ", " + esc(t.location) : ""}</span><span>${dmy(t.receivedAt)} · ${SOURCES[t.source] || ""}</span></div>
+          <span class="badge ${t.published ? "s-delivered" : "s-cancelled"}" style="align-self:flex-start">${t.published ? "Publicado" : "Oculto"}</span>
+        </div>
+      </article>`).join("") : '<p class="empty">Ainda não há testemunhos. Clique em "+ Novo testemunho" para adicionar uma mensagem que recebeu de um cliente.</p>';
+  }
+  function showTForm(show) { tf.hidden = !show; $("#tLayout").classList.toggle("with-panel", show); }
+  const tCounter = () => { $("#tcount").textContent = `(${tf.text.value.length}/600)`; };
+  tf.text.oninput = tCounter;
+  function renderTImage(t) {
+    $("#timgPrev").innerHTML = t && t.imageUrl ? `<img src="${esc(window.Brand.url(t.imageUrl))}" alt="">` : "Sem foto";
+    $("#timgRemove").disabled = !(t && t.imageUrl);
+    $("#timgFile").disabled = !t; $("#timgFile").parentElement.style.opacity = t ? "" : ".5";
+    $("#timgHint").textContent = t ? "Opcional: foto enviada pelo cliente (ex.: da encomenda recebida). PNG, JPG, WebP ou GIF até 4 MB." : "Guarde o testemunho primeiro para poder carregar a foto.";
+  }
+  function openTesti(id) {
+    const t = TESTI.find(x => x.id === id); if (!t) return;
+    tSel = id; tNew = false; renderTesti();
+    $("#tformTitle").textContent = "Editar testemunho";
+    tf.author.value = t.author; tf.location.value = t.location; tf.text.value = t.text; tf.rating.value = t.rating || "";
+    tf.source.value = t.source; tf.receivedAt.value = t.receivedAt; tf.position.value = t.position; tf.published.checked = t.published;
+    $("#confirmWrap").hidden = true; $("#tdelete").disabled = false; $("#tformErr").textContent = "";
+    tCounter(); renderTImage(t); showTForm(true);
+  }
+  $("#tgrid").onclick = e => { const c = e.target.closest("[data-tid]"); if (c) openTesti(+c.dataset.tid); };
+  $("#newTestimonial").onclick = () => {
+    tSel = null; tNew = true; renderTesti(); tf.reset();
+    tf.receivedAt.value = today(); tf.receivedAt.max = today(); tf.published.checked = true; tf.position.value = 0;
+    $("#tformTitle").textContent = "Novo testemunho"; $("#confirmWrap").hidden = false; $("#tdelete").disabled = true; $("#tformErr").textContent = "";
+    tCounter(); renderTImage(null); showTForm(true); tf.author.focus();
+  };
+  $("#tclose").onclick = () => { tSel = null; tNew = false; showTForm(false); renderTesti(); };
+  tf.onsubmit = async e => {
+    e.preventDefault(); $("#tformErr").textContent = "";
+    const body = { author: tf.author.value, location: tf.location.value, text: tf.text.value, rating: tf.rating.value, source: tf.source.value,
+      receivedAt: tf.receivedAt.value, position: tf.position.value || 0, published: tf.published.checked };
+    if (tNew) body.confirmReal = tf.confirmReal.checked;
+    const creating = tNew;
+    try {
+      const t = tNew ? await api("api/testimonials", { method: "POST", body: JSON.stringify(body) })
+                     : await api("api/testimonials/" + tSel + "/update", { method: "POST", body: JSON.stringify(body) });
+      await loadTestimonials(); openTesti(t.id);
+      toast(creating ? "Testemunho criado — já pode carregar a foto" : "Testemunho guardado");
+    } catch (err) { $("#tformErr").textContent = err.message; }
+  };
+  $("#timgFile").onchange = async e => {
+    const file = e.target.files[0]; e.target.value = ""; if (!file || !tSel) return;
+    const fd = new FormData(); fd.append("file", file);
+    try { const t = await api("api/testimonials/" + tSel + "/image", { method: "POST", body: fd }); TESTI[TESTI.findIndex(x => x.id === t.id)] = t; renderTImage(t); renderTesti(); toast("Foto atualizada"); }
+    catch (err) { toast(err.message); }
+  };
+  $("#timgRemove").onclick = async () => {
+    if (!tSel || !confirm("Remover a foto deste testemunho?")) return;
+    try { const t = await api("api/testimonials/" + tSel + "/image/delete", { method: "POST" }); TESTI[TESTI.findIndex(x => x.id === t.id)] = t; renderTImage(t); renderTesti(); toast("Foto removida"); }
+    catch (err) { toast(err.message); }
+  };
+  $("#tdelete").onclick = async () => {
+    if (!tSel || !confirm("Eliminar este testemunho? Esta ação não pode ser anulada.")) return;
+    try { await api("api/testimonials/" + tSel + "/delete", { method: "POST" }); tSel = null; showTForm(false); await loadTestimonials(); toast("Testemunho eliminado"); }
+    catch (err) { toast(err.message); }
   };
 
   // ---------- categories ----------

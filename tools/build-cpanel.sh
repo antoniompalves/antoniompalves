@@ -15,6 +15,7 @@ cp "$SRC/uploads/.htaccess" "$STAGE/uploads/"
 mkdir -p "$STAGE/uploads/products"
 cp "$SRC/uploads/brand/.keep" "$STAGE/uploads/brand/"
 cp "$SRC/uploads/products/.keep" "$STAGE/uploads/products/"
+mkdir -p "$STAGE/uploads/testimonials"; cp "$SRC/uploads/testimonials/.keep" "$STAGE/uploads/testimonials/"
 cp "$SRC/INSTALAR.txt" "$STAGE/"
 
 # Sanity checks: no secrets or local data in the package

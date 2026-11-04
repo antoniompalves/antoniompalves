@@ -12,6 +12,10 @@ if ($route === 'brand.css' && $method === 'GET') brand_css();
 try {
     // ----- public -----
     if ($route === 'settings' && $method === 'GET') json_out(200, brand_public());
+    if ($route === 'testimonials' && $method === 'GET') {
+        json_out(200, array_map(fn ($t) => ['author' => $t['author'], 'location' => $t['location'], 'text' => $t['text'], 'rating' => $t['rating'],
+            'source' => TESTIMONIAL_SOURCES[$t['source']] ?? '', 'receivedAt' => $t['receivedAt'], 'imageUrl' => $t['imageUrl']], testimonials_list()));
+    }
     if ($route === 'categories' && $method === 'GET') {
         json_out(200, array_map(fn ($c) => ['id' => $c['id'], 'name' => $c['name']], categories_list()));
     }
@@ -68,6 +72,16 @@ try {
     if (preg_match('~^orders/([0-9a-f-]{36})/(update|delete)$~', $route, $m) && $method === 'POST') {
         if ($m[2] === 'delete') { order_delete($m[1]); json_out(200, ['ok' => true]); }
         json_out(200, order_update($m[1], body_json()));
+    }
+
+    // ----- testimonials -----
+    if ($route === 'testimonials/all' && $method === 'GET') json_out(200, testimonials_list(true));
+    if ($route === 'testimonials' && $method === 'POST') json_out(201, testimonial_create(body_json()));
+    if (preg_match('~^testimonials/(\d{1,10})/(update|delete|image|image/delete)$~', $route, $m) && $method === 'POST') {
+        if ($m[2] === 'delete') { testimonial_delete((int) $m[1]); json_out(200, ['ok' => true]); }
+        if ($m[2] === 'image') json_out(200, testimonial_image_upload((int) $m[1], $_FILES['file'] ?? null));
+        if ($m[2] === 'image/delete') json_out(200, testimonial_image_remove((int) $m[1]));
+        json_out(200, testimonial_update((int) $m[1], body_json()));
     }
 
     // ----- categories -----

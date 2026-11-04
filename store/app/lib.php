@@ -66,6 +66,7 @@ function schema(string $driver, string $prefix): array
             products_schema('sqlite', $prefix),
             categories_schema('sqlite', $prefix),
             stock_schema('sqlite', $prefix),
+            testimonials_schema('sqlite', $prefix),
         ];
     }
     $tail = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
@@ -86,6 +87,7 @@ function schema(string $driver, string $prefix): array
         products_schema('mysql', $prefix),
         categories_schema('mysql', $prefix),
         stock_schema('mysql', $prefix),
+        testimonials_schema('mysql', $prefix),
     ];
 }
 
@@ -98,6 +100,20 @@ function stock_schema(string $driver, string $prefix): string
     return "CREATE TABLE IF NOT EXISTS {$prefix}stock_moves (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(64) NOT NULL,
       delta INT NOT NULL, stock_after INT NULL, reason VARCHAR(40) NOT NULL, note VARCHAR(200) NULL, order_number VARCHAR(20) NULL,
       at VARCHAR(32) NOT NULL, by_who VARCHAR(20) NOT NULL, KEY product_idx (product_id, id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+}
+
+function testimonials_schema(string $driver, string $prefix): string
+{
+    if ($driver === 'sqlite') {
+        return "CREATE TABLE IF NOT EXISTS {$prefix}testimonials (id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT NOT NULL, location TEXT, body TEXT NOT NULL,
+          rating INTEGER NULL, source TEXT NOT NULL, received_at TEXT NOT NULL, published INTEGER NOT NULL DEFAULT 1, position INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL, updated_at TEXT NOT NULL, image TEXT NULL)";
+    }
+    return "CREATE TABLE IF NOT EXISTS {$prefix}testimonials (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, author VARCHAR(80) NOT NULL,
+      location VARCHAR(80) NULL, body TEXT NOT NULL, rating TINYINT UNSIGNED NULL, source VARCHAR(20) NOT NULL, received_at VARCHAR(10) NOT NULL,
+      published TINYINT(1) NOT NULL DEFAULT 1, position INT NOT NULL DEFAULT 0, created_at VARCHAR(32) NOT NULL, updated_at VARCHAR(32) NOT NULL,
+      image VARCHAR(100) NULL, KEY pub_idx (published, position)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 }
 
@@ -849,3 +865,134 @@ function rate_limited(string $kind, int $limit, int $window): bool
     $st->execute([$kind, $ip, $now - $window]);
     return (int) $st->fetchColumn() > $limit;
 }
+
+// ---------- testimonials ----------
+// Real feedback the shop received (email, WhatsApp, phone, in person…) entered by the admin.
+const TESTIMONIAL_SOURCES = ['email' => 'Email', 'whatsapp' => 'WhatsApp', 'phone' => 'Telefone', 'sms' => 'SMS', 'in_person' => 'Presencial', 'other' => 'Outro'];
+
+function ensure_testimonials(): void
+{
+    static $ok = false;
+    if ($ok) return;
+    $pdo = db();
+    $pdo->exec(testimonials_schema($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), config()['prefix'] ?? ''));
+    $ok = true;
+}
+
+function row_to_testimonial(array $r): array
+{
+    return ['id' => (int) $r['id'], 'author' => $r['author'], 'location' => (string) $r['location'], 'text' => $r['body'],
+        'rating' => $r['rating'] === null ? null : (int) $r['rating'], 'source' => $r['source'], 'receivedAt' => $r['received_at'],
+        'published' => (bool) $r['published'], 'position' => (int) $r['position'], 'createdAt' => $r['created_at'], 'updatedAt' => $r['updated_at'],
+        'imageUrl' => !empty($r['image']) ? 'uploads/testimonials/' . $r['image'] : null];
+}
+
+function testimonials_list(bool $all = false): array
+{
+    ensure_testimonials();
+    $sql = 'SELECT * FROM ' . t('testimonials') . ($all ? '' : ' WHERE published = 1') . ' ORDER BY position, received_at DESC, id DESC';
+    return array_map('row_to_testimonial', db()->query($sql)->fetchAll());
+}
+
+function testimonial_fields(array $in, bool $creating): array
+{
+    $f = [];
+    if ($creating && empty($in['confirmReal'])) throw new HttpError(400, 'Confirme que o testemunho foi recebido de um cliente real');
+    if ($creating || array_key_exists('author', $in)) { $f['author'] = str_in($in['author'] ?? '', 80); if ($f['author'] === '') throw new HttpError(400, 'Indique o nome ou as iniciais do cliente'); }
+    if ($creating || array_key_exists('location', $in)) $f['location'] = str_in($in['location'] ?? '', 80);
+    if ($creating || array_key_exists('text', $in)) {
+        $f['body'] = str_in($in['text'] ?? '', 600);
+        if (mb_strlen($f['body']) < 10) throw new HttpError(400, 'O texto do testemunho é demasiado curto');
+    }
+    if ($creating || array_key_exists('rating', $in)) {
+        $r = $in['rating'] ?? null;
+        if ($r === '' || $r === null) $f['rating'] = null;
+        elseif (!is_numeric($r) || (int) $r < 1 || (int) $r > 5) throw new HttpError(400, 'Classificação inválida (1 a 5)');
+        else $f['rating'] = (int) $r;
+    }
+    if ($creating || array_key_exists('source', $in)) {
+        $f['source'] = (string) ($in['source'] ?? '');
+        if (!isset(TESTIMONIAL_SOURCES[$f['source']])) throw new HttpError(400, 'Indique onde recebeu o testemunho');
+    }
+    if ($creating || array_key_exists('receivedAt', $in)) {
+        $d = (string) ($in['receivedAt'] ?? '');
+        $dt = DateTime::createFromFormat('!Y-m-d', $d);
+        if (!$dt || $dt->format('Y-m-d') !== $d) throw new HttpError(400, 'Data inválida');
+        if ($dt > new DateTime('tomorrow')) throw new HttpError(400, 'A data não pode ser no futuro');
+        $f['received_at'] = $d;
+    }
+    if ($creating || array_key_exists('published', $in)) $f['published'] = array_key_exists('published', $in) && empty($in['published']) ? 0 : 1;
+    if (array_key_exists('position', $in) && is_numeric($in['position'])) $f['position'] = (int) $in['position'];
+    return $f;
+}
+
+function find_testimonial(int $id): array
+{
+    ensure_testimonials();
+    $st = db()->prepare('SELECT * FROM ' . t('testimonials') . ' WHERE id = ?');
+    $st->execute([$id]);
+    $r = $st->fetch();
+    if (!$r) throw new HttpError(404, 'Testemunho não encontrado');
+    return $r;
+}
+
+function testimonial_create(array $in): array
+{
+    ensure_testimonials();
+    $f = testimonial_fields($in, true);
+    $f['created_at'] = $f['updated_at'] = now_iso();
+    $cols = array_keys($f);
+    db()->prepare('INSERT INTO ' . t('testimonials') . ' (' . implode(',', $cols) . ') VALUES (' . implode(',', array_fill(0, count($cols), '?')) . ')')->execute(array_values($f));
+    return row_to_testimonial(find_testimonial((int) db()->lastInsertId()));
+}
+
+function testimonial_update(int $id, array $in): array
+{
+    find_testimonial($id);
+    $f = testimonial_fields($in, false);
+    if ($f) {
+        $f['updated_at'] = now_iso();
+        $set = implode(', ', array_map(fn ($k) => "$k = ?", array_keys($f)));
+        db()->prepare('UPDATE ' . t('testimonials') . " SET $set WHERE id = ?")->execute([...array_values($f), $id]);
+    }
+    return row_to_testimonial(find_testimonial($id));
+}
+
+function testimonial_delete(int $id): void
+{
+    $r = find_testimonial($id);
+    testimonial_image_unlink($r['image'] ?? null);
+    db()->prepare('DELETE FROM ' . t('testimonials') . ' WHERE id = ?')->execute([$id]);
+}
+
+// Optional photo sent by the customer (e.g. of the order they received).
+function testimonial_dir(): string
+{
+    $d = WEB_ROOT . '/uploads/testimonials';
+    if (!is_dir($d) && !mkdir($d, 0755, true)) throw new HttpError(500, 'Não foi possível criar a pasta uploads/testimonials');
+    return $d;
+}
+function testimonial_image_unlink(?string $name): void
+{
+    if ($name && preg_match('/^t-[a-f0-9]{16}\.(png|jpg|webp|gif)$/', $name)) @unlink(testimonial_dir() . '/' . $name);
+}
+function testimonial_image_upload(int $id, ?array $file): array
+{
+    $r = find_testimonial($id);
+    $ext = validate_upload($file, 4 * 1024 * 1024);
+    if ($ext === 'ico') throw new HttpError(400, 'Use PNG, JPG, WebP ou GIF.');
+    $name = 't-' . bin2hex(random_bytes(8)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], testimonial_dir() . '/' . $name)) throw new HttpError(500, 'Não foi possível guardar o ficheiro');
+    @chmod(testimonial_dir() . '/' . $name, 0644);
+    testimonial_image_unlink($r['image'] ?? null);
+    db()->prepare('UPDATE ' . t('testimonials') . ' SET image = ?, updated_at = ? WHERE id = ?')->execute([$name, now_iso(), $id]);
+    return row_to_testimonial(find_testimonial($id));
+}
+function testimonial_image_remove(int $id): array
+{
+    $r = find_testimonial($id);
+    testimonial_image_unlink($r['image'] ?? null);
+    db()->prepare('UPDATE ' . t('testimonials') . ' SET image = NULL, updated_at = ? WHERE id = ?')->execute([now_iso(), $id]);
+    return row_to_testimonial(find_testimonial($id));
+}
+

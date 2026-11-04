@@ -127,12 +127,16 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .empty { grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px; }
 
 /* ---------- uploaded product images ---------- */
-.pimg { width: 100%; height: 100%; object-fit: cover; display: block; }
-.card .img:has(.pimg) { background: #f4f1ee; }
-.feat-card .thumb .pimg { border-radius: 12px; }
-.detail .hero-img.has-img { background: #f4f1ee; overflow: hidden; }
-.detail .hero-img.has-img .pimg { max-height: 520px; object-fit: contain; }
-.ci .th .pimg { border-radius: 8px; }
+/* The picture is laid over a frame of fixed proportions, so any image size or orientation
+   (portrait packshots, wide photos) fits without stretching the card. Shown whole (contain). */
+.card .img, .feat-card .thumb, .ci .th, .detail .hero-img { position: relative; overflow: hidden; }
+.pimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+.card .img:has(.pimg), .feat-card .thumb:has(.pimg), .ci .th:has(.pimg) { background: #fff; }
+.card .img .pimg { padding: 10px; }
+.feat-card .thumb .pimg { padding: 8px; }
+.detail .hero-img.has-img { background: #fff; border: 1px solid var(--line); }
+.detail .hero-img.has-img .pimg { padding: 24px; }
+.ci .th .pimg { padding: 3px; }
 .acc div p { margin: 0 0 10px; } .acc div p:last-child { margin-bottom: 0; }
 
 /* ---------- stock ---------- */
@@ -182,7 +186,17 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .reviews h3, .faq h3 { font-size: 22px; font-weight: 500; margin: 0 0 8px; }
 .reviews p, .faq > p { font-size: 13px; }
 blockquote { margin: 24px 0 0; background: radial-gradient(circle at 50% 0%, #3a3f46, #0d0e10 80%); color: #fff; border-radius: 12px; padding: 30px; min-height: 220px; display: flex; flex-direction: column; justify-content: flex-end; font-size: 17px; line-height: 1.5; transition: opacity .3s; }
-blockquote cite { display: block; margin-top: 14px; font-size: 12px; font-style: normal; color: var(--orange-2); }
+blockquote cite { display: block; margin-top: 14px; font-size: 13px; font-style: normal; color: var(--orange-2); }
+blockquote p { margin: 0; }
+blockquote cite small { display: block; color: rgba(255,255,255,.6); font-size: 11px; margin-top: 3px; }
+blockquote.has-img { min-height: 340px; background-size: cover; background-position: center; }
+.t-stars { color: #ffc24a; letter-spacing: 2px; font-size: 15px; margin-bottom: 10px; } .t-stars span { color: rgba(255,255,255,.25); }
+.t-nav { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.t-nav > button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font-size: 18px; }
+.t-dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.t-dots button { width: 8px; height: 8px; border-radius: 50%; background: var(--line); padding: 0; }
+.t-dots button.on { background: var(--orange); width: 22px; border-radius: 4px; }
+.help.no-reviews { grid-template-columns: 1fr; max-width: 760px; }
 .contacts { display: flex; gap: 40px; margin: 22px 0; }
 .contacts div { display: flex; flex-direction: column; font-size: 13px; }
 .contacts i { width: 14px; height: 14px; border-radius: 50%; background: var(--orange); margin-bottom: 10px; }

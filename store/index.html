@@ -18,7 +18,7 @@
         <a class="logo" href="#home" data-brand-logo><span>FORGE</span><small>LABS</small></a>
         <nav class="pills" id="navPills">
           <a href="#home" class="active">Início</a>
-          <a href="#collection">Coleção</a>
+          <a href="#collection">Produtos</a>
           <a href="#about">Sobre Nós</a>
           <a href="#contact">Contactos</a>
         </nav>
@@ -90,7 +90,7 @@
   <!-- COLLECTION -->
   <section class="container" id="collection">
     <div class="col-head">
-      <h2 class="section-title left">Coleção</h2>
+      <h2 class="section-title left">Produtos</h2>
       <input type="search" id="search" placeholder="Pesquisar produtos…">
     </div>
     <div class="chips" id="chips"></div>
@@ -102,13 +102,18 @@
   <section class="container detail" id="detail"></section>
 
   <!-- REVIEWS + FAQ -->
-  <section class="container help" id="contact">
-    <div class="reviews">
+  <section class="container help no-reviews" id="contact">
+    <div class="reviews" id="reviews" hidden>
       <div class="reviews-head">
-        <span class="big">02<sup>/03</sup></span>
-        <div><h3>Avaliações Semanais de Clientes</h3><p class="muted">Opiniões reais de compradores verificados, atualizadas todas as semanas.</p></div>
+        <span class="big" id="tCount"></span>
+        <div><h3>O que dizem os nossos clientes</h3><p class="muted">Mensagens que recebemos de clientes, publicadas com a sua autorização.</p></div>
       </div>
-      <blockquote id="quote"></blockquote>
+      <blockquote id="quote" aria-live="polite"></blockquote>
+      <div class="t-nav" id="tNav">
+        <button type="button" data-tdir="-1" aria-label="Testemunho anterior">‹</button>
+        <div class="t-dots" id="tDots"></div>
+        <button type="button" data-tdir="1" aria-label="Testemunho seguinte">›</button>
+      </div>
     </div>
     <div class="faq">
       <h3>Tem alguma dúvida?<br>Estamos aqui para ajudar.</h3>

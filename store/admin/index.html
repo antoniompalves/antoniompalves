@@ -31,6 +31,7 @@
         <button data-view="new">Registar encomenda</button>
         <button data-view="products">Produtos</button>
         <button data-view="categories">Categorias</button>
+        <button data-view="testimonials">Testemunhos</button>
         <button data-view="brand">Marca</button>
       </nav>
       <div class="top-actions">
@@ -99,6 +100,7 @@
           <select id="pstate" class="sel-sm"><option value="">Todos</option><option value="on">Ativos</option><option value="off">Inativos</option><option value="low">Stock baixo</option><option value="out">Esgotados</option></select>
           <span class="stock-summary" id="stockSummary"></span>
           <button class="btn sm" id="newProduct">+ Novo produto</button>
+          <label class="ghost file-btn" title="Selecione várias imagens: cada uma é associada ao produto com o mesmo nome do ficheiro">⬆ Imagens em massa<input type="file" id="bulkFiles" multiple accept="image/png,image/jpeg,image/webp,image/gif" hidden></label>
         </div>
         <div class="layout" id="plLayout">
           <div class="table-wrap">
@@ -165,6 +167,17 @@
         </div>
       </section>
 
+      <div class="modal" id="bulk" hidden>
+        <div class="modal-box card bulk-box">
+          <h2>Carregar imagens de produtos</h2>
+          <p class="hint" style="margin:0">Cada ficheiro foi associado ao produto com o nome mais parecido. Confirme ou altere antes de carregar.</p>
+          <div class="bulk-list"><table><thead><tr><th></th><th>Ficheiro</th><th>Produto</th><th></th></tr></thead><tbody id="bulkRows"></tbody></table></div>
+          <p class="hint" id="bulkSummary" style="margin:0"></p>
+          <div class="bulk-progress" id="bulkProgress" hidden><div><i id="bulkBar"></i></div><span id="bulkPct"></span></div>
+          <div class="modal-actions"><button type="button" class="ghost" id="bulkCancel">Cancelar</button><button type="button" class="btn" id="bulkGo">Carregar</button></div>
+        </div>
+      </div>
+
       <!-- CATEGORIES VIEW -->
       <section id="view-categories" hidden>
         <div class="cat-layout">
@@ -198,6 +211,44 @@
             <p class="err" id="cdelErr"></p>
             <div class="modal-actions"><button type="button" class="ghost" id="cdelCancel">Cancelar</button><button type="button" class="btn" id="cdelConfirm">Eliminar</button></div>
           </div>
+        </div>
+      </section>
+
+      <!-- TESTIMONIALS VIEW -->
+      <section id="view-testimonials" hidden>
+        <div class="toolbar">
+          <button class="btn sm" id="newTestimonial">+ Novo testemunho</button>
+          <span class="hint" style="margin:0">Publicados aparecem na página inicial, pela ordem indicada.</span>
+        </div>
+        <div class="layout" id="tLayout">
+          <div class="tgrid" id="tgrid"></div>
+          <form class="panel pform" id="tform" hidden>
+            <div class="panel-head"><h3 id="tformTitle">Novo testemunho</h3><button type="button" class="ghost" id="tclose">✕</button></div>
+            <div class="pimg-box">
+              <div class="preview pimg-prev" id="timgPrev"></div>
+              <div class="upload-actions">
+                <label class="btn sm file-btn">Carregar foto<input type="file" id="timgFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden></label>
+                <button type="button" class="ghost" id="timgRemove">Remover</button>
+              </div>
+              <p class="hint" id="timgHint">Opcional: foto enviada pelo cliente (ex.: da encomenda recebida). PNG, JPG, WebP ou GIF até 4 MB.</p>
+            </div>
+            <label>Nome ou iniciais do cliente *<input name="author" required maxlength="80" placeholder="ex.: João M."></label>
+            <label>Localidade<input name="location" maxlength="80" placeholder="ex.: Porto"></label>
+            <label>Testemunho * <span class="hint" id="tcount" style="margin:0;font-weight:400"></span><textarea name="text" rows="5" required maxlength="600" placeholder="Copie a mensagem que o cliente enviou."></textarea></label>
+            <div class="grid2">
+              <label>Classificação<select name="rating"><option value="">Sem estrelas</option><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></label>
+              <label>Recebido por *<select name="source" required></select></label>
+            </div>
+            <div class="grid2">
+              <label>Data em que foi recebido *<input name="receivedAt" type="date" required></label>
+              <label>Ordem<input name="position" type="number" step="1" value="0"></label>
+            </div>
+            <label class="chk"><input type="checkbox" name="published" checked> Publicado na página inicial</label>
+            <label class="chk confirm" id="confirmWrap"><input type="checkbox" name="confirmReal"> Confirmo que esta mensagem foi enviada por um cliente real e que tenho autorização para a publicar.</label>
+            <p class="err" id="tformErr"></p>
+            <button class="btn">Guardar testemunho</button>
+            <button type="button" class="danger" id="tdelete">Eliminar testemunho</button>
+          </form>
         </div>
       </section>
 
@@ -256,7 +307,7 @@
           <div class="card preview-card">
             <h2>Pré-visualização</h2>
             <div class="mini-hero" id="miniHero">
-              <div class="mini-nav"><span class="logo" data-brand-logo><span>FORGE</span><small>LABS</small></span><span class="mini-pill">Início · Coleção</span></div>
+              <div class="mini-nav"><span class="logo" data-brand-logo><span>FORGE</span><small>LABS</small></span><span class="mini-pill">Início · Produtos</span></div>
               <div class="mini-title">Soluções<br>Inovadoras</div>
               <span class="mini-btn">Começar →</span>
             </div>

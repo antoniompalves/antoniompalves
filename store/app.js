@@ -204,14 +204,40 @@
   });
 
   // ---------- reviews + faq ----------
-  const quotes = [
-    ["Entrega rápida na UE e a embalagem era totalmente discreta. Voltarei a encomendar.", "Marco, Itália"],
-    ["O desconto por quantidade fez mesmo diferença. O apoio respondeu em menos de uma hora.", "Lukas, Alemanha"],
-    ["Chegou em quatro dias, exatamente como descrito. Excelente experiência.", "Sofia, Portugal"],
-  ];
-  let qi = 1;
-  const showQuote = () => { const [t, a] = quotes[qi]; $("#quote").innerHTML = `“${t}”<cite>— ${a}</cite>`; $(".big").innerHTML = `0${qi + 1}<sup>/0${quotes.length}</sup>`; };
-  showQuote(); setInterval(() => { qi = (qi + 1) % quotes.length; showQuote(); }, 5000);
+  // Testimonials entered in the backoffice (real messages from customers). The section stays hidden until there is one.
+  let tList = [], ti = 0, tTimer = null;
+  const pad2 = n => String(n).padStart(2, "0");
+  const fmtDay = d => { const [y, m, day] = String(d).split("-"); return day && m && y ? `${day}/${m}/${y}` : ""; };
+  const stars = r => r ? `<span class="t-stars" aria-label="${r} de 5 estrelas">${"★".repeat(r)}<span>${"★".repeat(5 - r)}</span></span>` : "";
+  function showQuote() {
+    const t = tList[ti]; if (!t) return;
+    const q = $("#quote");
+    q.classList.toggle("has-img", !!t.imageUrl);
+    q.style.backgroundImage = t.imageUrl ? `linear-gradient(180deg, rgba(10,11,13,.15) 0%, rgba(10,11,13,.55) 45%, rgba(10,11,13,.92) 100%), url("${encodeURI(window.Brand.url(t.imageUrl))}")` : "";
+    q.innerHTML = `${stars(t.rating)}<p>“${esc(t.text)}”</p>
+      <cite><b>${esc(t.author)}</b>${t.location ? ", " + esc(t.location) : ""}<small>${fmtDay(t.receivedAt)}${t.source ? " · via " + esc(t.source) : ""}</small></cite>`;
+    $("#tCount").innerHTML = `${pad2(ti + 1)}<sup>/${pad2(tList.length)}</sup>`;
+    $("#tDots").innerHTML = tList.map((_, i) => `<button type="button" data-ti="${i}" class="${i === ti ? "on" : ""}" aria-label="Testemunho ${i + 1}"></button>`).join("");
+  }
+  const go = i => { ti = (i + tList.length) % tList.length; showQuote(); restart(); };
+  function restart() { clearInterval(tTimer); if (tList.length > 1) tTimer = setInterval(() => { ti = (ti + 1) % tList.length; showQuote(); }, 7000); }
+  $("#tNav").addEventListener("click", e => {
+    const d = e.target.closest("[data-tdir]"), dot = e.target.closest("[data-ti]");
+    if (d) go(ti + +d.dataset.tdir); else if (dot) go(+dot.dataset.ti);
+  });
+  $("#reviews").addEventListener("mouseenter", () => clearInterval(tTimer));
+  $("#reviews").addEventListener("mouseleave", restart);
+  (async () => {
+    try {
+      const r = await fetch(window.Brand.url("api/testimonials"), { cache: "no-store" });
+      if (!r.ok) return;
+      tList = (await r.json()).filter(t => t && t.text);
+      if (!tList.length) return;
+      $("#reviews").hidden = false; $("#contact").classList.remove("no-reviews");
+      $("#tNav").hidden = tList.length < 2;
+      showQuote(); restart();
+    } catch {}
+  })();
   $("#faqList").innerHTML = window.FAQ.map(([q, a]) => `<details class="acc"><summary>${q}</summary><div>${a}</div></details>`).join("");
 
   // ---------- nav ----------

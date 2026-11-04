@@ -50,6 +50,7 @@ Por segurança, apague o ficheiro  install.php  no Gestor de Ficheiros.
   - Produtos: preços, promoções, descrições, imagens, ativar/desativar, criar e eliminar
   - Categorias: criar, renomear, ordenar, ocultar e eliminar (movendo os produtos)
   - Stock: controlo por produto, entradas/saídas/acertos, alertas de stock baixo e histórico
+  - Testemunhos: mensagens reais de clientes (com foto opcional) mostradas na página inicial
   - Marca: nome da loja, logótipo, favicon, cor principal, email de apoio e palavra-passe
 
 Estrutura
@@ -63,6 +64,7 @@ Estrutura
   app/config.php                   criado pelo instalador — dados da base de dados (NÃO partilhar)
   uploads/brand/                   logótipo e favicon carregados
   uploads/products/                imagens dos produtos
+  uploads/testimonials/            fotos dos testemunhos
 
 Alterar produtos, preços, descrições e imagens
 ----------------------------------------------
@@ -79,6 +81,15 @@ o disponível. Cancelar uma encomenda (ou eliminá-la sem estar cancelada) devol
 Registe entradas de mercadoria, saídas e acertos de inventário no próprio produto — todos os
 movimentos ficam no histórico. Na loja aparece "Últimas N unidades" ou "Esgotado". Produtos sem
 controlo de stock podem ser sempre encomendados. Filtros "Stock baixo" e "Esgotados" na lista.
+
+Imagens em massa: em "Produtos" → "⬆ Imagens em massa", selecione várias imagens de uma vez.
+Cada ficheiro é associado ao produto com o mesmo nome (ex.: "Testosterone Enanthate.jpg"; maiúsculas
+e acentos não contam). Confirme ou corrija cada associação antes de carregar.
+
+Testemunhos: em "Testemunhos" registe mensagens que recebeu de clientes (email, WhatsApp, telefone…),
+com nome ou iniciais, data, origem, estrelas opcionais e uma foto opcional enviada pelo cliente.
+É obrigatório confirmar que a mensagem é real e que tem autorização para a publicar. Os publicados
+aparecem na página inicial; sem testemunhos publicados, a secção não é mostrada.
 
 Backoffice → "Categorias": crie, renomeie e ordene as categorias (a ordem é a dos filtros da loja;
 as duas primeiras com produtos aparecem em destaque na página inicial). Ocultar uma categoria
