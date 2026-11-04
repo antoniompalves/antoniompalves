@@ -16,8 +16,10 @@
   const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 2000); };
 
   async function api(path, opts = {}) {
-    const r = await fetch(path, { ...opts, headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, ...(opts.headers || {}) } });
-    if (r.status === 401 && path !== "/api/login") { signOut(); throw new Error("A sessão expirou, inicie sessão novamente"); }
+    const isForm = opts.body instanceof FormData;
+    const headers = { Authorization: "Bearer " + token, "X-Admin-Token": token, ...(isForm ? {} : { "Content-Type": "application/json" }), ...(opts.headers || {}) };
+    const r = await fetch(window.Brand.url(path), { ...opts, headers });
+    if (r.status === 401) { signOut(); throw new Error("A sessão expirou, inicie sessão novamente"); }
     const d = r.headers.get("content-type")?.includes("json") ? await r.json() : await r.text();
     if (!r.ok) throw new Error(d.error || "O pedido falhou");
     return d;
@@ -29,13 +31,13 @@
   $("#loginForm").onsubmit = async e => {
     e.preventDefault(); $("#loginErr").textContent = "";
     try {
-      const r = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: e.target.password.value }) });
+      const r = await fetch(window.Brand.url("api/login"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: e.target.password.value }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
       setToken(d.token); e.target.reset(); start();
     } catch (err) { $("#loginErr").textContent = err.message; }
   };
-  $("#logout").onclick = async () => { try { await api("/api/logout", { method: "POST" }); } catch {} signOut(); };
+  $("#logout").onclick = async () => { try { await api("api/logout", { method: "POST" }); } catch {} signOut(); };
 
   async function start() {
     $("#login").hidden = true; $("#app").hidden = false;
@@ -45,13 +47,13 @@
   // ---------- views ----------
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => {
     document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("on", x === b));
-    $("#view-orders").hidden = b.dataset.view !== "orders";
-    $("#view-new").hidden = b.dataset.view !== "new";
+    ["orders", "new", "brand"].forEach(v => { $("#view-" + v).hidden = b.dataset.view !== v; });
+    if (b.dataset.view === "brand") fillBrandForm();
   });
 
   // ---------- orders list ----------
   async function load() {
-    try { orders = await api("/api/orders"); render(); } catch (e) { toast(e.message); }
+    try { orders = await api("api/orders"); render(); } catch (e) { toast(e.message); }
   }
   $("#refresh").onclick = () => load().then(() => toast("Atualizado"));
   $("#q").oninput = e => { query = e.target.value.toLowerCase(); renderRows(); };
@@ -118,19 +120,19 @@
     $("#saveNote").onclick = () => patch(o.id, { internalNote: $("#internalNote").value }, "Nota guardada");
     $("#delOrder").onclick = async () => {
       if (!confirm(`Eliminar ${o.number}? Esta ação não pode ser anulada.`)) return;
-      try { await api("/api/orders/" + o.id, { method: "DELETE" }); orders = orders.filter(x => x.id !== o.id); selected = null; render(); toast("Encomenda eliminada"); } catch (e) { toast(e.message); }
+      try { await api("api/orders/" + o.id + "/delete", { method: "POST" }); orders = orders.filter(x => x.id !== o.id); selected = null; render(); toast("Encomenda eliminada"); } catch (e) { toast(e.message); }
     };
   }
   async function patch(id, body, msg) {
     try {
-      const upd = await api("/api/orders/" + id, { method: "PATCH", body: JSON.stringify(body) });
+      const upd = await api("api/orders/" + id + "/update", { method: "POST", body: JSON.stringify(body) });
       orders = orders.map(o => o.id === id ? upd : o); render(); toast(msg);
     } catch (e) { toast(e.message); }
   }
 
   $("#exportCsv").onclick = async () => {
     try {
-      const csv = await api("/api/orders.csv");
+      const csv = await api("api/orders.csv");
       const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([csv], { type: "text/csv" })), download: "pre-encomendas.csv" });
       a.click(); URL.revokeObjectURL(a.href);
     } catch (e) { toast(e.message); }
@@ -158,7 +160,7 @@
     e.preventDefault(); $("#newErr").textContent = "";
     const f = Object.fromEntries(new FormData(e.target));
     try {
-      const o = await api("/api/orders", { method: "POST", body: JSON.stringify({ customer: f, notes: f.notes, items: Object.entries(lines).map(([id, qty]) => ({ id, qty })) }) });
+      const o = await api("api/orders", { method: "POST", body: JSON.stringify({ customer: f, notes: f.notes, items: Object.entries(lines).map(([id, qty]) => ({ id, qty })) }) });
       Object.keys(lines).forEach(k => delete lines[k]); e.target.reset(); renderLines();
       orders.unshift(o); selected = o.id; render();
       document.querySelector('[data-view="orders"]').click();
@@ -167,5 +169,78 @@
   };
   renderLines();
 
+  // ---------- brand ----------
+  const bf = $("#brandForm");
+  const luminance = hex => {
+    const c = [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  function contrastHint(hex) {
+    const ratio = 1.05 / (luminance(hex) + 0.05); // contrast against white text
+    const h = $("#contrastHint");
+    h.classList.toggle("warn", ratio < 3);
+    h.textContent = ratio < 3 ? `Contraste baixo com texto branco (${ratio.toFixed(1)}:1). Escolha uma cor mais escura para botões legíveis.` : `Contraste com texto branco: ${ratio.toFixed(1)}:1`;
+  }
+  function previewBrand(extra = {}) {
+    const f = Object.fromEntries(new FormData(bf));
+    window.Brand.apply({ ...window.BRAND, storeName: f.storeName || window.BRAND.storeName, logoText: f.logoText, logoSub: f.logoSub,
+      primaryColor: /^#[0-9a-f]{6}$/i.test(f.primaryColor) ? f.primaryColor : window.BRAND.primaryColor, ...extra,
+      logoUrl: window.BRAND.logoUrl, faviconUrl: window.BRAND.faviconUrl }, { titleSuffix: "Backoffice" });
+    renderBrandMedia();
+  }
+  function renderBrandMedia() {
+    const b = window.BRAND;
+    $("#logoPrev").innerHTML = b.logoUrl ? `<img src="${esc(b.logoUrl)}" alt="">` : "Sem logótipo — é usado o texto";
+    $("#favPrev").innerHTML = `<img src="${esc(b.faviconUrl || window.Brand.url("favicon.svg"))}" alt="">`;
+    $("#favTab").src = b.faviconUrl || window.Brand.url("favicon.svg");
+    $("#tabTitle").textContent = b.storeName;
+    $("#logoRemove").disabled = !b.logoUrl; $("#favRemove").disabled = !b.faviconUrl;
+  }
+  function fillBrandForm() {
+    const b = window.BRAND || window.Brand.DEFAULTS;
+    bf.storeName.value = b.storeName; bf.logoText.value = b.logoText || ""; bf.logoSub.value = b.logoSub || "";
+    bf.primaryColor.value = b.primaryColor; bf.primaryHex.value = b.primaryColor; bf.supportEmail.value = b.supportEmail || "";
+    contrastHint(b.primaryColor); renderBrandMedia(); $("#brandErr").textContent = "";
+  }
+  bf.primaryColor.oninput = () => { bf.primaryHex.value = bf.primaryColor.value; contrastHint(bf.primaryColor.value); previewBrand(); };
+  bf.primaryHex.oninput = () => { const v = bf.primaryHex.value.trim(); if (/^#[0-9a-f]{6}$/i.test(v)) { bf.primaryColor.value = v; contrastHint(v); previewBrand(); } };
+  ["storeName", "logoText", "logoSub"].forEach(n => bf[n].addEventListener("input", () => previewBrand()));
+  bf.onsubmit = async e => {
+    e.preventDefault(); $("#brandErr").textContent = "";
+    const f = Object.fromEntries(new FormData(bf));
+    try {
+      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail }) });
+      window.Brand.apply(b, { titleSuffix: "Backoffice" }); fillBrandForm(); toast("Marca atualizada");
+    } catch (err) { $("#brandErr").textContent = err.message; previewBrand(); }
+  };
+  async function upload(kind, input) {
+    const file = input.files[0]; input.value = "";
+    if (!file) return;
+    const fd = new FormData(); fd.append("file", file);
+    try {
+      const b = await api("api/settings/" + kind, { method: "POST", body: fd });
+      window.Brand.apply(b, { titleSuffix: "Backoffice" }); renderBrandMedia();
+      toast(kind === "logo" ? "Logótipo atualizado" : "Favicon atualizado");
+    } catch (err) { toast(err.message); }
+  }
+  async function removeMedia(kind) {
+    if (!confirm(kind === "logo" ? "Remover o logótipo?" : "Remover o favicon?")) return;
+    try { const b = await api("api/settings/" + kind + "/delete", { method: "POST" }); window.Brand.apply(b, { titleSuffix: "Backoffice" }); renderBrandMedia(); toast("Removido"); }
+    catch (err) { toast(err.message); }
+  }
+  $("#logoFile").onchange = e => upload("logo", e.target);
+  $("#favFile").onchange = e => upload("favicon", e.target);
+  $("#logoRemove").onclick = () => removeMedia("logo");
+  $("#favRemove").onclick = () => removeMedia("favicon");
+
+  $("#pwForm").onsubmit = async e => {
+    e.preventDefault(); $("#pwErr").textContent = "";
+    const f = Object.fromEntries(new FormData(e.target));
+    if (f.new !== f.new2) { $("#pwErr").textContent = "As palavras-passe não coincidem"; return; }
+    try { const d = await api("api/password", { method: "POST", body: JSON.stringify({ current: f.current, new: f.new }) }); setToken(d.token); e.target.reset(); toast("Palavra-passe alterada"); }
+    catch (err) { $("#pwErr").textContent = err.message; }
+  };
+
+  window.Brand.load({ titleSuffix: "Backoffice" });
   if (token) start();
 })();

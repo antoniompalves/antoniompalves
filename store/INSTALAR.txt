@@ -1,0 +1,84 @@
+INSTALAÇÃO DA LOJA NO CPANEL
+============================
+
+Requisitos
+----------
+- Alojamento com cPanel, Apache e PHP 8.1 ou superior (com PDO MySQL e mbstring — vêm ativos por omissão).
+- Uma base de dados MySQL ou MariaDB.
+- Certificado SSL (HTTPS) ativo no domínio — no cPanel: "SSL/TLS Status" ou "Let's Encrypt".
+
+1. Criar a base de dados
+------------------------
+cPanel → "Bases de dados MySQL" (MySQL Databases):
+  a) Crie uma base de dados, por exemplo  loja   → fica  <utilizadorcpanel>_loja
+  b) Crie um utilizador com uma palavra-passe forte → fica  <utilizadorcpanel>_loja
+  c) Em "Adicionar utilizador à base de dados", associe o utilizador à base de dados
+     e marque "TODOS OS PRIVILÉGIOS".
+Guarde o nome da base de dados, o utilizador e a palavra-passe.
+
+2. Carregar os ficheiros
+------------------------
+cPanel → "Gestor de Ficheiros" (File Manager):
+  a) Abra a pasta  public_html  (ou uma subpasta, ex.: public_html/loja).
+  b) Ative "Mostrar ficheiros ocultos" (Definições, canto superior direito) — o ficheiro .htaccess é necessário.
+  c) "Carregar" → escolha  loja-cpanel.zip.
+  d) Clique com o botão direito no zip → "Extrair". Depois pode apagar o zip.
+
+3. Executar o assistente de instalação
+--------------------------------------
+Abra no browser:  https://o-seu-dominio.pt/install.php
+(ou https://o-seu-dominio.pt/loja/install.php se usou uma subpasta)
+
+Preencha:
+  - Servidor: localhost (na maioria dos alojamentos cPanel)
+  - Nome da base de dados, utilizador e palavra-passe do passo 1
+  - Nome da loja e a palavra-passe do backoffice (mínimo 8 caracteres)
+
+Carregue em "Instalar".
+
+4. Apagar o install.php
+-----------------------
+Por segurança, apague o ficheiro  install.php  no Gestor de Ficheiros.
+(O assistente fica bloqueado depois de instalado, mas não deve ficar no servidor.)
+
+5. Entrar no backoffice
+-----------------------
+  https://o-seu-dominio.pt/admin/
+
+  - Pré-encomendas: lista, pesquisa, estados, notas internas, exportação CSV
+  - Registar encomenda: pedidos recebidos por telefone/email
+  - Marca: nome da loja, logótipo, favicon, cor principal, email de apoio e palavra-passe
+
+Estrutura
+---------
+  index.html, styles.css, app.js   loja
+  brand.js                         aplica a marca configurada no backoffice
+  products.js                      catálogo (produtos, preços, categorias, FAQ)
+  admin/                           backoffice
+  api.php                          API (pré-encomendas, marca, autenticação)
+  app/lib.php                      código do servidor  (pasta protegida pelo .htaccess)
+  app/config.php                   criado pelo instalador — dados da base de dados (NÃO partilhar)
+  uploads/brand/                   logótipo e favicon carregados
+
+Alterar produtos ou preços
+--------------------------
+Edite  products.js  no Gestor de Ficheiros. Altere apenas o bloco JSON entre /*CATALOG*/ e /*END*/
+e mantenha o formato JSON válido (aspas duplas, vírgulas entre produtos). O servidor recalcula sempre
+os preços a partir deste ficheiro, por isso a loja e o backoffice ficam sempre coerentes.
+
+Cópias de segurança
+-------------------
+As encomendas ficam na base de dados (tabelas fl_orders, fl_settings, …). Inclua-a nas cópias de
+segurança do cPanel ("Cópia de segurança" → "Base de dados MySQL"), juntamente com a pasta uploads/.
+
+Resolução de problemas
+----------------------
+- "Erro 404" ao enviar uma pré-encomenda ou entrar no backoffice:
+  o ficheiro .htaccess não foi extraído ou o mod_rewrite está desativado. Confirme que .htaccess
+  existe na pasta (ficheiros ocultos visíveis).
+- "Não autorizado" logo após entrar: alguns servidores removem o cabeçalho Authorization;
+  a loja já envia também X-Admin-Token. Se persistir, contacte o alojamento.
+- Ficheiro de logótipo recusado: use PNG, JPG, WebP ou GIF até 2 MB (favicon: PNG/ICO até 512 KB).
+  Se o erro for "demasiado grande para o servidor", aumente upload_max_filesize em
+  cPanel → "Selecionar versão do PHP" → Opções (ou "MultiPHP INI Editor").
+- Erro 500: veja cPanel → "Erros" (Errors) ou o ficheiro error_log na pasta da loja.

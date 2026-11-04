@@ -1,1 +1,6 @@
-data/
+# Gerado pelo install.php — contém as credenciais da base de dados
+app/config.php
+# Imagens carregadas no backoffice
+uploads/brand/*
+!uploads/brand/.keep
+error_log

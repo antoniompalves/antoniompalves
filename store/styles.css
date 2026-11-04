@@ -38,6 +38,9 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .logo { display: inline-flex; flex-direction: column; align-items: center; background: #fff; color: var(--ink); padding: 6px 16px; border-radius: 999px; line-height: 1; }
 .logo span { font-weight: 800; font-size: 15px; letter-spacing: .04em; }
 .logo small { font-size: 7px; letter-spacing: .35em; color: var(--orange); font-weight: 700; }
+.logo.has-img { padding: 5px 14px; background: #fff; }
+.logo img { display: block; height: 30px; width: auto; max-width: 170px; object-fit: contain; }
+.footer .logo.has-img { background: #fff; border: 1px solid var(--line); }
 .pills { display: flex; gap: 4px; background: rgba(255,255,255,.92); border-radius: 999px; padding: 4px; }
 .pills a { color: var(--muted); font-size: 13px; padding: 7px 16px; border-radius: 999px; }
 .pills a.active, .pills a:hover { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
@@ -52,7 +55,7 @@ button { font: inherit; cursor: pointer; border: 0; background: none; color: inh
 .btn-dark { display: inline-flex; gap: 14px; align-items: center; background: var(--ink); color: #fff; border-radius: 999px; padding: 12px 22px; font-size: 14px; }
 .btn-dark.sm { padding: 8px 20px; font-size: 12px; }
 .btn-orange { background: var(--orange); color: #fff; border-radius: 12px; padding: 13px; width: 100%; font-weight: 600; }
-.btn-orange:hover { background: #e25e12; }
+.btn-orange:hover { background: var(--orange-dark, #e25e12); }
 .hero-stage { position: relative; height: 320px; border-radius: 20px; overflow: hidden;
   background: radial-gradient(ellipse at 60% 40%, #3e4652 0%, #1f242b 55%, #12151a 100%); }
 .hero-stage .vial-xl { position: absolute; left: 44%; top: -20px; }

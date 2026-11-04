@@ -4,7 +4,8 @@
   const eur = n => new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(n);
   const finalPrice = window.unitPrice;
   const catName = id => (C.find(c => c.id === id) || {}).name || id;
-  const vial = (label = "FORGE") => `<div class="vial" data-label="${label}"></div>`;
+  const brandLabel = () => ((window.BRAND && (window.BRAND.logoText || window.BRAND.storeName)) || "FORGE").toUpperCase().slice(0, 12);
+  const vial = (label = brandLabel()) => `<div class="vial" data-label="${label}"></div>`;
   const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // ---------- cart (localStorage, guarded) ----------
@@ -53,7 +54,7 @@
     const f = Object.fromEntries(new FormData(form)), btn = $("#submitOrder");
     $("#formErr").textContent = ""; btn.disabled = true; btn.textContent = "A enviar…";
     try {
-      const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" },
+      const r = await fetch(window.Brand.url("api/orders"), { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customer: f, notes: f.notes, items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Não foi possível enviar a pré-encomenda");
@@ -64,7 +65,7 @@
       showStep("done");
       $("#doneClose").onclick = () => { openCart(false); showStep("cart"); };
     } catch (err) {
-      $("#formErr").textContent = location.protocol === "file:" ? "Execute `node server.js` e abra http://localhost:3000 para enviar pré-encomendas." : err.message;
+      $("#formErr").textContent = location.protocol === "file:" ? "Abra a loja através do servidor web (não como ficheiro local) para enviar pré-encomendas." : err.message;
     } finally { btn.disabled = false; btn.textContent = "Enviar pré-encomenda"; }
   };
 
@@ -196,4 +197,7 @@
 
   $("#prodCount").textContent = P.length;
   renderChips(); renderGrid(); renderDetail(feat.id); renderCart();
+  // re-render product art once the configured brand is known
+  document.addEventListener("brand:applied", () => document.querySelectorAll(".vial[data-label]").forEach(v => { if (v.dataset.label) v.dataset.label = brandLabel(); }));
+  window.Brand.load();
 })();

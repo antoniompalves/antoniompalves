@@ -6,6 +6,7 @@
   <title>Forge Labs</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,7 +14,7 @@
   <section class="hero-wrap" id="home">
     <div class="hero">
       <header class="nav">
-        <a class="logo" href="#home"><span>FORGE</span><small>LABS</small></a>
+        <a class="logo" href="#home" data-brand-logo><span>FORGE</span><small>LABS</small></a>
         <nav class="pills" id="navPills">
           <a href="#home" class="active">Início</a>
           <a href="#collection">Coleção</a>
@@ -33,7 +34,7 @@
       </div>
 
       <div class="hero-stage">
-        <div class="vial vial-xl" data-label="FORGE"></div>
+        <div class="vial vial-xl" data-label="FORGE" data-brand-label></div>
         <article class="feat-card" id="featCard"></article>
         <div class="stat-card">
           <small>Produtos Disponíveis</small>
@@ -113,16 +114,16 @@
       <p class="muted">As nossas perguntas frequentes. Ainda precisa de ajuda? Contacte-nos abaixo.</p>
       <div class="contacts">
         <div><i></i><b>Chat ao Vivo</b><small>Seg–Sáb, 9:00–20:00 (hora de Lisboa)</small></div>
-        <div><i></i><b>Envie-nos um Email</b><small>support@forgelabs.example</small></div>
+        <div data-brand-email-wrap><i></i><b>Envie-nos um Email</b><small data-brand-email>support@forgelabs.example</small></div>
       </div>
       <div id="faqList"></div>
     </div>
   </section>
 
   <footer class="container footer">
-    <span class="logo"><span>FORGE</span><small>LABS</small></span>
+    <span class="logo" data-brand-logo><span>FORGE</span><small>LABS</small></span>
     <p class="muted">Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</p>
-    <small class="muted">© 2026 Forge Labs</small>
+    <small class="muted">© 2026 <span data-brand-name>Forge Labs</span></small>
   </footer>
 
   <!-- CART DRAWER -->
@@ -153,6 +154,7 @@
   </aside>
   <div class="toast" id="toast">Adicionado! Precisa de mais?</div>
 
+  <script src="brand.js"></script>
   <script src="products.js"></script>
   <script src="app.js"></script>
 </body>

@@ -6,13 +6,14 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Forge Backoffice</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/admin/admin.css">
+  <link rel="icon" href="../favicon.svg">
+  <link rel="stylesheet" href="admin.css">
 </head>
 <body>
   <!-- LOGIN -->
   <section class="login" id="login">
     <form id="loginForm">
-      <span class="logo"><span>FORGE</span><small>BACKOFFICE</small></span>
+      <span class="logo" data-brand-logo="BACKOFFICE"><span>FORGE</span><small>BACKOFFICE</small></span>
       <h1>Iniciar sessão</h1>
       <input type="password" name="password" placeholder="Palavra-passe de administrador" required autofocus>
       <p class="err" id="loginErr"></p>
@@ -23,13 +24,14 @@
   <!-- APP -->
   <div class="app" id="app" hidden>
     <header class="top">
-      <span class="logo"><span>FORGE</span><small>BACKOFFICE</small></span>
+      <span class="logo" data-brand-logo="BACKOFFICE"><span>FORGE</span><small>BACKOFFICE</small></span>
       <nav class="pills">
         <button data-view="orders" class="on">Pré-encomendas</button>
         <button data-view="new">Registar encomenda</button>
+        <button data-view="brand">Marca</button>
       </nav>
       <div class="top-actions">
-        <a href="/" target="_blank" class="ghost">Ver loja ↗</a>
+        <a href="../" target="_blank" class="ghost">Ver loja ↗</a>
         <button class="ghost" id="logout">Terminar sessão</button>
       </div>
     </header>
@@ -86,11 +88,75 @@
           </div>
         </form>
       </section>
+      <!-- BRAND VIEW -->
+      <section id="view-brand" hidden>
+        <div class="brand-layout">
+          <form class="card" id="brandForm">
+            <h2>Identidade da loja</h2>
+            <label>Nome da loja *<input name="storeName" required maxlength="60"></label>
+            <p class="hint">Usado no título do separador do browser, no rodapé e como texto alternativo do logótipo.</p>
+            <div class="grid2">
+              <label>Texto do logótipo<input name="logoText" maxlength="20" placeholder="ex.: FORGE"></label>
+              <label>Subtítulo do logótipo<input name="logoSub" maxlength="24" placeholder="ex.: LABS"></label>
+            </div>
+            <p class="hint">Mostrado no cabeçalho quando não há imagem de logótipo, e sempre nos rótulos dos frascos.</p>
+            <label>Cor principal
+              <span class="color-row"><input type="color" name="primaryColor"><input name="primaryHex" maxlength="7" pattern="#[0-9a-fA-F]{6}"></span>
+            </label>
+            <p class="hint" id="contrastHint"></p>
+            <label>Email de apoio<input name="supportEmail" type="email" maxlength="160" placeholder="apoio@exemplo.pt"></label>
+            <p class="err" id="brandErr"></p>
+            <button class="btn">Guardar alterações</button>
+          </form>
+
+          <div class="card">
+            <h2>Logótipo</h2>
+            <div class="upload" id="logoBox">
+              <div class="preview logo-prev" id="logoPrev"></div>
+              <div class="upload-actions">
+                <label class="btn sm file-btn">Carregar imagem<input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden></label>
+                <button type="button" class="ghost" id="logoRemove">Remover</button>
+              </div>
+              <p class="hint">PNG, JPG, WebP ou GIF, até 2 MB. Ideal: horizontal, fundo transparente, ~400×120 px.</p>
+            </div>
+            <h2>Favicon</h2>
+            <div class="upload" id="favBox">
+              <div class="fav-row"><div class="preview fav-prev" id="favPrev"></div><div class="tab-mock"><img id="favTab" alt=""><span id="tabTitle"></span></div></div>
+              <div class="upload-actions">
+                <label class="btn sm file-btn">Carregar ícone<input type="file" id="favFile" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/webp,image/gif,image/jpeg" hidden></label>
+                <button type="button" class="ghost" id="favRemove">Remover</button>
+              </div>
+              <p class="hint">PNG ou ICO quadrado, até 512 KB. Ideal: 512×512 px.</p>
+            </div>
+          </div>
+
+          <form class="card" id="pwForm">
+            <h2>Segurança</h2>
+            <label>Palavra-passe atual<input type="password" name="current" required autocomplete="current-password"></label>
+            <label>Nova palavra-passe<input type="password" name="new" minlength="8" required autocomplete="new-password"></label>
+            <label>Confirmar nova palavra-passe<input type="password" name="new2" minlength="8" required autocomplete="new-password"></label>
+            <p class="err" id="pwErr"></p>
+            <button class="btn">Alterar palavra-passe</button>
+            <p class="hint">Ao alterar, todas as outras sessões abertas são terminadas.</p>
+          </form>
+
+          <div class="card preview-card">
+            <h2>Pré-visualização</h2>
+            <div class="mini-hero" id="miniHero">
+              <div class="mini-nav"><span class="logo" data-brand-logo><span>FORGE</span><small>LABS</small></span><span class="mini-pill">Início · Coleção</span></div>
+              <div class="mini-title">Soluções<br>Inovadoras</div>
+              <span class="mini-btn">Começar →</span>
+            </div>
+            <a href="../" target="_blank" class="ghost">Abrir loja ↗</a>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
   <div class="toast" id="toast"></div>
 
-  <script src="/products.js"></script>
-  <script src="/admin/admin.js"></script>
+  <script src="../brand.js"></script>
+  <script src="../products.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
