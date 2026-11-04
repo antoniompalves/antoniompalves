@@ -1,7 +1,7 @@
 // Applies the brand configured in the backoffice (name, logo, favicon, colour, support email).
 // Used by the storefront and the backoffice. Works without a server: defaults stay in place.
 (function () {
-  const DEFAULTS = { resellerInfo: "", logoHeight: 52, storeName: "Forge Labs", logoText: "FORGE", logoSub: "LABS", primaryColor: "#f26b1d", supportEmail: "support@forgelabs.example", logoUrl: null, faviconUrl: null };
+  const DEFAULTS = { logoHeight: 52, storeName: "Forge Labs", logoText: "FORGE", logoSub: "LABS", primaryColor: "#f26b1d", supportEmail: "support@forgelabs.example", logoUrl: null, faviconUrl: null };
   // Base URL of the site, derived from where brand.js is served (works in a subfolder too).
   const BASE = (document.currentScript && document.currentScript.src) ? document.currentScript.src.replace(/brand\.js(\?.*)?$/, "") : "./";
   const url = p => (/^(https?:|data:|blob:)/.test(p) ? p : BASE + String(p).replace(/^\//, ""));
@@ -40,10 +40,6 @@
     document.querySelectorAll("[data-brand-name]").forEach(el => { el.textContent = b.storeName; });
     document.querySelectorAll("[data-brand-email]").forEach(el => { el.textContent = b.supportEmail; el.closest("[data-brand-email-wrap]")?.toggleAttribute("hidden", !b.supportEmail); });
     document.querySelectorAll("[data-brand-label]").forEach(el => { el.dataset.label = (b.logoText || b.storeName).toUpperCase().slice(0, 12); });
-    // official resellers (Marca → Revendedores oficiais), shown in the contacts section when filled in
-    document.querySelectorAll("#resellerInfo").forEach(el => { el.innerHTML = window.Md ? window.Md.render(b.resellerInfo || "") : ""; });
-    document.querySelectorAll("#resellers").forEach(el => { el.hidden = !String(b.resellerInfo || "").trim(); });
-    document.querySelectorAll("[data-reseller-link]").forEach(el => { el.hidden = !String(b.resellerInfo || "").trim(); });
     window.BRAND = b;
     if (!opts.preview) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(b)); } catch {} }
     document.dispatchEvent(new CustomEvent("brand:applied", { detail: b }));

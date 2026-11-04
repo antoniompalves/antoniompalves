@@ -113,9 +113,6 @@ O botão abre o email/WhatsApp com o texto já escrito (reveja antes de enviar).
 na encomenda antes de enviar a mensagem 4. Depois de receber o pagamento, mude o estado para
 "Pagamento validado". O CSV inclui as colunas "entrega" e "tracking".
 
-Revendedores oficiais: em "Marca" → "Revendedores oficiais" (uma linha por revendedor, ex.:
-"- **Nome** — Lisboa — 912 345 678"). Aparecem na secção de contactos e no carrinho; vazio = oculto.
-
 Menu: o botão "Menu" no cabeçalho (☰ no telemóvel) abre um painel lateral com pesquisa (resultados
 ao escrever, Enter abre o produto), as categorias com o número de produtos (a seta mostra os produtos
 de cada uma), atalhos da loja e os "Objetivos". Os objetivos são uma segunda forma de agrupar produtos:

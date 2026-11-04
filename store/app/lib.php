@@ -7,7 +7,7 @@ const SESSION_TTL = 12 * 3600;
 const BRAND_LIMITS = ['logo' => 2 * 1024 * 1024, 'favicon' => 512 * 1024];
 const DEFAULT_SETTINGS = [
     'storeName' => 'Forge Labs', 'logoText' => 'FORGE', 'logoSub' => 'LABS', 'primaryColor' => '#f26b1d',
-    'supportEmail' => 'support@forgelabs.example', 'logo' => null, 'favicon' => null, 'updatedAt' => null, 'logoHeight' => 52, 'resellerInfo' => '',
+    'supportEmail' => 'support@forgelabs.example', 'logo' => null, 'favicon' => null, 'updatedAt' => null, 'logoHeight' => 52,
 ];
 define('WEB_ROOT', dirname(__DIR__));
 
@@ -835,7 +835,6 @@ function brand_public(): array
     return [
         'storeName' => $b['storeName'], 'logoText' => $b['logoText'], 'logoSub' => $b['logoSub'],
         'primaryColor' => $b['primaryColor'], 'supportEmail' => $b['supportEmail'], 'logoHeight' => (int) $b['logoHeight'],
-        'resellerInfo' => (string) $b['resellerInfo'],
         'logoUrl' => $b['logo'] ? 'uploads/brand/' . $b['logo'] : null,
         'faviconUrl' => $b['favicon'] ? 'uploads/brand/' . $b['favicon'] : null,
         'updatedAt' => $b['updatedAt'],
@@ -854,7 +853,6 @@ function brand_update(array $in): void
         if (!is_string($in['primaryColor']) || !preg_match('/^#[0-9a-f]{6}$/i', $in['primaryColor'])) throw new HttpError(400, 'Cor inválida (use o formato #rrggbb)');
         $kv['primaryColor'] = strtolower($in['primaryColor']);
     }
-    if (array_key_exists('resellerInfo', $in)) $kv['resellerInfo'] = str_in((string) $in['resellerInfo'], 2000);
     if (array_key_exists('paymentInfo', $in)) $kv['paymentInfo'] = str_in((string) $in['paymentInfo'], 1000); // admin-only
     if (array_key_exists('logoHeight', $in)) {
         $h = $in['logoHeight'];

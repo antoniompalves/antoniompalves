@@ -54,7 +54,7 @@ if (!$installed && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if (!is_dir(__DIR__ . '/uploads/brand')) @mkdir(__DIR__ . '/uploads/brand', 0755, true);
             $done = true;
         } catch (PDOException $e) {
-            $errors[] = 'Não foi possível ligar à base de dados: ' . htmlspecialchars($e->getMessage());
+            $errors[] = 'Não foi possível aceder à base de dados: ' . htmlspecialchars($e->getMessage());
         } catch (Throwable $e) {
             $errors[] = htmlspecialchars($e->getMessage());
         }

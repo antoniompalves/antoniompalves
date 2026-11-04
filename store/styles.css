@@ -253,14 +253,11 @@ img.pimg { position: absolute !important; inset: 0; width: 100% !important; heig
 .bo-note { color: #3730a3 !important; }
 .preorder .fl { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
 
-/* ---------- payment info / resellers ---------- */
+/* ---------- payment info ---------- */
 .pay-info { background: #f6f4f2; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 .pay-info p { margin: 0 !important; font-size: 12.5px !important; line-height: 1.5; color: #444; }
 .pay-info ul { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.5; color: #444; }
 .pay-info a, .delivery a, .acc a { color: var(--orange); font-weight: 600; }
-.resellers { margin-top: 22px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; scroll-margin-top: 20px; }
-.resellers h4 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
-.resellers .md { font-size: 13px; }
 
 /* ---------- products page (produtos.php) ---------- */
 .page-head { margin-top: 22px; }

@@ -40,8 +40,7 @@
     if (p.stock <= (p.lowStock ?? 5)) return `<span class="stock low">Últimas ${p.stock} em stock · entrega imediata</span>`;
     return `<span class="stock ok">Em stock · entrega imediata</span>`;
   };
-  const resellerHint = () => String((window.BRAND || {}).resellerInfo || "").trim()
-    ? ' Em alternativa, <a href="./#resellers" data-goto="#resellers">contacte um revendedor oficial</a>.' : " Em alternativa, pode contactar um revendedor oficial.";
+  const resellerHint = () => " Em alternativa, pode contactar um <b>revendedor oficial</b>.";
   // delivery box on the product page
   const deliveryBox = p => {
     const line = !tracked(p) ? "Entrega em Portugal: imediata se houver stock, caso contrário até 3 semanas."
@@ -461,7 +460,6 @@
   // re-render product art once the configured brand is known
   document.addEventListener("brand:applied", () => {
     document.querySelectorAll(".vial[data-label]").forEach(v => { if (v.dataset.label) v.dataset.label = brandLabel(); });
-    if (isProduct) renderDetail(PAGE.id); // reseller hint depends on the brand settings
   });
   window.Brand.load(isProduct ? { titlePrefix: PAGE.name } : PAGE.type === "products" ? { titlePrefix: "Produtos" } : PAGE.type === "notfound" ? { titlePrefix: "Produto não encontrado" } : {});
 })();

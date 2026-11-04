@@ -600,7 +600,7 @@
   ],
   [
    "Posso comprar através de um revendedor?",
-   "Sim. Em alternativa à encomenda no site, pode contactar um revendedor oficial."
+   "Sim. Em alternativa à encomenda no site, pode contactar um <b>revendedor oficial</b>."
   ],
   [
    "Qual é o prazo de entrega?",

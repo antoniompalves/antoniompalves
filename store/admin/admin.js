@@ -128,7 +128,7 @@
       <div class="panel-head"><div><h3>${esc(o.number)}</h3><small class="muted">${fmtDate(o.createdAt)} · ${L(o.source)}</small></div>
         <button class="ghost" id="closePanel">✕</button></div>
       <div><h4>Estado</h4><select id="statusSel">${STATUSES.map(s => `<option value="${s}" ${s === o.status ? "selected" : ""}>${L(s)}</option>`).join("")}</select></div>
-      <div><h4>Cliente</h4><p><b>${esc(c.name)}</b>${c.phone ? `<br><a href="tel:${esc(c.phone.replace(/[^+\d]/g, ""))}">📞 ${esc(c.phone)}</a> · <a target="_blank" rel="noopener" href="https://wa.me/${waNum(c.phone)}">WhatsApp</a>` : ""}${c.email ? `<br><a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</p>
+      <div><h4>Cliente</h4><p><b>${esc(c.name)}</b>${c.phone ? `<br>${esc(c.phone)} · <a target="_blank" rel="noopener" href="https://wa.me/${waNum(c.phone)}">WhatsApp</a>` : ""}${c.email ? `<br><a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</p>
         <p class="call-hint">Contactar o cliente por email ou WhatsApp (mensagens prontas abaixo). Só processar/enviar depois de mudar o estado para "Pagamento validado".</p>
         ${c.address || c.city ? `<p>${esc(c.address)}<br>${esc(c.postcode)} ${esc(c.city)}<br>${esc(c.country)}</p>` : ""}</div>
       <div><h4>Artigos</h4>${o.items.map(i => `<div class="li"><span>${i.qty} × ${esc(i.name)}${(i.backorder || 0) > 0 ? `<br><small class="bo-tag">${i.qty - i.backorder} em stock · ${i.backorder} por encomenda (até 3 semanas)</small>` : ""}<br><small class="muted">${esc(i.sub)} · ${eur(i.unit)}${i.discount ? ` · −${eur(i.discount)} quantidade` : ""}</small></span><b>${eur(i.total)}</b></div>`).join("")}
@@ -912,7 +912,6 @@
     const b = window.BRAND || window.Brand.DEFAULTS;
     bf.storeName.value = b.storeName; bf.logoText.value = b.logoText || ""; bf.logoSub.value = b.logoSub || "";
     bf.primaryColor.value = b.primaryColor; bf.primaryHex.value = b.primaryColor; bf.supportEmail.value = b.supportEmail || "";
-    bf.resellerInfo.value = b.resellerInfo || "";
     bf.paymentInfo.value = PAYMENT_INFO;
     bf.logoHeight.value = b.logoHeight || 52; $("#logoHVal").textContent = bf.logoHeight.value;
     contrastHint(b.primaryColor); renderBrandMedia(); $("#brandErr").textContent = "";
@@ -925,7 +924,7 @@
     e.preventDefault(); $("#brandErr").textContent = "";
     const f = Object.fromEntries(new FormData(bf));
     try {
-      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail, logoHeight: +f.logoHeight, resellerInfo: f.resellerInfo, paymentInfo: f.paymentInfo }) });
+      const b = await api("api/settings", { method: "POST", body: JSON.stringify({ storeName: f.storeName, logoText: f.logoText, logoSub: f.logoSub, primaryColor: f.primaryColor, supportEmail: f.supportEmail, logoHeight: +f.logoHeight, paymentInfo: f.paymentInfo }) });
       PAYMENT_INFO = f.paymentInfo || "";
       window.Brand.apply(b, { titleSuffix: "Backoffice" }); fillBrandForm(); toast("Marca atualizada");
     } catch (err) { $("#brandErr").textContent = err.message; previewBrand(); }
