@@ -364,6 +364,15 @@ blockquote cite { display: block; margin-top: 14px; font-size: 13px; font-style:
 blockquote p { margin: 0; }
 blockquote cite small { display: block; color: rgba(255,255,255,.6); font-size: 11px; margin-top: 3px; }
 blockquote.has-img { min-height: 340px; background-size: cover; background-position: center; }
+/* desktop: the testimonial fills the card, so it is as tall as the FAQ column next to it */
+@media (min-width: 901px) {
+  .help:not(.no-reviews) .reviews { display: flex; flex-direction: column; }
+  .help:not(.no-reviews) blockquote, .help:not(.no-reviews) blockquote.has-img { flex: 1; min-height: 420px; padding: 40px; }
+  .help:not(.no-reviews) blockquote p { font-size: 21px; line-height: 1.45; }
+  .help:not(.no-reviews) blockquote .t-stars { font-size: 20px; }
+  .help:not(.no-reviews) blockquote cite { font-size: 16px; } .help:not(.no-reviews) blockquote cite small { font-size: 13px; }
+  .help:not(.no-reviews) .t-nav { margin-top: 18px; }
+}
 .t-stars { color: #ffc24a; letter-spacing: 2px; font-size: 15px; margin-bottom: 10px; } .t-stars span { color: rgba(255,255,255,.25); }
 .t-nav { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
 .t-nav > button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font-size: 18px; }
