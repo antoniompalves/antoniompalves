@@ -604,3 +604,15 @@ body.cart-open .drawer { visibility: visible; transition: transform .45s var(--e
 
 .synth .synth-img { flex: none; height: 76px; width: auto; filter: drop-shadow(0 8px 12px rgba(0,0,0,.28)); transform: rotate(-6deg); }
 @media (max-width: 680px) { .synth .synth-img { height: 58px; } }
+
+/* mobile footer: logo sits below the divider line with breathing room */
+@media (max-width: 680px) {
+  .footer { padding-top: 22px; gap: 12px; }
+  .footer .logo { margin-top: 4px; align-self: flex-start; }
+  .footer .logo.has-img img { height: 34px; }
+}
+/* breadcrumbs: more padding inside the glass pill (mobile) */
+@media (max-width: 680px) {
+  .crumbs { padding: 10px 18px; gap: 8px; line-height: 1.2; }
+  .page-head .crumbs, .crumbs { margin-top: 14px; }
+}

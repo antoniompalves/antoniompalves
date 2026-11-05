@@ -95,7 +95,7 @@
   // optional reseller code: a link that opens the text field
   const setCodeBox = open => {
     $("#codeBox").hidden = !open; $("#codeToggle").setAttribute("aria-expanded", String(open));
-    $("#codeToggle").innerHTML = open ? '<span aria-hidden="true">−</span> Não tenho código' : '<span aria-hidden="true">＋</span> Tenho um código de revendedor';
+    $("#codeToggle").innerHTML = open ? '<span aria-hidden="true">−</span> Não tenho código' : '<span aria-hidden="true">＋</span> Tenho um código do revendedor';
     if (open) setTimeout(() => form.resellerCode.focus(), 50); else form.resellerCode.value = "";
   };
   $("#codeToggle").onclick = () => setCodeBox($("#codeBox").hidden);
