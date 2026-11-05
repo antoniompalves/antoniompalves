@@ -576,3 +576,16 @@ body.cart-open .drawer { visibility: visible; transition: transform .45s var(--e
 @media (max-width: 680px) { .q-img { height: 260px; padding: 16px; } }
 .q-img { display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
 .q-img img { display: block; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; min-height: 0; }
+
+/* hero stage: product range photo instead of the drawn bottle */
+.hero-stage { background: #f4f5f7; }
+.hero-stage .hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; display: block; z-index: 0; }
+.hero-stage .feat-card, .hero-stage .stat-card { z-index: 1; }
+@media (max-width: 680px) { .hero-stage .hero-bg { object-position: 58% 70%; } }
+.hero-stage { background: radial-gradient(120% 120% at 50% 40%, #fbfcfe 0%, #f4f5f8 60%, #eef0f5 100%); }
+.hero-stage .hero-bg { object-fit: contain; object-position: 50% 55%; }
+@media (max-width: 680px) { .hero-stage .hero-bg { object-fit: cover; object-position: 60% 100%; height: 64%; } }
+@media (min-width: 681px) {
+  .hero-stage .hero-bg { -webkit-mask-image: linear-gradient(90deg, transparent 22%, #000 32%, #000 68%, transparent 78%), linear-gradient(transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 22%, #000 32%, #000 68%, transparent 78%), linear-gradient(transparent, #000 8%, #000 92%, transparent); mask-composite: intersect; }
+}
