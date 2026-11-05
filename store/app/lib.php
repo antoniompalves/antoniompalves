@@ -350,8 +350,20 @@ function ensure_products(): void
         }
         $pdo->commit();
     }
+    // one-time: every product gets the standard verification text and link (editable per product afterwards)
+    $st = $pdo->prepare('SELECT v FROM ' . t('settings') . ' WHERE k = ?');
+    $st->execute(['verifyDefaultsApplied']);
+    if ($st->fetchColumn() !== VERIFY_DEFAULTS_VERSION) {
+        $pdo->prepare('UPDATE ' . t('products') . ' SET security_text = ?, verify_url = ?')->execute([VERIFY_TEXT_DEFAULT, VERIFY_URL_DEFAULT]);
+        setting_set(['verifyDefaultsApplied' => VERIFY_DEFAULTS_VERSION]);
+    }
     $ok = true;
 }
+
+// standard product verification ("Como funciona" + link), used for all products and as the default for new ones
+const VERIFY_TEXT_DEFAULT = 'A Hilma Biocare™ cuida dos consumidores e desenvolve regularmente diversos meios de proteção dos seus produtos, o que garante a segurança do paciente e a confiança na verificação dos nossos produtos';
+const VERIFY_URL_DEFAULT = 'https://hilmabiocare.com/product-verification/';
+const VERIFY_DEFAULTS_VERSION = '1';
 
 function row_to_product(array $r): array
 {
@@ -586,9 +598,13 @@ function product_fields(array $in, bool $creating): array
         $f['specs'] = json_encode($clean, JSON_UNESCAPED_UNICODE);
     }
     if (array_key_exists('position', $in) && is_numeric($in['position'])) $f['position'] = (int) $in['position'];
-    if ($creating || array_key_exists('securityText', $in)) $f['security_text'] = str_in($in['securityText'] ?? '', 2000);
+    if ($creating || array_key_exists('securityText', $in)) {
+        $f['security_text'] = str_in($in['securityText'] ?? '', 2000);
+        if ($creating && $f['security_text'] === '') $f['security_text'] = VERIFY_TEXT_DEFAULT;
+    }
     if ($creating || array_key_exists('verifyUrl', $in)) {
         $u = str_in($in['verifyUrl'] ?? '', 300);
+        if ($creating && $u === '') $u = VERIFY_URL_DEFAULT;
         if ($u !== '' && (!filter_var($u, FILTER_VALIDATE_URL) || !preg_match('~^https?://~i', $u))) throw new HttpError(400, 'Link de verificação inválido (deve começar por https://)');
         $f['verify_url'] = $u;
     }

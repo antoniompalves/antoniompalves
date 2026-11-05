@@ -85,7 +85,9 @@ controlo de stock podem ser sempre encomendados. Filtros "Stock baixo" e "Esgota
 
 Verificação e embalagem: no formulário do produto, a secção "Verificação e embalagem" permite
 carregar uma imagem do código de proteção (selo/código de segurança), uma imagem com os tamanhos
-da embalagem, um texto "Como funciona" e um link de verificação (https://). Aparecem numa secção
+da embalagem, um texto "Como funciona" e um link de verificação (https://). Por omissão, todos os
+produtos usam o texto padrão da Hilma Biocare™ e o link https://hilmabiocare.com/product-verification/
+(pode alterá-los em cada produto). Aparecem numa secção
 própria no fim da página do produto, só quando preenchidos.
 
 Avaliações de clientes: quando uma encomenda está "entregue", abra-a em Pré-encomendas e carregue
