@@ -512,3 +512,10 @@ body.cart-open .drawer { visibility: visible; transition: transform .45s var(--e
   .stats .stat small { white-space: normal; text-align: center; line-height: 1.2; }
 }
 @media (min-width: 681px) { .stats .stat small { font-size: 13px; } .stats .stat b { font-size: 40px; } }
+
+/* shelves: enough room inside the scroll box for the card shadows (no hard cut at the bottom/sides).
+   The padding is cancelled by negative margins, so cards keep their place and width. */
+.track { --gut: 24px; padding: 20px var(--gut) 46px; margin: -20px calc(-1 * var(--gut)) -34px; scroll-padding-inline: var(--gut); }
+@media (max-width: 900px) { .track { --gut: 16px; } }
+@media (max-width: 680px) { .track { --gut: 14px; } }
+.carousel .arrow { top: calc(40% - 6px); }
