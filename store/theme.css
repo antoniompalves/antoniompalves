@@ -404,16 +404,16 @@ button:active, .btn-dark:active, .btn-orange:active, .add:active, .icon-btn:acti
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes slideIn { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.menu.in .menu-cats li, .menu.in .menu-cols > div { animation: rise .42s var(--ease) both; animation-delay: calc(var(--i, 0) * 28ms + 60ms); }
+.menu.in .menu-cats li, .menu.in .menu-cols > div { animation: rise .42s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 28ms + 60ms); }
 .menu.in .menu-cols > div { --i: 8; }
-.menu.sub-anim .mp-list li { animation: slideIn .4s var(--ease) both; animation-delay: calc(var(--i, 0) * 22ms + 80ms); }
+.menu.sub-anim .mp-list li { animation: slideIn .4s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 22ms + 80ms); }
 .drawer { transition: transform .45s var(--ease); }
 .overlay, .menu-overlay { transition: opacity .35s ease; }
-.acc[open] > div, .acc[open] > p { animation: rise .3s var(--ease) both; }
+.acc[open] > div, .acc[open] > p { animation: rise .3s var(--ease) backwards; }
 .acc summary::after { transition: transform .25s var(--ease); }
-.detail, .page-head, .crumbs, .related, .pinfo { animation: rise .5s var(--ease) both; }
+.detail, .page-head, .crumbs, .related, .pinfo { animation: rise .5s var(--ease) backwards; }
 .js-reveal .card:not(.seen) { opacity: 0; transform: translateY(16px); }
-.js-reveal .card.seen { animation: rise .5s var(--ease) both; animation-delay: calc(var(--d, 0) * 45ms); }
+.js-reveal .card.seen { animation: rise .5s var(--ease) backwards; animation-delay: calc(var(--d, 0) * 45ms); }
 .toast { transition: transform .4s var(--ease), opacity .25s; }
 .tabbar svg { transition: transform .25s var(--ease); }
 .tabbar .on svg { transform: translateY(-1px) scale(1.06); }
@@ -519,3 +519,7 @@ body.cart-open .drawer { visibility: visible; transition: transform .45s var(--e
 @media (max-width: 900px) { .track { --gut: 16px; } }
 @media (max-width: 680px) { .track { --gut: 14px; } }
 .carousel .arrow { top: calc(40% - 6px); }
+
+/* Safari keeps a compositing layer on elements whose animation stays applied ("both"); that layer clipped the
+   shadows of the panels inside the product page. Animations now leave nothing behind once they finish. */
+.detail, .page-head, .crumbs, .related, .pinfo, .verify, .reviews-block, .acc, .delivery { will-change: auto; }
