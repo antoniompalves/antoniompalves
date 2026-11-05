@@ -382,6 +382,7 @@
   if (menu) {
     $("#menuOpen").onclick = () => setMenu(true);
     $("#burger").onclick = () => setMenu(true);
+    if ($("#headSearch")) $("#headSearch").onclick = () => { setMenu(true); setTimeout(() => $("#menuSearch").focus(), 60); };
     $("#menuClose").onclick = $("#menuOverlay").onclick = () => setMenu(false);
     document.addEventListener("keydown", e => {
       if (e.key !== "Escape" || !document.body.classList.contains("menu-open")) return;

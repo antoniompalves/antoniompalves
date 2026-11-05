@@ -476,3 +476,39 @@ h1, h2, h3, .section-title { word-spacing: .02em; }
 /* cart bottom sheet: fully hidden when closed (iOS toolbar resizes the viewport) */
 .drawer { visibility: hidden; transition: transform .45s var(--ease), visibility 0s linear .45s; }
 body.cart-open .drawer { visibility: visible; transition: transform .45s var(--ease), visibility 0s; }
+
+/* uploaded logo: no white pill behind it (header, footer, menu) */
+.logo.has-img, .nav .logo.has-img, .footer .logo.has-img, .menu-head .logo.has-img, .rv-top .logo.has-img {
+  background: transparent; border: 0; box-shadow: none; padding: 0; border-radius: 0;
+}
+
+/* on the blue home hero the uploaded logo is shown in white; inner pages keep its colours */
+.hero-wrap:not(.compact) .nav .logo.has-img img { filter: brightness(0) invert(1); }
+
+/* header search button */
+.search-btn { margin-left: auto; width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 50%;
+  background: rgba(255,255,255,.9); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.08); transition: transform .2s var(--ease), background .2s; }
+.search-btn:hover { background: #fff; }
+.search-btn:active { transform: scale(.94); }
+.search-btn + .menu-btn { margin-left: 8px; }
+@media (max-width: 680px) {
+  .search-btn { width: 44px; height: 44px; border-radius: 14px; background: rgba(255,255,255,.22); border: 1px solid rgba(255,255,255,.35); color: #fff; box-shadow: none; margin-right: 8px; }
+  .hero-wrap.compact .search-btn { width: 40px; height: 40px; border-radius: 12px; background: rgba(18,21,43,.05); border-color: transparent; color: var(--ink); }
+}
+
+/* stats row: equal boxes that fill the width (4 on desktop, 2×2 on tablet, badge + 3 on mobile) */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.stats > * { min-width: 0; min-height: 104px; margin: 0; border-radius: var(--r-md); box-sizing: border-box; }
+.stats .stat { display: flex; flex-direction: column; justify-content: center; padding: 16px 20px; }
+.stats .stat small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 6px; }
+.synth { justify-content: flex-start; gap: 16px; padding: 14px 20px; overflow: hidden; font-size: 20px; }
+.synth .vial-sm { flex: none; transform: scale(.8); transform-origin: center; }
+@media (max-width: 1000px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) {
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .stats > * { min-height: 84px; }
+  .synth { grid-column: 1 / -1; min-height: 72px; justify-content: center; font-size: 18px; }
+  .stats .stat { padding: 12px 6px; text-align: center; align-items: center; }
+  .stats .stat small { white-space: normal; text-align: center; line-height: 1.2; }
+}
+@media (min-width: 681px) { .stats .stat small { font-size: 13px; } .stats .stat b { font-size: 40px; } }
