@@ -16,6 +16,7 @@ mkdir -p "$STAGE/uploads/products"
 cp "$SRC/uploads/brand/.keep" "$STAGE/uploads/brand/"
 cp "$SRC/uploads/products/.keep" "$STAGE/uploads/products/"
 mkdir -p "$STAGE/uploads/testimonials"; cp "$SRC/uploads/testimonials/.keep" "$STAGE/uploads/testimonials/"
+mkdir -p "$STAGE/img"; cp "$SRC"/img/* "$STAGE/img/"
 cp "$SRC/INSTALAR.txt" "$STAGE/"
 
 # Cache busting: every build gets its own ?v= so browsers always load the new CSS/JS

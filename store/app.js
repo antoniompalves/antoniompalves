@@ -502,6 +502,16 @@
   }
   // shelves scroll sideways only: undo any vertical offset Safari may apply (snap, focus, find-in-page)
   document.addEventListener("scroll", e => { const t = e.target; if (t.classList && t.classList.contains("track") && t.scrollTop) t.scrollTop = 0; }, true);
+  // mission video: loads and plays only while on screen (saves mobile data); stays still with reduced motion / data saver
+  const mv = $("#missionVideo");
+  if (mv) {
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches || (navigator.connection && navigator.connection.saveData);
+    if (still) { mv.preload = "metadata"; }
+    else if (window.IntersectionObserver) {
+      new IntersectionObserver(([en]) => { if (en.isIntersecting) mv.play().catch(() => {}); else mv.pause(); }, { threshold: 0.25 }).observe(mv);
+    } else { mv.autoplay = true; }
+    mv.addEventListener("playing", () => mv.parentElement.classList.add("playing"));
+  }
   renderPage();
   if ((catParam || params.get("q")) && $("#collection")) setTimeout(() => $("#collection").scrollIntoView(), 0);
 
