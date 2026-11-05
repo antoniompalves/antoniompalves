@@ -1,0 +1,49 @@
+# Loja + API PHP — regras para Apache (cPanel)
+Options -Indexes
+DirectoryIndex index.html index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Alguns alojamentos removem o cabeçalho Authorization; isto passa-o ao PHP.
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  # /api/<rota>  ->  api.php?route=<rota>
+  RewriteRule ^api/(.*)$ api.php?route=$1 [QSA,L]
+  # /produto/<id>  ->  página própria do produto
+  RewriteRule ^produto/([a-z0-9-]+)/?$ produto.php?id=$1 [QSA,L]
+  # /produtos  ->  página com promoções, mais vendidos, novidades e catálogo completo
+  RewriteRule ^produtos/?$ produtos.php [QSA,L]
+</IfModule>
+
+# Ficheiros que nunca devem ser servidos
+<FilesMatch "(^\.|\.(md|sql|log|sh|bak|dist)$|^package\.json$|^INSTALAR\.txt$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  # Site para uso interno: nenhum motor de busca deve indexar páginas, imagens ou ficheiros
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# Pages are always revalidated so a new upload (new ?v= on CSS/JS) shows immediately
+<FilesMatch "\.html$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache"
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+</IfModule>

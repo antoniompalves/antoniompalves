@@ -1,0 +1,185 @@
+INSTALAÇÃO DA LOJA NO CPANEL
+============================
+
+Requisitos
+----------
+- Alojamento com cPanel, Apache e PHP 8.1 ou superior (com PDO MySQL e mbstring — vêm ativos por omissão).
+- Uma base de dados MySQL ou MariaDB.
+- Certificado SSL (HTTPS) ativo no domínio — no cPanel: "SSL/TLS Status" ou "Let's Encrypt".
+
+1. Criar a base de dados
+------------------------
+cPanel → "Bases de dados MySQL" (MySQL Databases):
+  a) Crie uma base de dados, por exemplo  loja   → fica  <utilizadorcpanel>_loja
+  b) Crie um utilizador com uma palavra-passe forte → fica  <utilizadorcpanel>_loja
+  c) Em "Adicionar utilizador à base de dados", associe o utilizador à base de dados
+     e marque "TODOS OS PRIVILÉGIOS".
+Guarde o nome da base de dados, o utilizador e a palavra-passe.
+
+2. Carregar os ficheiros
+------------------------
+cPanel → "Gestor de Ficheiros" (File Manager):
+  a) Abra a pasta  public_html  (ou uma subpasta, ex.: public_html/loja).
+  b) Ative "Mostrar ficheiros ocultos" (Definições, canto superior direito) — o ficheiro .htaccess é necessário.
+  c) "Carregar" → escolha  loja-cpanel.zip.
+  d) Clique com o botão direito no zip → "Extrair". Depois pode apagar o zip.
+
+3. Executar o assistente de instalação
+--------------------------------------
+Abra no browser:  https://o-seu-dominio.pt/install.php
+(ou https://o-seu-dominio.pt/loja/install.php se usou uma subpasta)
+
+Preencha:
+  - Servidor: localhost (na maioria dos alojamentos cPanel)
+  - Nome da base de dados, utilizador e palavra-passe do passo 1
+  - Nome da loja e a palavra-passe do backoffice (mínimo 8 caracteres)
+
+Carregue em "Instalar".
+
+4. Apagar o install.php
+-----------------------
+Por segurança, apague o ficheiro  install.php  no Gestor de Ficheiros.
+(O assistente fica bloqueado depois de instalado, mas não deve ficar no servidor.)
+
+5. Entrar no backoffice
+-----------------------
+  https://o-seu-dominio.pt/admin/
+
+  - Pré-encomendas: lista, pesquisa, estados, notas internas, exportação CSV
+  - Registar encomenda: pedidos recebidos por telefone/email
+  - Produtos: preços, promoções, descrições, imagens, ativar/desativar, criar e eliminar
+  - Categorias: criar, renomear, ordenar, ocultar e eliminar (movendo os produtos)
+  - Stock: controlo por produto, entradas/saídas/acertos, alertas de stock baixo e histórico
+  - Testemunhos: mensagens reais de clientes (com foto opcional) mostradas na página inicial
+  - Marca: nome da loja, logótipo, favicon, cor principal, email de apoio e palavra-passe
+
+Estrutura
+---------
+  index.html, styles.css, app.js   loja
+  brand.js                         aplica a marca configurada no backoffice
+  products.js                      catálogo (produtos, preços, categorias, FAQ)
+  admin/                           backoffice
+  api.php                          API (pré-encomendas, marca, autenticação)
+  app/lib.php                      código do servidor  (pasta protegida pelo .htaccess)
+  app/config.php                   criado pelo instalador — dados da base de dados (NÃO partilhar)
+  uploads/brand/                   logótipo e favicon carregados
+  uploads/products/                imagens dos produtos
+  uploads/testimonials/            fotos dos testemunhos
+
+Alterar produtos, preços, descrições e imagens
+----------------------------------------------
+Backoffice → "Produtos". Clique num produto para editar nome, subtítulo, categoria, preço,
+promoção (%), descrição, ordem e estado (ativo/inativo, mais vendido, novidade), e para carregar
+uma imagem (PNG, JPG, WebP ou GIF até 3 MB). As alterações aparecem logo na loja.
+Um produto inativo deixa de aparecer na loja e não pode ser encomendado — use esta opção em vez de
+eliminar se quiser manter o histórico.
+
+Os preços das encomendas são sempre calculados no servidor a partir da base de dados.
+Stock: no formulário do produto, marque "Controlar stock deste produto" e indique o stock inicial
+e o limite de alerta. Cada encomenda retira as unidades disponíveis (nunca abaixo de zero); o resto
+fica por encomenda (até 3 semanas). Cancelar uma encomenda (ou eliminá-la sem estar cancelada)
+devolve as unidades que tinham sido retiradas.
+Registe entradas de mercadoria, saídas e acertos de inventário no próprio produto — todos os
+movimentos ficam no histórico. Na loja aparece "Em stock · entrega imediata", "Últimas N em stock" ou "Por encomenda · até 3 semanas". Produtos sem
+controlo de stock podem ser sempre encomendados. Filtros "Stock baixo" e "Esgotados" na lista.
+
+Verificação e embalagem: no formulário do produto, a secção "Verificação e embalagem" permite
+carregar uma imagem do código de proteção (selo/código de segurança), uma imagem com os tamanhos
+da embalagem, um texto "Como funciona" e um link de verificação (https://). Por omissão, todos os
+produtos usam o texto padrão da Hilma Biocare™ e o link https://hilmabiocare.com/product-verification/
+(pode alterá-los em cada produto). Aparecem numa secção
+própria no fim da página do produto, só quando preenchidos.
+
+Avaliações de clientes: quando uma encomenda está "entregue", abra-a em Pré-encomendas e carregue
+em "Pedir avaliação". Copie o link ou envie-o por email/WhatsApp. O cliente avalia cada produto da
+encomenda (estrelas e texto, uma vez por produto). As avaliações ficam pendentes em "Avaliações" até
+as publicar; pode responder publicamente. Na loja aparecem com "Compra verificada" e a média de
+estrelas passa a ser calculada só com avaliações reais aprovadas.
+
+Tamanho do logótipo: em "Marca", ajuste "Tamanho do logótipo no cabeçalho" (28 a 96 px).
+
+Uso interno — sem indexação: o site não aparece em motores de busca. Todas as páginas têm
+"noindex, nofollow", o servidor envia X-Robots-Tag em todas as respostas (páginas, imagens, API) e o
+robots.txt bloqueia tudo. Não há sitemap.
+
+Encomendas: o cliente adiciona produtos ao carrinho e carrega em "Registar encomenda", indicando o
+nome, o email e o telemóvel/WhatsApp. A loja informa que vai receber mensagens por email ou WhatsApp
+para confirmar a encomenda e fazer o pagamento, receber a confirmação do pagamento e o tracking do
+envio; que a encomenda só é processada após a validação do pagamento; e que, em alternativa, pode
+contactar um revendedor oficial. No formulário, "Tenho um código do revendedor" abre um campo
+opcional para o código; fica guardado na encomenda (lista, painel, pesquisa e coluna
+"codigo_revendedor" no CSV).
+
+No backoffice, cada encomenda tem "Mensagens ao cliente" prontas a enviar por Email ou WhatsApp:
+  1. Confirmar encomenda   2. Pedido de pagamento   3. Pagamento confirmado   4. Envio e tracking
+O botão abre o email/WhatsApp com o texto já escrito (reveja antes de enviar). A mensagem 2 usa os
+"Dados de pagamento" definidos em Marca (privados, nunca aparecem na loja). Guarde o "Nº de seguimento"
+na encomenda antes de enviar a mensagem 4. Depois de receber o pagamento, mude o estado para
+"Pagamento validado". O CSV inclui as colunas "entrega" e "tracking".
+
+Menu: o botão "Menu" no cabeçalho (☰ no telemóvel) abre um painel lateral com pesquisa (resultados
+ao escrever, Enter abre o produto), as categorias com o número de produtos (tocar numa categoria
+desliza para um segundo nível com os produtos, com filtro; volta-se com "‹ Voltar", Esc ou deslizando
+para a direita), atalhos da loja e os "Objetivos". Os objetivos são uma segunda forma de agrupar produtos:
+gerem-se em "Categorias" → cartão "Objetivos" (criar, renomear, ordenar, remover — renomear mantém
+os produtos associados) e marcam-se em cada produto no editor. Só aparecem no menu os objetivos que
+têm produtos. Cada objetivo abre /produtos?goal=<id>.
+
+Página "Produtos": /produtos mostra as Promoções, os Mais vendidos e as Novidades, e o catálogo
+completo com pesquisa, filtros e paginação. /produtos?cat=<id> abre uma categoria. O menu "Produtos",
+os destaques de categoria da homepage e o caminho de navegação das fichas levam para esta página.
+
+Entregas: em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata.
+Sem stock imediato: o produto continua disponível com "Por encomenda · até 3 semanas". Numa encomenda
+acima do stock, as unidades disponíveis saem do stock e as restantes ficam "por encomenda"; o
+backoffice mostra, por artigo, quantas são de entrega imediata e quantas até 3 semanas (etiqueta
+"até 3 sem." na lista e coluna "entrega" no CSV). Cancelar devolve ao stock só as unidades retiradas.
+
+Páginas de produto: cada produto tem a sua própria página, em  /produto/<id>  (ex.: /produto/boldenone).
+Os cartões da homepage abrem essa página. No backoffice, "Ver página ↗" no editor do produto abre-a.
+
+Importar conteúdo: em "Produtos" → "⇪ Importar conteúdo", carregue ficheiros .md/.txt (vários de
+uma vez) ou cole o texto. Formato:
+  # Nome do produto
+  ## Especificações
+  - Rótulo: Valor
+  ## Qualquer título
+  Parágrafos e listas (- item), **negrito**
+Cada texto é associado ao produto pelo título (confirme na lista). As especificações vão para a tabela
+do produto e o resto para a descrição; linhas "Fonte" e a secção "Imagens" são ignoradas (as imagens
+nunca são descarregadas). Pré-visualize antes de aplicar. Na página do produto, "Detalhes" mostra o
+primeiro parágrafo e a secção "Especificações / Descrição" mostra o conteúdo completo.
+
+Imagens em massa: em "Produtos" → "⬆ Imagens em massa", selecione várias imagens de uma vez.
+Cada ficheiro é associado ao produto com o mesmo nome (ex.: "Testosterone Enanthate.jpg"; maiúsculas
+e acentos não contam). Confirme ou corrija cada associação antes de carregar.
+
+Testemunhos: em "Testemunhos" registe mensagens que recebeu de clientes (email, WhatsApp, telefone…),
+com nome ou iniciais, data, origem, estrelas opcionais e uma foto opcional enviada pelo cliente.
+É obrigatório confirmar que a mensagem é real e que tem autorização para a publicar. Os publicados
+aparecem na página inicial; sem testemunhos publicados, a secção não é mostrada.
+
+Backoffice → "Categorias": crie, renomeie e ordene as categorias (a ordem é a dos filtros da loja;
+as duas primeiras com produtos aparecem em destaque na página inicial). Ocultar uma categoria
+esconde-a da loja juntamente com os seus produtos. Para eliminar uma categoria com produtos, o
+backoffice pede para escolher para onde os mover.
+
+O ficheiro products.js só é usado para criar o catálogo e as categorias iniciais (na primeira
+utilização) e para as perguntas frequentes.
+
+Cópias de segurança
+-------------------
+As encomendas ficam na base de dados (tabelas fl_orders, fl_settings, …). Inclua-a nas cópias de
+segurança do cPanel ("Cópia de segurança" → "Base de dados MySQL"), juntamente com a pasta uploads/ (logótipo, favicon e imagens de produtos).
+
+Resolução de problemas
+----------------------
+- "Erro 404" ao enviar uma pré-encomenda ou entrar no backoffice:
+  o ficheiro .htaccess não foi extraído ou o mod_rewrite está desativado. Confirme que .htaccess
+  existe na pasta (ficheiros ocultos visíveis).
+- "Não autorizado" logo após entrar: alguns servidores removem o cabeçalho Authorization;
+  a loja já envia também X-Admin-Token. Se persistir, contacte o alojamento.
+- Ficheiro de logótipo recusado: use PNG, JPG, WebP ou GIF até 2 MB (favicon: PNG/ICO até 512 KB).
+  Se o erro for "demasiado grande para o servidor", aumente upload_max_filesize em
+  cPanel → "Selecionar versão do PHP" → Opções (ou "MultiPHP INI Editor").
+- Erro 500: veja cPanel → "Erros" (Errors) ou o ficheiro error_log na pasta da loja.

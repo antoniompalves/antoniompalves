@@ -1,0 +1,10 @@
+# Gerado pelo install.php — contém as credenciais da base de dados
+app/config.php
+# Imagens carregadas no backoffice
+uploads/brand/*
+!uploads/brand/.keep
+uploads/products/*
+!uploads/products/.keep
+error_log
+uploads/testimonials/*
+!uploads/testimonials/.keep

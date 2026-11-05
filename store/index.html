@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#eef1f8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <title>Forge Labs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css?v=dev">
+  <link rel="stylesheet" href="theme.css?v=dev">
+  <link rel="stylesheet" href="api/brand.css">
+</head>
+<body>
+  <!-- HERO -->
+  <section class="hero-wrap" id="home">
+    <div class="hero">
+      <header class="nav">
+        <a class="logo" href="./" data-brand-logo><span>FORGE</span><small>LABS</small></a>
+        <nav class="pills" id="navPills">
+          <a href="./" class="active">Início</a>
+          <a href="produtos">Produtos</a>
+          <a href="./#about">Sobre Nós</a>
+          <a href="./#contact">Contactos</a>
+        </nav>
+        <button class="search-btn" id="headSearch" aria-label="Pesquisar produtos"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+        <button class="menu-btn" id="menuOpen" aria-label="Abrir menu" aria-controls="menu" aria-expanded="false"><span class="mb-ico">☰</span><span class="mb-txt">Menu</span></button>
+        <button class="cart-btn" id="openCart">Carrinho <span class="cart-ico"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg><b id="cartCount">0</b></span></button>
+        <button class="burger" id="burger" aria-label="Menu">☰</button>
+      </header>
+
+      <!--HOME-ONLY-->
+      <div class="hero-top">
+        <h1>Soluções<br>Inovadoras de<br>Performance</h1>
+        <div class="hero-side">
+          <p>Compostos testados em laboratório, entregues em Portugal e no resto da Europa, sempre em embalagem discreta, com descontos por quantidade em todas as encomendas.</p>
+          <a href="produtos" class="btn-dark">Ver produtos <span>→</span></a>
+        </div>
+      </div>
+
+      <div class="hero-stage">
+        <img class="hero-bg" src="img/hero.jpg" alt="" width="1600" height="900" fetchpriority="high" decoding="async">
+        <article class="feat-card" id="featCard"></article>
+        <div class="stat-card">
+          <small>Produtos Disponíveis</small>
+          <strong id="prodCount">67</strong>
+          <div class="bar"><i style="width:76%"></i></div>
+          <div class="row"><span>21 lotes testados em laboratório</span><span>76%</span></div>
+          <small class="muted">Qualidade verificada em cada lote</small>
+        </div>
+      </div>
+      <!--/HOME-ONLY-->
+    </div>
+  </section>
+
+  <!--HOME-ONLY-->
+  <!-- STATS -->
+  <section class="container stats" id="about">
+    <div class="synth">
+      <img class="synth-img" src="img/promo-peptido.webp" alt="" width="180" height="420">
+      <span>Testado em<br>Laboratório</span>
+    </div>
+    <div class="stat"><b>5+</b><small>Anos Online</small></div>
+    <div class="stat"><b>4K</b><small>Clientes Satisfeitos</small></div>
+    <div class="stat"><b>PT</b><small>Entregas em Portugal</small></div>
+  </section>
+
+  <!-- MISSION VIDEO -->
+  <section class="container mission">
+    <div class="mission-media">
+      <video id="missionVideo" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"
+        src="https://hilmabiocare-store.com/wp-content/uploads/2026/07/mov_main_01-1.mp4"></video>
+      <p class="mission-card"><b>A nossa missão</b> — beneficiar a sociedade produzindo medicamentos modernos, eficazes e de elevada qualidade.</p>
+    </div>
+  </section>
+
+  <!-- QUALITY STANDARDS -->
+  <section class="container quality" aria-labelledby="qualityTitle">
+    <div class="q-stats">
+      <div class="q-stat"><b>08</b><small>Anos no mercado</small></div>
+      <div class="q-stat"><b>47</b><small>Países servidos</small></div>
+      <div class="q-stat"><b>60</b><small>Produtos fabricados</small></div>
+      <div class="q-stat"><b>03</b><small>Laboratórios de produção</small></div>
+    </div>
+    <div class="q-main">
+      <div class="q-img"><img src="img/qualidade.png" alt="Frasco Hilma Biocare com selo 100% Quality Product" width="517" height="821" loading="lazy"></div>
+      <div class="q-text">
+        <span class="q-eyebrow">Padrões de qualidade</span>
+        <h2 id="qualityTitle">A Hilma Biocare opera segundo as normas GMP</h2>
+        <p>Os produtos são fabricados em estrita conformidade com a composição química exigida, em condições controladas, evitando componentes indesejados e garantindo a sua preservação ao longo de todo o prazo de validade.</p>
+        <div class="q-badges">
+          <div class="q-badge"><b>100%</b><small>Controlo de<br>qualidade</small></div>
+          <div class="q-badge"><b>GMP</b><small>Normas</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROMO CARDS -->
+  <section class="container promo">
+    <div class="promo-main">
+      <small>Novidades</small>
+      <h2>Péptidos testados.<br>Resultados Garantidos.</h2>
+      <img class="promo-img l" src="img/promo-peptido.webp" alt="" width="180" height="420" loading="lazy"><img class="promo-img r" src="img/promo-oral-2.webp" alt="" width="165" height="420" loading="lazy">
+      <a href="produtos?cat=peptides" class="btn-dark sm" data-cat-link="peptides">Saber Mais</a>
+    </div>
+    <a class="promo-tile" href="produtos?cat=injectable" data-tile="0">
+      <h4>Injetáveis</h4><small>desde 29 €</small>
+      <img class="tile-img" src="img/promo-injetavel.webp" alt="" width="420" height="418" loading="lazy">
+    </a>
+    <a class="promo-tile" href="produtos?cat=oral" data-tile="1">
+      <h4>Compostos<br>orais</h4><small>desde 21 €</small>
+      <img class="tile-img" src="img/promo-oral.webp" alt="" width="414" height="420" loading="lazy">
+    </a>
+  </section>
+
+  <!-- BEST SELLING -->
+  <section class="container" id="best">
+    <h2 class="section-title">Mais Vendidos</h2>
+    <div class="carousel">
+      <button class="arrow left" data-dir="-1">‹</button>
+      <div class="track" id="bestTrack"></div>
+      <button class="arrow right" data-dir="1">›</button>
+    </div>
+    <div class="see-all"><a href="produtos" class="btn-dark">Ver todos os produtos <span>→</span></a></div>
+  </section>
+
+
+  <!--/HOME-ONLY-->
+  <!--PAGE-SLOT-->
+
+  <!-- REVIEWS + FAQ -->
+  <section class="container help no-reviews" id="contact">
+    <div class="reviews" id="reviews" hidden>
+      <div class="reviews-head">
+        <span class="big" id="tCount"></span>
+        <div><h3>O que dizem os nossos clientes</h3><p class="muted">Mensagens que recebemos de clientes, publicadas com a sua autorização.</p></div>
+      </div>
+      <blockquote id="quote" aria-live="polite"></blockquote>
+      <div class="t-nav" id="tNav">
+        <button type="button" data-tdir="-1" aria-label="Testemunho anterior">‹</button>
+        <div class="t-dots" id="tDots"></div>
+        <button type="button" data-tdir="1" aria-label="Testemunho seguinte">›</button>
+      </div>
+    </div>
+    <div class="faq">
+      <h3>Tem alguma dúvida?<br>Estamos aqui para ajudar.</h3>
+      <p class="muted">As nossas perguntas frequentes. Ainda precisa de ajuda? Contacte-nos abaixo.</p>
+      <div class="contacts">
+        <div><i></i><b>Chat ao Vivo</b><small>Seg–Sáb, 9:00–20:00 (hora de Lisboa)</small></div>
+        <div data-brand-email-wrap><i></i><b>Envie-nos um Email</b><small data-brand-email>support@forgelabs.example</small></div>
+      </div>
+      <div id="faqList"></div>
+    </div>
+  </section>
+
+  <footer class="container footer">
+    <span class="logo" data-brand-logo><span>FORGE</span><small>LABS</small></span>
+    <p class="muted">Leia atentamente as instruções. Não exceda a dose recomendada. Consulte o seu médico antes de utilizar.</p>
+    <small class="muted">© 2026 <span data-brand-name>Forge Labs</span></small>
+  </footer>
+
+  <!-- MENU (categorias, objetivos, pesquisa) -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <aside class="menu" id="menu" aria-label="Menu" aria-hidden="true">
+    <div class="menu-head">
+      <button type="button" class="icon-btn" id="menuClose" aria-label="Fechar menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <a class="logo" href="./" data-brand-logo><span>FORGE</span><small>LABS</small></a>
+      <a class="icon-btn" href="produtos" aria-label="Todos os produtos"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></a>
+    </div>
+    <div class="mpanels" id="mpanels">
+    <section class="mpanel mp-root menu-body" id="mpRoot">
+      <label class="menu-search"><input type="search" id="menuSearch" placeholder="Pesquisar" autocomplete="off" aria-label="Pesquisar produtos">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></label>
+      <div class="menu-results" id="menuResults" hidden></div>
+      <ul class="menu-cats" id="menuCats"></ul>
+      <div class="menu-cols">
+        <div><h4>Loja</h4><ul class="menu-links">
+          <li><a href="produtos">Todos os produtos</a></li>
+          <li><a href="produtos#promos">Promoções</a></li>
+          <li><a href="produtos#bestsellers">Mais vendidos</a></li>
+          <li><a href="produtos#newin">Novidades</a></li>
+          <li><a href="./#about">Sobre Nós</a></li>
+          <li><a href="./#contact">Contactos</a></li>
+        </ul></div>
+        <div id="menuGoalsCol" hidden><h4>Objetivos</h4><ul class="menu-links" id="menuGoals"></ul></div>
+      </div>
+    </section>
+    <!-- second level: products of a category or goal (slides in from the right) -->
+    <section class="mpanel mp-sub" id="mpSub" aria-hidden="true">
+      <div class="mp-head">
+        <button type="button" class="pill-btn" id="mpBack"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 6-6 6 6 6"/></svg>Voltar</button>
+        <h3 id="mpTitle"></h3>
+        <button type="button" class="icon-btn" id="mpFind" aria-label="Filtrar lista"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+      </div>
+      <label class="mp-filter" id="mpFilterWrap" hidden><input type="search" id="mpFilter" placeholder="Filtrar…" autocomplete="off" aria-label="Filtrar produtos"></label>
+      <ul class="mp-list" id="mpList"></ul>
+      <a class="mp-all" id="mpAll" href="produtos">Ver todos na página Produtos <svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></a>
+    </section>
+    </div>
+  </aside>
+
+  <!-- CART DRAWER -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head"><h3>O seu carrinho</h3><button id="closeCart">✕</button></div>
+    <div id="cartItems"></div>
+    <div class="drawer-foot">
+      <div class="row"><span>Desconto por quantidade</span><span id="cartDisc">0,00 €</span></div>
+      <div class="row total"><span>Total</span><span id="cartTotal">0,00 €</span></div>
+      <p class="ship-note">💳 A encomenda só é processada após a validação do pagamento. Recebe as instruções por email ou WhatsApp.<br>🚚 Entrega em Portugal: imediata para artigos em stock, até 3 semanas para os restantes.<br>📦 Embalagem sempre discreta.</p>
+      <button class="btn-orange" id="checkout">Registar encomenda</button>
+    </div>
+    <form class="preorder" id="preorder" hidden>
+      <button type="button" class="back" id="backToCart">← Voltar ao carrinho</button>
+      <h4>Os seus dados</h4>
+      <div class="pay-info">
+        <p><b>Como funciona:</b> depois de registar a encomenda, vai receber uma mensagem por <b>email ou WhatsApp</b> para:</p>
+        <ul><li>confirmar a encomenda e fazer o pagamento;</li><li>receber a confirmação do pagamento;</li><li>receber o número de seguimento (tracking) do envio.</li></ul>
+        <p>A encomenda só é processada <b>após a validação do pagamento</b>. Nada é cobrado agora.</p>
+        <p>Em alternativa, pode contactar um <b>revendedor oficial</b>.</p>
+      </div>
+      <label class="fl">Nome<input name="name" placeholder="O seu nome" required maxlength="120" autocomplete="name"></label>
+      <label class="fl">Email<input name="email" type="email" placeholder="nome@exemplo.pt" required maxlength="160" autocomplete="email"></label>
+      <label class="fl">Telemóvel / WhatsApp<input name="phone" type="tel" placeholder="9xx xxx xxx" required maxlength="40" autocomplete="tel" inputmode="tel" minlength="9"></label>
+      <button type="button" class="code-toggle" id="codeToggle" aria-expanded="false" aria-controls="codeBox"><span aria-hidden="true">＋</span> Tenho um código do revendedor</button>
+      <div class="code-box" id="codeBox" hidden>
+        <label class="fl">Código de revendedor<input name="resellerCode" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ex.: REV-1234"></label>
+        <p class="code-hint">Opcional. Indique o código que o seu <b>revendedor oficial</b> lhe forneceu.</p>
+      </div>
+      <p class="form-err" id="formErr"></p>
+      <button class="btn-orange" type="submit" id="submitOrder">Registar encomenda</button>
+    </form>
+    <div class="done" id="orderDone" hidden></div>
+  </aside>
+  <div class="toast" id="toast">Adicionado ao carrinho</div>
+
+  <!-- MOBILE TAB BAR -->
+  <nav class="tabbar" id="tabbar" aria-label="Navegação">
+    <a href="./" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</a>
+    <a href="produtos" data-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>Produtos</a>
+    <button type="button" id="tabSearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Pesquisar</button>
+    <button type="button" id="tabCart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h15l-1.5 9h-12z"/><path d="M6 7 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>Carrinho<span class="tb-count" id="tabCount" data-n="0">0</span></button>
+  </nav>
+
+  <script src="brand.js?v=dev"></script>
+  <script src="products.js?v=dev"></script>
+  <script src="app.js?v=dev"></script>
+</body>
+</html>

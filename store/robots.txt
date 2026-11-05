@@ -1,0 +1,3 @@
+# Site para uso interno — não indexar
+User-agent: *
+Disallow: /

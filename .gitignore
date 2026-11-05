@@ -1,1 +1,3 @@
 hilmabiocare.zip
+dist/*
+!dist/loja-cpanel.zip
