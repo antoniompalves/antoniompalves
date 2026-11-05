@@ -523,3 +523,8 @@ body.cart-open .drawer { visibility: visible; transition: transform .45s var(--e
 /* Safari keeps a compositing layer on elements whose animation stays applied ("both"); that layer clipped the
    shadows of the panels inside the product page. Animations now leave nothing behind once they finish. */
 .detail, .page-head, .crumbs, .related, .pinfo, .verify, .reviews-block, .acc, .delivery { will-change: auto; }
+
+/* Safari: snap only on the horizontal axis. With a plain "start" it also aligned the cards vertically and
+   scrolled the (overflow-y: hidden) shelf down by its top padding, cutting the top of the cards and their shadows. */
+.track { scroll-snap-type: x mandatory; scroll-padding-block: 0; }
+.track > *, .track > .card, .card { scroll-snap-align: none start; }
