@@ -557,6 +557,33 @@
     $("#impSummary").textContent = IMP.length ? `${IMP.length} texto(s) · ${n} para aplicar` : "Ainda não carregou nenhum texto.";
     $("#impGo").disabled = !n; $("#impGo").textContent = n ? `Aplicar a ${n} produto${n === 1 ? "" : "s"}` : "Aplicar";
   }
+  // ---------- bulk price change ----------
+  const bpRound = (x, m) => m === "ten" ? Math.round(x * 10) / 10 : m === "euro" ? Math.round(x) : m === "n90" ? Math.max(0.9, Math.round(x + 0.1) - 0.1) : Math.round(x * 100) / 100;
+  const eurA = n => new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(n);
+  function bpList() { const c = $("#bpCat").value; return PRODUCTS.filter(p => !c || p.cat === c); }
+  function renderBp() {
+    const pct = parseFloat(String($("#bpPct").value).replace(",", ".")), m = $("#bpRound").value, list = bpList();
+    const ok = Number.isFinite(pct) && pct !== 0 && pct >= -90 && pct <= 500;
+    $("#bpRows").innerHTML = list.map(p => `<tr><td>${esc(p.name)}</td><td>${eurA(p.price)}</td><td><b>${ok ? eurA(Math.min(100000, bpRound(p.price * (1 + pct / 100), m))) : "—"}</b></td></tr>`).join("");
+    $("#bpSummary").textContent = ok ? `${list.length} produto(s) · ${pct > 0 ? "+" : ""}${pct}%` : "Indique uma percentagem entre −90 e 500 (diferente de 0).";
+    $("#bpGo").disabled = !ok || !list.length;
+  }
+  $("#priceOpen").onclick = () => {
+    $("#bpCat").innerHTML = '<option value="">Todos os produtos</option>' + CATEGORIES.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
+    renderBp(); $("#bprice").hidden = false;
+  };
+  ["#bpPct", "#bpCat", "#bpRound"].forEach(s => $(s).addEventListener("input", renderBp));
+  $("#bpClose").onclick = $("#bpCancel").onclick = () => { $("#bprice").hidden = true; };
+  $("#bpGo").onclick = async () => {
+    const pct = $("#bpPct").value, n = bpList().length;
+    if (!confirm(`Alterar o preço de ${n} produto(s) em ${pct}%? Esta ação não pode ser anulada automaticamente.`)) return;
+    $("#bpGo").disabled = true;
+    try {
+      const r = await api("api/products/bulk-price", { method: "POST", body: JSON.stringify({ percent: pct, cat: $("#bpCat").value, round: $("#bpRound").value }) });
+      PRODUCTS = r.products; renderProducts(); renderProdSel(); renderLines();
+      $("#bprice").hidden = true; toast(`Preços atualizados em ${r.updated} produto(s)`);
+    } catch (e) { toast(e.message); $("#bpGo").disabled = false; }
+  };
   $("#importOpen").onclick = () => { IMP = []; $("#impProgress").hidden = true; $("#impText").value = ""; renderImp(); $("#imp").hidden = false; };
   $("#impClose").onclick = $("#impCancel").onclick = () => { $("#imp").hidden = true; IMP = []; loadProducts(); };
   $("#impFiles").onchange = async e => {

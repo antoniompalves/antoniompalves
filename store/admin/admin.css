@@ -279,3 +279,16 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   .grid2 { grid-template-columns: 1fr; } .span2 { grid-column: auto; }
   .toolbar input { width: 100%; }
 }
+
+/* bulk price modal */
+.bp-list table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.bp-list th, .bp-list td { padding: 9px 12px; text-align: left; white-space: normal; overflow-wrap: anywhere; vertical-align: middle; }
+.bp-list th:nth-child(1), .bp-list td:nth-child(1) { width: 56%; }
+.bp-list th:nth-child(2), .bp-list td:nth-child(2), .bp-list th:nth-child(3), .bp-list td:nth-child(3) { width: 22%; text-align: right; font-variant-numeric: tabular-nums; }
+.bp-list td:nth-child(2) { color: var(--muted); }
+@media (max-width: 640px) { #bprice .row { grid-template-columns: 1fr !important; } }
+/* modals never wider than the screen (grid track was sized by the table content) */
+.modal { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+.modal-box { max-width: calc(100vw - 32px); min-width: 0; box-sizing: border-box; }
+.modal-box.bulk-box, .modal-box.imp-box { width: min(860px, calc(100vw - 32px)); }
+#bprice label { min-width: 0; } #bprice input, #bprice select { width: 100%; box-sizing: border-box; }

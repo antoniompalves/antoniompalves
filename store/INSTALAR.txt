@@ -138,6 +138,12 @@ backoffice mostra, por artigo, quantas são de entrega imediata e quantas até 3
 Páginas de produto: cada produto tem a sua própria página, em  /produto/<id>  (ex.: /produto/boldenone).
 Os cartões da homepage abrem essa página. No backoffice, "Ver página ↗" no editor do produto abre-a.
 
+Ajustar preços em massa: em "Produtos" → "％ Ajustar preços", indique a percentagem (ex.: 40 para +40%,
+-10 para −10%), escolha todos os produtos ou uma categoria e o arredondamento (cêntimo, 10 cêntimos,
+euro ou terminar em ,90). A tabela mostra o preço atual e o novo antes de aplicar. As promoções (%)
+mantêm-se sobre o novo preço; as encomendas já registadas não mudam. Para desfazer, aplique a
+percentagem inversa (ex.: depois de +40%, use −28,57%) ou corrija os produtos individualmente.
+
 Importar conteúdo: em "Produtos" → "⇪ Importar conteúdo", carregue ficheiros .md/.txt (vários de
 uma vez) ou cole o texto. Formato:
   # Nome do produto

@@ -644,6 +644,41 @@ function product_update(string $id, array $in): array
     return row_to_product(find_product($id));
 }
 
+// bulk price change: +/- a percentage on every product (or one category), with optional rounding
+function bulk_price_round(float $x, string $mode): float
+{
+    switch ($mode) {
+        case 'ten': return round($x, 1);
+        case 'euro': return round($x);
+        case 'n90': return max(0.9, round($x + 0.1) - 0.1);
+        default: return round($x, 2);
+    }
+}
+function products_bulk_price(array $in): array
+{
+    $pct = $in['percent'] ?? null;
+    if (is_string($pct)) $pct = str_replace(',', '.', trim($pct));
+    if (!is_numeric($pct) || (float) $pct == 0.0 || (float) $pct < -90 || (float) $pct > 500) throw new HttpError(400, 'Percentagem inválida (entre −90% e +500%, diferente de 0)');
+    $pct = (float) $pct;
+    $cat = (string) ($in['cat'] ?? '');
+    if ($cat !== '' && !in_array($cat, category_ids(), true)) throw new HttpError(400, 'Categoria inválida');
+    $mode = in_array($in['round'] ?? 'cent', ['cent', 'ten', 'euro', 'n90'], true) ? $in['round'] : 'cent';
+    $pdo = db();
+    $rows = $cat === '' ? $pdo->query('SELECT id, price FROM ' . t('products'))->fetchAll()
+        : (function () use ($pdo, $cat) { $st = $pdo->prepare('SELECT id, price FROM ' . t('products') . ' WHERE cat = ?'); $st->execute([$cat]); return $st->fetchAll(); })();
+    $upd = $pdo->prepare('UPDATE ' . t('products') . ' SET price = ?, updated_at = ? WHERE id = ?');
+    $now = now_iso(); $n = 0;
+    $pdo->beginTransaction();
+    try {
+        foreach ($rows as $r) {
+            $new = min(100000, bulk_price_round((float) $r['price'] * (1 + $pct / 100), $mode));
+            $upd->execute([$new, $now, $r['id']]); $n++;
+        }
+        $pdo->commit();
+    } catch (Throwable $e) { $pdo->rollBack(); throw $e; }
+    return ['updated' => $n, 'products' => products_list(true)];
+}
+
 function product_delete(string $id): void
 {
     $r = find_product($id);

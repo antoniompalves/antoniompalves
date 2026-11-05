@@ -103,6 +103,7 @@
           <span class="stock-summary" id="stockSummary"></span>
           <button class="btn sm" id="newProduct">+ Novo produto</button>
           <button type="button" class="ghost" id="importOpen">⇪ Importar conteúdo</button>
+          <button type="button" class="ghost" id="priceOpen">％ Ajustar preços</button>
           <label class="ghost file-btn" title="Selecione várias imagens: cada uma é associada ao produto com o mesmo nome do ficheiro">⬆ Imagens em massa<input type="file" id="bulkFiles" multiple accept="image/png,image/jpeg,image/webp,image/gif" hidden></label>
         </div>
         <div class="layout" id="plLayout">
@@ -213,6 +214,26 @@
           <p class="hint" id="impSummary" style="margin:0"></p>
           <div class="bulk-progress" id="impProgress" hidden><div><i id="impBar"></i></div><span id="impPct"></span></div>
           <div class="modal-actions"><button type="button" class="ghost" id="impCancel">Fechar</button><button type="button" class="btn" id="impGo" disabled>Aplicar</button></div>
+        </div>
+      </div>
+
+      <div class="modal" id="bprice" hidden>
+        <div class="modal-box card bulk-box">
+          <div class="panel-head"><h2>Ajustar preços em massa</h2><button type="button" class="ghost" id="bpClose">✕</button></div>
+          <p class="hint" style="margin:0">Altera o preço base de vários produtos de uma vez. As promoções (%) mantêm-se e aplicam-se sobre o novo preço. As encomendas já registadas não mudam.</p>
+          <div class="row" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px">
+            <label>Alteração (%)<input id="bpPct" type="number" step="0.1" min="-90" max="500" value="40"></label>
+            <label>Produtos<select id="bpCat"><option value="">Todos os produtos</option></select></label>
+            <label>Arredondar<select id="bpRound">
+              <option value="cent">Ao cêntimo (ex.: 45,36 €)</option>
+              <option value="ten">A 10 cêntimos (ex.: 45,40 €)</option>
+              <option value="euro">Ao euro (ex.: 45,00 €)</option>
+              <option value="n90">Terminar em ,90 (ex.: 44,90 €)</option>
+            </select></label>
+          </div>
+          <div class="bulk-list bp-list"><table><thead><tr><th>Produto</th><th>Preço atual</th><th>Novo preço</th></tr></thead><tbody id="bpRows"></tbody></table></div>
+          <p class="hint" id="bpSummary" style="margin:0"></p>
+          <div class="modal-actions"><button type="button" class="ghost" id="bpCancel">Cancelar</button><button type="button" class="btn" id="bpGo">Aplicar</button></div>
         </div>
       </div>
 
