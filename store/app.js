@@ -526,6 +526,12 @@
       el.href = window.Brand.url("produtos?cat=" + encodeURIComponent(c.id));
       el.querySelector("h4").textContent = c.name;
       el.querySelector("small").textContent = "desde " + eur(min);
+      // picture that matches the category (by name/id); otherwise the first product photo of that category
+      const key = (c.id + " " + c.name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const pic = /pept/.test(key) ? "img/promo-peptido.webp" : /inje/.test(key) ? "img/promo-injetavel.webp" : /oral|compr|tab/.test(key) ? "img/promo-oral.webp"
+        : ((P.find(p => p.cat === c.id && p.imageUrl) || {}).imageUrl || "");
+      const img = el.querySelector(".tile-img");
+      if (img && pic) img.src = window.Brand.url(pic);
     });
   }
 
