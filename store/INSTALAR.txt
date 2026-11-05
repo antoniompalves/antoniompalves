@@ -129,7 +129,7 @@ Página "Produtos": /produtos mostra as Promoções, os Mais vendidos e as Novid
 completo com pesquisa, filtros e paginação. /produtos?cat=<id> abre uma categoria. O menu "Produtos",
 os destaques de categoria da homepage e o caminho de navegação das fichas levam para esta página.
 
-Entregas: em todo o Portugal, sempre em embalagem discreta. Artigos em stock: entrega imediata.
+Entregas: em Portugal e no resto da Europa, sempre em embalagem discreta. Artigos em stock: entrega imediata.
 Sem stock imediato: o produto continua disponível com "Por encomenda · até 3 semanas". Numa encomenda
 acima do stock, as unidades disponíveis saem do stock e as restantes ficam "por encomenda"; o
 backoffice mostra, por artigo, quantas são de entrega imediata e quantas até 3 semanas (etiqueta

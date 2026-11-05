@@ -604,7 +604,7 @@
   ],
   [
    "Qual é o prazo de entrega?",
-   "Entregamos em todo o Portugal. Artigos em stock: entrega imediata. Artigos sem stock imediato: até 3 semanas. Recebe o tracking assim que a encomenda for enviada."
+   "Entregamos em Portugal e no resto da Europa. Artigos em stock: entrega imediata. Artigos sem stock imediato: até 3 semanas. Recebe o tracking assim que a encomenda for enviada."
   ],
   [
    "A embalagem é discreta?",
