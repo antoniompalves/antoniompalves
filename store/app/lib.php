@@ -1142,9 +1142,13 @@ function testimonial_image_remove(int $id): array
     return row_to_testimonial(find_testimonial($id));
 }
 
-// ---------- product reviews (verified buyers only) ----------
+// ---------- product reviews ----------
 // A delivered order gets a private review link (random token). Each product of that order can be
-// reviewed once; reviews are published only after the admin approves them.
+// reviewed once; reviews are published only after the admin approves them. These are shown as
+// "Compra verificada".
+// The admin can also transcribe a review a real customer sent through another channel (WhatsApp,
+// email, ...). Those have `source` set, are never shown as verified purchases, and the storefront
+// says where they were received. Their order_id is a "manual-..." placeholder.
 const REVIEW_STATUSES = ['pending', 'approved', 'rejected'];
 
 function ensure_reviews(): void
@@ -1154,6 +1158,7 @@ function ensure_reviews(): void
     $pdo = db();
     $pdo->exec(reviews_schema($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), config()['prefix'] ?? ''));
     add_column_if_missing('orders', 'review_token', 'VARCHAR(64) NULL');
+    add_column_if_missing('reviews', 'source', 'VARCHAR(20) NULL');
     $ok = true;
 }
 
@@ -1243,8 +1248,10 @@ function review_submit(string $token, array $in): array
 
 function row_to_review(array $r, bool $admin): array
 {
+    $src = $r['source'] ?? null;
     $out = ['id' => (int) $r['id'], 'productId' => $r['product_id'], 'author' => $r['author'], 'rating' => (int) $r['rating'],
-        'text' => $r['body'], 'reply' => (string) ($r['reply'] ?? ''), 'createdAt' => $r['created_at'], 'verified' => true];
+        'text' => $r['body'], 'reply' => (string) ($r['reply'] ?? ''), 'createdAt' => $r['created_at'], 'verified' => empty($src),
+        'source' => $src ?: null, 'sourceLabel' => $src ? (TESTIMONIAL_SOURCES[$src] ?? 'Outro') : null];
     if ($admin) $out += ['status' => $r['status'], 'orderNumber' => $r['order_number'], 'orderId' => $r['order_id'], 'moderatedAt' => $r['moderated_at']];
     return $out;
 }
@@ -1263,13 +1270,65 @@ function reviews_admin_list(): array
     return array_map(fn ($r) => row_to_review($r, true), db()->query('SELECT * FROM ' . t('reviews') . ' ORDER BY id DESC LIMIT 1000')->fetchAll());
 }
 
+// Validates the content fields of a review typed in by the admin (all required when creating).
+function manual_review_fields(array $in, bool $creating): array
+{
+    $f = [];
+    if ($creating || array_key_exists('productId', $in)) { $f['product_id'] = find_product((string) ($in['productId'] ?? ''))['id']; }
+    if ($creating || array_key_exists('author', $in)) { $f['author'] = str_in($in['author'] ?? '', 40); if ($f['author'] === '') throw new HttpError(400, 'Indique o nome ou as iniciais do cliente'); }
+    if ($creating || array_key_exists('rating', $in)) {
+        $r = $in['rating'] ?? null;
+        if (!is_numeric($r) || (int) $r < 1 || (int) $r > 5) throw new HttpError(400, 'Escolha de 1 a 5 estrelas');
+        $f['rating'] = (int) $r;
+    }
+    if ($creating || array_key_exists('text', $in)) {
+        $f['body'] = str_in($in['text'] ?? '', 1500);
+        if (mb_strlen($f['body']) < 10) throw new HttpError(400, 'O texto da avaliação é demasiado curto');
+    }
+    if ($creating || array_key_exists('source', $in)) {
+        $f['source'] = (string) ($in['source'] ?? '');
+        if (!isset(TESTIMONIAL_SOURCES[$f['source']])) throw new HttpError(400, 'Indique onde recebeu a avaliação');
+    }
+    if ($creating || array_key_exists('receivedAt', $in)) {
+        $d = (string) ($in['receivedAt'] ?? '');
+        $dt = DateTime::createFromFormat('!Y-m-d', $d);
+        if (!$dt || $dt->format('Y-m-d') !== $d) throw new HttpError(400, 'Data inválida');
+        if ($dt > new DateTime('tomorrow')) throw new HttpError(400, 'A data não pode ser no futuro');
+        $f['created_at'] = $d . 'T12:00:00.000Z';
+    }
+    return $f;
+}
+
+// Admin: transcribe a review a real customer sent by WhatsApp, email, etc.
+function review_create_manual(array $in): array
+{
+    ensure_reviews();
+    if (empty($in['confirmReal'])) throw new HttpError(400, 'Confirme que a avaliação foi enviada por um cliente real');
+    $f = manual_review_fields($in, true);
+    $f['order_id'] = 'manual-' . bin2hex(random_bytes(14));
+    $f['status'] = array_key_exists('published', $in) && empty($in['published']) ? 'pending' : 'approved';
+    $f['moderated_at'] = now_iso();
+    $f['reply'] = str_in($in['reply'] ?? '', 1000);
+    $cols = implode(', ', array_keys($f));
+    db()->prepare('INSERT INTO ' . t('reviews') . " ($cols) VALUES (" . implode(',', array_fill(0, count($f), '?')) . ')')->execute(array_values($f));
+    $st = db()->prepare('SELECT * FROM ' . t('reviews') . ' WHERE id = ?');
+    $st->execute([(int) db()->lastInsertId()]);
+    return row_to_review($st->fetch(), true);
+}
+
 function review_moderate(int $id, array $in): array
 {
     ensure_reviews();
     $st = db()->prepare('SELECT * FROM ' . t('reviews') . ' WHERE id = ?');
     $st->execute([$id]);
-    if (!$st->fetch()) throw new HttpError(404, 'Avaliação não encontrada');
+    $row = $st->fetch();
+    if (!$row) throw new HttpError(404, 'Avaliação não encontrada');
     $f = [];
+    // content can only be edited on reviews typed in by the admin, never on a customer's own review
+    if (array_intersect(['productId', 'author', 'rating', 'text', 'source', 'receivedAt'], array_keys($in))) {
+        if (empty($row['source'])) throw new HttpError(403, 'O texto de uma avaliação de compra verificada não pode ser alterado');
+        $f = manual_review_fields($in, false);
+    }
     if (array_key_exists('status', $in)) {
         if (!in_array($in['status'], REVIEW_STATUSES, true)) throw new HttpError(400, 'Estado inválido');
         $f['status'] = $in['status']; $f['moderated_at'] = now_iso();

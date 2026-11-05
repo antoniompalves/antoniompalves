@@ -26,6 +26,8 @@ Funciona na raiz do domínio ou numa subpasta (ex.: `public_html/loja`).
   verificação (só https) e imagem dos tamanhos da embalagem, numa secção da página do produto
 - **Avaliações de clientes reais:** link privado por encomenda entregue, uma avaliação por produto, moderação
   (publicar/rejeitar/responder), "Compra verificada", média e contagem reais na loja
+  - **Escrever avaliação (backoffice):** regista por produto uma avaliação que um cliente enviou por WhatsApp, email,
+    etc. (canal, data e confirmação obrigatórios); editável; na loja aparece "Recebida por <canal>", nunca "Compra verificada"
 - **Testemunhos:** mensagens reais de clientes com foto opcional, origem e data; publicadas na página inicial
 - **Uso interno, sem indexação:** meta robots `noindex, nofollow` em todas as páginas, `X-Robots-Tag` em todas
   as respostas e `robots.txt` com `Disallow: /`

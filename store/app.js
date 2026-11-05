@@ -209,7 +209,7 @@
   }));
   }
 
-  // real reviews from verified buyers (count + average come from the API)
+  // customer reviews: verified buyers, plus reviews received by WhatsApp/email that the admin transcribed
   async function loadProductReviews(p) {
     const box = $("#detailReviews"); if (!box || !p.reviews) return;
     try {
@@ -219,7 +219,7 @@
       if ($("#detailReviews") !== box) return; // user opened another product meanwhile
       const card = v => `<article class="rv-card">${starRow(v.rating)}<p>${esc(v.text)}</p>
         <div class="who"><span><b>${esc(v.author)}</b></span><span>${esc(String(v.createdAt).slice(0, 10).split("-").reverse().join("/"))}</span></div>
-        <span class="verified">✓ Compra verificada</span>
+        ${v.verified ? '<span class="verified">✓ Compra verificada</span>' : `<span class="rv-src">Recebida por ${esc(v.sourceLabel || "mensagem")}</span>`}
         ${v.reply ? `<div class="rv-reply"><b>Resposta da loja</b>${esc(v.reply)}</div>` : ""}</article>`;
       const show = n => { box.querySelector(".rv-list").innerHTML = list.slice(0, n).map(card).join("");
         const more = box.querySelector(".rv-more"); more.hidden = list.length <= n; more.onclick = () => show(n + 6); };

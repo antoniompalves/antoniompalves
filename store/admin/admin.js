@@ -660,7 +660,9 @@
   };
 
   // ---------- product reviews (moderation) ----------
-  let REVIEWS = [], rvFilter = "pending";
+  let REVIEWS = [], rvFilter = "pending", rvProd = "", rvSel = null;
+  const dmyRv = iso => String(iso || "").slice(0, 10).split("-").reverse().join("/");
+  const RV_SOURCES = { email: "Email", whatsapp: "WhatsApp", phone: "Telefone", sms: "SMS", in_person: "Presencial", other: "Outro" };
   const RV_LABEL = { pending: "Pendentes", approved: "Publicadas", rejected: "Rejeitadas", all: "Todas" };
   const pname = id => (PRODUCTS.find(p => p.id === id) || {}).name || id;
   async function loadReviews(quiet) {
@@ -671,27 +673,74 @@
     $("#rvBadge").hidden = !pending; $("#rvBadge").textContent = pending;
     $("#rvChips").innerHTML = ["pending", "approved", "rejected", "all"].map(s =>
       `<button class="chip ${rvFilter === s ? "on" : ""}" data-rvs="${s}">${RV_LABEL[s]} ${s === "all" ? REVIEWS.length : REVIEWS.filter(r => r.status === s).length}</button>`).join("");
-    const list = REVIEWS.filter(r => rvFilter === "all" || r.status === rvFilter);
+    const sel = $("#rvProduct"), ids = [...new Set(REVIEWS.map(r => r.productId))].sort((a, b) => pname(a).localeCompare(pname(b)));
+    sel.innerHTML = '<option value="">Todos os produtos</option>' + ids.map(id => `<option value="${esc(id)}">${esc(pname(id))}</option>`).join("");
+    sel.value = ids.includes(rvProd) ? rvProd : (rvProd = "");
+    const list = REVIEWS.filter(r => (rvFilter === "all" || r.status === rvFilter) && (!rvProd || r.productId === rvProd));
     $("#rvAdmin").innerHTML = list.length ? list.map(r => `
       <article class="rva st-${r.status}" data-rid="${r.id}">
         <div>
           <span class="stars">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</span> <b>${esc(pname(r.productId))}</b>
           <p>${esc(r.text)}</p>
-          <div class="meta">${esc(r.author)} · ${fmtDate(r.createdAt)} · encomenda ${esc(r.orderNumber || "")} · <span class="badge s-${r.status === "approved" ? "delivered" : r.status === "rejected" ? "cancelled" : "pending"}">${RV_LABEL[r.status].replace(/s$/, "").replace(/Pendente$/, "Pendente")}</span></div>
+          <div class="meta">${esc(r.author)} · ${r.verified ? fmtDate(r.createdAt) + " · encomenda " + esc(r.orderNumber || "") : `${dmyRv(r.createdAt)} · <span class="src">recebida por ${esc(r.sourceLabel || "")}</span>`} · <span class="badge s-${r.status === "approved" ? "delivered" : r.status === "rejected" ? "cancelled" : "pending"}">${RV_LABEL[r.status].replace(/s$/, "").replace(/Pendente$/, "Pendente")}</span></div>
         </div>
         <div class="acts">
           ${r.status !== "approved" ? '<button type="button" class="btn-ok" data-rva="approved">Publicar</button>' : ""}
           ${r.status !== "rejected" ? '<button type="button" class="ghost" data-rva="rejected">Rejeitar</button>' : ""}
+          ${r.verified ? "" : '<button type="button" class="ghost" data-rva="edit">Editar</button>'}
           <button type="button" class="ghost danger-ghost" data-rva="delete">Eliminar</button>
         </div>
         <div class="reply"><textarea rows="1" maxlength="1000" placeholder="Resposta pública da loja (opcional)">${esc(r.reply)}</textarea><button type="button" class="ghost" data-rva="reply">Guardar resposta</button></div>
       </article>`).join("") : `<p class="empty" style="background:#fff;border-radius:14px">${rvFilter === "pending" ? "Não há avaliações à espera de revisão." : "Nada para mostrar."}</p>`;
   }
   $("#rvChips").onclick = e => { const b = e.target.closest("[data-rvs]"); if (b) { rvFilter = b.dataset.rvs; renderReviews(); } };
+  $("#rvProduct").onchange = e => { rvProd = e.target.value; renderReviews(); };
+
+  // reviews typed in by the admin (sent by a customer through WhatsApp, email, ...)
+  const rf = $("#rvform");
+  rf.source.innerHTML = '<option value="">Escolher…</option>' + Object.entries(RV_SOURCES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
+  const rvCount = () => { $("#rvcount").textContent = `(${rf.text.value.length}/1500)`; };
+  rf.text.oninput = rvCount;
+  function openRvForm(r) {
+    rvSel = r ? r.id : null;
+    rf.productId.innerHTML = '<option value="">Escolher produto…</option>' + [...PRODUCTS].sort((a, b) => a.name.localeCompare(b.name))
+      .map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.sub ? " · " + esc(p.sub) : ""}</option>`).join("");
+    rf.reset();
+    if (r) {
+      rf.productId.value = r.productId; rf.author.value = r.author; rf.rating.value = r.rating; rf.text.value = r.text;
+      rf.source.value = r.source || ""; rf.receivedAt.value = String(r.createdAt).slice(0, 10); rf.reply.value = r.reply;
+      rf.published.checked = r.status === "approved";
+    } else {
+      rf.productId.value = rvProd; rf.receivedAt.value = new Date().toISOString().slice(0, 10);
+    }
+    $("#rvformTitle").textContent = r ? "Editar avaliação" : "Escrever avaliação";
+    $("#rvConfirmWrap").hidden = !!r; $("#rvformErr").textContent = "";
+    rvCount(); rf.hidden = false; rf.scrollIntoView({ behavior: "smooth", block: "start" }); (r ? rf.text : rf.productId).focus();
+  }
+  $("#newReview").onclick = () => openRvForm(null);
+  $("#rvclose").onclick = () => { rf.hidden = true; rvSel = null; };
+  rf.onsubmit = async e => {
+    e.preventDefault(); $("#rvformErr").textContent = "";
+    const body = { productId: rf.productId.value, author: rf.author.value, rating: rf.rating.value, text: rf.text.value,
+      source: rf.source.value, receivedAt: rf.receivedAt.value, reply: rf.reply.value };
+    try {
+      if (rvSel === null) {
+        await api("api/reviews", { method: "POST", body: JSON.stringify({ ...body, published: rf.published.checked, confirmReal: rf.confirmReal.checked }) });
+        toast(rf.published.checked ? "Avaliação publicada" : "Avaliação guardada (pendente)");
+      } else {
+        await api("api/reviews/" + rvSel + "/update", { method: "POST", body: JSON.stringify({ ...body, status: rf.published.checked ? "approved" : "pending" }) });
+        toast("Avaliação guardada");
+      }
+      rf.hidden = true; rvSel = null;
+      rvFilter = rf.published.checked ? "approved" : "pending";
+      await loadReviews(); loadProducts();
+    } catch (err) { $("#rvformErr").textContent = err.message; }
+  };
   $("#rvAdmin").onclick = async e => {
     const b = e.target.closest("[data-rva]"); if (!b) return;
     const art = b.closest("[data-rid]"), id = art.dataset.rid, act = b.dataset.rva;
     try {
+      if (act === "edit") { openRvForm(REVIEWS.find(r => r.id === +id)); return; }
       if (act === "delete") {
         if (!confirm("Eliminar esta avaliação? O cliente não poderá voltar a avaliar este produto com o mesmo link.")) return;
         await api("api/reviews/" + id + "/delete", { method: "POST" }); REVIEWS = REVIEWS.filter(r => r.id !== +id); toast("Avaliação eliminada");

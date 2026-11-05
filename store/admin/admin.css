@@ -184,6 +184,9 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .rva .reply { grid-column: 1 / -1; display: flex; gap: 8px; }
 .rva .reply textarea { min-height: 40px; }
 .rva.st-rejected { opacity: .6; }
+.rvform { position: static; max-width: 720px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 12px; }
+.rv-filter { max-width: 240px; }
+.rva .src { font-weight: 600; color: var(--ink); }
 .ro { background: #f6f4f2 !important; color: var(--muted); }
 .review-link { display: flex; flex-direction: column; gap: 8px; background: #f6f4f2; border-radius: 10px; padding: 10px; }
 .review-link input { font-size: 12px; }

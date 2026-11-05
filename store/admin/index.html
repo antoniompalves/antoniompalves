@@ -274,9 +274,30 @@
       <!-- REVIEWS VIEW -->
       <section id="view-reviews" hidden>
         <div class="toolbar">
+          <button class="btn sm" id="newReview">+ Escrever avaliação</button>
           <div class="chips" id="rvChips"></div>
-          <span class="hint" style="margin:0">Só clientes com encomenda entregue podem avaliar, através do link que lhes envia (Pré-encomendas → encomenda entregue → "Pedir avaliação").</span>
+          <select id="rvProduct" class="rv-filter" aria-label="Filtrar por produto"></select>
+          <span class="hint" style="margin:0">Os clientes com encomenda entregue avaliam através do link que lhes envia (Pré-encomendas → encomenda entregue → "Pedir avaliação"). Use "Escrever avaliação" para registar uma avaliação que um cliente lhe enviou por WhatsApp, email, etc.</span>
         </div>
+        <form class="panel rvform" id="rvform" hidden>
+          <div class="panel-head"><h3 id="rvformTitle">Escrever avaliação</h3><button type="button" class="ghost" id="rvclose">✕</button></div>
+          <label>Produto *<select name="productId" required></select></label>
+          <div class="grid2">
+            <label>Nome ou iniciais do cliente *<input name="author" required maxlength="40" placeholder="ex.: João M."></label>
+            <label>Classificação *<select name="rating" required><option value="">Escolher…</option><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></label>
+          </div>
+          <label>Avaliação * <span class="hint" id="rvcount" style="margin:0;font-weight:400"></span><textarea name="text" rows="5" required maxlength="1500" placeholder="Copie o que o cliente escreveu sobre o produto."></textarea></label>
+          <div class="grid2">
+            <label>Recebida por *<select name="source" required></select></label>
+            <label>Data em que foi recebida *<input name="receivedAt" type="date" required></label>
+          </div>
+          <label>Resposta da loja<textarea name="reply" rows="2" maxlength="1000" placeholder="Opcional, aparece por baixo da avaliação."></textarea></label>
+          <label class="chk"><input type="checkbox" name="published" checked> Publicada na página do produto</label>
+          <label class="chk confirm" id="rvConfirmWrap"><input type="checkbox" name="confirmReal"> Confirmo que esta avaliação foi enviada por um cliente real e que tenho autorização para a publicar.</label>
+          <p class="hint" style="margin:0">Na loja aparece como "Recebida por WhatsApp" (ou o canal escolhido), não como "Compra verificada".</p>
+          <p class="err" id="rvformErr"></p>
+          <button class="btn">Guardar avaliação</button>
+        </form>
         <div class="rv-admin" id="rvAdmin"></div>
       </section>
 

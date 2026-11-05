@@ -86,6 +86,7 @@ try {
 
     // ----- reviews (admin) -----
     if ($route === 'reviews/all' && $method === 'GET') json_out(200, reviews_admin_list());
+    if ($route === 'reviews' && $method === 'POST') json_out(201, review_create_manual(body_json()));
     if (preg_match('~^reviews/(\d{1,10})/(update|delete)$~', $route, $m) && $method === 'POST') {
         if ($m[2] === 'delete') { review_delete((int) $m[1]); json_out(200, ['ok' => true]); }
         json_out(200, review_moderate((int) $m[1], body_json()));
