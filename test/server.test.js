@@ -50,8 +50,20 @@ test('first-run password, login, import, update, ledger, export', async () => {
   const h = { Cookie: cookie, 'Content-Type': 'application/json', 'X-Vroom': '1' };
 
   assert.equal((await fetch(`${base}/index.php`, { headers: h })).status, 200);
-  // CSRF header required on writes
+  // CSRF: a write without any proof is refused…
   assert.equal((await fetch(`${base}/api.php?r=deals`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: '{}' })).status, 403);
+  // …and from another site even with the header
+  assert.equal((await fetch(`${base}/api.php?r=deals`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json', 'X-Vroom': '1', Origin: 'https://evil.example' }, body: '{"title":"x"}' })).status, 403);
+  // the token works even when a host strips custom headers (sent in the URL)
+  const page = await (await fetch(`${base}/index.php`, { headers: { Cookie: cookie } })).text();
+  const token = page.match(/name="vroom-token" content="([a-f0-9]+)"/)[1];
+  assert.equal((await (await fetch(`${base}/api.php?r=state`, { headers: { Cookie: cookie } })).json()).csrf, token);
+  const viaToken = await fetch(`${base}/api.php?r=deals&t=${token}`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: '{"title":"token test"}' });
+  assert.equal(viaToken.status, 201);
+  const tokDeal = await viaToken.json();
+  // same-site Origin alone is also accepted (browsers always send it on POST)
+  assert.equal((await fetch(`${base}/api.php?r=deals/${tokDeal.id}&_method=DELETE`, { method: 'POST', headers: { Cookie: cookie, Origin: base } })).status, 200);
+  assert.equal((await fetch(`${base}/api.php?r=deals&t=wrongtoken`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: '{}' })).status, 403);
 
   const imp = await (await fetch(`${base}/api.php?r=import/paste`, { method: 'POST', headers: h, body: JSON.stringify({ content_b64: b64(lbcPage([lbcAd(), lbcAd({ id: 5, price: 9000 })])) }) })).json();
   assert.equal(imp.created, 2);

@@ -8,14 +8,15 @@ require __DIR__ . '/inc/receipts.php';
 
 set_exception_handler(function ($e) { json_out(['error' => $e->getMessage()], $e instanceof InvalidArgumentException ? 400 : 500); });
 if (!is_authed()) json_out(['error' => 'sessão necessária'], 401);
+$csrf = csrf_token();
 session_write_close(); // don't hold the session lock during slow fetches
 
 $route = trim((string)($_GET['r'] ?? ''), '/');
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 if ($method === 'POST' && isset($_GET['_method'])) $method = strtoupper((string)$_GET['_method']);
 if ($method !== 'GET') {
-    // CSRF: the app always sends this header; cross-site forms cannot.
-    if (($_SERVER['HTTP_X_VROOM'] ?? '') !== '1') json_out(['error' => 'pedido recusado'], 403);
+    // CSRF protection (see write_allowed): token, X-Vroom header or same-site Origin/Referer.
+    if (!write_allowed($csrf)) json_out(['error' => 'Pedido recusado por segurança (o pedido não veio da aplicação). Recarregue a página (F5) e tente novamente.'], 403);
 }
 
 /** Empty JSON objects come back from PHP as [] — keep known object fields as objects so the browser can add keys. */
@@ -61,7 +62,7 @@ if (preg_match('~^receipts/([a-f0-9]{24})$~', $route, $m) && $method === 'DELETE
 $s = vroom_store();
 
 if ($route === 'state' && $method === 'GET') {
-    json_out(['deals' => array_map('objectify', $s->data['deals']), 'settings' => obj($s->data['settings']), 'ledger' => $s->data['ledger'], 'firecrawl' => firecrawl_key() !== '']);
+    json_out(['deals' => array_map('objectify', $s->data['deals']), 'settings' => obj($s->data['settings']), 'ledger' => $s->data['ledger'], 'firecrawl' => firecrawl_key() !== '', 'csrf' => $csrf]);
 }
 if ($route === 'deals' && $method === 'POST') {
     $b = json_body();

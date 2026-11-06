@@ -33,17 +33,19 @@ const STATUS = Object.fromEntries(STATUSES);
 const ACTIVE = ['reserved', 'bought', 'transit', 'legalising', 'for_sale'];
 
 // 'api/deals/x' → 'api.php?r=deals/x'. PUT/DELETE travel as POST + _method (some hosts block other verbs).
-const apiUrl = (path, method = 'GET') => `api.php?r=${path.replace(/^api\//, '')}${['PUT', 'DELETE'].includes(method) ? `&_method=${method}` : ''}`;
+// security token for write requests: sent as header and in the URL (some hosts strip custom headers)
+let TOKEN = document.querySelector('meta[name="vroom-token"]')?.content || '';
+const apiUrl = (path, method = 'GET') => `api.php?r=${path.replace(/^api\//, '')}${['PUT', 'DELETE'].includes(method) ? `&_method=${method}` : ''}${method !== 'GET' && TOKEN ? `&t=${encodeURIComponent(TOKEN)}` : ''}`;
 async function api(path, opts = {}) {
   const method = (opts.method || 'GET').toUpperCase();
-  const r = await fetch(apiUrl(path, method), { ...opts, method: method === 'GET' ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Vrooom': '1', ...(opts.headers || {}) }, body: opts.body && typeof opts.body !== 'string' ? JSON.stringify(opts.body) : opts.body });
+  const r = await fetch(apiUrl(path, method), { ...opts, method: method === 'GET' ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Vroom': '1', 'X-Vroom-Token': TOKEN, ...(opts.headers || {}) }, body: opts.body && typeof opts.body !== 'string' ? JSON.stringify(opts.body) : opts.body });
   if (r.status === 401) { location.href = 'login.php'; throw new Error('login'); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
   return j;
 }
 function toast(msg, ms = 3500) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), ms); }
-async function refresh() { const j = await api('api/state'); S.deals = j.deals; S.settings = j.settings || {}; S.ledger = j.ledger || { general: [], settlements: [] }; S.firecrawl = j.firecrawl; }
+async function refresh() { const j = await api('api/state'); S.deals = j.deals; S.settings = j.settings || {}; S.ledger = j.ledger || { general: [], settlements: [] }; S.firecrawl = j.firecrawl; if (j.csrf) TOKEN = j.csrf; }
 async function saveLedger() { S.ledger = await api('api/ledger', { method: 'PUT', body: S.ledger }); }
 async function saveDeal(d) {
   const saved = await api(`api/deals/${d.id}`, { method: 'PUT', body: d });
@@ -447,7 +449,7 @@ async function uploadReceipts(files) {
   for (const f of files) {
     const fd = new FormData();
     fd.append('file', await shrinkImage(f));
-    const r = await fetch('api.php?r=receipts', { method: 'POST', headers: { 'X-Vrooom': '1' }, body: fd });
+    const r = await fetch(`api.php?r=receipts&t=${encodeURIComponent(TOKEN)}`, { method: 'POST', headers: { 'X-Vroom': '1', 'X-Vroom-Token': TOKEN }, body: fd });
     if (r.status === 401) { location.href = 'login.php'; throw new Error('login'); }
     const j = await r.json().catch(() => ({ error: `Erro no envio (HTTP ${r.status})` }));
     if (!r.ok) throw new Error(`${f.name}: ${j.error}`);

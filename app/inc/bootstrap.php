@@ -110,4 +110,42 @@ function firecrawl_key(): string
     return is_array($c) ? (string)($c['firecrawl'] ?? '') : '';
 }
 
+/** Per-session anti-CSRF token (also used by the login form). */
+function csrf_token(): string
+{
+    start_session();
+    if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
+    return (string)$_SESSION['csrf'];
+}
+
+/** Same-site check from the Origin / Referer headers the browser adds to every POST. */
+function same_origin(): bool
+{
+    $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+    foreach (['HTTP_ORIGIN', 'HTTP_REFERER'] as $k) {
+        if (empty($_SERVER[$k])) continue;
+        $h = strtolower((string)parse_url((string)$_SERVER[$k], PHP_URL_HOST));
+        $p = parse_url((string)$_SERVER[$k], PHP_URL_PORT);
+        if ($h !== '' && ($h === $host || ($p && "$h:$p" === $host))) return true;
+        return false; // present but foreign → refuse
+    }
+    return false;
+}
+
+/**
+ * Write requests must prove they come from the app. Some hosts (proxies, firewalls, caches) strip custom
+ * headers, so several proofs are accepted: the session token (header or ?t=), the X-Vroom header, or Origin/Referer.
+ */
+function write_allowed(string $token): bool
+{
+    $sent = (string)($_SERVER['HTTP_X_VROOM_TOKEN'] ?? ($_GET['t'] ?? ''));
+    if ($token !== '' && $sent !== '' && hash_equals($token, $sent)) return true;
+    if (($_SERVER['HTTP_X_VROOM'] ?? '') === '1' && same_origin_or_absent()) return true;
+    return same_origin();
+}
+function same_origin_or_absent(): bool
+{
+    return (empty($_SERVER['HTTP_ORIGIN']) && empty($_SERVER['HTTP_REFERER'])) || same_origin();
+}
+
 function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }

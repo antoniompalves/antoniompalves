@@ -8,4 +8,4 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
 header('Cache-Control: no-cache');
-readfile(__DIR__ . '/inc/shell.html');
+echo str_replace('</head>', '<meta name="vroom-token" content="' . h(csrf_token()) . '"></head>', (string)file_get_contents(__DIR__ . '/inc/shell.html'));

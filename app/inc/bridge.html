@@ -23,7 +23,8 @@ window.addEventListener('message', (e) => {
 go.onclick = async () => {
   go.disabled = true; msg.textContent = 'A importar…';
   const b64 = btoa(unescape(encodeURIComponent(payload.content)));
-  const r = await fetch('api.php?r=import/paste', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Vrooom': '1' }, body: JSON.stringify({ content_b64: b64, url: payload.url, country: payload.country }) });
+  const tok = document.querySelector('meta[name="vroom-token"]')?.content || '';
+  const r = await fetch('api.php?r=import/paste&t=' + encodeURIComponent(tok), { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Vroom': '1', 'X-Vroom-Token': tok }, body: JSON.stringify({ content_b64: b64, url: payload.url, country: payload.country }) });
   const j = await r.json().catch(() => ({}));
   if (r.status === 401) { msg.textContent = 'Entre primeiro no Vrooom.pt (nesta janela) e volte a carregar no marcador.'; open.hidden = false; open.href = 'login.php?next=bridge.php'; return; }
   msg.textContent = r.ok ? `Concluído: ${j.created} novos, ${j.updated} atualizados.` : (j.error || 'A importação falhou');
