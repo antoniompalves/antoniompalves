@@ -148,4 +148,38 @@ function same_origin_or_absent(): bool
     return (empty($_SERVER['HTTP_ORIGIN']) && empty($_SERVER['HTTP_REFERER'])) || same_origin();
 }
 
+/** Version of the front-end files = newest modification time of assets/. Changes on every update. */
+function asset_version(): string
+{
+    static $v = null;
+    if ($v !== null) return $v;
+    $files = array_merge(glob(VROOM_ROOT . '/assets/*.{js,css,svg}', GLOB_BRACE) ?: [], glob(VROOM_ROOT . '/assets/lib/*.js') ?: []);
+    $max = 0; $sig = '';
+    foreach ($files as $f) { $m = (int)@filemtime($f); $max = max($max, $m); $sig .= basename($f) . $m . (int)@filesize($f); }
+    return $v = date('Ymd-Hi', $max ?: time()) . '-' . substr(md5($sig), 0, 6);
+}
+
+/**
+ * Output a page template with cache-busted assets: ?v=<version> on the stylesheet and script, and an import map
+ * so every JavaScript module (including the ones imported by other modules) is also fetched with ?v=.
+ * Browsers and host caches can then never mix old and new files after an update.
+ */
+function render_page(string $template): void
+{
+    $v = rawurlencode(asset_version());
+    $html = (string)file_get_contents($template);
+    $map = [];
+    foreach (array_merge(glob(VROOM_ROOT . '/assets/*.js') ?: [], glob(VROOM_ROOT . '/assets/lib/*.js') ?: []) as $f) {
+        $rel = './' . ltrim(str_replace('\\', '/', substr($f, strlen(VROOM_ROOT))), '/');
+        $map[$rel] = $rel . '?v=' . $v;
+    }
+    $head = '<meta name="vroom-token" content="' . h(csrf_token()) . '"><meta name="vroom-version" content="' . h(asset_version()) . '">'
+        . '<script type="importmap">' . json_encode(['imports' => $map], JSON_UNESCAPED_SLASHES) . '</script>';
+    $html = str_replace(['assets/styles.css"', 'assets/app.js"', 'assets/logo.svg"'], ["assets/styles.css?v=$v\"", "assets/app.js?v=$v\"", "assets/logo.svg?v=$v\""], $html);
+    $html = preg_replace('~<head>~', '<head>' . $head, $html, 1);
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo $html;
+}
+
 function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }

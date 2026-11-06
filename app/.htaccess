@@ -15,6 +15,13 @@ RedirectMatch 404 ^.*/(data|inc|cron)/.*$
 # hide dotfiles, but keep /.well-known/ for AutoSSL
 RedirectMatch 404 /\.(?!well-known/)
 
+# Front-end files: always revalidate (the pages also add ?v=<version>, so updates are picked up at once)
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|html)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
 # JavaScript modules must be served as JavaScript
 AddType text/javascript .js
 AddType image/svg+xml .svg

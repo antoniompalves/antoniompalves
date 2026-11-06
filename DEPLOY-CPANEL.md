@@ -53,6 +53,8 @@ O caminho do PHP pode variar: o cPanel mostra-o na página **Cron Jobs**, ou use
 
 Envie o novo `vrooom-pt.zip` para a mesma pasta → **Extract** → substituir ficheiros. O zip não traz dados, por isso `data/` (e `config.php`, se existir) mantêm-se.
 
+Não é preciso limpar a cache do navegador: as páginas pedem cada ficheiro com o número da versão, por isso o navegador usa sempre os ficheiros novos. Para confirmar a versão em uso: **Definições → Cópia de segurança → Versão da aplicação**.
+
 ## Resolução de problemas
 
 | Sintoma | Solução |

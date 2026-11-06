@@ -19,6 +19,8 @@ test('browser sends exactly the security headers the server reads', () => {
 
 test('the token meta tag the pages inject is the one the browser reads', () => {
   const idx = fs.readFileSync('app/index.php', 'utf8') + fs.readFileSync('app/bridge.php', 'utf8');
-  assert.equal((idx.match(/meta name="vroom-token"/g) || []).length, 2);
+  const boot = fs.readFileSync('app/inc/bootstrap.php', 'utf8');
+  assert.match(boot, /meta name="vroom-token"/);
+  assert.match(idx, /render_page\(/);
   for (const src of Object.values(front)) assert.match(src, /meta\[name="vroom-token"\]/);
 });

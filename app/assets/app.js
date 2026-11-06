@@ -908,6 +908,7 @@ function viewSettings() {
         <p class="small muted">Opcional. Permite ao servidor obter páginas do leboncoin quando este o bloqueia. Fica guardada só no servidor (pasta data/). Deixe vazio e guarde para remover.</p>
         <button class="btn" id="fc_go">Guardar chave</button></div>
       <div class="card"><h3>Cópia de segurança</h3><p class="muted small">Descarregue todos os negócios e definições em JSON, ou reponha uma cópia (substitui os dados atuais; fica guardada uma cópia dos dados atuais no servidor).</p>
+        <p class="small muted">Versão da aplicação: <b class="mono">${esc(document.querySelector('meta[name="vroom-version"]')?.content || '?')}</b></p>
         <a class="btn" href="api.php?r=export">${icon('download', 16)} Descarregar cópia</a> <label class="btn">${icon('upload', 16)} Repor<input type="file" id="restore" accept=".json" hidden></label> <button class="btn danger" id="reset">Repor definições de origem</button></div>
     </div>`;
   $('#view').querySelectorAll('[data-s]').forEach((el) => el.addEventListener('change', async () => {

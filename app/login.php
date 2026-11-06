@@ -23,7 +23,7 @@ header('Content-Type: text/html; charset=utf-8');
 header('X-Frame-Options: DENY');
 ?><!doctype html>
 <html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vrooom.pt · Entrar</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="assets/styles.css"></head>
+<title>Vrooom.pt · Entrar</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="assets/styles.css?v=<?= h(rawurlencode(asset_version())) ?>"></head>
 <body class="login-page">
 <form class="login-card" method="post" action="login.php">
   <img src="assets/logo.svg" width="48" height="48" alt="">
