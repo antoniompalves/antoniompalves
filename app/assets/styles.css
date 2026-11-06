@@ -165,3 +165,16 @@ table.t td.n,table.t th.n,.nw{white-space:nowrap}
 .arch-row{display:flex;gap:10px;align-items:center;margin-bottom:10px}.arch-row .deal-row{flex:1;margin-bottom:0}
 .arch-row .deal-row .btn.sm{display:none}
 a.badge{text-decoration:none}
+/* deal modal: keep the gallery inside the window */
+.m-body{grid-template-columns:minmax(0,1fr) 420px}
+.m-body>div{min-width:0}
+.gallery{min-width:0;max-width:100%}
+.gallery .main-img{width:100%;aspect-ratio:4/3;max-height:min(62vh,560px);background-color:#0f172a;background-size:contain;background-position:center;background-repeat:no-repeat}
+.thumbs{max-width:100%;scrollbar-width:thin}
+.thumbs button{width:84px;height:56px;background-size:cover;background-position:center}
+.gal-nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:0;background:#ffffffd9;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0003}
+.gal-nav:hover{background:#fff}.gal-nav.prev{left:12px}.gal-nav.next{right:12px}
+.gal-open{position:absolute;left:12px;bottom:10px;background:#0009;color:#fff;border-radius:6px;padding:3px 9px;font-size:12px;display:inline-flex;gap:5px;align-items:center}
+.m-head h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:1150px){.m-body{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.gallery .main-img{aspect-ratio:4/3;max-height:45vh}.m-head h2{font-size:17px;white-space:normal}}

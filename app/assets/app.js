@@ -354,7 +354,7 @@ function viewImport() {
 // ---------- deal modal ----------
 function closeModal(nav = true) { $('#modal').hidden = true; document.body.style.overflow = ''; S.modalFor = null; if (nav && parseHash().name === 'deal') location.hash = S.lastHash || '#/'; }
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); else S.galKeys?.(e); });
 
 function standVirtualUrl(d) {
   const slug = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -386,7 +386,7 @@ function drawModal(d) {
   $('#modalBody').innerHTML = `
   <div class="m-head"><h2>${esc(title(d))}</h2>${d.favorite ? `<span class="badge fav">${I.heart} favorito</span>` : ''}<span class="badge">${esc(STATUS[d.status] || d.status)}</span>${d.demo ? '<span class="badge info">Demonstração</span>' : ''}<div style="margin-left:auto"></div><button class="icon-btn" id="mClose" aria-label="Fechar">${icon('x', 18)}</button></div>
   <div class="m-body"><div>
-    <div class="gallery"><div class="main-img" style="${img ? `background-image:url('${esc(img)}')` : ''}">${imgs.length ? `<span class="count">${S.modalImg + 1} / ${imgs.length}</span>` : '<div class="empty" style="height:100%;display:flex;align-items:center;justify-content:center;border:0;background:none">Sem fotos</div>'}</div>
+    <div class="gallery"><div class="main-img" style="${img ? `background-image:url('${esc(img)}')` : ''}">${imgs.length ? `<span class="count">${S.modalImg + 1} / ${imgs.length}</span><a class="gal-open" href="${esc(img)}" target="_blank" rel="noopener">${icon('ext', 13)} Ampliar</a>${imgs.length > 1 ? `<button class="gal-nav prev" data-gal="-1" aria-label="Foto anterior">${icon('chevL', 20)}</button><button class="gal-nav next" data-gal="1" aria-label="Foto seguinte">${icon('chevR', 20)}</button>` : ''}` : '<div class="empty" style="height:100%;display:flex;align-items:center;justify-content:center;border:0;background:none">Sem fotos</div>'}</div>
       ${imgs.length > 1 ? `<div class="thumbs">${imgs.map((u, i) => `<button data-img="${i}" class="${i === S.modalImg ? 'on' : ''}" style="background-image:url('${esc(u)}')" aria-label="Foto ${i + 1}"></button>`).join('')}</div>` : ''}</div>
     <div class="specs">
       <div><div class="l">Quilómetros</div><div class="v">${d.km != null ? nf.format(d.km) + ' km' : '—'}</div></div>
@@ -677,6 +677,11 @@ function bindModal(d) {
   const body = $('#modalBody');
   $('#mClose').onclick = () => closeModal();
   body.querySelectorAll('[data-img]').forEach((b) => (b.onclick = () => { S.modalImg = Number(b.dataset.img); drawModal(d); }));
+  const n = (d.images || []).length;
+  const go = (step) => { if (n > 1) { S.modalImg = (S.modalImg + step + n) % n; drawModal(d); } };
+  body.querySelectorAll('[data-gal]').forEach((b) => (b.onclick = () => go(Number(b.dataset.gal))));
+  S.galKeys = (e) => { if ($('#modal').hidden || ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return; if (e.key === 'ArrowLeft') go(-1); if (e.key === 'ArrowRight') go(1); };
+  const on = body.querySelector('.thumbs button.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   body.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { S.modalTab = b.dataset.tab; drawModal(d); }));
   const commit = async () => { try { const saved = await saveDeal(d); drawModal(saved); } catch (e) { toast(e.message); } };
   body.querySelectorAll('[data-path]').forEach((el) => el.addEventListener('change', () => {
