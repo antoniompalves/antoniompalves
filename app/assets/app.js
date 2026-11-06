@@ -1,5 +1,8 @@
 import { analyzeDeal, scoreDeals, mergeSettings, deadlinesFor, tradeInValuation, capitalPosition, DEFAULT_SETTINGS } from './lib/costs.js';
 import { processFor, progressOf } from './lib/process.js';
+import { icon, hydrateIcons } from './icons.js';
+// pre-rendered icons used inside templates
+const I = { ext: icon('ext', 14), check: icon('check', 13), checkC: icon('checkCircle', 16).replace('class="i"', 'class="i i-ok"'), circle: icon('circle', 16), x: icon('x', 13), trash: icon('trash', 15), clock: icon('clock', 16).replace('class="i"', 'class="i i-warn"'), heart: icon('heart', 13, true), heartBtn: icon('heart', 18), heartOn: icon('heart', 18, true), clip: icon('clip', 14), file: icon('file', 13), image: icon('image', 13), pin: icon('pin', 15) };
 import { EXPENSE_TYPES, CATEGORY_LABELS, CASH, SPLIT, balances, settleTransfers, paidBy, expenseStatus, expenseLabel, expenseCategory, allExpenses, estimateVsReal, toCSV } from './lib/ledger.js';
 import { computeISV, computeIUC, ageInMonths } from './lib/tax.js';
 
@@ -96,10 +99,10 @@ function dealRow(d, { compare = false } = {}) {
     a.fitsTargets ? '<span class="badge info">Alvo ISV baixo</span>' : '',
     d.status !== 'new' ? `<span class="badge">${esc(STATUS[d.status])} · ${Math.round(progressOf(d).pct * 100)}%</span>` : '',
     d.priceHistory?.length && d.price < d.priceHistory.at(-1).price ? `<span class="badge warn">Preço ↓ ${eur(d.priceHistory.at(-1).price - d.price)}</span>` : '',
-    d.favorite ? '<span class="badge">♥</span>' : '',
+    d.favorite ? `<span class="badge fav">${I.heart}</span>` : '',
   ].join('');
   return `<div class="deal-row" data-open="${d.id}">
-    <div class="thumb" ${thumbStyle(d)}>${d.images?.[0] ? '' : '🚗'}</div>
+    <div class="thumb" ${thumbStyle(d)}>${d.images?.[0] ? '' : icon('car', 30)}</div>
     <div><div class="deal-title">${esc(title(d))}</div>
       <div class="deal-meta">${flag(d.country)} <b>${esc(d.city || COUNTRIES[d.country] || '')}</b> · ${esc(d.year || '—')} · ${d.km != null ? nf.format(d.km) + ' km' : '—'} · ${esc(FUELS[d.fuel] || d.fuel || '—')} · ISV ${eur(a.isv.total)}</div>
       <div class="deal-sub">${sub}</div><div class="badges">${badges}</div></div>
@@ -133,7 +136,7 @@ function viewHome() {
   <div class="home"><div>
     <div style="display:flex;justify-content:space-between;gap:16px;align-items:start;flex-wrap:wrap">
       <div><h2>Bem-vindo ao Vroom.pt</h2><p class="muted" style="max-width:560px;margin:0">Encontre carros em França, Espanha, Alemanha e Países Baixos, veja quanto custam postos em Portugal (ISV, IUC, viagem, legalização) e acompanhe cada carro da pré-seleção até à venda.</p></div>
-      <a class="btn primary" href="#/deals" style="padding:12px 22px">⌕ Procurar negócios</a></div>
+      <a class="btn primary" href="#/deals" style="padding:12px 22px">${icon('search')} Procurar negócios</a></div>
     <div class="grid cols-4" style="margin-top:20px">
       <div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div><div class="small muted">${live.length} negócios em análise</div></div>
       <div class="card kpi"><div class="lbl">Melhor lucro líquido</div><div class="val ${cls(best)}">${signed(best)}</div></div>
@@ -147,15 +150,15 @@ function viewHome() {
   <div>
     <div class="eyebrow">Precisa da sua atenção</div>
     <div class="card">
-      ${deadlines.slice(0, 5).map((x) => `<div class="att"><div class="ic">⏱</div><div><b>${esc(x.label)}</b> — ${esc(title(x.d))}<div class="small ${x.due < new Date().toISOString().slice(0, 10) ? 'neg' : 'muted'}">prazo ${esc(x.due)}</div><a href="#/deal/${x.d.id}?tab=pipeline">Abrir</a></div></div>`).join('')}
-      ${nextSteps.slice(0, 4).map(({ d, pr }) => `<div class="att"><div class="ic">✓</div><div><b>${esc(title(d))}</b><div class="small muted">${esc(pr.phase.label)} → ${esc(pr.next.label)}</div>${progressBar(pr)}<a href="#/deal/${d.id}?tab=pipeline">Abrir checklist</a></div></div>`).join('')}
-      <div class="att"><div class="ic">€</div><div><b>${noMarket.length}</b> sem preço de mercado PT<div class="small muted">Adicione comparáveis do StandVirtual para obter o lucro</div><a href="#/deals?nomarket=1">Rever</a></div></div>
-      <div class="att"><div class="ic">⚙</div><div><b>${noSpecs.length}</b> sem CO2 ou cilindrada<div class="small muted">Sem ambos, o ISV não pode ser exato</div><a href="#/deals?nospecs=1">Corrigir</a></div></div>
-      <div class="att"><div class="ic">▦</div><div><b>${active.length}</b> carros em curso<div class="small muted">Reservado → vendido</div><a href="#/pipeline">Abrir processo</a></div></div>
+      ${deadlines.slice(0, 5).map((x) => `<div class="att"><div class="ic">${icon('clock')}</div><div><b>${esc(x.label)}</b> — ${esc(title(x.d))}<div class="small ${x.due < new Date().toISOString().slice(0, 10) ? 'neg' : 'muted'}">prazo ${esc(x.due)}</div><a href="#/deal/${x.d.id}?tab=pipeline">Abrir</a></div></div>`).join('')}
+      ${nextSteps.slice(0, 4).map(({ d, pr }) => `<div class="att"><div class="ic">${icon('list')}</div><div><b>${esc(title(d))}</b><div class="small muted">${esc(pr.phase.label)} → ${esc(pr.next.label)}</div>${progressBar(pr)}<a href="#/deal/${d.id}?tab=pipeline">Abrir checklist</a></div></div>`).join('')}
+      <div class="att"><div class="ic">${icon('euro')}</div><div><b>${noMarket.length}</b> sem preço de mercado PT<div class="small muted">Adicione comparáveis do StandVirtual para obter o lucro</div><a href="#/deals?nomarket=1">Rever</a></div></div>
+      <div class="att"><div class="ic">${icon('alert')}</div><div><b>${noSpecs.length}</b> sem CO2 ou cilindrada<div class="small muted">Sem ambos, o ISV não pode ser exato</div><a href="#/deals?nospecs=1">Corrigir</a></div></div>
+      <div class="att"><div class="ic">${icon('kanban')}</div><div><b>${active.length}</b> carros em curso<div class="small muted">Reservado → vendido</div><a href="#/pipeline">Abrir processo</a></div></div>
     </div>
     <div class="card" style="margin-top:16px">
       <h3>Analisar um anúncio</h3><p class="muted small" style="margin-top:0">Cole o URL de um anúncio ou pesquisa do leboncoin. ${S.firecrawl ? 'Usa o Firecrawl se o leboncoin bloquear o servidor.' : 'Se o leboncoin bloquear o servidor, use o marcador na página Importar anúncios.'}</p>
-      <input id="qUrl" placeholder="https://www.leboncoin.fr/ad/voitures/…"><button class="btn primary" id="qGo" style="width:100%;margin-top:8px">⚡ Obter e analisar</button>
+      <input id="qUrl" placeholder="https://www.leboncoin.fr/ad/voitures/…"><button class="btn primary" id="qGo" style="width:100%;margin-top:8px">${icon('zap', 16)} Obter e analisar</button>
     </div>
     <div class="card dark" style="margin-top:16px">
       <h3>Carros alvo (passo 1)</h3>
@@ -246,11 +249,11 @@ function viewImport() {
         <label class="f">Caixa<select id="s_gearbox"><option value="">Qualquer</option><option value="manual">Manual</option><option value="auto">Automática</option></select></label>
       </div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;margin:12px 0">${['gasoline', 'diesel', 'hybrid', 'phev', 'electric'].map((k) => `<label class="chk"><input type="checkbox" class="s_fuel" value="${k}" ${['gasoline', 'hybrid', 'electric'].includes(k) ? 'checked' : ''}> ${FUELS[k]}</label>`).join('')}<label class="chk"><input type="checkbox" id="s_pro" checked> Só profissionais</label></div>
-      <button class="btn primary" id="s_go">Abrir pesquisa no leboncoin ↗</button>
+      <button class="btn primary" id="s_go">Abrir pesquisa no leboncoin ${I.ext}</button>
       <p class="small muted">Depois carregue no marcador (2) na página de resultados para importar todos os carros de uma vez.</p></div>
     <div class="card"><h3>2 · Marcador / bookmarklet (recomendado)</h3>
       <p class="muted small">O leboncoin bloqueia servidores automáticos, mas não o seu navegador. Arraste este botão para a barra de marcadores. Em qualquer página de <b>resultados</b> ou de <b>anúncio</b> do leboncoin (e também AutoScout24, mobile.de, coches.net…), carregue nele: os carros da página são enviados para o Vroom.pt.</p>
-      <p><a class="bm" id="bm" href="#">⇣ Enviar para o Vroom.pt</a></p>
+      <p><a class="bm" id="bm" href="#">${icon('download', 16)} Enviar para o Vroom.pt</a></p>
       <ol class="steps small"><li>Entre no Vroom.pt neste navegador.</li><li>Abra o leboncoin e faça a pesquisa.</li><li>Carregue no marcador → abre-se uma pequena janela → <b>Importar</b>.</li></ol></div>
     <div class="card"><h3>3 · Obter um URL a partir do servidor</h3>
       <p class="muted small">URL de anúncio ou de pesquisa do leboncoin. ${S.firecrawl ? '<span class="badge ok">Firecrawl ativo</span> usado se o leboncoin devolver 403.' : '<span class="badge warn">Firecrawl não configurado</span> O leboncoin costuma bloquear pedidos diretos do servidor; configure a chave Firecrawl nas <a href="#/settings">Definições</a> para isto funcionar de forma fiável.'}</p>
@@ -325,7 +328,7 @@ function drawModal(d) {
   const months = ageInMonths(d.firstRegistration || d.year);
   const tabs = [['details', 'Dados do anúncio'], ['costs', 'Custos'], ['market', 'Mercado PT'], ['pipeline', 'Processo (checklist)'], ['sale', 'Venda e retoma'], ['expenses', 'Despesas']];
   $('#modalBody').innerHTML = `
-  <div class="m-head"><h2>${esc(title(d))}</h2>${d.favorite ? '<span class="badge">♥ favorito</span>' : ''}<span class="badge">${esc(STATUS[d.status] || d.status)}</span><div style="margin-left:auto"></div><button class="icon-btn" id="mClose" aria-label="Fechar">✕</button></div>
+  <div class="m-head"><h2>${esc(title(d))}</h2>${d.favorite ? `<span class="badge fav">${I.heart} favorito</span>` : ''}<span class="badge">${esc(STATUS[d.status] || d.status)}</span><div style="margin-left:auto"></div><button class="icon-btn" id="mClose" aria-label="Fechar">${icon('x', 18)}</button></div>
   <div class="m-body"><div>
     <div class="gallery"><div class="main-img" style="${img ? `background-image:url('${esc(img)}')` : ''}">${imgs.length ? `<span class="count">${S.modalImg + 1} / ${imgs.length}</span>` : '<div class="empty" style="height:100%;display:flex;align-items:center;justify-content:center;border:0;background:none">Sem fotos</div>'}</div>
       ${imgs.length > 1 ? `<div class="thumbs">${imgs.map((u, i) => `<button data-img="${i}" class="${i === S.modalImg ? 'on' : ''}" style="background-image:url('${esc(u)}')" aria-label="Foto ${i + 1}"></button>`).join('')}</div>` : ''}</div>
@@ -337,8 +340,8 @@ function drawModal(d) {
       <div><div class="l">Combustível</div><div class="v">${esc(FUELS[d.fuel] || '—')}</div></div>
       <div><div class="l">Potência / caixa</div><div class="v">${d.powerHp ? d.powerHp + ' cv' : '—'} · ${esc(d.gearbox || '—')}</div></div>
     </div>
-    <div class="badges" style="margin-top:12px">${a.checks.map((c) => `<span class="badge ${c.ok ? 'ok' : 'bad'}">${c.ok ? '✓' : '✗'} ${esc(c.label)}</span>`).join('')}</div>
-    <p class="muted" style="margin:8px 0 0">📍 ${esc([d.city, d.zipcode, d.region, COUNTRIES[d.country]].filter(Boolean).join(', ') || 'Localização desconhecida')} · ${a.km} km até ${esc(s.homeBase.name)}${d.sellerName ? ` · Vendedor: <b>${esc(d.sellerName)}</b> (${esc({ pro: 'profissional', private: 'particular' }[d.sellerType] || '?')})` : ''}</p>
+    <div class="badges" style="margin-top:12px">${a.checks.map((c) => `<span class="badge ${c.ok ? 'ok' : 'bad'}">${c.ok ? I.check : I.x} ${esc(c.label)}</span>`).join('')}</div>
+    <p class="muted loc" style="margin:8px 0 0">${I.pin} ${esc([d.city, d.zipcode, d.region, COUNTRIES[d.country]].filter(Boolean).join(', ') || 'Localização desconhecida')} · ${a.km} km até ${esc(s.homeBase.name)}${d.sellerName ? ` · Vendedor: <b>${esc(d.sellerName)}</b> (${esc({ pro: 'profissional', private: 'particular' }[d.sellerType] || '?')})` : ''}</p>
     <div class="tabs">${tabs.map(([k, l]) => `<button data-tab="${k}" class="${S.modalTab === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div id="tabBody">${TAB[S.modalTab](d, a, s)}</div>
   </div>
@@ -358,8 +361,8 @@ function drawModal(d) {
     ${a.market.avg ? `<div class="eyebrow">Cenários de venda (passo 9)</div><div class="scen">${[['conservative', 'Conservador'], ['medium', 'Médio'], ['high', 'Alto']].map(([k, l]) => `<div><div class="small muted">${l}</div><div class="p">${eur(a.scenarios[k]?.sale)}</div><div class="small ${cls(a.scenarios[k]?.profit)}">${signed(a.scenarios[k]?.profit)}</div></div>`).join('')}</div>` : ''}
     ${a.warnings.length ? `<div class="card" style="margin-top:14px;background:#fffbeb;border-color:#fde68a"><ul class="ul small">${a.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>` : ''}
     <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px">
-      ${d.url ? `<a class="btn primary" href="${esc(d.url)}" target="_blank" rel="noopener">Ver anúncio em ${esc(d.source === 'manual' ? 'site' : d.source)} ↗</a>` : '<span></span>'}
-      <button class="btn" id="mFav" title="Favorito">${d.favorite ? '♥' : '♡'}</button></div>
+      ${d.url ? `<a class="btn primary" href="${esc(d.url)}" target="_blank" rel="noopener">Ver anúncio em ${esc(d.source === 'manual' ? 'site' : d.source)} ${I.ext}</a>` : '<span></span>'}
+      <button class="btn fav-btn ${d.favorite ? 'on' : ''}" id="mFav" title="${d.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}" aria-label="Favorito">${d.favorite ? I.heartOn : I.heartBtn}</button></div>
     <label class="f" style="margin-top:12px">Estado${sel(d, 'status', STATUSES)}</label>
     <div class="card" style="margin-top:14px"><div class="eyebrow">Verificar antes de comprar</div>
       <div class="grid cols-2"><a class="btn" href="https://www.carvertical.com/" target="_blank" rel="noopener">Histórico (carVertical)</a><a class="btn" href="https://www.autodna.com/" target="_blank" rel="noopener">autoDNA</a>
@@ -402,8 +405,8 @@ const deleteReceiptFiles = (list = []) => Promise.all((list || []).map((r) => ap
 const receiptUrl = (r, dl = false) => `api.php?r=receipt&id=${encodeURIComponent(r.id)}&name=${encodeURIComponent(r.name || 'fatura')}${dl ? '&dl=1' : ''}`;
 function receiptChips(e, ref) {
   const list = e.receipts || [];
-  return `<div class="rc">${list.map((r, j) => `<span class="rchip"><a href="${receiptUrl(r)}" target="_blank" rel="noopener" title="${esc(r.name)}">${r.mime === 'application/pdf' ? '📄' : '🖼'} ${esc(r.name.length > 18 ? r.name.slice(0, 16) + '…' : r.name)}</a><button data-rdel="${ref}|${j}" aria-label="Remover anexo">✕</button></span>`).join('')}
-    <label class="btn sm rattach" title="Anexar fatura ou recibo">📎 ${list.length ? '+' : 'anexar'}<input type="file" accept="image/*,application/pdf" multiple hidden data-rattach="${ref}"></label></div>`;
+  return `<div class="rc">${list.map((r, j) => `<span class="rchip"><a href="${receiptUrl(r)}" target="_blank" rel="noopener" title="${esc(r.name)}">${r.mime === 'application/pdf' ? I.file : I.image} ${esc(r.name.length > 18 ? r.name.slice(0, 16) + '…' : r.name)}</a><button data-rdel="${ref}|${j}" aria-label="Remover anexo">${I.x}</button></span>`).join('')}
+    <label class="btn sm rattach" title="Anexar fatura ou recibo">${I.clip} ${list.length ? '+' : 'anexar'}<input type="file" accept="image/*,application/pdf" multiple hidden data-rattach="${ref}"></label></div>`;
 }
 function expenseByRef(ref) {
   const [dealId, i] = ref.split('|');
@@ -486,7 +489,7 @@ function balanceBlock(b, transfers, { record = false } = {}) {
       <div><span>Parte de cada sócio</span><span class="v">${eur(b.share, 2)}</span></div>
       ${Object.keys(b.paid).map((p) => `<div><span>${esc(p)} pagou ${eur(b.paid[p], 2)}</span><span class="v ${cls(b.balance[p])}">${Math.abs(b.balance[p]) < 0.01 ? 'acertado' : b.balance[p] > 0 ? `recebe ${eur(b.balance[p], 2)}` : `deve ${eur(-b.balance[p], 2)}`}</span></div>`).join('')}
     </div><div class="kv"><div class="grp"><span>Acertos sugeridos</span><span></span></div>
-      ${transfers.length ? transfers.map((t, i) => `<div><span>${esc(t.from)} → ${esc(t.to)}</span><span class="v">${eur(t.amount, 2)} ${record ? `<button class="btn sm" data-settle="${i}">Registar</button>` : ''}</span></div>`).join('') : '<div><span class="pos">Tudo acertado ✓</span><span></span></div>'}
+      ${transfers.length ? transfers.map((t, i) => `<div><span>${esc(t.from)} → ${esc(t.to)}</span><span class="v">${eur(t.amount, 2)} ${record ? `<button class="btn sm" data-settle="${i}">Registar</button>` : ''}</span></div>`).join('') : `<div><span class="pos">${I.check} Tudo acertado</span><span></span></div>`}
     </div></div>`;
 }
 
@@ -524,9 +527,9 @@ const TAB = {
     <p class="small muted">Os campos vazios usam os valores das Definições; escreva um valor para o alterar só neste carro. ISV: componente cilindrada ${eur(a.isv.cc, 2)} + componente ambiental ${eur(a.isv.co2, 2)}, −${Math.round(a.isv.discount * 100)}% de desconto por idade (${a.isv.months ?? '?'} meses)${a.isv.particles ? ' + 500 € partículas' : ''}. IUC/ano ${eur(a.iuc.total, 2)}.</p>`,
   market: (d, a) => `
     <p class="muted small" style="margin-top:0">Passo 2: encontre o carro comparável mais barato e o mais caro em Portugal (ano, km e estado semelhantes), de vendedores <b>profissionais</b>.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><a class="btn" href="${esc(standVirtualUrl(d))}" target="_blank" rel="noopener">Pesquisar no StandVirtual ↗</a><a class="btn" href="https://www.olx.pt/carros-motos-e-barcos/carros/q-${encodeURIComponent([d.make, d.model].filter(Boolean).join('-'))}/" target="_blank" rel="noopener">Pesquisar no OLX ↗</a><a class="btn" href="https://www.piscapisca.pt/" target="_blank" rel="noopener">PiscaPisca ↗</a></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><a class="btn" href="${esc(standVirtualUrl(d))}" target="_blank" rel="noopener">Pesquisar no StandVirtual ${I.ext}</a><a class="btn" href="https://www.olx.pt/carros-motos-e-barcos/carros/q-${encodeURIComponent([d.make, d.model].filter(Boolean).join('-'))}/" target="_blank" rel="noopener">Pesquisar no OLX ${I.ext}</a><a class="btn" href="https://www.piscapisca.pt/" target="_blank" rel="noopener">PiscaPisca ${I.ext}</a></div>
     <table class="t"><thead><tr><th>Site / link</th><th class="n">Ano</th><th class="n">Km</th><th>Estado</th><th class="n">Preço €</th><th></th></tr></thead><tbody>
-      ${(d.market?.comps || []).map((c, i) => `<tr><td><input data-path="market.comps.${i}.url" value="${esc(c.url || '')}" placeholder="https://www.standvirtual.com/…"></td><td><input type="number" data-path="market.comps.${i}.year" value="${esc(c.year || '')}"></td><td><input type="number" data-path="market.comps.${i}.km" value="${esc(c.km || '')}"></td><td><input data-path="market.comps.${i}.condition" value="${esc(c.condition || '')}" placeholder="Bom"></td><td><input type="number" data-path="market.comps.${i}.price" value="${esc(c.price || '')}"></td><td><button class="btn sm danger" data-delcomp="${i}">✕</button></td></tr>`).join('')}
+      ${(d.market?.comps || []).map((c, i) => `<tr><td><input data-path="market.comps.${i}.url" value="${esc(c.url || '')}" placeholder="https://www.standvirtual.com/…"></td><td><input type="number" data-path="market.comps.${i}.year" value="${esc(c.year || '')}"></td><td><input type="number" data-path="market.comps.${i}.km" value="${esc(c.km || '')}"></td><td><input data-path="market.comps.${i}.condition" value="${esc(c.condition || '')}" placeholder="Bom"></td><td><input type="number" data-path="market.comps.${i}.price" value="${esc(c.price || '')}"></td><td><button class="btn sm danger icon-only" data-delcomp="${i}" aria-label="Apagar">${I.trash}</button></td></tr>`).join('')}
       <tr><td colspan="6"><button class="btn sm" id="addComp">+ Adicionar comparável</button></td></tr></tbody></table>
     <div class="form-grid" style="margin-top:14px">
       <label class="f">Mais baixo (manual)${inp(d, 'market.low', 'number', `placeholder="${a.market.low ?? ''}"`)}</label>
@@ -544,16 +547,16 @@ const TAB = {
       'overrides.returnMode': sel(d, 'overrides.returnMode', [['', '— escolher —'], ['drive', 'Estrada (trazer a conduzir)'], ['truck', 'Transportadora']]),
       hasCoc: sel(d, 'hasCoc', [['', '— por confirmar —'], ['true', 'Sim, tem COC'], ['false', 'Não — pedir à marca']]),
     }[f] || '');
-    return `<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><b>Progresso do processo: ${pr.done} / ${pr.total} (${Math.round(pr.pct * 100)}%)</b>${pr.next ? `<span class="muted">Próximo passo: <b>${esc(pr.phase.label)} → ${esc(pr.next.label)}</b></span>` : '<span class="pos"><b>Processo concluído ✓</b></span>'}</div>${progressBar(pr)}</div>
+    return `<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><b>Progresso do processo: ${pr.done} / ${pr.total} (${Math.round(pr.pct * 100)}%)</b>${pr.next ? `<span class="muted">Próximo passo: <b>${esc(pr.phase.label)} → ${esc(pr.next.label)}</b></span>` : '<span class="pos"><b>${I.check} Processo concluído</b></span>'}</div>${progressBar(pr)}</div>
       <div class="form-grid">
       <label class="f">Data de compra${inp(d, 'dates.bought', 'date')}</label><label class="f">Chegada a PT${inp(d, 'dates.arrivedPT', 'date')}</label>
       <label class="f">DAV submetida${inp(d, 'dates.davDate', 'date')}</label><label class="f">Matrícula PT atribuída${inp(d, 'dates.plateDate', 'date')}</label>
       <label class="f">Anunciado para venda${inp(d, 'dates.listed', 'date')}</label><label class="f">Data de venda${inp(d, 'dates.sold', 'date')}</label>
       <label class="f">Sinal enviado €${inp(d, 'deposit', 'number')}</label></div>
-      ${dl.length ? `<div class="eyebrow" style="margin-top:16px">Prazos legais</div><div class="kv">${dl.map((x) => `<div><span>${x.done ? '✓' : '⏱'} ${esc(x.label)}</span><span class="v ${!x.done && x.due < new Date().toISOString().slice(0, 10) ? 'neg' : ''}">${esc(x.due)}</span></div>`).join('')}</div>` : '<p class="small muted">Os prazos aparecem quando indicar as datas de chegada / DAV / matrícula: DAV até 20 dias úteis após a chegada, ISV em 10 dias úteis, DUA em 30 dias e registo em 60 dias.</p>'}
+      ${dl.length ? `<div class="eyebrow" style="margin-top:16px">Prazos legais</div><div class="kv">${dl.map((x) => `<div><span>${x.done ? I.checkC : I.clock} ${esc(x.label)}</span><span class="v ${!x.done && x.due < new Date().toISOString().slice(0, 10) ? 'neg' : ''}">${esc(x.due)}</span></div>`).join('')}</div>` : '<p class="small muted">Os prazos aparecem quando indicar as datas de chegada / DAV / matrícula: DAV até 20 dias úteis após a chegada, ISV em 10 dias úteis, DUA em 30 dias e registo em 60 dias.</p>'}
       ${phases.map((p) => `<div class="card checks" style="margin-top:14px"><div style="display:flex;justify-content:space-between"><div class="eyebrow">${esc(p.label)}</div><span class="small ${p.done === p.total ? 'pos' : 'muted'}">${p.done}/${p.total}</span></div>
         ${p.steps.map((st) => st.field
-          ? `<div class="step-field"><span>${st.done ? '✓' : '○'} ${esc(st.label)}</span>${field(st.field)}</div>`
+          ? `<div class="step-field"><span>${st.done ? I.checkC : I.circle} ${esc(st.label)}</span>${field(st.field)}</div>`
           : `<label><input type="checkbox" data-check="${st.key}" ${st.done ? 'checked' : ''}> <span>${esc(st.label)}${st.hint ? `<span class="small muted"> — ${esc(st.hint)}</span>` : ''}${st.supplier && s.suppliers[st.supplier] ? `<span class="small muted"> — ${esc(s.suppliers[st.supplier])}</span>` : ''}</span></label>`).join('')}</div>`).join('')}`;
   },
   sale: (d, a) => {
@@ -568,7 +571,7 @@ const TAB = {
       <label class="f">Meio de venda${sel(d, 'saleChannel', [['', '—'], ['OLX', 'OLX'], ['FB', 'Facebook Marketplace'], ['Instagram', 'Instagram'], ['StandVirtual', 'StandVirtual'], ['Consignação', 'Consignação'], ['Troca', 'Troca']])}</label>
       <label class="f">Crédito${sel(d, 'saleCredit', [['', 'Sem crédito'], ['Credibom', 'Credibom'], ['Cetelem', 'Cetelem']])}</label>
       <label class="f">Garantia${sel(d, 'saleWarranty', [['', '—'], ['SNG', 'SNG'], ['GR3', 'GR3']])}</label></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><a class="btn sm" href="https://www.olx.pt/anuncio/novo/" target="_blank" rel="noopener">Publicar no OLX ↗</a><a class="btn sm" href="https://www.standvirtual.com/" target="_blank" rel="noopener">StandVirtual ↗</a><a class="btn sm" href="https://www.facebook.com/marketplace/create/vehicle" target="_blank" rel="noopener">Facebook Marketplace ↗</a><a class="btn sm" href="https://www.standvirtual.com/carros/q-${q}" target="_blank" rel="noopener">Ver concorrência ↗</a></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><a class="btn sm" href="https://www.olx.pt/anuncio/novo/" target="_blank" rel="noopener">Publicar no OLX ${I.ext}</a><a class="btn sm" href="https://www.standvirtual.com/" target="_blank" rel="noopener">StandVirtual ${I.ext}</a><a class="btn sm" href="https://www.facebook.com/marketplace/create/vehicle" target="_blank" rel="noopener">Facebook Marketplace ${I.ext}</a><a class="btn sm" href="https://www.standvirtual.com/carros/q-${q}" target="_blank" rel="noopener">Ver concorrência ${I.ext}</a></div>
     <div class="eyebrow" style="margin-top:8px">Custos e lucros ${a.realised ? '(venda real)' : '(estimativa, cenário médio)'}</div>
     <div class="kv"><div><span>Venda${a.otherIncome ? ' + outras receitas' : ''}</span><span class="v">${eur(res ? res.sale + a.otherIncome : null)}</span></div>
       <div><span>Custos totais (viatura + processo + preparação)</span><span class="v">${eur(a.totalInvestment)}</span></div>
@@ -583,7 +586,7 @@ const TAB = {
       <label class="f">Valor mais baixo no StandVirtual €${inp(d, 'tradeIn.lowestSV', 'number')}</label>
       <label class="f">Revenda${sel(d, 'tradeIn.reconditioned', [['false', 'Tal como está (média −10%)'], ['true', 'Recondicionado (valor de mercado)']])}</label></div>
       ${tv ? `<div class="kv" style="margin-top:10px"><div><span>Valor a oferecer (referência −${Math.round(s.tradeIn.buyDiscount * 100)}%)</span><span class="v">${eur(tv.offer)}</span></div><div><span>Valor real para venda</span><span class="v">${eur(tv.resale)}</span></div><div><span>Margem da retoma</span><span class="v ${cls(tv.margin)}">${signed(tv.margin)}</span></div><div><span>Valor para sócios (compra ÷ ${s.partners.length})</span><span class="v">${eur(tv.perPartner)} cada</span></div></div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><a class="btn sm" href="https://www.standvirtual.com/carros/q-${encodeURIComponent(t.desc || '')}" target="_blank" rel="noopener">StandVirtual ↗</a><a class="btn sm" href="https://www.autosapo.pt/" target="_blank" rel="noopener">Auto Sapo ↗</a><button class="btn sm primary" id="mkTrade">Criar negócio para a retoma</button></div>` : '<p class="small muted">Indique o valor médio de mercado (e, se possível, o mais baixo no StandVirtual).</p>'}` : ''}`;
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><a class="btn sm" href="https://www.standvirtual.com/carros/q-${encodeURIComponent(t.desc || '')}" target="_blank" rel="noopener">StandVirtual ${I.ext}</a><a class="btn sm" href="https://www.autosapo.pt/" target="_blank" rel="noopener">Auto Sapo ${I.ext}</a><button class="btn sm primary" id="mkTrade">Criar negócio para a retoma</button></div>` : '<p class="small muted">Indique o valor médio de mercado (e, se possível, o mais baixo no StandVirtual).</p>'}` : ''}`;
   },
   expenses: (d) => {
     const P = settings().partners; const ex = d.expenses || [];
@@ -600,9 +603,9 @@ const TAB = {
       <td><select data-path="expenses.${i}.method">${METHODS.map(([k, l]) => `<option value="${k}" ${k === (e.method || '') ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
       <td>${receiptChips(e, `${d.id}|${i}`)}</td>
       <td><span class="badge ${expenseStatus(e, P) === 'ok' ? 'ok' : 'bad'}">${expenseStatus(e, P)}</span></td>
-      <td><button class="btn sm danger" data-delexp="${i}" aria-label="Apagar">✕</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Ainda sem despesas. Use o formulário acima ou pré-preencha a partir da estimativa.</td></tr>'}
+      <td><button class="btn sm danger icon-only" data-delexp="${i}" aria-label="Apagar">${I.trash}</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Ainda sem despesas. Use o formulário acima ou pré-preencha a partir da estimativa.</td></tr>'}
     </tbody></table></div>
-    <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm" id="fillExp">Pré-preencher a partir da estimativa</button>${ex.length ? (() => { const miss = ex.filter((e) => !(e.receipts || []).length).length; return miss ? `<span class="badge warn">${miss} despesa${miss === 1 ? '' : 's'} sem fatura</span>` : '<span class="badge ok">Todas as despesas com fatura ✓</span>'; })() : ''}</div>
+    <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm" id="fillExp">Pré-preencher a partir da estimativa</button>${ex.length ? (() => { const miss = ex.filter((e) => !(e.receipts || []).length).length; return miss ? `<span class="badge warn">${miss} despesa${miss === 1 ? '' : 's'} sem fatura</span>` : `<span class="badge ok">${I.check} Todas as despesas com fatura</span>`; })() : ''}</div>
     ${balanceBlock(b, settleTransfers(b.balance))}
     <div class="eyebrow" style="margin-top:18px">Estimado vs. real</div>
     <div style="overflow-x:auto"><table class="t"><thead><tr><th>Linha</th><th class="n">Estimado</th><th class="n">Real</th><th class="n">Diferença</th></tr></thead><tbody>
@@ -679,7 +682,7 @@ function viewPipeline() {
   const cols = STATUSES.filter(([k]) => k !== 'rejected');
   $('#view').innerHTML = `<div class="kanban">${cols.map(([k, l]) => {
     const items = S.deals.filter((d) => d.status === k);
-    return `<div class="col"><h3><span>${l}</span><span>${items.length}</span></h3>${items.slice(0, 60).map((d) => { const a = an(d); return `<div class="kcard" data-k="${d.id}"><b>${esc(title(d))}</b><div class="small muted">${flag(d.country)}${esc(d.year || '')} · ${eur(a.price)}</div><div class="small ${cls(a.realised?.profit ?? a.netProfit)}">${signed(a.realised?.profit ?? a.netProfit)}</div>${(() => { const pr = progressOf(d); return `${progressBar(pr)}<div class="small muted">${pr.next ? `→ ${esc(pr.next.label)}` : 'Concluído ✓'}</div>`; })()}${deadlinesFor(d).filter((x) => !x.done).slice(0, 1).map((x) => `<div class="small warn">⏱ ${esc(x.label)} · ${esc(x.due)}</div>`).join('')}</div>`; }).join('')}</div>`;
+    return `<div class="col"><h3><span>${l}</span><span>${items.length}</span></h3>${items.slice(0, 60).map((d) => { const a = an(d); return `<div class="kcard" data-k="${d.id}"><b>${esc(title(d))}</b><div class="small muted">${flag(d.country)}${esc(d.year || '')} · ${eur(a.price)}</div><div class="small ${cls(a.realised?.profit ?? a.netProfit)}">${signed(a.realised?.profit ?? a.netProfit)}</div>${(() => { const pr = progressOf(d); return `${progressBar(pr)}<div class="small muted">${pr.next ? `→ ${esc(pr.next.label)}` : `${I.check} Concluído`}</div>`; })()}${deadlinesFor(d).filter((x) => !x.done).slice(0, 1).map((x) => `<div class="small warn ico-line">${icon('clock', 13)} ${esc(x.label)} · ${esc(x.due)}</div>`).join('')}</div>`; }).join('')}</div>`;
   }).join('')}</div>`;
   $('#view').querySelectorAll('[data-k]').forEach((el) => (el.onclick = () => { S.modalFor = el.dataset.k; S.modalTab = 'pipeline'; S.modalImg = 0; location.hash = `#/deal/${el.dataset.k}`; }));
 }
@@ -700,7 +703,7 @@ function viewLedger() {
   $('#view').innerHTML = `
     <div class="grid cols-4"><div class="card kpi"><div class="lbl">Total de despesas</div><div class="val">${eur(b.total)}</div></div><div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(tot)}">${signed(tot)}</div></div><div class="card kpi"><div class="lbl">Caixa (${Math.round(s.cashReservePct * 100)}% dos lucros)</div><div class="val">${eur(reserve)}</div></div><div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div></div></div>
     <div style="margin-top:16px">${expenseForm({ withCar: true })}</div>
-    <div class="sec-h"><h3>Quem pagou o quê</h3><button class="btn sm" id="csv">⇣ Exportar CSV (Excel)</button></div>
+    <div class="sec-h"><h3>Quem pagou o quê</h3><button class="btn sm" id="csv">${icon('download', 16)} Exportar CSV (Excel)</button></div>
     <div class="card"><div class="filters" style="grid-template-columns:repeat(4,1fr)">
       <label class="f">Carro<select id="lf_car"><option value="">Todos</option><option value="__general" ${f.car === '__general' ? 'selected' : ''}>Geral</option>${carsWithExp.map(([id, n]) => `<option value="${id}" ${f.car === id ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
       <label class="f">Quem pagou<select id="lf_payer"><option value="">Todos</option>${[...P, CASH].map((p) => `<option ${f.payer === p ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select></label>
@@ -712,7 +715,7 @@ function viewLedger() {
     ${balanceBlock(b, transfers, { record: true })}
     <div class="sec-h"><h3>Acertos registados</h3></div>
     <div class="card"><div class="form-grid"><label class="f">De<select id="st_from">${P.map((p) => `<option>${esc(p)}</option>`).join('')}</select></label><label class="f">Para<select id="st_to">${P.map((p, i) => `<option ${i === 1 ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select></label><label class="f">Montante €<input id="st_amount" type="number" step="0.01"></label><label class="f">Data<input id="st_date" type="date" value="${today()}"></label></div><button class="btn" id="st_add" style="margin-top:10px">Registar acerto</button>
-      <table class="t" style="margin-top:12px"><thead><tr><th>Data</th><th>De</th><th>Para</th><th class="n">Montante</th><th></th></tr></thead><tbody>${S.ledger.settlements.map((t, i) => `<tr><td class="nw">${esc(t.date ? t.date.split('-').reverse().join('/') : '')}</td><td>${esc(t.from)}</td><td>${esc(t.to)}</td><td class="n">${eur(t.amount, 2)}</td><td><button class="btn sm danger" data-delst="${i}">✕</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">Sem acertos.</td></tr>'}</tbody></table></div>
+      <table class="t" style="margin-top:12px"><thead><tr><th>Data</th><th>De</th><th>Para</th><th class="n">Montante</th><th></th></tr></thead><tbody>${S.ledger.settlements.map((t, i) => `<tr><td class="nw">${esc(t.date ? t.date.split('-').reverse().join('/') : '')}</td><td>${esc(t.from)}</td><td>${esc(t.to)}</td><td class="n">${eur(t.amount, 2)}</td><td><button class="btn sm danger icon-only" data-delst="${i}" aria-label="Apagar">${I.trash}</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">Sem acertos.</td></tr>'}</tbody></table></div>
     <div class="sec-h"><h3>Resultado por carro</h3></div>
     <div style="overflow-x:auto"><table class="t"><thead><tr><th>Carro</th><th>Estado</th><th class="n">Custo estimado</th><th class="n">Gasto real</th><th class="n">Venda</th><th class="n">Lucro</th><th class="n">%</th><th class="n">Por sócio</th></tr></thead><tbody>
     ${rows.map(({ d, a, spent, profit }) => `<tr><td><a href="#/deal/${d.id}?tab=expenses">${esc(title(d))}</a></td><td>${esc(STATUS[d.status])}</td><td class="n">${eur(a.totalInvestment)}</td><td class="n">${spent ? eur(spent) : '—'}</td><td class="n">${eur(d.salePrice)}</td><td class="n ${cls(profit)}">${signed(profit)}</td><td class="n">${profit != null ? pct(profit / (spent || a.totalInvestment)) : '—'}</td><td class="n">${profit != null ? eur(Math.round((profit - (profit > 0 ? profit * s.cashReservePct : 0)) / P.length)) : '—'}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">Ainda não há carros comprados.</td></tr>'}</tbody></table></div>`;
@@ -726,9 +729,9 @@ function viewLedger() {
     const byPartner = Object.fromEntries([...P, CASH].map((p) => [p, 0]));
     for (const e of list) { if (e.payer === CASH) byPartner[CASH] += Number(e.amount) || 0; for (const [p, v] of Object.entries(paidBy(e, P))) byPartner[p] += v; }
     const missing = list.filter((e) => !(e.receipts || []).length).length;
-    $('#expList').innerHTML = `<div class="badges" style="margin-bottom:10px">${missing ? `<span class="badge warn">${missing} sem fatura</span>` : list.length ? '<span class="badge ok">todas com fatura ✓</span>' : ''}${Object.entries(byPartner).filter(([, v]) => v).map(([p, v]) => `<span class="badge info">${esc(p)}: ${eur(v, 2)}</span>`).join('')}${Object.entries(byCat).map(([c, v]) => `<span class="badge">${esc(CATEGORY_LABELS[c] || c)}: ${eur(v, 2)}</span>`).join('')}</div>
+    $('#expList').innerHTML = `<div class="badges" style="margin-bottom:10px">${missing ? `<span class="badge warn">${missing} sem fatura</span>` : list.length ? `<span class="badge ok">${I.check} todas com fatura</span>` : ''}${Object.entries(byPartner).filter(([, v]) => v).map(([p, v]) => `<span class="badge info">${esc(p)}: ${eur(v, 2)}</span>`).join('')}${Object.entries(byCat).map(([c, v]) => `<span class="badge">${esc(CATEGORY_LABELS[c] || c)}: ${eur(v, 2)}</span>`).join('')}</div>
     <div style="overflow-x:auto"><table class="t"><thead><tr><th>Data</th><th>Carro</th><th>Tipo</th><th>Descrição</th><th class="n">Montante</th><th>Quem pagou</th><th>Pagamento</th><th>Fatura</th><th>Estado</th><th></th></tr></thead><tbody>
-    ${list.map((e) => `<tr><td class="nw">${esc(e.date ? e.date.split('-').reverse().join('/') : '—')}</td><td>${e.dealId ? `<a href="#/deal/${e.dealId}?tab=expenses">${esc(e.car)}</a>` : 'Geral'}</td><td>${esc(EXPENSE_TYPES[e.type]?.[0] || 'Outra')}</td><td>${esc(e.note ?? e.label ?? '')}</td><td class="n">${eur(Number(e.amount) || 0, 2)}</td><td>${e.payer === SPLIT ? esc(Object.entries(e.shares || {}).filter(([, v]) => v).map(([p, v]) => `${p} ${eur(v, 2)}`).join(' + ')) : esc(e.payer || '—')}</td><td>${esc(e.method || '')}</td><td>${receiptChips(e, `${e.dealId || ''}|${e.index}`)}</td><td><span class="badge ${expenseStatus(e, P) === 'ok' ? 'ok' : 'bad'}">${expenseStatus(e, P)}</span></td><td><button class="btn sm danger" data-delrow="${e.dealId || ''}|${e.index}" aria-label="Apagar">✕</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">Sem despesas para estes filtros.</td></tr>'}
+    ${list.map((e) => `<tr><td class="nw">${esc(e.date ? e.date.split('-').reverse().join('/') : '—')}</td><td>${e.dealId ? `<a href="#/deal/${e.dealId}?tab=expenses">${esc(e.car)}</a>` : 'Geral'}</td><td>${esc(EXPENSE_TYPES[e.type]?.[0] || 'Outra')}</td><td>${esc(e.note ?? e.label ?? '')}</td><td class="n">${eur(Number(e.amount) || 0, 2)}</td><td>${e.payer === SPLIT ? esc(Object.entries(e.shares || {}).filter(([, v]) => v).map(([p, v]) => `${p} ${eur(v, 2)}`).join(' + ')) : esc(e.payer || '—')}</td><td>${esc(e.method || '')}</td><td>${receiptChips(e, `${e.dealId || ''}|${e.index}`)}</td><td><span class="badge ${expenseStatus(e, P) === 'ok' ? 'ok' : 'bad'}">${expenseStatus(e, P)}</span></td><td><button class="btn sm danger" data-delrow="${e.dealId || ''}|${e.index}" aria-label="Apagar">${I.trash}</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">Sem despesas para estes filtros.</td></tr>'}
     <tr><th colspan="4">Total (${list.length})</th><th class="n">${eur(sum, 2)}</th><th colspan="5"></th></tr></tbody></table></div>`;
     $('#expList').querySelectorAll('[data-delrow]').forEach((btn) => (btn.onclick = async () => {
       if (!confirm('Apagar esta despesa (e as faturas anexadas)?')) return;
@@ -820,7 +823,7 @@ function viewSettings() {
         <p class="small muted">Opcional. Permite ao servidor obter páginas do leboncoin quando este o bloqueia. Fica guardada só no servidor (pasta data/). Deixe vazio e guarde para remover.</p>
         <button class="btn" id="fc_go">Guardar chave</button></div>
       <div class="card"><h3>Cópia de segurança</h3><p class="muted small">Descarregue todos os negócios e definições em JSON, ou reponha uma cópia (substitui os dados atuais; fica guardada uma cópia dos dados atuais no servidor).</p>
-        <a class="btn" href="api.php?r=export">⇣ Descarregar cópia</a> <label class="btn">⇡ Repor<input type="file" id="restore" accept=".json" hidden></label> <button class="btn danger" id="reset">Repor definições de origem</button></div>
+        <a class="btn" href="api.php?r=export">${icon('download', 16)} Descarregar cópia</a> <label class="btn">${icon('upload', 16)} Repor<input type="file" id="restore" accept=".json" hidden></label> <button class="btn danger" id="reset">Repor definições de origem</button></div>
     </div>`;
   $('#view').querySelectorAll('[data-s]').forEach((el) => el.addEventListener('change', async () => {
     const next = mergeSettings(S.settings);
@@ -837,4 +840,5 @@ function viewSettings() {
 }
 
 // ---------- boot ----------
+hydrateIcons();
 refresh().then(render).catch((e) => { if (e.message !== 'login') $('#view').innerHTML = `<div class="empty">Não foi possível carregar os dados: ${esc(e.message)}</div>`; });
