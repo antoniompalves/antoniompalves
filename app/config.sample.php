@@ -1,8 +1,8 @@
 <?php
 // Optional. Copy to config.php only if you need to change something; the app works without it.
 
-// Keep the data folder outside public_html (recommended), e.g. /home/USER/vroom-data
-// define('DATA_DIR', '/home/USER/vroom-data');
+// Keep the data folder outside public_html (recommended), e.g. /home/USER/vrooom-data
+// define('DATA_DIR', '/home/USER/vrooom-data');
 
 // Fixed password instead of the one chosen on first use (then it can't be changed in the app).
 // define('APP_PASSWORD', 'uma-palavra-passe-forte');

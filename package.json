@@ -1,5 +1,5 @@
 {
-  "name": "vroom-pt",
+  "name": "vrooom-pt",
   "version": "2.0.0",
   "description": "Plataforma de análise de importação de carros (FR/ES/DE/NL → PT) em PHP + HTML para cPanel.",
   "private": true,

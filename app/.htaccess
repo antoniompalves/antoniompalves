@@ -1,4 +1,4 @@
-# Vroom.pt — Apache / LiteSpeed settings (cPanel)
+# Vrooom.pt — Apache / LiteSpeed settings (cPanel)
 Options -Indexes
 DirectoryIndex index.php
 

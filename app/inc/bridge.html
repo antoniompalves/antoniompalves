@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vroom.pt · Importar</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="assets/styles.css"></head>
+<title>Vrooom.pt · Importar</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="assets/styles.css"></head>
 <body class="login-page">
 <div class="login-card">
   <img src="assets/logo.svg" width="48" height="48" alt="">
   <h1>Importar anúncio</h1>
   <p id="msg" class="muted">À espera dos dados da página do anúncio…</p>
   <button id="go" class="btn primary" hidden>Importar</button>
-  <a id="open" class="btn" href="index.php" hidden>Abrir o Vroom.pt</a>
+  <a id="open" class="btn" href="index.php" hidden>Abrir o Vrooom.pt</a>
 </div>
 <script>
 const msg = document.getElementById('msg'), go = document.getElementById('go'), open = document.getElementById('open');
@@ -23,9 +23,9 @@ window.addEventListener('message', (e) => {
 go.onclick = async () => {
   go.disabled = true; msg.textContent = 'A importar…';
   const b64 = btoa(unescape(encodeURIComponent(payload.content)));
-  const r = await fetch('api.php?r=import/paste', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Vroom': '1' }, body: JSON.stringify({ content_b64: b64, url: payload.url, country: payload.country }) });
+  const r = await fetch('api.php?r=import/paste', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Vrooom': '1' }, body: JSON.stringify({ content_b64: b64, url: payload.url, country: payload.country }) });
   const j = await r.json().catch(() => ({}));
-  if (r.status === 401) { msg.textContent = 'Entre primeiro no Vroom.pt (nesta janela) e volte a carregar no marcador.'; open.hidden = false; open.href = 'login.php?next=bridge.php'; return; }
+  if (r.status === 401) { msg.textContent = 'Entre primeiro no Vrooom.pt (nesta janela) e volte a carregar no marcador.'; open.hidden = false; open.href = 'login.php?next=bridge.php'; return; }
   msg.textContent = r.ok ? `Concluído: ${j.created} novos, ${j.updated} atualizados.` : (j.error || 'A importação falhou');
   go.hidden = true; open.hidden = false;
   if (r.ok && j.ids?.length === 1) open.href = `index.php#/deal/${j.ids[0]}`;
@@ -34,6 +34,6 @@ go.onclick = async () => {
   if (r.ok) { try { new BroadcastChannel('vroom').postMessage({ type: 'imported', created: j.created, updated: j.updated, ids: j.ids }); } catch {} }
 };
 if (window.opener) window.opener.postMessage('vroom-ready', '*');
-else msg.textContent = 'Abra esta página através do marcador do Vroom.pt numa página do leboncoin (ou de outro portal).';
+else msg.textContent = 'Abra esta página através do marcador do Vrooom.pt numa página do leboncoin (ou de outro portal).';
 </script>
 </body></html>

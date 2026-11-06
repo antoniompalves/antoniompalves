@@ -36,7 +36,7 @@ const ACTIVE = ['reserved', 'bought', 'transit', 'legalising', 'for_sale'];
 const apiUrl = (path, method = 'GET') => `api.php?r=${path.replace(/^api\//, '')}${['PUT', 'DELETE'].includes(method) ? `&_method=${method}` : ''}`;
 async function api(path, opts = {}) {
   const method = (opts.method || 'GET').toUpperCase();
-  const r = await fetch(apiUrl(path, method), { ...opts, method: method === 'GET' ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Vroom': '1', ...(opts.headers || {}) }, body: opts.body && typeof opts.body !== 'string' ? JSON.stringify(opts.body) : opts.body });
+  const r = await fetch(apiUrl(path, method), { ...opts, method: method === 'GET' ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Vrooom': '1', ...(opts.headers || {}) }, body: opts.body && typeof opts.body !== 'string' ? JSON.stringify(opts.body) : opts.body });
   if (r.status === 401) { location.href = 'login.php'; throw new Error('login'); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
@@ -181,7 +181,7 @@ function viewHome() {
   $('#view').innerHTML = `
   <div class="home"><div>
     <div style="display:flex;justify-content:space-between;gap:16px;align-items:start;flex-wrap:wrap">
-      <div><h2>Bem-vindo ao Vroom.pt</h2><p class="muted" style="max-width:560px;margin:0">Encontre carros em França, Espanha, Alemanha e Países Baixos, veja quanto custam postos em Portugal (ISV, IUC, viagem, legalização) e acompanhe cada carro da pré-seleção até à venda.</p></div>
+      <div><h2>Bem-vindo ao Vrooom.pt</h2><p class="muted" style="max-width:560px;margin:0">Encontre carros em França, Espanha, Alemanha e Países Baixos, veja quanto custam postos em Portugal (ISV, IUC, viagem, legalização) e acompanhe cada carro da pré-seleção até à venda.</p></div>
       <a class="btn primary" href="#/deals" style="padding:12px 22px">${icon('search')} Procurar negócios</a></div>
     <div class="grid cols-4" style="margin-top:20px">
       <div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div><div class="small muted">${live.length + active.length} negócios em aberto</div></div>
@@ -305,9 +305,9 @@ function viewImport() {
       <button class="btn primary" id="s_go">Abrir pesquisa no leboncoin ${I.ext}</button>
       <p class="small muted">Depois carregue no marcador (2) na página de resultados para importar todos os carros de uma vez.</p></div>
     <div class="card"><h3>2 · Marcador / bookmarklet (recomendado)</h3>
-      <p class="muted small">O leboncoin bloqueia servidores automáticos, mas não o seu navegador. Arraste este botão para a barra de marcadores. Em qualquer página de <b>resultados</b> ou de <b>anúncio</b> do leboncoin (e também AutoScout24, mobile.de, coches.net…), carregue nele: os carros da página são enviados para o Vroom.pt.</p>
-      <p><a class="bm" id="bm" href="#">${icon('download', 16)} Enviar para o Vroom.pt</a></p>
-      <ol class="steps small"><li>Entre no Vroom.pt neste navegador.</li><li>Abra o leboncoin e faça a pesquisa.</li><li>Carregue no marcador → abre-se uma pequena janela → <b>Importar</b>.</li></ol></div>
+      <p class="muted small">O leboncoin bloqueia servidores automáticos, mas não o seu navegador. Arraste este botão para a barra de marcadores. Em qualquer página de <b>resultados</b> ou de <b>anúncio</b> do leboncoin (e também AutoScout24, mobile.de, coches.net…), carregue nele: os carros da página são enviados para o Vrooom.pt.</p>
+      <p><a class="bm" id="bm" href="#">${icon('download', 16)} Enviar para o Vrooom.pt</a></p>
+      <ol class="steps small"><li>Entre no Vrooom.pt neste navegador.</li><li>Abra o leboncoin e faça a pesquisa.</li><li>Carregue no marcador → abre-se uma pequena janela → <b>Importar</b>.</li></ol></div>
     <div class="card"><h3>3 · Obter um URL a partir do servidor</h3>
       <p class="muted small">URL de anúncio ou de pesquisa do leboncoin. ${S.firecrawl ? '<span class="badge ok">Firecrawl ativo</span> usado se o leboncoin devolver 403.' : '<span class="badge warn">Firecrawl não configurado</span> O leboncoin costuma bloquear pedidos diretos do servidor; configure a chave Firecrawl nas <a href="#/settings">Definições</a> para isto funcionar de forma fiável.'}</p>
       <input id="u_url" placeholder="https://www.leboncoin.fr/recherche?category=2&…"><button class="btn primary" id="u_go" style="margin-top:8px">Obter</button></div>
@@ -447,7 +447,7 @@ async function uploadReceipts(files) {
   for (const f of files) {
     const fd = new FormData();
     fd.append('file', await shrinkImage(f));
-    const r = await fetch('api.php?r=receipts', { method: 'POST', headers: { 'X-Vroom': '1' }, body: fd });
+    const r = await fetch('api.php?r=receipts', { method: 'POST', headers: { 'X-Vrooom': '1' }, body: fd });
     if (r.status === 401) { location.href = 'login.php'; throw new Error('login'); }
     const j = await r.json().catch(() => ({ error: `Erro no envio (HTTP ${r.status})` }));
     if (!r.ok) throw new Error(`${f.name}: ${j.error}`);

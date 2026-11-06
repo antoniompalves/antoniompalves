@@ -1,4 +1,4 @@
-# Vroom.pt — análise de importação de carros
+# Vrooom.pt — análise de importação de carros
 
 Aplicação web privada para encontrar carros em **França** (principalmente), **Espanha, Alemanha e Países Baixos**, calcular quanto custa cada um posto na estrada em **Portugal** e acompanhá-lo da pré-seleção até à venda.
 
@@ -36,7 +36,7 @@ Em **Importar anúncios** (ou no Início, enquanto não houver negócios em aber
 
 O leboncoin protege-se contra robôs (DataDome), por isso um servidor recebe normalmente **HTTP 403**. Há quatro formas:
 
-1. **Marcador / bookmarklet (recomendado).** Página *Importar anúncios* → arraste *Enviar para o Vroom.pt* para a barra de marcadores. Em qualquer página de resultados ou de anúncio do leboncoin, carregue nele: todos os carros da página são importados a partir do **seu** navegador. Também funciona no AutoScout24, mobile.de, coches.net e Marktplaats (dados schema.org).
+1. **Marcador / bookmarklet (recomendado).** Página *Importar anúncios* → arraste *Enviar para o Vrooom.pt* para a barra de marcadores. Em qualquer página de resultados ou de anúncio do leboncoin, carregue nele: todos os carros da página são importados a partir do **seu** navegador. Também funciona no AutoScout24, mobile.de, coches.net e Marktplaats (dados schema.org).
 2. **Colar o código-fonte** da página (Ctrl+U → copiar tudo → colar).
 3. **Obter pelo servidor** um URL do leboncoin: tenta um pedido direto e depois o [Firecrawl](https://firecrawl.dev), se a chave estiver guardada em Definições.
 4. **Introdução manual**, ou **calculadora** → *Guardar como negócio*.
@@ -60,7 +60,7 @@ Requer PHP 7.4 ou superior. Não há base de dados nem dependências.
 ```bash
 npm run serve        # = php -S localhost:8000 -t app  →  http://localhost:8000
 npm test             # testes (Node.js 18+ e PHP no PATH)
-npm run package      # cria dist/vroom-pt.zip para o cPanel
+npm run package      # cria dist/vrooom-pt.zip para o cPanel
 ```
 
 Na primeira utilização a aplicação pede para escolher a palavra-passe. Todos os dados ficam em `app/data/db.json`. Em Definições → *Descarregar cópia* exporta tudo.
@@ -72,7 +72,7 @@ Ver [DEPLOY-CPANEL.md](DEPLOY-CPANEL.md): enviar o zip para `public_html`, extra
 ## Estrutura
 
 ```
-app/                      ← o que vai para o cPanel (public_html/vroom)
+app/                      ← o que vai para o cPanel (public_html/vrooom)
   index.php               aplicação (exige sessão)
   login.php / logout.php  entrada; na 1.ª vez escolhe a palavra-passe
   api.php                 API JSON (api.php?r=...)

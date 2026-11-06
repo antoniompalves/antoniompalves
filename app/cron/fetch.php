@@ -1,5 +1,5 @@
 <?php
-// Refresh saved leboncoin searches into Vroom.pt (command line / cPanel Cron Jobs only).
+// Refresh saved leboncoin searches into Vrooom.pt (command line / cPanel Cron Jobs only).
 //   php cron/fetch.php                       → reads data/searches.txt (one URL per line, # comments)
 //   php cron/fetch.php "https://www.leboncoin.fr/recherche?..." [more urls]
 //   php cron/fetch.php --file pagina.html    → parse a page saved from the browser

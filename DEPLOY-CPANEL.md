@@ -1,15 +1,15 @@
-# Instalar o Vroom.pt no cPanel (PHP)
+# Instalar o Vrooom.pt no cPanel (PHP)
 
 A aplicação é **PHP + HTML + JavaScript**, sem base de dados nem instalação. Funciona em qualquer alojamento cPanel com **PHP 7.4 ou superior** (recomendado 8.1+) e as extensões habituais `curl`, `json`, `mbstring` e `session`, que estão ativas por omissão.
 
 ## 1. Enviar os ficheiros
 
 1. cPanel → **File Manager** → abra `public_html`.
-2. Crie uma pasta, por exemplo `vroom` → entre nela.
-3. **Upload** de `vroom-pt.zip` → botão direito → **Extract**.
-4. Deve ver `index.php`, `api.php`, `login.php`, `assets/`, `inc/` e `data/` dentro de `public_html/vroom`.
+2. Crie uma pasta, por exemplo `vrooom` → entre nela.
+3. **Upload** de `vrooom-pt.zip` → botão direito → **Extract**.
+4. Deve ver `index.php`, `api.php`, `login.php`, `assets/`, `inc/` e `data/` dentro de `public_html/vrooom`.
 
-A aplicação fica em `https://seudominio.pt/vroom/`. Para usar um subdomínio (ex.: `vroom.seudominio.pt`), crie-o em **Domains** e extraia o zip na pasta desse subdomínio.
+A aplicação fica em `https://seudominio.pt/vrooom/`. Para usar um subdomínio (ex.: `vrooom.seudominio.pt`), crie-o em **Domains** e extraia o zip na pasta desse subdomínio.
 
 ## 2. Primeira utilização
 
@@ -23,15 +23,15 @@ cPanel → **SSL/TLS Status** → execute o **AutoSSL** para o domínio. Depois,
 
 ## 4. Marcador (bookmarklet)
 
-Entre na aplicação → **Importar anúncios** → arraste **Enviar para o Vroom.pt** para a barra de marcadores. Em qualquer página de resultados ou de anúncio do leboncoin, carregue no marcador: abre-se uma pequena janela → **Importar**. Se ainda não tiver sessão iniciada, a janela pede a palavra-passe e continua sozinha.
+Entre na aplicação → **Importar anúncios** → arraste **Enviar para o Vrooom.pt** para a barra de marcadores. Em qualquer página de resultados ou de anúncio do leboncoin, carregue no marcador: abre-se uma pequena janela → **Importar**. Se ainda não tiver sessão iniciada, a janela pede a palavra-passe e continua sozinha.
 
 ## Segurança e dados
 
 * Tudo fica na pasta `data/`: `db.json` (carros, despesas, definições), `receipts/` (faturas e recibos anexados), `auth.json` (hash da palavra-passe), `secrets.json` (chave Firecrawl), `sessions/` e `backups/`.
 * As faturas só abrem com sessão iniciada: são servidas pelo `api.php`, nunca diretamente. Aceita PDF, JPG, PNG, WEBP e HEIC; o conteúdo do ficheiro é verificado (não só a extensão).
-* O `.htaccess` bloqueia o acesso web a `data/`, `inc/`, `cron/` e `config*.php`. Para confirmar, abra `https://seudominio.pt/vroom/data/db.json`: tem de dar **403 Forbidden**.
+* O `.htaccess` bloqueia o acesso web a `data/`, `inc/`, `cron/` e `config*.php`. Para confirmar, abra `https://seudominio.pt/vrooom/data/db.json`: tem de dar **403 Forbidden**.
 * **Ainda mais seguro (opcional):** guarde os dados fora de `public_html`. Copie `config.sample.php` para `config.php` e ative a linha
-  `define('DATA_DIR', '/home/SEU_UTILIZADOR/vroom-data');`
+  `define('DATA_DIR', '/home/SEU_UTILIZADOR/vrooom-data');`
 * **Cópias de segurança:** em **Definições → Descarregar cópia** exporta os dados em JSON, **mas não inclui os ficheiros das faturas**. Para guardar tudo, faça backup da pasta `data/` inteira (cPanel → **Backup** ou **File Manager → Compress** da pasta `data` e descarregar o zip).
 
 ## Chave Firecrawl (opcional)
@@ -44,14 +44,14 @@ O leboncoin bloqueia pedidos feitos a partir de servidores. Para a aplicação c
 2. cPanel → **Cron Jobs** → por exemplo duas vezes por dia:
 
 ```bash
-/usr/local/bin/php /home/SEU_UTILIZADOR/public_html/vroom/cron/fetch.php >> /home/SEU_UTILIZADOR/vroom-cron.log 2>&1
+/usr/local/bin/php /home/SEU_UTILIZADOR/public_html/vrooom/cron/fetch.php >> /home/SEU_UTILIZADOR/vrooom-cron.log 2>&1
 ```
 
 O caminho do PHP pode variar: o cPanel mostra-o na página **Cron Jobs**, ou use `php` em vez de `/usr/local/bin/php`. Na prática isto precisa da chave Firecrawl.
 
 ## Atualizar a aplicação
 
-Envie o novo `vroom-pt.zip` para a mesma pasta → **Extract** → substituir ficheiros. O zip não traz dados, por isso `data/` (e `config.php`, se existir) mantêm-se.
+Envie o novo `vrooom-pt.zip` para a mesma pasta → **Extract** → substituir ficheiros. O zip não traz dados, por isso `data/` (e `config.php`, se existir) mantêm-se.
 
 ## Resolução de problemas
 

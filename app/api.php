@@ -1,5 +1,5 @@
 <?php
-// Vroom.pt JSON API. Routes: api.php?r=<route>. Only GET and POST are used (some hosts block PUT/DELETE);
+// Vrooom.pt JSON API. Routes: api.php?r=<route>. Only GET and POST are used (some hosts block PUT/DELETE);
 // POST with &_method=PUT|DELETE stands in for them.
 declare(strict_types=1);
 require __DIR__ . '/inc/bootstrap.php';
@@ -117,11 +117,11 @@ if ($route === 'import/paste' && $method === 'POST') {
 if ($route === 'leboncoin/search-url' && $method === 'POST') json_out(['url' => lbc_search_url(json_body())]);
 if ($route === 'export' && $method === 'GET') {
     json_out(['deals' => array_map('objectify', $s->data['deals']), 'settings' => obj($s->data['settings']), 'ledger' => $s->data['ledger']], 200,
-        ['Content-Disposition' => 'attachment; filename="vroom-copia-' . date('Y-m-d') . '.json"']);
+        ['Content-Disposition' => 'attachment; filename="vrooom-copia-' . date('Y-m-d') . '.json"']);
 }
 if ($route === 'restore' && $method === 'POST') {
     $b = json_body();
-    if (!isset($b['deals']) || !is_array($b['deals'])) json_out(['error' => 'Não é um ficheiro de cópia de segurança do Vroom'], 400);
+    if (!isset($b['deals']) || !is_array($b['deals'])) json_out(['error' => 'Não é um ficheiro de cópia de segurança do Vrooom'], 400);
     $s->backup();
     $s->data = ['deals' => $b['deals'], 'settings' => $b['settings'] ?? [], 'ledger' => $b['ledger'] ?? ['general' => [], 'settlements' => []]];
     $s->save();

@@ -23,11 +23,11 @@ header('Content-Type: text/html; charset=utf-8');
 header('X-Frame-Options: DENY');
 ?><!doctype html>
 <html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vroom.pt · Entrar</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="assets/styles.css"></head>
+<title>Vrooom.pt · Entrar</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="assets/styles.css"></head>
 <body class="login-page">
 <form class="login-card" method="post" action="login.php">
   <img src="assets/logo.svg" width="48" height="48" alt="">
-  <h1>Vroom.pt</h1>
+  <h1>Vrooom.pt</h1>
   <p class="muted"><?= $setup ? 'Primeira utilização: escolha a palavra-passe de acesso.' : 'Análise de importação · França · Espanha · Alemanha · Países Baixos → Portugal' ?></p>
   <?php if ($error): ?><p class="error"><?= h($error) ?></p><?php endif; ?>
   <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">

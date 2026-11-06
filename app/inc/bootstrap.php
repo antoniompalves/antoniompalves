@@ -1,5 +1,5 @@
 <?php
-// Vroom.pt — bootstrap: configuration, session, auth, JSON helpers. PHP 7.4+.
+// Vrooom.pt — bootstrap: configuration, session, auth, JSON helpers. PHP 7.4+.
 declare(strict_types=1);
 
 define('VROOM_ROOT', dirname(__DIR__));
