@@ -159,3 +159,9 @@ table.t td.n,table.t th.n,.nw{white-space:nowrap}
 .i.i-ok{color:var(--green)!important}.i.i-warn{color:var(--amber)!important}.badge.ok .i{color:#047857}.badge.bad .i{color:#b91c1c}
 .icon-btn.menu{display:none}
 @media (max-width:760px){.icon-btn.menu{display:inline-flex}}
+.seg{display:inline-flex;gap:4px;background:#e9eef5;padding:4px;border-radius:11px;margin-bottom:14px}
+.seg a{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;color:#475569;font-weight:600}
+.seg a.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px #0f172a1a}
+.arch-row{display:flex;gap:10px;align-items:center;margin-bottom:10px}.arch-row .deal-row{flex:1;margin-bottom:0}
+.arch-row .deal-row .btn.sm{display:none}
+a.badge{text-decoration:none}

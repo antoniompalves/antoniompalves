@@ -31,6 +31,7 @@ go.onclick = async () => {
   if (r.ok && j.ids?.length === 1) open.href = `index.php#/deal/${j.ids[0]}`;
   else if (r.ok) open.href = 'index.php#/deals';
   window.opener?.postMessage({ type: 'vroom-done' }, '*');
+  if (r.ok) { try { new BroadcastChannel('vroom').postMessage({ type: 'imported', created: j.created, updated: j.updated, ids: j.ids }); } catch {} }
 };
 if (window.opener) window.opener.postMessage('vroom-ready', '*');
 else msg.textContent = 'Abra esta página através do marcador do Vroom.pt numa página do leboncoin (ou de outro portal).';

@@ -1,7 +1,7 @@
 import { analyzeDeal, scoreDeals, mergeSettings, deadlinesFor, tradeInValuation, capitalPosition, DEFAULT_SETTINGS } from './lib/costs.js';
 import { processFor, progressOf } from './lib/process.js';
 import { icon, hydrateIcons } from './icons.js';
-import { buildDemo } from './demo.js';
+import { buildDemos, DEMO_IDS } from './demo.js';
 // pre-rendered icons used inside templates
 const I = { ext: icon('ext', 14), check: icon('check', 13), checkC: icon('checkCircle', 16).replace('class="i"', 'class="i i-ok"'), circle: icon('circle', 16), x: icon('x', 13), trash: icon('trash', 15), clock: icon('clock', 16).replace('class="i"', 'class="i i-warn"'), heart: icon('heart', 13, true), heartBtn: icon('heart', 18), heartOn: icon('heart', 18, true), clip: icon('clip', 14), file: icon('file', 13), image: icon('image', 13), pin: icon('pin', 15) };
 import { EXPENSE_TYPES, CATEGORY_LABELS, CASH, SPLIT, balances, settleTransfers, paidBy, expenseStatus, expenseLabel, expenseCategory, allExpenses, estimateVsReal, toCSV } from './lib/ledger.js';
@@ -66,11 +66,12 @@ function setPath(o, p, v) {
 const b64 = (str) => btoa(unescape(encodeURIComponent(str)));
 const thumbStyle = (d) => (d.images?.[0] ? `style="background-image:url('${esc(d.images[0])}')"` : '');
 const flag = (c) => `<span class="flag">${esc(c || '?')}</span>`;
+const fmtDate = (iso) => (iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '');
 const title = (d) => d.title || [d.make, d.model, d.version].filter(Boolean).join(' ') || 'Carro sem título';
 
 // ---------- router ----------
-const routes = { home: viewHome, deals: viewDeals, import: viewImport, calculator: viewCalculator, compare: viewCompare, pipeline: viewPipeline, ledger: viewLedger, settings: viewSettings };
-const TITLES = { home: 'Início', deals: 'Negócios', import: 'Importar anúncios', calculator: 'Calculadora ISV / custos', compare: 'Comparar e pontuar', pipeline: 'Processo', ledger: 'Despesas e resultados', settings: 'Definições' };
+const routes = { home: viewHome, deals: viewDeals, archive: viewArchive, import: viewImport, calculator: viewCalculator, compare: viewCompare, pipeline: viewPipeline, ledger: viewLedger, settings: viewSettings };
+const TITLES = { home: 'Início', deals: 'Negócios em aberto', archive: 'Arquivo', import: 'Importar anúncios', calculator: 'Calculadora ISV / custos', compare: 'Comparar e pontuar', pipeline: 'Processo', ledger: 'Despesas e resultados', settings: 'Definições' };
 function parseHash() {
   const [p, q = ''] = location.hash.replace(/^#\/?/, '').split('?');
   const parts = p.split('/').filter(Boolean);
@@ -107,8 +108,8 @@ function dealRow(d, { compare = false } = {}) {
     <div class="thumb" ${thumbStyle(d)}>${d.images?.[0] ? '' : icon('car', 30)}</div>
     <div><div class="deal-title">${esc(title(d))}</div>
       <div class="deal-meta">${flag(d.country)} <b>${esc(d.city || COUNTRIES[d.country] || '')}</b> · ${esc(d.year || '—')} · ${d.km != null ? nf.format(d.km) + ' km' : '—'} · ${esc(FUELS[d.fuel] || d.fuel || '—')} · ISV ${eur(a.isv.total)}</div>
-      <div class="deal-sub">${sub}</div><div class="badges">${badges}</div></div>
-    <div class="deal-right"><div class="profit ${cls(a.netProfit)}">${signed(a.netProfit)}</div><div class="small muted">${a.netProfit != null ? `lucro líquido estimado · ${pct(a.margin)}` : 'falta preço de mercado'}</div>
+      <div class="deal-sub">${sub}</div><div class="badges">${badges}</div>${ACTIVE.includes(d.status) ? (() => { const pr = progressOf(d); return `${progressBar(pr)}<div class="small muted" style="margin-top:4px">${pr.next ? `Próximo: <b>${esc(pr.phase.label)}</b> → ${esc(pr.next.label)}` : `${I.check} Processo concluído`}</div>`; })() : ''}</div>
+    <div class="deal-right"><div class="profit ${cls(a.realised?.profit ?? a.netProfit)}">${signed(a.realised?.profit ?? a.netProfit)}</div><div class="small muted">${a.realised ? `lucro realizado · ${pct(a.realised.margin)}` : a.netProfit != null ? `lucro líquido estimado · ${pct(a.margin)}` : 'falta preço de mercado'}</div>
       <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end">${compare ? `<label class="chk small" data-stop><input type="checkbox" data-cmp="${d.id}" ${S.compare.has(d.id) ? 'checked' : ''}> comparar</label>` : ''}<button class="btn sm">Ver</button></div></div>
   </div>`;
 }
@@ -119,57 +120,86 @@ function bindRows(root) {
 
 // ---------- demo car (from the workbook) ----------
 async function loadDemo() {
-  const existing = S.deals.find((d) => d.demo);
-  if (existing) { toast('O carro de demonstração já está carregado'); location.hash = `#/deal/${existing.id}`; return; }
+  const have = new Set(S.deals.filter((d) => d.demo).map((d) => d.sourceId));
+  if (DEMO_IDS.every((id) => have.has(id))) { toast('Os carros de demonstração já estão carregados'); return; }
   let partners = settings().partners;
-  if (!partners.includes('Calado') && confirm('Na folha de cálculo há 3 sócios: António, Tono e Calado (o Calado pagou a entrada de 1000 € e as deslocações).\n\nOK = adicionar o Calado aos sócios\nCancelar = atribuir essas despesas à caixa da empresa')) {
+  if (!partners.includes('Calado') && confirm('Na folha de cálculo há 3 sócios: António, Tono e Calado (o Calado pagou as entradas dos carros).\n\nOK = adicionar o Calado aos sócios\nCancelar = atribuir essas despesas à caixa da empresa')) {
     const next = mergeSettings(S.settings); next.partners = [...partners, 'Calado'];
     S.settings = await api('api/settings', { method: 'PUT', body: next }); S.settingsVer = (S.settingsVer || 0) + 1;
     partners = settings().partners;
   }
-  const saved = await api('api/deals', { method: 'POST', body: buildDemo(partners) });
-  await refresh(); S.modalFor = null; toast('Carro de demonstração carregado');
-  location.hash = `#/deal/${saved.id}?tab=sale`;
+  let firstOpen = null;
+  for (const d of buildDemos(partners)) {
+    if (have.has(d.sourceId)) continue;
+    const saved = await api('api/deals', { method: 'POST', body: d });
+    if (!['sold', 'rejected'].includes(saved.status)) firstOpen = firstOpen || saved;
+  }
+  await refresh(); S.modalFor = null; toast('Carros de demonstração carregados: Audi A6 (em aberto) e Renault Kadjar (vendido, no Arquivo)', 7000);
+  location.hash = firstOpen ? `#/deal/${firstOpen.id}?tab=pipeline` : '#/archive';
 }
-const demoButton = (cls = 'btn') => S.deals.some((d) => d.demo) ? '' : `<button class="${cls}" data-demo>${icon('car', 16)} Carregar carro de demonstração (da folha)</button>`;
+const demoButton = (cls = 'btn') => {
+  const have = new Set(S.deals.filter((d) => d.demo).map((d) => d.sourceId));
+  return DEMO_IDS.every((id) => have.has(id)) ? '' : `<button class="${cls}" data-demo>${icon('car', 16)} Carregar carros de demonstração (da folha)</button>`;
+};
 function bindDemo(root = document) { root.querySelectorAll('[data-demo]').forEach((b) => (b.onclick = () => loadDemo().catch((e) => toast(e.message)))); }
+
+// ---------- live refresh: imports from the bookmarklet window, other tabs, coming back to the tab ----------
+let lastRefresh = Date.now();
+async function refreshAndRedraw(msg) {
+  try { await refresh(); } catch { return; }
+  lastRefresh = Date.now();
+  const typing = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+  if ($('#modal').hidden && !typing) render();
+  if (msg) toast(msg, 6000);
+}
+try {
+  const ch = new BroadcastChannel('vroom');
+  ch.onmessage = (e) => { if (e.data?.type === 'imported') refreshAndRedraw(`Importados: ${e.data.created} novos, ${e.data.updated} atualizados — já aparecem em Negócios`); };
+} catch { /* old browser */ }
+window.addEventListener('focus', () => { if (Date.now() - lastRefresh > 4000) refreshAndRedraw(); });
 
 // ---------- home ----------
 function viewHome() {
   const s = settings();
-  const live = S.deals.filter((d) => !['rejected', 'sold'].includes(d.status) && !ACTIVE.includes(d.status));
+  const OPEN_EARLY = ['new', 'shortlist', 'contacted'];
+  const live = S.deals.filter((d) => OPEN_EARLY.includes(d.status));
   const ranked = live.map((d) => [d, an(d)]).filter(([, a]) => a.netProfit != null).sort((x, y) => y[1].netProfit - x[1].netProfit);
   const best = ranked[0]?.[1].netProfit;
   const top = ranked.slice(0, 8);
   const avg = top.length ? top.reduce((a, [, x]) => a + x.netProfit, 0) / top.length : null;
   const active = S.deals.filter((d) => ACTIVE.includes(d.status));
   const sold = S.deals.filter((d) => d.status === 'sold' && d.salePrice);
+  const archived = S.deals.filter((d) => ['sold', 'rejected'].includes(d.status));
   const realised = sold.reduce((a, d) => a + (an(d).realised?.profit || 0), 0);
   const noMarket = live.filter((d) => !an(d).market.avg);
   const noSpecs = live.filter((d) => !d.cc || !d.co2);
   const deadlines = active.flatMap((d) => deadlinesFor(d).filter((x) => !x.done).map((x) => ({ ...x, d }))).sort((a, b) => a.due.localeCompare(b.due));
   const cap = capitalPosition(S.deals, S.settings);
   const nextSteps = active.map((d) => ({ d, pr: progressOf(d) })).filter((x) => x.pr.next);
-  const unpriced = live.filter((d) => !ranked.find(([x]) => x === d)).slice(0, 5);
+  const unpriced = live.filter((d) => !ranked.find(([x]) => x === d)).sort((x, y) => String(y.createdAt).localeCompare(String(x.createdAt)));
+  const nothingOpen = !active.length && !live.length;
   $('#view').innerHTML = `
   <div class="home"><div>
     <div style="display:flex;justify-content:space-between;gap:16px;align-items:start;flex-wrap:wrap">
       <div><h2>Bem-vindo ao Vroom.pt</h2><p class="muted" style="max-width:560px;margin:0">Encontre carros em França, Espanha, Alemanha e Países Baixos, veja quanto custam postos em Portugal (ISV, IUC, viagem, legalização) e acompanhe cada carro da pré-seleção até à venda.</p></div>
       <a class="btn primary" href="#/deals" style="padding:12px 22px">${icon('search')} Procurar negócios</a></div>
     <div class="grid cols-4" style="margin-top:20px">
-      <div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div><div class="small muted">${live.length} negócios em análise</div></div>
+      <div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div><div class="small muted">${live.length + active.length} negócios em aberto</div></div>
       <div class="card kpi"><div class="lbl">Melhor lucro líquido</div><div class="val ${cls(best)}">${signed(best)}</div></div>
       <div class="card kpi"><div class="lbl">Carros em curso</div><div class="val">${active.length}</div></div>
       <div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(sold.length ? realised : null)}">${sold.length ? signed(realised) : '—'}</div></div>
     </div>
-    <div class="sec-h"><div><h2>${top.length ? `Top ${top.length} negócios` : 'Melhores negócios'}</h2>${avg != null ? `<div class="muted">lucro líquido médio <b class="${cls(avg)} mono">${signed(Math.round(avg))}</b> · melhor <b class="pos mono">${signed(best)}</b> ${esc(title(ranked[0][0]))}</div>` : ''}</div><a class="btn dark" href="#/deals">Ver todos</a></div>
-    <div id="topList">${top.length ? top.map(([d]) => dealRow(d)).join('') : `<div class="empty">Ainda não há negócios com preço. <a href="#/import">Importe anúncios do leboncoin</a> e depois adicione comparáveis portugueses no separador <b>Mercado PT</b> de cada carro.<div style="margin-top:14px">${demoButton('btn primary')}</div></div>`}</div>
-    ${unpriced.length ? `<div class="sec-h"><h3>À espera de preço de mercado PT</h3></div><div id="unpriced">${unpriced.map((d) => dealRow(d)).join('')}</div>` : ''}
+    ${nothingOpen ? `<div class="empty" style="margin-top:26px"><b>Não há negócios em aberto.</b><br>${archived.length ? `Os ${archived.length} negócios concluídos estão no <a href="#/archive">Arquivo</a>. ` : ''}<a href="#/import">Importe anúncios do leboncoin</a> para começar.<div style="margin-top:14px">${demoButton('btn primary')}</div></div>` : ''}
+    ${active.length ? `<div class="sec-h"><div><h2>Em curso (${active.length})</h2><div class="muted">Reservados, comprados, a caminho, em legalização ou à venda</div></div><a class="btn" href="#/pipeline">Ver processo</a></div><div>${active.map((d) => dealRow(d)).join('')}</div>` : ''}
+    ${unpriced.length ? `<div class="sec-h"><div><h2>Por analisar (${unpriced.length})</h2><div class="muted">Importados, ainda sem preço de mercado PT — abra cada um e adicione comparáveis no separador <b>Mercado PT</b></div></div>${unpriced.length > 10 ? `<a class="btn" href="#/deals?nomarket=1">Ver todos</a>` : ''}</div><div>${unpriced.slice(0, 10).map((d) => dealRow(d)).join('')}</div>` : ''}
+    ${top.length ? `<div class="sec-h"><div><h2>Melhores negócios (${ranked.length})</h2>${avg != null ? `<div class="muted">lucro líquido médio <b class="${cls(avg)} mono">${signed(Math.round(avg))}</b> · melhor <b class="pos mono">${signed(best)}</b> ${esc(title(ranked[0][0]))}</div>` : ''}</div><a class="btn dark" href="#/deals">Ver todos</a></div>
+    <div id="topList">${top.map(([d]) => dealRow(d)).join('')}</div>` : ''}
+    ${archived.length && !nothingOpen ? `<p class="muted small" style="margin-top:18px">${icon('archive', 14)} ${archived.length} negócio${archived.length === 1 ? '' : 's'} concluído${archived.length === 1 ? '' : 's'} no <a href="#/archive">Arquivo</a>.</p>` : ''}
   </div>
   <div>
     <div class="eyebrow">Precisa da sua atenção</div>
     <div class="card">
-      ${deadlines.slice(0, 5).map((x) => `<div class="att"><div class="ic">${icon('clock')}</div><div><b>${esc(x.label)}</b> — ${esc(title(x.d))}<div class="small ${x.due < new Date().toISOString().slice(0, 10) ? 'neg' : 'muted'}">prazo ${esc(x.due)}</div><a href="#/deal/${x.d.id}?tab=pipeline">Abrir</a></div></div>`).join('')}
+      ${deadlines.slice(0, 5).map((x) => `<div class="att"><div class="ic">${icon('clock')}</div><div><b>${esc(x.label)}</b> — ${esc(title(x.d))}<div class="small ${x.due < new Date().toISOString().slice(0, 10) ? 'neg' : 'muted'}">prazo ${esc(fmtDate(x.due))}</div><a href="#/deal/${x.d.id}?tab=pipeline">Abrir</a></div></div>`).join('')}
       ${nextSteps.slice(0, 4).map(({ d, pr }) => `<div class="att"><div class="ic">${icon('list')}</div><div><b>${esc(title(d))}</b><div class="small muted">${esc(pr.phase.label)} → ${esc(pr.next.label)}</div>${progressBar(pr)}<a href="#/deal/${d.id}?tab=pipeline">Abrir checklist</a></div></div>`).join('')}
       <div class="att"><div class="ic">${icon('euro')}</div><div><b>${noMarket.length}</b> sem preço de mercado PT<div class="small muted">Adicione comparáveis do StandVirtual para obter o lucro</div><a href="#/deals?nomarket=1">Rever</a></div></div>
       <div class="att"><div class="ic">${icon('alert')}</div><div><b>${noSpecs.length}</b> sem CO2 ou cilindrada<div class="small muted">Sem ambos, o ISV não pode ser exato</div><a href="#/deals?nospecs=1">Corrigir</a></div></div>
@@ -195,7 +225,7 @@ async function fetchUrl(url, btn) {
   try {
     const r = await api('api/import/leboncoin', { method: 'POST', body: { url } });
     await refresh(); toast(`Importados: ${r.created} novos, ${r.updated} atualizados`);
-    location.hash = r.ids.length === 1 ? `#/deal/${r.ids[0]}` : '#/deals?sort=new';
+    S.lastHash = '#/deals?sort=new'; location.hash = r.ids.length === 1 ? `#/deal/${r.ids[0]}` : '#/deals?sort=new';
   } catch (e) { toast(e.message, 9000); } finally { btn.disabled = false; btn.textContent = t; }
 }
 
@@ -204,7 +234,10 @@ function viewDeals(r) {
   const f = { text: '', country: '', fuel: '', status: 'open', maxPrice: '', minProfit: '', targets: false, pro: false, sort: 'profit', ...load('filters', {}) };
   if (r.q.get('sort')) f.sort = r.q.get('sort');
   const fav = r.q.get('fav'), nomarket = r.q.get('nomarket'), nospecs = r.q.get('nospecs');
+  const nOpen = S.deals.filter((d) => !['sold', 'rejected'].includes(d.status)).length;
+  const nArch = S.deals.length - nOpen;
   $('#view').innerHTML = `
+    <div class="seg"><a class="on" href="#/deals">Em aberto (${nOpen})</a><a href="#/archive">${icon('archive', 15)} Arquivo (${nArch})</a></div>
     <div class="card"><div class="filters">
       <label class="f">Pesquisar<input id="f_text" placeholder="marca, modelo, cidade…" value="${esc(f.text)}"></label>
       <label class="f">País<select id="f_country"><option value="">Todos</option>${Object.entries(COUNTRIES).map(([k, v]) => `<option value="${k}" ${f.country === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
@@ -242,7 +275,7 @@ function viewDeals(r) {
     const key = { profit: (d) => -(an(d).netProfit ?? -1e9), margin: (d) => -(an(d).margin ?? -1e9), price: (d) => an(d).price || 1e9, km: (d) => d.km ?? 1e9, new: (d) => -new Date(d.createdAt).getTime(), isv: (d) => an(d).isv.total }[f.sort];
     list = list.sort((a, b) => key(a) - key(b));
     $('#count').textContent = `${list.length} negócio${list.length === 1 ? '' : 's'}`;
-    $('#list').innerHTML = list.length ? list.map((d) => dealRow(d, { compare: true })).join('') : '<div class="empty">Nenhum negócio corresponde aos filtros. <a href="#/import">Importe anúncios</a>.</div>';
+    $('#list').innerHTML = list.length ? list.map((d) => dealRow(d, { compare: true })).join('') : `<div class="empty">Nenhum negócio corresponde aos filtros. <a href="#/import">Importe anúncios</a>${nArch ? ` ou veja o <a href="#/archive">Arquivo</a> (${nArch})` : ''}.</div>`;
     bindRows($('#list'));
   };
   $('#view').querySelectorAll('input,select').forEach((el) => el.addEventListener(el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input', draw));
@@ -303,7 +336,7 @@ function viewImport() {
   };
   $('#u_go').onclick = () => fetchUrl($('#u_url').value, $('#u_go'));
   $('#p_go').onclick = async () => {
-    try { const r = await api('api/import/paste', { method: 'POST', body: { content_b64: b64($('#p_content').value), url: $('#p_url').value, country: $('#p_country').value } }); await refresh(); toast(`Importados: ${r.created} novos, ${r.updated} atualizados`); location.hash = r.ids.length === 1 ? `#/deal/${r.ids[0]}` : '#/deals?sort=new'; } catch (e) { toast(e.message, 8000); }
+    try { const r = await api('api/import/paste', { method: 'POST', body: { content_b64: b64($('#p_content').value), url: $('#p_url').value, country: $('#p_country').value } }); await refresh(); toast(`Importados: ${r.created} novos, ${r.updated} atualizados`); S.lastHash = '#/deals?sort=new'; location.hash = r.ids.length === 1 ? `#/deal/${r.ids[0]}` : '#/deals?sort=new'; } catch (e) { toast(e.message, 8000); }
   };
   $('#m_go').onclick = async () => {
     const d = {}; for (const k of ['make', 'model', 'version', 'firstRegistration', 'km', 'fuel', 'cc', 'co2', 'price', 'country', 'city', 'url', 'sellerType']) d[k] = $(`#m_${k}`).value || null;
@@ -312,7 +345,7 @@ function viewImport() {
     d.title = [d.make, d.model, d.version].filter(Boolean).join(' ');
     if (!d.title) return toast('Indique pelo menos a marca e o modelo');
     const saved = await api('api/deals', { method: 'POST', body: { ...d, source: 'manual' } });
-    await refresh(); location.hash = `#/deal/${saved.id}`;
+    await refresh(); S.lastHash = '#/deals?sort=new'; location.hash = `#/deal/${saved.id}`;
   };
 }
 
@@ -531,6 +564,7 @@ const TAB = {
       <label class="f">Vendedor${sel(d, 'sellerType', [['pro', 'Profissional'], ['private', 'Particular'], ['', 'Desconhecido']])}</label><label class="f">Nome do vendedor${inp(d, 'sellerName')}</label>
       <label class="f">Qualidade aparente (1 melhor – 5)${sel(d, 'quality', [[1, '1 · excelente'], [2, '2'], [3, '3 · média'], [4, '4'], [5, '5 · fraca']])}</label>
       <label class="f">URL do anúncio${inp(d, 'url', 'url')}</label>
+      <label class="f">VIN (n.º de chassis)${inp(d, 'vin', 'text', 'maxlength="17" style="text-transform:uppercase"')}</label>
     </div>
     <p class="small muted">O CO2 e a cilindrada raramente vêm estruturados no leboncoin: peça ao vendedor o <b>COC</b> ou a <b>carte grise</b> (campos V.7 = CO2, P.1 = cm³).</p>
     <label class="f" style="margin-top:10px">Notas<textarea data-path="notes">${esc(d.notes || '')}</textarea></label>
@@ -574,7 +608,7 @@ const TAB = {
       <label class="f">DAV submetida${inp(d, 'dates.davDate', 'date')}</label><label class="f">Matrícula PT atribuída${inp(d, 'dates.plateDate', 'date')}</label>
       <label class="f">Anunciado para venda${inp(d, 'dates.listed', 'date')}</label><label class="f">Data de venda${inp(d, 'dates.sold', 'date')}</label>
       <label class="f">Sinal enviado €${inp(d, 'deposit', 'number')}</label></div>
-      ${dl.length ? `<div class="eyebrow" style="margin-top:16px">Prazos legais</div><div class="kv">${dl.map((x) => `<div><span>${x.done ? I.checkC : I.clock} ${esc(x.label)}</span><span class="v ${!x.done && x.due < new Date().toISOString().slice(0, 10) ? 'neg' : ''}">${esc(x.due)}</span></div>`).join('')}</div>` : '<p class="small muted">Os prazos aparecem quando indicar as datas de chegada / DAV / matrícula: DAV até 20 dias úteis após a chegada, ISV em 10 dias úteis, DUA em 30 dias e registo em 60 dias.</p>'}
+      ${dl.length ? `<div class="eyebrow" style="margin-top:16px">Prazos legais</div><div class="kv">${dl.map((x) => `<div><span>${x.done ? I.checkC : I.clock} ${esc(x.label)}</span><span class="v ${!x.done && x.due < new Date().toISOString().slice(0, 10) ? 'neg' : ''}">${esc(fmtDate(x.due))}</span></div>`).join('')}</div>` : '<p class="small muted">Os prazos aparecem quando indicar as datas de chegada / DAV / matrícula: DAV até 20 dias úteis após a chegada, ISV em 10 dias úteis, DUA em 30 dias e registo em 60 dias.</p>'}
       ${phases.map((p) => `<div class="card checks" style="margin-top:14px"><div style="display:flex;justify-content:space-between"><div class="eyebrow">${esc(p.label)}</div><span class="small ${p.done === p.total ? 'pos' : 'muted'}">${p.done}/${p.total}</span></div>
         ${p.steps.map((st) => st.field
           ? `<div class="step-field"><span>${st.done ? I.checkC : I.circle} ${esc(st.label)}</span>${field(st.field)}</div>`
@@ -657,7 +691,7 @@ function bindModal(d) {
   const mk = $('#mkTrade'); if (mk) mk.onclick = async () => {
     const t = d.tradeIn; const tv = tradeInValuation(t, S.settings);
     const saved = await api('api/deals', { method: 'POST', body: { source: 'manual', title: t.desc || 'Retoma', country: 'PT', price: tv.offer, sellerType: 'private', status: 'bought', market: { comps: [], target: tv.resale }, notes: `Retoma de: ${title(d)}` } });
-    d.checklist = { ...(d.checklist || {}), s_tradein: true }; await saveDeal(d); await refresh(); location.hash = `#/deal/${saved.id}`;
+    d.checklist = { ...(d.checklist || {}), s_tradein: true }; await saveDeal(d); await refresh(); S.lastHash = '#/deals?sort=new'; location.hash = `#/deal/${saved.id}`;
   };
   body.querySelectorAll('[data-check]').forEach((el) => el.addEventListener('change', () => { d.checklist = { ...(d.checklist || {}), [el.dataset.check]: el.checked }; commit(); }));
   const addComp = $('#addComp'); if (addComp) addComp.onclick = () => { d.market = d.market || {}; d.market.comps = [...(d.market.comps || []), { url: '', price: null }]; commit(); };
@@ -680,6 +714,28 @@ function bindModal(d) {
   $('#mDel').onclick = async () => { if (!confirm('Eliminar este negócio?')) return; await api(`api/deals/${d.id}`, { method: 'DELETE' }); S.deals = S.deals.filter((x) => x.id !== d.id); closeModal(); };
 }
 
+// ---------- archive (sold / rejected) ----------
+function viewArchive(r) {
+  const P = settings().partners;
+  const which = r?.q?.get('s') || 'all';
+  const all = S.deals.filter((d) => ['sold', 'rejected'].includes(d.status));
+  const list = all.filter((d) => which === 'all' || d.status === which).sort((a, b) => String(b.dates?.sold || b.updatedAt).localeCompare(String(a.dates?.sold || a.updatedAt)));
+  const sold = all.filter((d) => d.status === 'sold');
+  const tot = sold.reduce((x, d) => x + (an(d).realised?.profit || 0), 0);
+  const nOpen = S.deals.length - all.length;
+  $('#view').innerHTML = `
+    <div class="seg"><a href="#/deals">Em aberto (${nOpen})</a><a class="on" href="#/archive">${icon('archive', 15)} Arquivo (${all.length})</a></div>
+    <div class="grid cols-3"><div class="card kpi"><div class="lbl">Vendidos</div><div class="val">${sold.length}</div></div><div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(sold.length ? tot : null)}">${sold.length ? signed(tot) : '—'}</div></div><div class="card kpi"><div class="lbl">Rejeitados</div><div class="val">${all.length - sold.length}</div></div></div>
+    <div class="badges" style="margin:16px 0 12px">${[['all', 'Todos'], ['sold', 'Vendidos'], ['rejected', 'Rejeitados']].map(([k, l]) => `<a class="badge ${which === k ? 'info' : ''}" href="#/archive?s=${k}">${l}</a>`).join('')}</div>
+    <div id="list">${list.length ? list.map((d) => `<div class="arch-row">${dealRow(d)}<button class="btn sm" data-reopen="${d.id}">Reabrir</button></div>`).join('') : `<div class="empty">O arquivo está vazio. Os negócios passam para aqui quando ficam <b>Vendidos</b> ou <b>Rejeitados</b>.</div>`}</div>`;
+  bindRows($('#list'));
+  $('#view').querySelectorAll('[data-reopen]').forEach((b) => (b.onclick = async () => {
+    const d = S.deals.find((x) => x.id === b.dataset.reopen);
+    d.status = d.status === 'sold' ? 'for_sale' : 'shortlist'; await saveDeal(d); toast('Negócio reaberto'); viewArchive(r);
+  }));
+  void P;
+}
+
 // ---------- compare (step 3) ----------
 function viewCompare() {
   const s = settings();
@@ -700,10 +756,11 @@ function viewCompare() {
 
 // ---------- pipeline ----------
 function viewPipeline() {
-  const cols = STATUSES.filter(([k]) => k !== 'rejected');
-  $('#view').innerHTML = `<div class="kanban">${cols.map(([k, l]) => {
+  const cols = STATUSES.filter(([k]) => !['rejected', 'sold'].includes(k));
+  const nArch = S.deals.filter((d) => ['sold', 'rejected'].includes(d.status)).length;
+  $('#view').innerHTML = `<p class="muted" style="margin-top:0">Negócios em aberto por fase. ${nArch ? `Os concluídos (vendidos e rejeitados) estão no <a href="#/archive">Arquivo (${nArch})</a>.` : ''}</p><div class="kanban">${cols.map(([k, l]) => {
     const items = S.deals.filter((d) => d.status === k);
-    return `<div class="col"><h3><span>${l}</span><span>${items.length}</span></h3>${items.slice(0, 60).map((d) => { const a = an(d); return `<div class="kcard" data-k="${d.id}"><b>${esc(title(d))}</b><div class="small muted">${flag(d.country)}${esc(d.year || '')} · ${eur(a.price)}</div><div class="small ${cls(a.realised?.profit ?? a.netProfit)}">${signed(a.realised?.profit ?? a.netProfit)}</div>${(() => { const pr = progressOf(d); return `${progressBar(pr)}<div class="small muted">${pr.next ? `→ ${esc(pr.next.label)}` : `${I.check} Concluído`}</div>`; })()}${deadlinesFor(d).filter((x) => !x.done).slice(0, 1).map((x) => `<div class="small warn ico-line">${icon('clock', 13)} ${esc(x.label)} · ${esc(x.due)}</div>`).join('')}</div>`; }).join('')}</div>`;
+    return `<div class="col"><h3><span>${l}</span><span>${items.length}</span></h3>${items.slice(0, 60).map((d) => { const a = an(d); return `<div class="kcard" data-k="${d.id}"><b>${esc(title(d))}</b><div class="small muted">${flag(d.country)}${esc(d.year || '')} · ${eur(a.price)}</div><div class="small ${cls(a.realised?.profit ?? a.netProfit)}">${signed(a.realised?.profit ?? a.netProfit)}</div>${(() => { const pr = progressOf(d); return `${progressBar(pr)}<div class="small muted">${pr.next ? `→ ${esc(pr.next.label)}` : `${I.check} Concluído`}</div>`; })()}${deadlinesFor(d).filter((x) => !x.done).slice(0, 1).map((x) => `<div class="small warn ico-line">${icon('clock', 13)} ${esc(x.label)} · ${esc(fmtDate(x.due))}</div>`).join('')}</div>`; }).join('')}</div>`;
   }).join('')}</div>`;
   $('#view').querySelectorAll('[data-k]').forEach((el) => (el.onclick = () => { S.modalFor = el.dataset.k; S.modalTab = 'pipeline'; S.modalImg = 0; location.hash = `#/deal/${el.dataset.k}`; }));
 }
@@ -810,7 +867,7 @@ function viewCalculator() {
       ${[...isv.notes, ...iuc.notes].length ? `<ul class="ul small muted">${[...isv.notes, ...iuc.notes].map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}`;
   };
   $('#view').querySelectorAll('input,select').forEach((el) => el.addEventListener('input', draw));
-  $('#c_save').onclick = async () => { const saved = await api('api/deals', { method: 'POST', body: { source: 'manual', title: 'Carro da calculadora', cc: +c.cc, co2: +c.co2, fuel: c.fuel, co2Standard: c.co2Standard, firstRegistration: c.firstRegistration || null, year: c.firstRegistration ? +c.firstRegistration.slice(0, 4) : null, price: +c.price, country: c.country, km: +c.km, market: { comps: [], target: +c.market }, sellerType: 'pro' } }); await refresh(); location.hash = `#/deal/${saved.id}`; };
+  $('#c_save').onclick = async () => { const saved = await api('api/deals', { method: 'POST', body: { source: 'manual', title: 'Carro da calculadora', cc: +c.cc, co2: +c.co2, fuel: c.fuel, co2Standard: c.co2Standard, firstRegistration: c.firstRegistration || null, year: c.firstRegistration ? +c.firstRegistration.slice(0, 4) : null, price: +c.price, country: c.country, km: +c.km, market: { comps: [], target: +c.market }, sellerType: 'pro' } }); await refresh(); S.lastHash = '#/deals?sort=new'; location.hash = `#/deal/${saved.id}`; };
   draw();
 }
 

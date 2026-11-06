@@ -21,9 +21,16 @@ Cada carro tem ainda uma **checklist do processo completo** (separador *Processo
 
 As fórmulas do ISV e do IUC foram validadas com a folha de cálculo (1968 cm³ · 119 g/km NEDC gasóleo → ISV 2 830,86 €, IUC 241,50 €). Confirme sempre o ISV final na DAV.
 
-## Carro de demonstração
+## Carros de demonstração
 
-Em **Importar anúncios** (ou no Início, enquanto não houver carros) há o botão **Carregar carro de demonstração (da folha)**. Cria o Renault Kadjar da folha *Vroom.Pt* com todo o processo concluído: custos dos passos 1–9, ISV 2 830,86 €, IUC 241,50 €, venda por 27 500 € e as despesas com quem pagou segundo o Balanço de Despesas. Os valores que não existiam na folha (comparáveis StandVirtual, carVertical, deslocações, dormidas, matrícula temporária, mecânico, pintura, extras e datas) são simulados e marcados "(simulado)". Pode apagá-lo como qualquer outro carro.
+Em **Importar anúncios** (ou no Início, enquanto não houver negócios em aberto) há o botão **Carregar carros de demonstração (da folha)**. Cria dois carros:
+
+* **Audi A6** — a "escolha principal" do passo 3 (2018, 125 800 km, L'Union, 8 000 €, VIN da folha, entrada de 1 000 € paga pelo Calado, venda prevista de 15 000 €), como negócio **em aberto, em legalização**: aquisição e transporte feitos, IPO feita, DAV por submeter. As datas são relativas ao dia em que é carregado. O motor, CO2, comparáveis e despesas da viagem são simulados.
+* **Renault Kadjar** da folha *Vroom.Pt* com todo o processo concluído: custos dos passos 1–9, ISV 2 830,86 €, IUC 241,50 €, venda por 27 500 € e as despesas com quem pagou segundo o Balanço de Despesas. Os valores que não existiam na folha (comparáveis StandVirtual, carVertical, deslocações, dormidas, matrícula temporária, mecânico, pintura, extras e datas) são simulados e marcados "(simulado)". Fica no **Arquivo**, por estar vendido. Pode apagar qualquer um como qualquer outro carro.
+
+## Em aberto e Arquivo
+
+*Negócios em aberto*, o *Início* e o quadro *Processo* mostram só os negócios em curso. Os **vendidos e rejeitados** passam para o **Arquivo**, com o lucro realizado e um botão *Reabrir*. A aplicação atualiza-se sozinha quando importa carros pelo marcador e quando volta ao separador.
 
 ## Como entram os anúncios
 
