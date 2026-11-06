@@ -6,23 +6,39 @@ export const HOME_BASE = { name: 'Porto', lat: 41.1579, lng: -8.6291 };
 
 export const DEFAULT_SETTINGS = {
   homeBase: HOME_BASE,
-  partners: ['António', 'Tono', 'Calado'],
+  partners: ['António', 'Tono'],
   roadFactor: 1.25, // straight-line → road km
   fuelPrice: 1.75, // €/l
   consumption: { gasoline: 7, diesel: 5.8, hybrid: 5.5, phev: 6, lpg: 9, electric: 0 },
   kmPerDay: 900,
   nightCost: 55,
   countries: {
-    FR: { name: 'França', flight: 120, localTransport: 40, defaultKm: 1500, tollPerKm: 0.075, tempPlates: 70, truck: 650 },
+    FR: { name: 'França', flight: 120, localTransport: 40, defaultKm: 1500, tollPerKm: 0.075, tempPlates: 70, truck: 500 },
     ES: { name: 'Espanha', flight: 80, localTransport: 30, defaultKm: 700, tollPerKm: 0.03, tempPlates: 60, truck: 400 },
     DE: { name: 'Alemanha', flight: 140, localTransport: 40, defaultKm: 2200, tollPerKm: 0.065, tempPlates: 120, truck: 900 },
     NL: { name: 'Países Baixos', flight: 140, localTransport: 40, defaultKm: 2000, tollPerKm: 0.06, tempPlates: 90, truck: 850 },
     BE: { name: 'Bélgica', flight: 120, localTransport: 40, defaultKm: 1800, tollPerKm: 0.065, tempPlates: 80, truck: 800 },
+    PT: { name: 'Portugal (retoma / nacional)', flight: 0, localTransport: 0, defaultKm: 0, tollPerKm: 0, tempPlates: 0, truck: 0 },
   },
-  purchase: { tempInsurance: 106.3, coc: 160, historyCheck: 25 },
-  legal: { homologation: 0, inspection: 100, plates: 15, registration: 65, agency: 200 },
-  recon: { workshop: 300 },
-  sale: { ads: 0 },
+  transport: { roadExtras: 50, truckTip: 20 },
+  // COC requested from the brand when the car comes without one (Esquema de Execução: Renault ±200 €, Stellantis ±120 €)
+  cocByBrand: { renault: 200, dacia: 200, peugeot: 120, citroen: 120, ds: 120, opel: 120, fiat: 120, jeep: 120, 'alfa romeo': 120, default: 200 },
+  purchase: { tempInsurance: 106.3, historyCheck: 25 },
+  legal: { homologation: 0, inspection: 100, imt: 45, plates: 15, registration: 55, agency: 0, transfer: 55 },
+  recon: { mechanic: 150, bodywork: 100, parts: 50, extras: 0 },
+  sale: { ads: 0, warranty: 0 },
+  // Lucros: 20% do lucro fica na caixa, 80% é dividido pelos sócios
+  cashReservePct: 0.2,
+  capital: 8000,
+  // Retomas: avaliação = referência (valor mais baixo StandVirtual, ou média) −30%; revenda = média −10% (ou média se recondicionado)
+  tradeIn: { buyDiscount: 0.3, resaleDiscount: 0.1 },
+  acquisition: { budgetMin: 4000, budgetMax: 8000, zone: 'Toulouse' },
+  suppliers: {
+    mechanic: 'Pedro Duarte (bom e barato)',
+    bodywork: 'Couto (50 €/peça), Miguel Detalhe',
+    parts: 'Car Mechanic, Sucata LJMEJ, OLX, HumberPeças, Centrauto',
+    extras: 'Antonios (peças de substituição fácil, upgrades, detalhe), Pedro das Chaves, ExpressGlass',
+  },
   // Step 1 — targets that keep ISV low
   targets: { minAgeYears: 5, maxAgeYears: 15, maxCc: 2000, maxCo2: 150, fuels: ['gasoline', 'diesel', 'hybrid', 'phev', 'electric'] },
   // Step 3 — weights for picking the main choice
@@ -75,51 +91,76 @@ export function analyzeDeal(deal, settingsIn = {}, at = new Date()) {
   const mode = o.returnMode || 'drive';
   const pick = (key, def) => num(o[key], def);
 
-  const isv = computeISV({ cc: deal.cc, co2: deal.co2, fuel: deal.fuel, standard: deal.co2Standard, firstRegistration: deal.firstRegistration || deal.year, dieselParticles: !!deal.dieselParticles, hybridBase: deal.hybridBase, at });
+  const isvRaw = computeISV({ cc: deal.cc, co2: deal.co2, fuel: deal.fuel, standard: deal.co2Standard, firstRegistration: deal.firstRegistration || deal.year, dieselParticles: !!deal.dieselParticles, hybridBase: deal.hybridBase, at });
+  const isv = deal.country === 'PT' ? { ...isvRaw, total: 0, cc: 0, co2: 0, notes: [] } : isvRaw;
   const iuc = computeIUC({ cc: deal.cc, co2: deal.co2, fuel: deal.fuel, standard: deal.co2Standard, firstRegistration: deal.firstRegistration || deal.year, hybridBase: deal.hybridBase });
 
   const consumption = s.consumption[deal.fuel] ?? s.consumption.gasoline;
   const days = Math.max(1, Math.ceil(km / s.kmPerDay));
-  const groups = [
-    { key: 'trip', label: 'Ida (passo 5)', items: [
-      { key: 'flight', label: 'Voos', amount: pick('flight', mode === 'truck' ? 0 : c.flight) },
-      { key: 'localTransport', label: 'Deslocações locais', amount: pick('localTransport', mode === 'truck' ? 0 : c.localTransport) },
+  const domestic = deal.country === 'PT';
+  const brand = String(deal.make || '').toLowerCase();
+  const cocAmount = deal.hasCoc === false ? (s.cocByBrand[brand] ?? s.cocByBrand.default) : 0;
+  const R = (key, label, amount) => ({ key, label, amount: pick(key, amount) });
+  const groups = domestic ? [
+    { key: 'legal', label: 'Legal (carro nacional)', items: [R('transfer', 'Transferência de propriedade / registo', s.legal.transfer)] },
+  ] : [
+    { key: 'trip', label: 'Ida', items: mode === 'truck' ? [] : [
+      R('flight', 'Voos', c.flight),
+      R('localTransport', 'Deslocações locais', c.localTransport),
     ] },
-    { key: 'purchase', label: 'Compra (passo 6)', items: [
-      { key: 'tempInsurance', label: 'Seguro temporário', amount: pick('tempInsurance', mode === 'truck' ? 0 : s.purchase.tempInsurance) },
-      { key: 'tempPlates', label: 'Matrícula temporária (exportação)', amount: pick('tempPlates', mode === 'truck' ? 0 : c.tempPlates) },
-      { key: 'coc', label: 'COC', amount: pick('coc', s.purchase.coc) },
-      { key: 'historyCheck', label: 'Relatório de histórico (carVertical)', amount: pick('historyCheck', s.purchase.historyCheck) },
+    { key: 'purchase', label: 'Compra', items: [
+      ...(mode === 'truck' ? [] : [R('tempInsurance', 'Seguro temporário', s.purchase.tempInsurance), R('tempPlates', 'Matrícula temporária (exportação)', c.tempPlates)]),
+      R('coc', deal.hasCoc === false ? `COC pedido à marca${deal.make ? ` (${deal.make})` : ''}` : 'COC (incluído pelo vendedor?)', cocAmount),
+      R('historyCheck', 'Relatório de histórico (carVertical)', s.purchase.historyCheck),
     ] },
-    { key: 'return', label: `Vinda para Portugal (passo 7) · ${km} km`, items: mode === 'truck'
-      ? [{ key: 'truck', label: 'Transportadora', amount: pick('truck', c.truck) }]
+    { key: 'return', label: `Transporte para Portugal · ${km} km`, items: mode === 'truck'
+      ? [R('truck', 'Transportadora (serviço)', c.truck), R('truckTip', 'Gratificação', s.transport.truckTip)]
       : [
-        { key: 'fuel', label: `Combustível (${consumption} l/100 km)`, amount: pick('fuel', Math.round(km * consumption / 100 * s.fuelPrice)) },
-        { key: 'tolls', label: 'Portagens', amount: pick('tolls', Math.round(km * c.tollPerKm)) },
-        { key: 'nights', label: `Dormidas (${days - 1})`, amount: pick('nights', (days - 1) * s.nightCost) },
+        R('fuel', `Combustível (${consumption} l/100 km)`, Math.round(km * consumption / 100 * s.fuelPrice)),
+        R('tolls', 'Portagens', Math.round(km * c.tollPerKm)),
+        R('roadExtras', 'Extras de viagem', s.transport.roadExtras),
+        R('nights', `Dormidas (${days - 1})`, (days - 1) * s.nightCost),
       ] },
-    { key: 'legal', label: 'Legalização (passo 8)', items: [
-      { key: 'isv', label: 'ISV', amount: pick('isv', isv.total) },
-      { key: 'inspection', label: 'Inspeção para matrícula (cat. B)', amount: pick('inspection', s.legal.inspection) },
-      { key: 'homologation', label: 'Homologação nacional (IMT)', amount: pick('homologation', s.legal.homologation) },
-      { key: 'plates', label: 'Chapas de matrícula', amount: pick('plates', s.legal.plates) },
-      { key: 'registration', label: 'Registo inicial (Conservatória)', amount: pick('registration', s.legal.registration) },
-      { key: 'agency', label: 'Serviço de agência', amount: pick('agency', s.legal.agency) },
-      { key: 'iuc', label: 'IUC (1.º ano)', amount: pick('iuc', iuc.total ?? 0) },
-    ] },
-    { key: 'recon', label: 'Oficina e venda (passo 9)', items: [
-      { key: 'workshop', label: 'Oficina / preparação', amount: pick('workshop', s.recon.workshop) },
-      { key: 'ads', label: 'Anúncios / custos de venda', amount: pick('ads', s.sale.ads) },
-      { key: 'other', label: 'Outros', amount: pick('other', 0) },
+    { key: 'legal', label: 'Legalização', items: [
+      R('isv', 'ISV', isv.total),
+      R('inspection', 'Inspeção IPO B', s.legal.inspection),
+      R('homologation', 'Homologação nacional', s.legal.homologation),
+      R('imt', 'IMT (documentos)', s.legal.imt),
+      R('plates', 'Matrículas (impressão)', s.legal.plates),
+      R('registration', 'Registo inicial (Conservatória)', s.legal.registration),
+      R('agency', 'Serviço de agência', s.legal.agency),
+      R('iuc', 'IUC (1.º ano)', iuc.total ?? 0),
     ] },
   ];
+  groups.push(
+    { key: 'recon', label: 'Preparação', items: [
+      R('mechanic', 'Mecânica', s.recon.mechanic),
+      R('bodywork', 'Chapa e pintura', s.recon.bodywork),
+      R('parts', 'Peças', s.recon.parts),
+      R('extras', 'Extras', s.recon.extras),
+    ] },
+    { key: 'sale', label: 'Venda', items: [
+      R('ads', 'Anúncios / marketing', s.sale.ads),
+      R('warranty', 'Garantia (SNG / GR3)', s.sale.warranty),
+      R('other', 'Outros', 0),
+    ] },
+  );
   const vat = vatApplies({ km: deal.km, firstRegistration: deal.firstRegistration || deal.year, at });
   for (const g of groups) g.total = g.items.reduce((a, i) => a + i.amount, 0);
   const price = num(o.negotiatedPrice, num(deal.price));
   const importCosts = groups.reduce((a, g) => a + g.total, 0);
   const totalInvestment = price + importCosts;
   const m = marketStats(deal.market);
-  const scen = (sale) => (sale ? { sale, profit: Math.round(sale - totalInvestment), margin: (sale - totalInvestment) / totalInvestment } : null);
+  const otherIncome = num(deal.otherIncome); // vendas de material, comissões de crédito, garantias…
+  const split = (profit) => {
+    const reserve = profit > 0 ? profit * s.cashReservePct : 0;
+    return { reserve: Math.round(reserve), perPartner: Math.round((profit - reserve) / Math.max(1, s.partners.length)) };
+  };
+  const scen = (sale) => {
+    if (!sale) return null;
+    const profit = Math.round(sale + otherIncome - totalInvestment);
+    return { sale, profit, margin: profit / totalInvestment, ...split(profit) };
+  };
   const scenarios = { conservative: scen(m.low), medium: scen(m.avg), high: scen(m.high) };
   const realised = deal.salePrice ? scen(num(deal.salePrice)) : null;
   const t = s.targets;
@@ -137,7 +178,7 @@ export function analyzeDeal(deal, settingsIn = {}, at = new Date()) {
   return {
     price, km, mode, isv, iuc, groups, importCosts: Math.round(importCosts), totalInvestment: Math.round(totalInvestment),
     market: m, scenarios, netProfit: scenarios.medium?.profit ?? null, margin: scenarios.medium?.margin ?? null,
-    realised, checks, fitsTargets: checks.slice(0, 3).every((x) => x.ok), vat, warnings,
+    otherIncome, realised, checks, fitsTargets: checks.slice(0, 3).every((x) => x.ok), vat, warnings,
   };
 }
 
@@ -168,6 +209,30 @@ export function scoreDeals(deals, settingsIn = {}) {
     const score = Object.entries(w).reduce((a, [k, wt]) => a + wt / ranks[k], 0);
     return { id: d.id, ranks, score };
   });
+}
+
+/** Retomas (trade-ins), per the Esquema de Execução. */
+export function tradeInValuation(t = {}, settingsIn = {}) {
+  const s = mergeSettings(settingsIn);
+  const avg = num(t.marketAvg) || null;
+  const ref = num(t.lowestSV) || avg;
+  if (!ref) return null;
+  const offer = Math.round(ref * (1 - s.tradeIn.buyDiscount));
+  const resale = avg ? Math.round(t.reconditioned ? avg : avg * (1 - s.tradeIn.resaleDiscount)) : null;
+  return { offer, resale, margin: resale != null ? resale - offer : null, perPartner: Math.round(offer / Math.max(1, s.partners.length)) };
+}
+
+/** Capital available = starting capital + cash reserve from sold cars − money tied up in cars not yet sold. */
+export function capitalPosition(deals, settingsIn = {}) {
+  const s = mergeSettings(settingsIn);
+  const tied = ['reserved', 'bought', 'transit', 'legalising', 'for_sale'];
+  let reserve = 0, invested = 0;
+  for (const d of deals) {
+    const a = analyzeDeal(d, s);
+    if (d.status === 'sold' && a.realised) reserve += a.realised.reserve;
+    if (tied.includes(d.status)) invested += a.totalInvestment;
+  }
+  return { capital: s.capital, reserve, invested, available: s.capital + reserve - invested };
 }
 
 // Step 8 deadlines (from the workbook)

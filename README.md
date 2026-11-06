@@ -17,6 +17,8 @@ Segue os 9 passos da folha de cálculo *Vroom.Pt*:
 | 9 · Venda | Cenários conservador / médio / alto, preço real de venda, lucro % |
 | Balanço de despesas | **Despesas** por carro + saldo entre sócios (quem deve a quem) |
 
+Cada carro tem ainda uma **checklist do processo completo** (separador *Processo (checklist)*), igual ao *Esquema de Execução*: Aquisição → Transporte (ramo estrada ou transportadora) → Legalização (ramo com/sem COC) → Preparação (com fornecedores) → Venda (marketing, comercial, legal, financeiro) → Custos e lucros. O progresso e o próximo passo aparecem no quadro *Processo* e no início. O separador *Venda e retoma* mostra a divisão do lucro (20% caixa, 80% pelos sócios) e avalia retomas (referência −30% na compra, média −10% na revenda).
+
 As fórmulas do ISV e do IUC foram validadas com a folha de cálculo (1968 cm³ · 119 g/km NEDC gasóleo → ISV 2 830,86 €, IUC 241,50 €). Confirme sempre o ISV final na DAV.
 
 ## Como entram os anúncios
@@ -63,7 +65,8 @@ Ver [DEPLOY-CPANEL.md](DEPLOY-CPANEL.md).
 app.js               servidor HTTP + API (sem dependências)
 server.cjs           ficheiro de arranque para cPanel/Passenger (carrega app.js)
 src/tax.js           ISV + IUC 2026
-src/costs.js         modelo de custos, pontuação, prazos (partilhado com o navegador)
+src/costs.js         modelo de custos, pontuação, prazos, retomas, capital (partilhado com o navegador)
+src/process.js       checklist do Esquema de Execução
 src/leboncoin.js     obtenção/leitura do leboncoin + criador de URL de pesquisa
 src/generic.js       leitor schema.org JSON-LD para outros portais
 src/store.js         armazenamento em ficheiro JSON

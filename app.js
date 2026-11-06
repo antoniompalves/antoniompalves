@@ -133,7 +133,7 @@ const server = http.createServer(async (req, res) => {
     if (!isPublic && !authed(req)) return p.startsWith('/api/') ? send(res, 401, { error: 'sessão necessária' }) : send(res, 302, '', { Location: `${BASE_PATH}/login` });
     if (p.startsWith('/api/')) return await api(req, res, p);
     if (STATIC[p]) return serveFile(res, STATIC[p]);
-    if (p === '/lib/tax.js' || p === '/lib/costs.js') return serveFile(res, path.join('src', path.basename(p)));
+    if (['/lib/tax.js', '/lib/costs.js', '/lib/process.js'].includes(p)) return serveFile(res, path.join('src', path.basename(p)));
     return serveFile(res, path.join('public', path.normalize(p).replace(/^([/\\])+/, '')));
   } catch (e) {
     console.error(e);

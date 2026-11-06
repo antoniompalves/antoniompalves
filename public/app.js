@@ -1,4 +1,5 @@
-import { analyzeDeal, scoreDeals, mergeSettings, deadlinesFor, DEFAULT_SETTINGS } from './lib/costs.js';
+import { analyzeDeal, scoreDeals, mergeSettings, deadlinesFor, tradeInValuation, capitalPosition, DEFAULT_SETTINGS } from './lib/costs.js';
+import { processFor, progressOf } from './lib/process.js';
 import { computeISV, computeIUC, ageInMonths } from './lib/tax.js';
 
 // ---------- state & helpers ----------
@@ -17,7 +18,8 @@ const settings = () => mergeSettings(S.settings);
 const A = new Map();
 const an = (d) => { const k = `${d.id}:${d.updatedAt}:${S.settingsVer || 0}`; if (!A.has(k)) A.set(k, analyzeDeal(d, S.settings)); return A.get(k); };
 const FUELS = { gasoline: 'Gasolina', diesel: 'Gasóleo', hybrid: 'Híbrido', phev: 'Híbrido plug-in', electric: 'Elétrico', lpg: 'GPL', cng: 'GNC' };
-const COUNTRIES = { FR: 'França', ES: 'Espanha', DE: 'Alemanha', NL: 'Países Baixos', BE: 'Bélgica' };
+const COUNTRIES = { FR: 'França', ES: 'Espanha', DE: 'Alemanha', NL: 'Países Baixos', BE: 'Bélgica', PT: 'Portugal (retoma)' };
+const progressBar = (pr) => `<div class="bar"><span style="width:${Math.round(pr.pct * 100)}%"></span></div>`;
 const STATUSES = [
   ['new', 'Novo'], ['shortlist', 'Pré-seleção'], ['contacted', 'Vendedor contactado'], ['reserved', 'Reservado'], ['bought', 'Comprado'],
   ['transit', 'A caminho de PT'], ['legalising', 'Em legalização'], ['for_sale', 'À venda'], ['sold', 'Vendido'], ['rejected', 'Rejeitado'],
@@ -75,7 +77,7 @@ function dealRow(d, { compare = false } = {}) {
   const badges = [
     d.sellerType === 'pro' ? '<span class="badge ok">Profissional</span>' : d.sellerType === 'private' ? '<span class="badge bad">Particular</span>' : '',
     a.fitsTargets ? '<span class="badge info">Alvo ISV baixo</span>' : '',
-    d.status !== 'new' ? `<span class="badge">${esc(STATUS[d.status])}</span>` : '',
+    d.status !== 'new' ? `<span class="badge">${esc(STATUS[d.status])} · ${Math.round(progressOf(d).pct * 100)}%</span>` : '',
     d.priceHistory?.length && d.price < d.priceHistory.at(-1).price ? `<span class="badge warn">Preço ↓ ${eur(d.priceHistory.at(-1).price - d.price)}</span>` : '',
     d.favorite ? '<span class="badge">♥</span>' : '',
   ].join('');
@@ -107,6 +109,8 @@ function viewHome() {
   const noMarket = live.filter((d) => !an(d).market.avg);
   const noSpecs = live.filter((d) => !d.cc || !d.co2);
   const deadlines = active.flatMap((d) => deadlinesFor(d).filter((x) => !x.done).map((x) => ({ ...x, d }))).sort((a, b) => a.due.localeCompare(b.due));
+  const cap = capitalPosition(S.deals, S.settings);
+  const nextSteps = active.map((d) => ({ d, pr: progressOf(d) })).filter((x) => x.pr.next);
   const unpriced = live.filter((d) => !ranked.find(([x]) => x === d)).slice(0, 5);
   $('#view').innerHTML = `
   <div class="home"><div>
@@ -114,7 +118,7 @@ function viewHome() {
       <div><h2>Bem-vindo ao Vroom.pt</h2><p class="muted" style="max-width:560px;margin:0">Encontre carros em França, Espanha, Alemanha e Países Baixos, veja quanto custam postos em Portugal (ISV, IUC, viagem, legalização) e acompanhe cada carro da pré-seleção até à venda.</p></div>
       <a class="btn primary" href="#/deals" style="padding:12px 22px">⌕ Procurar negócios</a></div>
     <div class="grid cols-4" style="margin-top:20px">
-      <div class="card kpi"><div class="lbl">Negócios em análise</div><div class="val">${live.length}</div></div>
+      <div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div><div class="small muted">${live.length} negócios em análise</div></div>
       <div class="card kpi"><div class="lbl">Melhor lucro líquido</div><div class="val ${cls(best)}">${signed(best)}</div></div>
       <div class="card kpi"><div class="lbl">Carros em curso</div><div class="val">${active.length}</div></div>
       <div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(sold.length ? realised : null)}">${sold.length ? signed(realised) : '—'}</div></div>
@@ -127,6 +131,7 @@ function viewHome() {
     <div class="eyebrow">Precisa da sua atenção</div>
     <div class="card">
       ${deadlines.slice(0, 5).map((x) => `<div class="att"><div class="ic">⏱</div><div><b>${esc(x.label)}</b> — ${esc(title(x.d))}<div class="small ${x.due < new Date().toISOString().slice(0, 10) ? 'neg' : 'muted'}">prazo ${esc(x.due)}</div><a href="#/deal/${x.d.id}?tab=pipeline">Abrir</a></div></div>`).join('')}
+      ${nextSteps.slice(0, 4).map(({ d, pr }) => `<div class="att"><div class="ic">✓</div><div><b>${esc(title(d))}</b><div class="small muted">${esc(pr.phase.label)} → ${esc(pr.next.label)}</div>${progressBar(pr)}<a href="#/deal/${d.id}?tab=pipeline">Abrir checklist</a></div></div>`).join('')}
       <div class="att"><div class="ic">€</div><div><b>${noMarket.length}</b> sem preço de mercado PT<div class="small muted">Adicione comparáveis do StandVirtual para obter o lucro</div><a href="#/deals?nomarket=1">Rever</a></div></div>
       <div class="att"><div class="ic">⚙</div><div><b>${noSpecs.length}</b> sem CO2 ou cilindrada<div class="small muted">Sem ambos, o ISV não pode ser exato</div><a href="#/deals?nospecs=1">Corrigir</a></div></div>
       <div class="att"><div class="ic">▦</div><div><b>${active.length}</b> carros em curso<div class="small muted">Reservado → vendido</div><a href="#/pipeline">Abrir processo</a></div></div>
@@ -213,14 +218,14 @@ function viewImport() {
   $('#view').innerHTML = `
   <div class="grid cols-2">
     <div class="card"><h3>1 · Criar uma pesquisa no leboncoin a partir dos alvos</h3>
-      <p class="muted small">Passo 1 da folha de cálculo: ${s.targets.minAgeYears} a ${s.targets.maxAgeYears} anos, &lt;${s.targets.maxCc} cm³, &lt;${s.targets.maxCo2} g/km, vendedores profissionais.</p>
+      <p class="muted small">Zona: ${esc(s.acquisition.zone)} (escolha a localização no leboncoin). Passo 1 da folha de cálculo: ${s.targets.minAgeYears} a ${s.targets.maxAgeYears} anos, &lt;${s.targets.maxCc} cm³, &lt;${s.targets.maxCo2} g/km, vendedores profissionais.</p>
       <div class="form-grid">
         <label class="f">Marca / modelo<input id="s_text" placeholder="ex.: Renault Kadjar"></label>
         <label class="f">Ano desde<input id="s_minYear" type="number" value="${y - s.targets.maxAgeYears}"></label>
         <label class="f">Ano até<input id="s_maxYear" type="number" value="${y - s.targets.minAgeYears}"></label>
         <label class="f">Km máx.<input id="s_maxKm" type="number" value="180000"></label>
-        <label class="f">Preço mín. €<input id="s_minPrice" type="number" value="5000"></label>
-        <label class="f">Preço máx. €<input id="s_maxPrice" type="number" value="25000"></label>
+        <label class="f">Preço mín. €<input id="s_minPrice" type="number" value="${s.acquisition.budgetMin}"></label>
+        <label class="f">Preço máx. €<input id="s_maxPrice" type="number" value="${s.acquisition.budgetMax}"></label>
         <label class="f">Caixa<select id="s_gearbox"><option value="">Qualquer</option><option value="manual">Manual</option><option value="auto">Automática</option></select></label>
       </div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;margin:12px 0">${['gasoline', 'diesel', 'hybrid', 'phev', 'electric'].map((k) => `<label class="chk"><input type="checkbox" class="s_fuel" value="${k}" ${['gasoline', 'hybrid', 'electric'].includes(k) ? 'checked' : ''}> ${FUELS[k]}</label>`).join('')}<label class="chk"><input type="checkbox" id="s_pro" checked> Só profissionais</label></div>
@@ -301,7 +306,7 @@ function drawModal(d) {
   const imgs = d.images || [];
   const img = imgs[S.modalImg] || '';
   const months = ageInMonths(d.firstRegistration || d.year);
-  const tabs = [['details', 'Dados do anúncio'], ['costs', 'Custos'], ['market', 'Mercado PT'], ['pipeline', 'Processo e legalização'], ['expenses', 'Despesas']];
+  const tabs = [['details', 'Dados do anúncio'], ['costs', 'Custos'], ['market', 'Mercado PT'], ['pipeline', 'Processo (checklist)'], ['sale', 'Venda e retoma'], ['expenses', 'Despesas']];
   $('#modalBody').innerHTML = `
   <div class="m-head"><h2>${esc(title(d))}</h2>${d.favorite ? '<span class="badge">♥ favorito</span>' : ''}<span class="badge">${esc(STATUS[d.status] || d.status)}</span><div style="margin-left:auto"></div><button class="icon-btn" id="mClose" aria-label="Fechar">✕</button></div>
   <div class="m-body"><div>
@@ -332,7 +337,7 @@ function drawModal(d) {
     <div class="profit-card"><div class="lbl">Lucro líquido estimado</div>
       <div class="big">${signed(a.netProfit)} ${a.margin != null ? `<span style="font-size:16px;color:#4ade80">${pct(a.margin)}</span>` : ''}</div>
       <div class="sub">${a.market.low && a.market.high ? `Intervalo ${signed(a.scenarios.conservative.profit)} → ${signed(a.scenarios.high.profit)}` : 'Adicione comparáveis no separador “Mercado PT”'}</div>
-      ${a.realised ? `<div class="sub">Realizado: ${signed(a.realised.profit)} (${pct(a.realised.margin)}) · por sócio ${signed(Math.round(a.realised.profit / s.partners.length))}</div>` : ''}</div>
+      ${a.realised ? `<div class="sub">Realizado: ${signed(a.realised.profit)} (${pct(a.realised.margin)}) · caixa ${eur(a.realised.reserve)} · por sócio ${signed(a.realised.perPartner)}</div>` : ''}</div>
     ${a.market.avg ? `<div class="eyebrow">Cenários de venda (passo 9)</div><div class="scen">${[['conservative', 'Conservador'], ['medium', 'Médio'], ['high', 'Alto']].map(([k, l]) => `<div><div class="small muted">${l}</div><div class="p">${eur(a.scenarios[k]?.sale)}</div><div class="small ${cls(a.scenarios[k]?.profit)}">${signed(a.scenarios[k]?.profit)}</div></div>`).join('')}</div>` : ''}
     ${a.warnings.length ? `<div class="card" style="margin-top:14px;background:#fffbeb;border-color:#fde68a"><ul class="ul small">${a.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>` : ''}
     <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px">
@@ -392,21 +397,55 @@ const TAB = {
     </div>
     <p class="small muted">O lucro usa o preço de venda alvo (por omissão: média entre o mais baixo e o mais alto). Dica: anuncie primeiro pelo preço mais alto e vá baixando até ao valor conservador.</p>`,
   pipeline: (d) => {
-    const groups = [
-      ['Antes de partir', [['docs_id', 'Cartão de Cidadão / passaporte'], ['docs_license', 'Carta de condução'], ['docs_address', 'Comprovativo de morada'], ['docs_iban', 'Comprovativo de IBAN'], ['videos', 'Pedidos vídeos do carro ao stand'], ['reviews', 'Vistas as reviews do stand no Google'], ['history', 'Relatório de histórico (carVertical / autoDNA)']]],
-      ['No vendedor', [['contract', 'Contrato de compra e venda assinado'], ['invoice', 'Fatura'], ['insurance_temp', 'Seguro temporário'], ['coc', 'COC (certificado de conformidade)'], ['plates_temp', 'Matrícula temporária']]],
-      ['Documentos a trazer', [['b_coc', 'COC'], ['b_sale', 'Declaração de venda'], ['b_green', 'Carta verde do seguro'], ['b_grise', 'Carte grise / documento de matrícula']]],
-      ['Legalização em Portugal', [['homolog', '1 · Número de homologação nacional (IMT)'], ['inspection', '2 · Inspeção para matrícula, cat. B (modelo 112)'], ['dav', '3 · DAV no Portal Aduaneiro'], ['tax', '4 · Pagar o ISV (DUC)'], ['dua', '5 · Entregar o Modelo 9 no IMT'], ['plates', '6 · Fazer as chapas de matrícula'], ['insurance', '7 · Seguro definitivo'], ['reg', '8 · Registo inicial (Conservatória)'], ['iuc', '9 · Pagar o IUC']]],
-    ];
+    const s = settings();
+    const phases = processFor(d);
+    const pr = progressOf(d);
     const dl = deadlinesFor(d);
-    return `<div class="form-grid">
+    const field = (f) => ({
+      paymentMethod: sel(d, 'paymentMethod', [['', '— escolher —'], ['TRF', 'Transferência'], ['Cash', 'Numerário']]),
+      'overrides.returnMode': sel(d, 'overrides.returnMode', [['', '— escolher —'], ['drive', 'Estrada (trazer a conduzir)'], ['truck', 'Transportadora']]),
+      hasCoc: sel(d, 'hasCoc', [['', '— por confirmar —'], ['true', 'Sim, tem COC'], ['false', 'Não — pedir à marca']]),
+    }[f] || '');
+    return `<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><b>Progresso do processo: ${pr.done} / ${pr.total} (${Math.round(pr.pct * 100)}%)</b>${pr.next ? `<span class="muted">Próximo passo: <b>${esc(pr.phase.label)} → ${esc(pr.next.label)}</b></span>` : '<span class="pos"><b>Processo concluído ✓</b></span>'}</div>${progressBar(pr)}</div>
+      <div class="form-grid">
       <label class="f">Data de compra${inp(d, 'dates.bought', 'date')}</label><label class="f">Chegada a PT${inp(d, 'dates.arrivedPT', 'date')}</label>
       <label class="f">DAV submetida${inp(d, 'dates.davDate', 'date')}</label><label class="f">Matrícula PT atribuída${inp(d, 'dates.plateDate', 'date')}</label>
       <label class="f">Anunciado para venda${inp(d, 'dates.listed', 'date')}</label><label class="f">Data de venda${inp(d, 'dates.sold', 'date')}</label>
-      <label class="f">Preço final de venda €${inp(d, 'salePrice', 'number')}</label><label class="f">Sinal enviado €${inp(d, 'deposit', 'number')}</label></div>
-      ${dl.length ? `<div class="eyebrow" style="margin-top:16px">Prazos</div><div class="kv">${dl.map((x) => `<div><span>${x.done ? '✓' : '⏱'} ${esc(x.label)}</span><span class="v ${!x.done && x.due < new Date().toISOString().slice(0, 10) ? 'neg' : ''}">${esc(x.due)}</span></div>`).join('')}</div>` : '<p class="small muted">Os prazos aparecem quando indicar as datas de chegada / DAV / matrícula: DAV até 20 dias úteis após a chegada, ISV em 10 dias úteis, DUA em 30 dias e registo em 60 dias.</p>'}
-      <div class="grid cols-2" style="margin-top:16px">${groups.map(([g, items]) => `<div class="card checks"><div class="eyebrow">${g}</div>${items.map(([k, l]) => `<label><input type="checkbox" data-check="${k}" ${d.checklist?.[k] ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>`).join('')}</div>
-      <div class="card small muted" style="margin-top:16px"><b>Ver o carro:</b> de dia, com luz natural; experimentar os pedais, todos os comandos e o sistema de som; nenhuma luz de aviso acesa depois de ligar; sem ruídos nem batidas (um chiar pode indicar a correia de distribuição); a direção não deve vibrar; desgaste dos estofos e do volante coerente com os km; confirmar o VIN nos documentos.</div>`;
+      <label class="f">Sinal enviado €${inp(d, 'deposit', 'number')}</label></div>
+      ${dl.length ? `<div class="eyebrow" style="margin-top:16px">Prazos legais</div><div class="kv">${dl.map((x) => `<div><span>${x.done ? '✓' : '⏱'} ${esc(x.label)}</span><span class="v ${!x.done && x.due < new Date().toISOString().slice(0, 10) ? 'neg' : ''}">${esc(x.due)}</span></div>`).join('')}</div>` : '<p class="small muted">Os prazos aparecem quando indicar as datas de chegada / DAV / matrícula: DAV até 20 dias úteis após a chegada, ISV em 10 dias úteis, DUA em 30 dias e registo em 60 dias.</p>'}
+      ${phases.map((p) => `<div class="card checks" style="margin-top:14px"><div style="display:flex;justify-content:space-between"><div class="eyebrow">${esc(p.label)}</div><span class="small ${p.done === p.total ? 'pos' : 'muted'}">${p.done}/${p.total}</span></div>
+        ${p.steps.map((st) => st.field
+          ? `<div class="step-field"><span>${st.done ? '✓' : '○'} ${esc(st.label)}</span>${field(st.field)}</div>`
+          : `<label><input type="checkbox" data-check="${st.key}" ${st.done ? 'checked' : ''}> <span>${esc(st.label)}${st.hint ? `<span class="small muted"> — ${esc(st.hint)}</span>` : ''}${st.supplier && s.suppliers[st.supplier] ? `<span class="small muted"> — ${esc(s.suppliers[st.supplier])}</span>` : ''}</span></label>`).join('')}</div>`).join('')}`;
+  },
+  sale: (d, a) => {
+    const s = settings();
+    const t = d.tradeIn || {};
+    const tv = tradeInValuation(t, S.settings);
+    const res = a.realised || a.scenarios.medium;
+    const q = encodeURIComponent([d.make, d.model].filter(Boolean).join(' '));
+    return `<div class="form-grid">
+      <label class="f">Preço final de venda €${inp(d, 'salePrice', 'number')}</label>
+      <label class="f">Outras receitas € <span class="small">(material, comissão de crédito, garantia)</span>${inp(d, 'otherIncome', 'number')}</label>
+      <label class="f">Meio de venda${sel(d, 'saleChannel', [['', '—'], ['OLX', 'OLX'], ['FB', 'Facebook Marketplace'], ['Instagram', 'Instagram'], ['StandVirtual', 'StandVirtual'], ['Consignação', 'Consignação'], ['Troca', 'Troca']])}</label>
+      <label class="f">Crédito${sel(d, 'saleCredit', [['', 'Sem crédito'], ['Credibom', 'Credibom'], ['Cetelem', 'Cetelem']])}</label>
+      <label class="f">Garantia${sel(d, 'saleWarranty', [['', '—'], ['SNG', 'SNG'], ['GR3', 'GR3']])}</label></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><a class="btn sm" href="https://www.olx.pt/anuncio/novo/" target="_blank" rel="noopener">Publicar no OLX ↗</a><a class="btn sm" href="https://www.standvirtual.com/" target="_blank" rel="noopener">StandVirtual ↗</a><a class="btn sm" href="https://www.facebook.com/marketplace/create/vehicle" target="_blank" rel="noopener">Facebook Marketplace ↗</a><a class="btn sm" href="https://www.standvirtual.com/carros/q-${q}" target="_blank" rel="noopener">Ver concorrência ↗</a></div>
+    <div class="eyebrow" style="margin-top:8px">Custos e lucros ${a.realised ? '(venda real)' : '(estimativa, cenário médio)'}</div>
+    <div class="kv"><div><span>Venda${a.otherIncome ? ' + outras receitas' : ''}</span><span class="v">${eur(res ? res.sale + a.otherIncome : null)}</span></div>
+      <div><span>Custos totais (viatura + processo + preparação)</span><span class="v">${eur(a.totalInvestment)}</span></div>
+      <div><span><b>Lucro</b></span><span class="v ${cls(res?.profit)}">${signed(res?.profit)}</span></div>
+      <div><span>${Math.round(s.cashReservePct * 100)}% para a caixa (investimento)</span><span class="v">${eur(res?.reserve)}</span></div>
+      <div><span>${Math.round((1 - s.cashReservePct) * 100)}% pelos sócios ÷ ${s.partners.length}</span><span class="v ${cls(res?.perPartner)}">${eur(res?.perPartner)} cada</span></div></div>
+    <div class="eyebrow" style="margin-top:18px">Retoma</div>
+    <label class="chk"><input type="checkbox" data-bool="tradeIn.enabled" ${t.enabled ? 'checked' : ''}> O cliente entrega um carro como retoma</label>
+    ${t.enabled ? `<div class="form-grid" style="margin-top:10px">
+      <label class="f">Carro da retoma${inp(d, 'tradeIn.desc', 'text', 'placeholder="ex.: Seat Ibiza 2012, 180 000 km"')}</label>
+      <label class="f">Valor médio de mercado €${inp(d, 'tradeIn.marketAvg', 'number')}</label>
+      <label class="f">Valor mais baixo no StandVirtual €${inp(d, 'tradeIn.lowestSV', 'number')}</label>
+      <label class="f">Revenda${sel(d, 'tradeIn.reconditioned', [['false', 'Tal como está (média −10%)'], ['true', 'Recondicionado (valor de mercado)']])}</label></div>
+      ${tv ? `<div class="kv" style="margin-top:10px"><div><span>Valor a oferecer (referência −${Math.round(s.tradeIn.buyDiscount * 100)}%)</span><span class="v">${eur(tv.offer)}</span></div><div><span>Valor real para venda</span><span class="v">${eur(tv.resale)}</span></div><div><span>Margem da retoma</span><span class="v ${cls(tv.margin)}">${signed(tv.margin)}</span></div><div><span>Valor para sócios (compra ÷ ${s.partners.length})</span><span class="v">${eur(tv.perPartner)} cada</span></div></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><a class="btn sm" href="https://www.standvirtual.com/carros/q-${encodeURIComponent(t.desc || '')}" target="_blank" rel="noopener">StandVirtual ↗</a><a class="btn sm" href="https://www.autosapo.pt/" target="_blank" rel="noopener">Auto Sapo ↗</a><button class="btn sm primary" id="mkTrade">Criar negócio para a retoma</button></div>` : '<p class="small muted">Indique o valor médio de mercado (e, se possível, o mais baixo no StandVirtual).</p>'}` : ''}`;
   },
   expenses: (d) => {
     const s = settings(); const ex = d.expenses || [];
@@ -415,7 +454,7 @@ const TAB = {
     const share = total / s.partners.length;
     return `<p class="small muted" style="margin-top:0">Custos reais à medida que acontecem (o "Balanço de Despesas" da folha). O saldo mostra quem deve a quem para a divisão ficar igual.</p>
     <table class="t"><thead><tr><th>Despesa</th><th>Categoria</th><th>Quem pagou</th><th class="n">Montante €</th><th></th></tr></thead><tbody>
-    ${ex.map((e, i) => `<tr><td><input data-path="expenses.${i}.label" value="${esc(e.label || '')}"></td><td>${sel(d, `expenses.${i}.cat`, [['trip', 'Ida'], ['purchase', 'Compra'], ['return', 'Vinda'], ['legal', 'Legalização'], ['recon', 'Oficina'], ['other', 'Outros']])}</td><td>${sel(d, `expenses.${i}.payer`, s.partners.map((p) => [p, p]))}</td><td><input type="number" step="any" data-path="expenses.${i}.amount" value="${esc(e.amount ?? '')}"></td><td><button class="btn sm danger" data-delexp="${i}">✕</button></td></tr>`).join('')}
+    ${ex.map((e, i) => `<tr><td><input data-path="expenses.${i}.label" value="${esc(e.label || '')}"></td><td>${sel(d, `expenses.${i}.cat`, [['trip', 'Ida'], ['purchase', 'Compra'], ['return', 'Transporte'], ['legal', 'Legalização'], ['recon', 'Preparação'], ['sale', 'Venda'], ['other', 'Outros']])}</td><td>${sel(d, `expenses.${i}.payer`, s.partners.map((p) => [p, p]))}</td><td><input type="number" step="any" data-path="expenses.${i}.amount" value="${esc(e.amount ?? '')}"></td><td><button class="btn sm danger" data-delexp="${i}">✕</button></td></tr>`).join('')}
     <tr><td colspan="5"><button class="btn sm" id="addExp">+ Adicionar despesa</button> <button class="btn sm" id="fillExp">Preencher a partir da estimativa</button></td></tr></tbody></table>
     <div class="grid cols-2" style="margin-top:14px"><div class="kv"><div><span><b>Total gasto</b></span><span class="v">${eur(total, 2)}</span></div><div><span>Estimado</span><span class="v">${eur(an(d).totalInvestment)}</span></div><div><span>Parte de cada sócio</span><span class="v">${eur(share, 2)}</span></div></div>
     <div class="kv">${s.partners.map((p) => `<div><span>${esc(p)} pagou ${eur(paid[p], 2)}</span><span class="v ${cls(paid[p] - share)}">${paid[p] - share >= 0 ? 'recebe' : 'deve'} ${eur(Math.abs(paid[p] - share), 2)}</span></div>`).join('')}</div></div>`;
@@ -438,6 +477,12 @@ function bindModal(d) {
     setPath(d, el.dataset.path, v === '' ? null : v);
     commit();
   }));
+  body.querySelectorAll('[data-bool]').forEach((el) => el.addEventListener('change', () => { setPath(d, el.dataset.bool, el.checked); commit(); }));
+  const mk = $('#mkTrade'); if (mk) mk.onclick = async () => {
+    const t = d.tradeIn; const tv = tradeInValuation(t, S.settings);
+    const saved = await api('api/deals', { method: 'POST', body: { source: 'manual', title: t.desc || 'Retoma', country: 'PT', price: tv.offer, sellerType: 'private', status: 'bought', market: { comps: [], target: tv.resale }, notes: `Retoma de: ${title(d)}` } });
+    d.checklist = { ...(d.checklist || {}), s_tradein: true }; await saveDeal(d); await refresh(); location.hash = `#/deal/${saved.id}`;
+  };
   body.querySelectorAll('[data-check]').forEach((el) => el.addEventListener('change', () => { d.checklist = { ...(d.checklist || {}), [el.dataset.check]: el.checked }; commit(); }));
   const addComp = $('#addComp'); if (addComp) addComp.onclick = () => { d.market = d.market || {}; d.market.comps = [...(d.market.comps || []), { url: '', price: null }]; commit(); };
   body.querySelectorAll('[data-delcomp]').forEach((b) => (b.onclick = () => { d.market.comps.splice(Number(b.dataset.delcomp), 1); commit(); }));
@@ -471,7 +516,7 @@ function viewPipeline() {
   const cols = STATUSES.filter(([k]) => k !== 'rejected');
   $('#view').innerHTML = `<div class="kanban">${cols.map(([k, l]) => {
     const items = S.deals.filter((d) => d.status === k);
-    return `<div class="col"><h3><span>${l}</span><span>${items.length}</span></h3>${items.slice(0, 60).map((d) => { const a = an(d); return `<div class="kcard" data-k="${d.id}"><b>${esc(title(d))}</b><div class="small muted">${flag(d.country)}${esc(d.year || '')} · ${eur(a.price)}</div><div class="small ${cls(a.realised?.profit ?? a.netProfit)}">${signed(a.realised?.profit ?? a.netProfit)}</div>${deadlinesFor(d).filter((x) => !x.done).slice(0, 1).map((x) => `<div class="small warn">⏱ ${esc(x.label)} · ${esc(x.due)}</div>`).join('')}</div>`; }).join('')}</div>`;
+    return `<div class="col"><h3><span>${l}</span><span>${items.length}</span></h3>${items.slice(0, 60).map((d) => { const a = an(d); return `<div class="kcard" data-k="${d.id}"><b>${esc(title(d))}</b><div class="small muted">${flag(d.country)}${esc(d.year || '')} · ${eur(a.price)}</div><div class="small ${cls(a.realised?.profit ?? a.netProfit)}">${signed(a.realised?.profit ?? a.netProfit)}</div>${(() => { const pr = progressOf(d); return `${progressBar(pr)}<div class="small muted">${pr.next ? `→ ${esc(pr.next.label)}` : 'Concluído ✓'}</div>`; })()}${deadlinesFor(d).filter((x) => !x.done).slice(0, 1).map((x) => `<div class="small warn">⏱ ${esc(x.label)} · ${esc(x.due)}</div>`).join('')}</div>`; }).join('')}</div>`;
   }).join('')}</div>`;
   $('#view').querySelectorAll('[data-k]').forEach((el) => (el.onclick = () => { S.modalFor = el.dataset.k; S.modalTab = 'pipeline'; S.modalImg = 0; location.hash = `#/deal/${el.dataset.k}`; }));
 }
@@ -482,10 +527,13 @@ function viewLedger() {
   const cars = S.deals.filter((d) => ACTIVE.includes(d.status) || d.status === 'sold');
   const rows = cars.map((d) => { const a = an(d); const spent = (d.expenses || []).reduce((x, e) => x + (Number(e.amount) || 0), 0); const profit = d.salePrice ? d.salePrice - (spent || a.totalInvestment) : null; return { d, a, spent, profit }; });
   const tot = rows.reduce((x, r) => x + (r.profit || 0), 0);
+  const cap = capitalPosition(S.deals, S.settings);
+  const reserve = tot > 0 ? Math.round(tot * s.cashReservePct) : 0;
   const paid = Object.fromEntries(s.partners.map((p) => [p, cars.reduce((x, d) => x + (d.expenses || []).filter((e) => e.payer === p).reduce((y, e) => y + (Number(e.amount) || 0), 0), 0)]));
   const all = Object.values(paid).reduce((a, b) => a + b, 0);
   $('#view').innerHTML = `
-    <div class="grid cols-4"><div class="card kpi"><div class="lbl">Carros comprados</div><div class="val">${cars.length}</div></div><div class="card kpi"><div class="lbl">Total gasto</div><div class="val">${eur(all)}</div></div><div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(tot)}">${signed(tot)}</div></div><div class="card kpi"><div class="lbl">Por sócio</div><div class="val ${cls(tot)}">${signed(Math.round(tot / s.partners.length))}</div></div></div>
+    <div class="grid cols-4"><div class="card kpi"><div class="lbl">Carros comprados</div><div class="val">${cars.length}</div></div><div class="card kpi"><div class="lbl">Total gasto</div><div class="val">${eur(all)}</div></div><div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(tot)}">${signed(tot)}</div></div><div class="card kpi"><div class="lbl">Por sócio (${Math.round((1 - s.cashReservePct) * 100)}% ÷ ${s.partners.length})</div><div class="val ${cls(tot)}">${signed(Math.round((tot - reserve) / s.partners.length))}</div></div></div>
+    <div class="grid cols-3" style="margin-top:16px"><div class="card kpi"><div class="lbl">Caixa (${Math.round(s.cashReservePct * 100)}% dos lucros)</div><div class="val">${eur(reserve)}</div></div><div class="card kpi"><div class="lbl">Capital empatado em carros</div><div class="val">${eur(cap.invested)}</div></div><div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div></div></div>
     <div class="sec-h"><h3>Por carro</h3></div>
     <table class="t"><thead><tr><th>Carro</th><th>Estado</th><th class="n">Custo estimado</th><th class="n">Gasto real</th><th class="n">Venda</th><th class="n">Lucro</th><th class="n">%</th></tr></thead><tbody>
     ${rows.map(({ d, a, spent, profit }) => `<tr><td><a href="#/deal/${d.id}">${esc(title(d))}</a></td><td>${esc(STATUS[d.status])}</td><td class="n">${eur(a.totalInvestment)}</td><td class="n">${spent ? eur(spent) : '—'}</td><td class="n">${eur(d.salePrice)}</td><td class="n ${cls(profit)}">${signed(profit)}</td><td class="n">${profit != null ? pct(profit / (spent || a.totalInvestment)) : '—'}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Ainda não há carros comprados.</td></tr>'}</tbody></table>
@@ -533,12 +581,16 @@ function viewSettings() {
       <div class="card"><h3>Geral</h3><div class="form-grid">
         ${f('homeBase.name', 'Base (destino)', 'text')}${f('homeBase.lat', 'Latitude')}${f('homeBase.lng', 'Longitude')}
         ${f('fuelPrice', 'Combustível €/l')}${f('roadFactor', 'Km estrada ÷ km em linha reta')}${f('kmPerDay', 'Km por dia de condução')}${f('nightCost', 'Dormida €')}${f('minProfit', 'Lucro mínimo que compensa €')}
+        ${f('capital', 'Capital inicial a investir €')}${f('cashReservePct', 'Parte do lucro para a caixa (0,2 = 20%)')}${f('acquisition.budgetMin', 'Viatura: preço mín. €')}${f('acquisition.budgetMax', 'Viatura: preço máx. €')}${f('acquisition.zone', 'Zona de compra', 'text')}
+        ${f('tradeIn.buyDiscount', 'Retoma: desconto na compra (0,3 = 30%)')}${f('tradeIn.resaleDiscount', 'Retoma: desconto na revenda (0,1 = 10%)')}
         <label class="f">Sócios (separados por vírgulas)<input data-s="partners" type="text" value="${esc(s.partners.join(', '))}"></label></div>
         <div class="eyebrow" style="margin-top:14px">Consumo l/100 km</div><div class="form-grid">${Object.keys(s.consumption).map((k) => f(`consumption.${k}`, FUELS[k] || k)).join('')}</div></div>
       <div class="card"><h3>Custos por omissão</h3><div class="form-grid">
         ${f('purchase.tempInsurance', 'Seguro temporário')}${f('purchase.coc', 'COC')}${f('purchase.historyCheck', 'Relatório de histórico')}
         ${f('legal.inspection', 'Inspeção')}${f('legal.homologation', 'Homologação')}${f('legal.plates', 'Chapas de matrícula')}${f('legal.registration', 'Registo')}${f('legal.agency', 'Agência')}
-        ${f('recon.workshop', 'Oficina')}${f('sale.ads', 'Anúncios')}</div>
+        ${f('legal.imt', 'IMT (documentos)')}${f('legal.transfer', 'Transferência (carro nacional)')}${f('transport.roadExtras', 'Extras de viagem (estrada)')}${f('transport.truckTip', 'Gratificação transportadora')}
+        ${f('recon.mechanic', 'Mecânica')}${f('recon.bodywork', 'Chapa e pintura')}${f('recon.parts', 'Peças')}${f('recon.extras', 'Extras')}${f('sale.ads', 'Anúncios')}${f('sale.warranty', 'Garantia')}</div>
+        <div class="eyebrow" style="margin-top:14px">Fornecedores (preparação)</div><div class="form-grid">${f('suppliers.mechanic', 'Mecânica', 'text')}${f('suppliers.bodywork', 'Chapa e pintura', 'text')}${f('suppliers.parts', 'Peças', 'text')}${f('suppliers.extras', 'Extras', 'text')}</div>
         <div class="eyebrow" style="margin-top:14px">Alvos (passo 1)</div><div class="form-grid">${f('targets.minAgeYears', 'Idade mín. (anos)')}${f('targets.maxAgeYears', 'Idade máx. (anos)')}${f('targets.maxCc', 'Cilindrada máx. cm³')}${f('targets.maxCo2', 'CO2 máx. g/km')}</div>
         <div class="eyebrow" style="margin-top:14px">Pesos da pontuação (passo 3)</div><div class="form-grid">${Object.keys(s.weights).map((k) => f(`weights.${k}`, { age: 'Idade', location: 'Local', quality: 'Qualidade', km: 'Km', price: 'Preço' }[k] || k)).join('')}</div></div>
       <div class="card" style="grid-column:1/-1"><h3>Por país</h3><div style="overflow-x:auto"><table class="t"><thead><tr><th>País</th><th class="n">Voos €</th><th class="n">Deslocações €</th><th class="n">Km por omissão</th><th class="n">Portagens €/km</th><th class="n">Matrícula temp. €</th><th class="n">Transportadora €</th></tr></thead><tbody>

@@ -123,3 +123,5 @@ table.t input,table.t select{padding:4px 8px}
   .thumb{width:80px;height:56px}.modal-back{padding:0}.modal{border-radius:0}.m-body{padding:16px}.m-head{padding:14px 16px}
   .specs{grid-template-columns:repeat(2,1fr)}.tb-sub{display:none}
 }
+.bar{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}.bar span{display:block;height:100%;background:var(--green)}
+.step-field{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:6px 0;flex-wrap:wrap}.step-field select{max-width:260px}
