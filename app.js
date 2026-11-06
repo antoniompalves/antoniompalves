@@ -79,7 +79,7 @@ function parsePasted(content, url = '') {
 
 async function api(req, res, p) {
   const m = req.method;
-  if (p === '/api/state' && m === 'GET') return send(res, 200, { deals: store.deals, settings: store.data.settings, firecrawl: !!process.env.FIRECRAWL_API_KEY });
+  if (p === '/api/state' && m === 'GET') return send(res, 200, { deals: store.deals, settings: store.data.settings, ledger: store.ledger, firecrawl: !!process.env.FIRECRAWL_API_KEY });
   if (p === '/api/deals' && m === 'POST') {
     const body = await readBody(req);
     const r = store.upsert({ source: 'manual', ...body, sourceId: body.sourceId || (body.source && body.source !== 'manual' ? body.url : undefined) });
@@ -88,6 +88,12 @@ async function api(req, res, p) {
   const dm = p.match(/^\/api\/deals\/([\w-]+)$/);
   if (dm && m === 'PUT') { const d = store.update(dm[1], await readBody(req)); return d ? send(res, 200, d) : send(res, 404, { error: 'não encontrado' }); }
   if (dm && m === 'DELETE') return store.remove(dm[1]) ? send(res, 200, { ok: true }) : send(res, 404, { error: 'não encontrado' });
+  if (p === '/api/ledger' && m === 'PUT') {
+    const body = await readBody(req);
+    store.data.ledger = { general: Array.isArray(body?.general) ? body.general : [], settlements: Array.isArray(body?.settlements) ? body.settlements : [] };
+    store.save();
+    return send(res, 200, store.data.ledger);
+  }
   if (p === '/api/settings' && m === 'PUT') { store.data.settings = await readBody(req); store.save(); return send(res, 200, store.data.settings); }
   if (p === '/api/import/leboncoin' && m === 'POST') {
     const { url } = await readBody(req);
@@ -105,7 +111,7 @@ async function api(req, res, p) {
   if (p === '/api/restore' && m === 'POST') {
     const body = await readBody(req);
     if (!Array.isArray(body?.deals)) return send(res, 400, { error: 'Não é um ficheiro de cópia de segurança do Vroom' });
-    store.backup(); store.data = { deals: body.deals, settings: body.settings || {} }; store.save();
+    store.backup(); store.data = { deals: body.deals, settings: body.settings || {}, ledger: body.ledger || { general: [], settlements: [] } }; store.save();
     return send(res, 200, { ok: true, deals: body.deals.length });
   }
   return send(res, 404, { error: 'endpoint desconhecido' });
@@ -133,7 +139,7 @@ const server = http.createServer(async (req, res) => {
     if (!isPublic && !authed(req)) return p.startsWith('/api/') ? send(res, 401, { error: 'sessão necessária' }) : send(res, 302, '', { Location: `${BASE_PATH}/login` });
     if (p.startsWith('/api/')) return await api(req, res, p);
     if (STATIC[p]) return serveFile(res, STATIC[p]);
-    if (['/lib/tax.js', '/lib/costs.js', '/lib/process.js'].includes(p)) return serveFile(res, path.join('src', path.basename(p)));
+    if (['/lib/tax.js', '/lib/costs.js', '/lib/process.js', '/lib/ledger.js'].includes(p)) return serveFile(res, path.join('src', path.basename(p)));
     return serveFile(res, path.join('public', path.normalize(p).replace(/^([/\\])+/, '')));
   } catch (e) {
     console.error(e);

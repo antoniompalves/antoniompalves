@@ -45,6 +45,9 @@ test('auth, import, update, export under a sub-path', async () => {
 
   const upd = await (await fetch(`${base}/api/deals/${k.id}`, { method: 'PUT', headers: h, body: JSON.stringify({ ...k, status: 'shortlist' }) })).json();
   assert.equal(upd.status, 'shortlist');
+  const led = await (await fetch(`${base}/api/ledger`, { method: 'PUT', headers: h, body: JSON.stringify({ general: [{ type: 'other', amount: 60, payer: 'Caixa' }], settlements: [{ from: 'Tono', to: 'António', amount: 20 }] }) })).json();
+  assert.equal(led.settlements.length, 1);
+  assert.equal((await (await fetch(`${base}/api/state`, { headers: h })).json()).ledger.general[0].amount, 60);
   const exp = await (await fetch(`${base}/api/export`, { headers: h })).json();
   assert.equal(exp.deals.length, 2);
   assert.ok(fs.existsSync(path.join(dataDir, 'db.json')));

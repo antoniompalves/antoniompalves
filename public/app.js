@@ -1,5 +1,6 @@
 import { analyzeDeal, scoreDeals, mergeSettings, deadlinesFor, tradeInValuation, capitalPosition, DEFAULT_SETTINGS } from './lib/costs.js';
 import { processFor, progressOf } from './lib/process.js';
+import { EXPENSE_TYPES, CATEGORY_LABELS, CASH, SPLIT, balances, settleTransfers, paidBy, expenseStatus, expenseLabel, expenseCategory, allExpenses, estimateVsReal, toCSV } from './lib/ledger.js';
 import { computeISV, computeIUC, ageInMonths } from './lib/tax.js';
 
 // ---------- state & helpers ----------
@@ -35,7 +36,8 @@ async function api(path, opts = {}) {
   return j;
 }
 function toast(msg, ms = 3500) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), ms); }
-async function refresh() { const j = await api('api/state'); S.deals = j.deals; S.settings = j.settings || {}; S.firecrawl = j.firecrawl; }
+async function refresh() { const j = await api('api/state'); S.deals = j.deals; S.settings = j.settings || {}; S.ledger = j.ledger || { general: [], settlements: [] }; S.firecrawl = j.firecrawl; }
+async function saveLedger() { S.ledger = await api('api/ledger', { method: 'PUT', body: S.ledger }); }
 async function saveDeal(d) {
   const saved = await api(`api/deals/${d.id}`, { method: 'PUT', body: d });
   const i = S.deals.findIndex((x) => x.id === d.id); if (i >= 0) S.deals[i] = saved;
@@ -352,6 +354,59 @@ function drawModal(d) {
   bindModal(d);
 }
 
+
+// ---------- expense helpers ----------
+const today = () => new Date().toISOString().slice(0, 10);
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+const METHODS = [['', '—'], ['TRF', 'Transferência'], ['Cash', 'Numerário'], ['Cartão', 'Cartão'], ['MB Way', 'MB Way']];
+function typeOptions(selected) {
+  const by = {};
+  for (const [k, [label, cat]] of Object.entries(EXPENSE_TYPES)) (by[cat] ||= []).push([k, label]);
+  return Object.entries(by).map(([cat, list]) => `<optgroup label="${esc(CATEGORY_LABELS[cat])}">${list.map(([k, l]) => `<option value="${k}" ${k === selected ? 'selected' : ''}>${esc(l)}</option>`).join('')}</optgroup>`).join('');
+}
+const payerOptions = (partners, selected) => [...partners.map((p) => [p, p]), [SPLIT, 'Vários sócios'], [CASH, 'Caixa da empresa']].map(([k, l]) => `<option value="${esc(k)}" ${k === selected ? 'selected' : ''}>${esc(l)}</option>`).join('');
+function expenseForm({ withCar = false } = {}) {
+  const P = settings().partners;
+  const cars = S.deals.filter((d) => d.status !== 'rejected');
+  return `<div class="card exp-form"><div class="eyebrow">Registar despesa</div><div class="form-grid">
+    ${withCar ? `<label class="f">Carro<select id="xe_car"><option value="">Geral (sem carro)</option>${cars.map((d) => `<option value="${d.id}">${esc(title(d))}</option>`).join('')}</select></label>` : ''}
+    <label class="f">Tipo<select id="xe_type">${typeOptions('tolls')}</select></label>
+    <label class="f">Montante €<input id="xe_amount" type="number" step="0.01" inputmode="decimal" placeholder="0,00"></label>
+    <label class="f">Quem pagou<select id="xe_payer">${payerOptions(P, P[0])}</select></label>
+    <label class="f">Data<input id="xe_date" type="date" value="${today()}"></label>
+    <label class="f">Forma de pagamento<select id="xe_method">${METHODS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+    <label class="f">Descrição / notas<input id="xe_note" placeholder="ex.: A63 Bordéus–Bayonne"></label>
+  </div><div id="xe_split" class="form-grid" hidden style="margin-top:8px">${P.map((p) => `<label class="f">${esc(p)} pagou €<input type="number" step="0.01" data-share="${esc(p)}"></label>`).join('')}</div>
+  <button class="btn primary" id="xe_add" style="margin-top:10px">+ Adicionar despesa</button></div>`;
+}
+function readExpenseForm() {
+  const P = settings().partners;
+  const amount = Number($('#xe_amount').value);
+  if (!amount) { toast('Indique o montante'); return null; }
+  const e = { id: uid(), type: $('#xe_type').value, amount, payer: $('#xe_payer').value, date: $('#xe_date').value || today(), method: $('#xe_method').value, note: $('#xe_note').value.trim() };
+  if (e.payer === SPLIT) {
+    e.shares = {};
+    document.querySelectorAll('[data-share]').forEach((el) => { if (el.value !== '') e.shares[el.dataset.share] = Number(el.value); });
+    if (!Object.keys(e.shares).length) P.forEach((p) => (e.shares[p] = Math.round((amount / P.length) * 100) / 100));
+  }
+  return e;
+}
+function bindExpenseForm(onAdd) {
+  const payer = $('#xe_payer'); if (!payer) return;
+  payer.onchange = () => { $('#xe_split').hidden = payer.value !== SPLIT; };
+  $('#xe_add').onclick = async () => { const e = readExpenseForm(); if (e) await onAdd(e, $('#xe_car')?.value || null); };
+}
+function balanceBlock(b, transfers, { record = false } = {}) {
+  return `<div class="grid cols-2" style="margin-top:14px"><div class="kv">
+      <div><span><b>Total de despesas</b></span><span class="v">${eur(b.total, 2)}</span></div>
+      ${b.fromCash ? `<div><span>Pago pela caixa</span><span class="v">${eur(b.fromCash, 2)}</span></div>` : ''}
+      <div><span>Parte de cada sócio</span><span class="v">${eur(b.share, 2)}</span></div>
+      ${Object.keys(b.paid).map((p) => `<div><span>${esc(p)} pagou ${eur(b.paid[p], 2)}</span><span class="v ${cls(b.balance[p])}">${Math.abs(b.balance[p]) < 0.01 ? 'acertado' : b.balance[p] > 0 ? `recebe ${eur(b.balance[p], 2)}` : `deve ${eur(-b.balance[p], 2)}`}</span></div>`).join('')}
+    </div><div class="kv"><div class="grp"><span>Acertos sugeridos</span><span></span></div>
+      ${transfers.length ? transfers.map((t, i) => `<div><span>${esc(t.from)} → ${esc(t.to)}</span><span class="v">${eur(t.amount, 2)} ${record ? `<button class="btn sm" data-settle="${i}">Registar</button>` : ''}</span></div>`).join('') : '<div><span class="pos">Tudo acertado ✓</span><span></span></div>'}
+    </div></div>`;
+}
+
 const TAB = {
   details: (d) => `
     <div class="eyebrow">O carro — corrija o que o anúncio tiver errado</div>
@@ -448,16 +503,29 @@ const TAB = {
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><a class="btn sm" href="https://www.standvirtual.com/carros/q-${encodeURIComponent(t.desc || '')}" target="_blank" rel="noopener">StandVirtual ↗</a><a class="btn sm" href="https://www.autosapo.pt/" target="_blank" rel="noopener">Auto Sapo ↗</a><button class="btn sm primary" id="mkTrade">Criar negócio para a retoma</button></div>` : '<p class="small muted">Indique o valor médio de mercado (e, se possível, o mais baixo no StandVirtual).</p>'}` : ''}`;
   },
   expenses: (d) => {
-    const s = settings(); const ex = d.expenses || [];
-    const total = ex.reduce((a, e) => a + (Number(e.amount) || 0), 0);
-    const paid = Object.fromEntries(s.partners.map((p) => [p, ex.filter((e) => e.payer === p).reduce((a, e) => a + (Number(e.amount) || 0), 0)]));
-    const share = total / s.partners.length;
-    return `<p class="small muted" style="margin-top:0">Custos reais à medida que acontecem (o "Balanço de Despesas" da folha). O saldo mostra quem deve a quem para a divisão ficar igual.</p>
-    <table class="t"><thead><tr><th>Despesa</th><th>Categoria</th><th>Quem pagou</th><th class="n">Montante €</th><th></th></tr></thead><tbody>
-    ${ex.map((e, i) => `<tr><td><input data-path="expenses.${i}.label" value="${esc(e.label || '')}"></td><td>${sel(d, `expenses.${i}.cat`, [['trip', 'Ida'], ['purchase', 'Compra'], ['return', 'Transporte'], ['legal', 'Legalização'], ['recon', 'Preparação'], ['sale', 'Venda'], ['other', 'Outros']])}</td><td>${sel(d, `expenses.${i}.payer`, s.partners.map((p) => [p, p]))}</td><td><input type="number" step="any" data-path="expenses.${i}.amount" value="${esc(e.amount ?? '')}"></td><td><button class="btn sm danger" data-delexp="${i}">✕</button></td></tr>`).join('')}
-    <tr><td colspan="5"><button class="btn sm" id="addExp">+ Adicionar despesa</button> <button class="btn sm" id="fillExp">Preencher a partir da estimativa</button></td></tr></tbody></table>
-    <div class="grid cols-2" style="margin-top:14px"><div class="kv"><div><span><b>Total gasto</b></span><span class="v">${eur(total, 2)}</span></div><div><span>Estimado</span><span class="v">${eur(an(d).totalInvestment)}</span></div><div><span>Parte de cada sócio</span><span class="v">${eur(share, 2)}</span></div></div>
-    <div class="kv">${s.partners.map((p) => `<div><span>${esc(p)} pagou ${eur(paid[p], 2)}</span><span class="v ${cls(paid[p] - share)}">${paid[p] - share >= 0 ? 'recebe' : 'deve'} ${eur(Math.abs(paid[p] - share), 2)}</span></div>`).join('')}</div></div>`;
+    const P = settings().partners; const ex = d.expenses || [];
+    const b = balances(ex, P);
+    const evr = estimateVsReal(d, an(d));
+    return `<p class="small muted" style="margin-top:0">Registe cada despesa real à medida que acontece e quem a pagou (o "Balanço de Despesas" da folha). Os custos dividem-se em partes iguais pelos sócios; o que é pago pela caixa da empresa não conta para nenhum.</p>
+    ${expenseForm()}
+    <div style="overflow-x:auto;margin-top:14px"><table class="t exp-table"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th class="n">Montante €</th><th>Quem pagou</th><th>Pagamento</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${ex.map((e, i) => `<tr><td><input type="date" data-path="expenses.${i}.date" value="${esc(e.date || '')}"></td>
+      <td><select data-path="expenses.${i}.type">${typeOptions(e.type || 'other')}</select></td>
+      <td><input data-path="expenses.${i}.note" value="${esc(e.note ?? e.label ?? '')}"></td>
+      <td><input type="number" step="0.01" data-path="expenses.${i}.amount" value="${esc(e.amount ?? '')}" style="max-width:110px"></td>
+      <td><select data-path="expenses.${i}.payer">${payerOptions(P, e.payer)}</select>${e.payer === SPLIT ? `<div class="split-in">${P.map((p) => `<label class="small">${esc(p)}<input type="number" step="0.01" data-path="expenses.${i}.shares.${p}" value="${esc(e.shares?.[p] ?? '')}"></label>`).join('')}</div>` : ''}</td>
+      <td><select data-path="expenses.${i}.method">${METHODS.map(([k, l]) => `<option value="${k}" ${k === (e.method || '') ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+      <td><span class="badge ${expenseStatus(e, P) === 'ok' ? 'ok' : 'bad'}">${expenseStatus(e, P)}</span></td>
+      <td><button class="btn sm danger" data-delexp="${i}" aria-label="Apagar">✕</button></td></tr>`).join('') || '<tr><td colspan="8" class="muted">Ainda sem despesas. Use o formulário acima ou pré-preencha a partir da estimativa.</td></tr>'}
+    </tbody></table></div>
+    <div style="margin-top:8px"><button class="btn sm" id="fillExp">Pré-preencher a partir da estimativa</button></div>
+    ${balanceBlock(b, settleTransfers(b.balance))}
+    <div class="eyebrow" style="margin-top:18px">Estimado vs. real</div>
+    <div style="overflow-x:auto"><table class="t"><thead><tr><th>Linha</th><th class="n">Estimado</th><th class="n">Real</th><th class="n">Diferença</th></tr></thead><tbody>
+      ${evr.lines.map((l) => `<tr><td>${esc(l.label)}</td><td class="n">${eur(l.estimate, 2)}</td><td class="n">${l.real != null ? eur(l.real, 2) : '<span class="muted">—</span>'}</td><td class="n ${l.diff == null ? 'muted' : l.diff > 0 ? 'neg' : 'pos'}">${l.diff == null ? '—' : `${l.diff > 0 ? '+' : ''}${eur(l.diff, 2)}`}</td></tr>`).join('')}
+      ${evr.unmatched ? `<tr><td>Outras despesas (sem estimativa)</td><td class="n">—</td><td class="n">${eur(evr.unmatched, 2)}</td><td class="n neg">+${eur(evr.unmatched, 2)}</td></tr>` : ''}
+      <tr><th>Total</th><th class="n">${eur(evr.estimateTotal)}</th><th class="n">${eur(evr.realTotal, 2)}</th><th class="n ${evr.realTotal > evr.estimateTotal ? 'neg' : 'pos'}">${evr.realTotal ? eur(evr.realTotal - evr.estimateTotal, 2) : '—'}</th></tr>
+    </tbody></table></div>`;
   },
 };
 
@@ -486,8 +554,14 @@ function bindModal(d) {
   body.querySelectorAll('[data-check]').forEach((el) => el.addEventListener('change', () => { d.checklist = { ...(d.checklist || {}), [el.dataset.check]: el.checked }; commit(); }));
   const addComp = $('#addComp'); if (addComp) addComp.onclick = () => { d.market = d.market || {}; d.market.comps = [...(d.market.comps || []), { url: '', price: null }]; commit(); };
   body.querySelectorAll('[data-delcomp]').forEach((b) => (b.onclick = () => { d.market.comps.splice(Number(b.dataset.delcomp), 1); commit(); }));
-  const addExp = $('#addExp'); if (addExp) addExp.onclick = () => { d.expenses = [...(d.expenses || []), { label: '', cat: 'other', payer: settings().partners[0], amount: null }]; commit(); };
-  const fillExp = $('#fillExp'); if (fillExp) fillExp.onclick = () => { const a = an(d); const p = settings().partners[0]; d.expenses = [...(d.expenses || []), { label: 'Carro', cat: 'purchase', payer: p, amount: a.price }, ...a.groups.flatMap((g) => g.items.filter((i) => i.amount).map((i) => ({ label: i.label, cat: g.key, payer: p, amount: Math.round(i.amount * 100) / 100 })))]; commit(); };
+  bindExpenseForm(async (e) => { d.expenses = [...(d.expenses || []), e]; await commit(); toast('Despesa registada'); });
+  const fillExp = $('#fillExp'); if (fillExp) fillExp.onclick = () => {
+    const a = an(d); const p = settings().partners[0];
+    const typeOf = Object.fromEntries(Object.entries(EXPENSE_TYPES).filter(([, v]) => v[2]).map(([k, v]) => [v[2], k]));
+    const lines = [{ key: 'price', amount: a.price }, ...a.groups.flatMap((g) => g.items)].filter((i) => i.amount && typeOf[i.key]);
+    d.expenses = [...(d.expenses || []), ...lines.map((i) => ({ id: uid(), type: typeOf[i.key], amount: Math.round(i.amount * 100) / 100, payer: p, date: today(), note: 'estimativa — confirmar' }))];
+    commit();
+  };
   body.querySelectorAll('[data-delexp]').forEach((b) => (b.onclick = () => { d.expenses.splice(Number(b.dataset.delexp), 1); commit(); }));
   $('#mFav').onclick = () => { d.favorite = !d.favorite; commit(); };
   $('#mDel').onclick = async () => { if (!confirm('Eliminar este negócio?')) return; await api(`api/deals/${d.id}`, { method: 'DELETE' }); S.deals = S.deals.filter((x) => x.id !== d.id); closeModal(); };
@@ -523,22 +597,74 @@ function viewPipeline() {
 
 // ---------- ledger ----------
 function viewLedger() {
-  const s = settings();
+  const s = settings(); const P = s.partners;
+  const f = { car: '', payer: '', cat: '', month: '', ...load('ledgerFilters', {}) };
   const cars = S.deals.filter((d) => ACTIVE.includes(d.status) || d.status === 'sold');
-  const rows = cars.map((d) => { const a = an(d); const spent = (d.expenses || []).reduce((x, e) => x + (Number(e.amount) || 0), 0); const profit = d.salePrice ? d.salePrice - (spent || a.totalInvestment) : null; return { d, a, spent, profit }; });
+  const rows = cars.map((d) => { const a = an(d); const spent = (d.expenses || []).reduce((x, e) => x + (Number(e.amount) || 0), 0); const profit = d.salePrice ? d.salePrice + a.otherIncome - (spent || a.totalInvestment) : null; return { d, a, spent, profit }; });
   const tot = rows.reduce((x, r) => x + (r.profit || 0), 0);
   const cap = capitalPosition(S.deals, S.settings);
   const reserve = tot > 0 ? Math.round(tot * s.cashReservePct) : 0;
-  const paid = Object.fromEntries(s.partners.map((p) => [p, cars.reduce((x, d) => x + (d.expenses || []).filter((e) => e.payer === p).reduce((y, e) => y + (Number(e.amount) || 0), 0), 0)]));
-  const all = Object.values(paid).reduce((a, b) => a + b, 0);
+  const all = allExpenses(S.deals, S.ledger.general);
+  const b = balances(all, P, S.ledger.settlements);
+  const transfers = settleTransfers(b.balance);
+  const carsWithExp = [...new Map(all.filter((e) => e.dealId).map((e) => [e.dealId, e.car])).entries()];
   $('#view').innerHTML = `
-    <div class="grid cols-4"><div class="card kpi"><div class="lbl">Carros comprados</div><div class="val">${cars.length}</div></div><div class="card kpi"><div class="lbl">Total gasto</div><div class="val">${eur(all)}</div></div><div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(tot)}">${signed(tot)}</div></div><div class="card kpi"><div class="lbl">Por sócio (${Math.round((1 - s.cashReservePct) * 100)}% ÷ ${s.partners.length})</div><div class="val ${cls(tot)}">${signed(Math.round((tot - reserve) / s.partners.length))}</div></div></div>
-    <div class="grid cols-3" style="margin-top:16px"><div class="card kpi"><div class="lbl">Caixa (${Math.round(s.cashReservePct * 100)}% dos lucros)</div><div class="val">${eur(reserve)}</div></div><div class="card kpi"><div class="lbl">Capital empatado em carros</div><div class="val">${eur(cap.invested)}</div></div><div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div></div></div>
-    <div class="sec-h"><h3>Por carro</h3></div>
-    <table class="t"><thead><tr><th>Carro</th><th>Estado</th><th class="n">Custo estimado</th><th class="n">Gasto real</th><th class="n">Venda</th><th class="n">Lucro</th><th class="n">%</th></tr></thead><tbody>
-    ${rows.map(({ d, a, spent, profit }) => `<tr><td><a href="#/deal/${d.id}">${esc(title(d))}</a></td><td>${esc(STATUS[d.status])}</td><td class="n">${eur(a.totalInvestment)}</td><td class="n">${spent ? eur(spent) : '—'}</td><td class="n">${eur(d.salePrice)}</td><td class="n ${cls(profit)}">${signed(profit)}</td><td class="n">${profit != null ? pct(profit / (spent || a.totalInvestment)) : '—'}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Ainda não há carros comprados.</td></tr>'}</tbody></table>
-    <div class="sec-h"><h3>Saldo entre sócios (todos os carros)</h3></div>
-    <div class="kv">${s.partners.map((p) => `<div><span>${esc(p)} pagou ${eur(paid[p], 2)}</span><span class="v ${cls(paid[p] - all / s.partners.length)}">${paid[p] - all / s.partners.length >= 0 ? 'recebe' : 'deve'} ${eur(Math.abs(paid[p] - all / s.partners.length), 2)}</span></div>`).join('')}</div>`;
+    <div class="grid cols-4"><div class="card kpi"><div class="lbl">Total de despesas</div><div class="val">${eur(b.total)}</div></div><div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(tot)}">${signed(tot)}</div></div><div class="card kpi"><div class="lbl">Caixa (${Math.round(s.cashReservePct * 100)}% dos lucros)</div><div class="val">${eur(reserve)}</div></div><div class="card kpi"><div class="lbl">Capital disponível</div><div class="val ${cls(cap.available)}">${eur(cap.available)}</div></div></div>
+    <div style="margin-top:16px">${expenseForm({ withCar: true })}</div>
+    <div class="sec-h"><h3>Quem pagou o quê</h3><button class="btn sm" id="csv">⇣ Exportar CSV (Excel)</button></div>
+    <div class="card"><div class="filters" style="grid-template-columns:repeat(4,1fr)">
+      <label class="f">Carro<select id="lf_car"><option value="">Todos</option><option value="__general" ${f.car === '__general' ? 'selected' : ''}>Geral</option>${carsWithExp.map(([id, n]) => `<option value="${id}" ${f.car === id ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+      <label class="f">Quem pagou<select id="lf_payer"><option value="">Todos</option>${[...P, CASH].map((p) => `<option ${f.payer === p ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select></label>
+      <label class="f">Categoria<select id="lf_cat"><option value="">Todas</option>${Object.entries(CATEGORY_LABELS).map(([k, l]) => `<option value="${k}" ${f.cat === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="f">Mês<input id="lf_month" type="month" value="${esc(f.month)}"></label></div></div>
+    <div id="expList" style="margin-top:12px"></div>
+    <div class="sec-h"><h3>Saldo entre sócios (todas as despesas)</h3></div>
+    ${balanceBlock(b, transfers, { record: true })}
+    <div class="sec-h"><h3>Acertos registados</h3></div>
+    <div class="card"><div class="form-grid"><label class="f">De<select id="st_from">${P.map((p) => `<option>${esc(p)}</option>`).join('')}</select></label><label class="f">Para<select id="st_to">${P.map((p, i) => `<option ${i === 1 ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select></label><label class="f">Montante €<input id="st_amount" type="number" step="0.01"></label><label class="f">Data<input id="st_date" type="date" value="${today()}"></label></div><button class="btn" id="st_add" style="margin-top:10px">Registar acerto</button>
+      <table class="t" style="margin-top:12px"><thead><tr><th>Data</th><th>De</th><th>Para</th><th class="n">Montante</th><th></th></tr></thead><tbody>${S.ledger.settlements.map((t, i) => `<tr><td class="nw">${esc(t.date ? t.date.split('-').reverse().join('/') : '')}</td><td>${esc(t.from)}</td><td>${esc(t.to)}</td><td class="n">${eur(t.amount, 2)}</td><td><button class="btn sm danger" data-delst="${i}">✕</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">Sem acertos.</td></tr>'}</tbody></table></div>
+    <div class="sec-h"><h3>Resultado por carro</h3></div>
+    <div style="overflow-x:auto"><table class="t"><thead><tr><th>Carro</th><th>Estado</th><th class="n">Custo estimado</th><th class="n">Gasto real</th><th class="n">Venda</th><th class="n">Lucro</th><th class="n">%</th><th class="n">Por sócio</th></tr></thead><tbody>
+    ${rows.map(({ d, a, spent, profit }) => `<tr><td><a href="#/deal/${d.id}?tab=expenses">${esc(title(d))}</a></td><td>${esc(STATUS[d.status])}</td><td class="n">${eur(a.totalInvestment)}</td><td class="n">${spent ? eur(spent) : '—'}</td><td class="n">${eur(d.salePrice)}</td><td class="n ${cls(profit)}">${signed(profit)}</td><td class="n">${profit != null ? pct(profit / (spent || a.totalInvestment)) : '—'}</td><td class="n">${profit != null ? eur(Math.round((profit - (profit > 0 ? profit * s.cashReservePct : 0)) / P.length)) : '—'}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">Ainda não há carros comprados.</td></tr>'}</tbody></table></div>`;
+  const filtered = () => all.filter((e) => (!f.car || (f.car === '__general' ? !e.dealId : e.dealId === f.car)) && (!f.payer || e.payer === f.payer || (e.payer === SPLIT && Number(e.shares?.[f.payer]))) && (!f.cat || expenseCategory(e) === f.cat) && (!f.month || String(e.date || '').startsWith(f.month))).sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')));
+  const draw = () => {
+    for (const k of Object.keys(f)) f[k] = $(`#lf_${k}`).value;
+    keep('ledgerFilters', f);
+    const list = filtered();
+    const sum = list.reduce((x, e) => x + (Number(e.amount) || 0), 0);
+    const byCat = {}; for (const e of list) byCat[expenseCategory(e)] = (byCat[expenseCategory(e)] || 0) + (Number(e.amount) || 0);
+    const byPartner = Object.fromEntries([...P, CASH].map((p) => [p, 0]));
+    for (const e of list) { if (e.payer === CASH) byPartner[CASH] += Number(e.amount) || 0; for (const [p, v] of Object.entries(paidBy(e, P))) byPartner[p] += v; }
+    $('#expList').innerHTML = `<div class="badges" style="margin-bottom:10px">${Object.entries(byPartner).filter(([, v]) => v).map(([p, v]) => `<span class="badge info">${esc(p)}: ${eur(v, 2)}</span>`).join('')}${Object.entries(byCat).map(([c, v]) => `<span class="badge">${esc(CATEGORY_LABELS[c] || c)}: ${eur(v, 2)}</span>`).join('')}</div>
+    <div style="overflow-x:auto"><table class="t"><thead><tr><th>Data</th><th>Carro</th><th>Tipo</th><th>Descrição</th><th class="n">Montante</th><th>Quem pagou</th><th>Pagamento</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${list.map((e) => `<tr><td class="nw">${esc(e.date ? e.date.split('-').reverse().join('/') : '—')}</td><td>${e.dealId ? `<a href="#/deal/${e.dealId}?tab=expenses">${esc(e.car)}</a>` : 'Geral'}</td><td>${esc(EXPENSE_TYPES[e.type]?.[0] || 'Outra')}</td><td>${esc(e.note ?? e.label ?? '')}</td><td class="n">${eur(Number(e.amount) || 0, 2)}</td><td>${e.payer === SPLIT ? esc(Object.entries(e.shares || {}).filter(([, v]) => v).map(([p, v]) => `${p} ${eur(v, 2)}`).join(' + ')) : esc(e.payer || '—')}</td><td>${esc(e.method || '')}</td><td><span class="badge ${expenseStatus(e, P) === 'ok' ? 'ok' : 'bad'}">${expenseStatus(e, P)}</span></td><td><button class="btn sm danger" data-delrow="${e.dealId || ''}|${e.index}" aria-label="Apagar">✕</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Sem despesas para estes filtros.</td></tr>'}
+    <tr><th colspan="4">Total (${list.length})</th><th class="n">${eur(sum, 2)}</th><th colspan="4"></th></tr></tbody></table></div>`;
+    $('#expList').querySelectorAll('[data-delrow]').forEach((btn) => (btn.onclick = async () => {
+      if (!confirm('Apagar esta despesa?')) return;
+      const [dealId, idx] = btn.dataset.delrow.split('|');
+      if (dealId) { const d = S.deals.find((x) => x.id === dealId); d.expenses.splice(Number(idx), 1); await saveDeal(d); }
+      else { S.ledger.general.splice(Number(idx), 1); await saveLedger(); }
+      viewLedger();
+    }));
+  };
+  $('#view').querySelectorAll('[id^=lf_]').forEach((el) => el.addEventListener('change', draw));
+  draw();
+  bindExpenseForm(async (e, carId) => {
+    if (carId) { const d = S.deals.find((x) => x.id === carId); d.expenses = [...(d.expenses || []), e]; await saveDeal(d); }
+    else { S.ledger.general = [...S.ledger.general, e]; await saveLedger(); }
+    toast('Despesa registada'); viewLedger();
+  });
+  $('#csv').onclick = () => {
+    const blob = new Blob([toCSV(filtered(), P)], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `despesas-${today()}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  };
+  $('#view').querySelectorAll('[data-settle]').forEach((btn) => (btn.onclick = async () => { const t = transfers[Number(btn.dataset.settle)]; S.ledger.settlements = [...S.ledger.settlements, { ...t, date: today() }]; await saveLedger(); toast('Acerto registado'); viewLedger(); }));
+  $('#st_add').onclick = async () => {
+    const t = { from: $('#st_from').value, to: $('#st_to').value, amount: Number($('#st_amount').value), date: $('#st_date').value };
+    if (!t.amount || t.from === t.to) return toast('Indique o montante e dois sócios diferentes');
+    S.ledger.settlements = [...S.ledger.settlements, t]; await saveLedger(); viewLedger();
+  };
+  $('#view').querySelectorAll('[data-delst]').forEach((btn) => (btn.onclick = async () => { S.ledger.settlements.splice(Number(btn.dataset.delst), 1); await saveLedger(); viewLedger(); }));
 }
 
 // ---------- calculator ----------

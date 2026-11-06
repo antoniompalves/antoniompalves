@@ -24,6 +24,7 @@ export class Store {
     for (const f of files.slice(0, Math.max(0, files.length - 30))) fs.unlinkSync(path.join(b, f));
   }
   get deals() { return this.data.deals; }
+  get ledger() { return (this.data.ledger ||= { general: [], settlements: [] }); }
   find(id) { return this.data.deals.find((d) => d.id === id); }
 
   /** Insert or update by (source, sourceId). Keeps user fields, tracks price drops. */

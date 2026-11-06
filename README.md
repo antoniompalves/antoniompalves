@@ -15,7 +15,7 @@ Segue os 9 passos da folha de cálculo *Vroom.Pt*:
 | 7 · Vinda | Distância do local do anúncio até ao Porto × consumo × preço do combustível + portagens + dormidas, ou transportadora |
 | 8 · Legalização | Inspeção, homologação, chapas, registo, agência, IUC + lista de tarefas e prazos legais (DAV 20 dias úteis, ISV 10, DUA 30 dias, registo 60 dias) |
 | 9 · Venda | Cenários conservador / médio / alto, preço real de venda, lucro % |
-| Balanço de despesas | **Despesas** por carro + saldo entre sócios (quem deve a quem) |
+| Balanço de despesas | **Controlo de despesas**: cada despesa com tipo (portagens, combustível, inspeção, ISV…), data, forma de pagamento e quem pagou (um sócio, vários ou a caixa). Estimado vs. real por carro, despesas gerais, saldo entre sócios, acertos sugeridos e registados, exportação CSV para Excel |
 
 Cada carro tem ainda uma **checklist do processo completo** (separador *Processo (checklist)*), igual ao *Esquema de Execução*: Aquisição → Transporte (ramo estrada ou transportadora) → Legalização (ramo com/sem COC) → Preparação (com fornecedores) → Venda (marketing, comercial, legal, financeiro) → Custos e lucros. O progresso e o próximo passo aparecem no quadro *Processo* e no início. O separador *Venda e retoma* mostra a divisão do lucro (20% caixa, 80% pelos sócios) e avalia retomas (referência −30% na compra, média −10% na revenda).
 
@@ -67,6 +67,7 @@ server.cjs           ficheiro de arranque para cPanel/Passenger (carrega app.js)
 src/tax.js           ISV + IUC 2026
 src/costs.js         modelo de custos, pontuação, prazos, retomas, capital (partilhado com o navegador)
 src/process.js       checklist do Esquema de Execução
+src/ledger.js        despesas, quem pagou, saldos e acertos entre sócios
 src/leboncoin.js     obtenção/leitura do leboncoin + criador de URL de pesquisa
 src/generic.js       leitor schema.org JSON-LD para outros portais
 src/store.js         armazenamento em ficheiro JSON

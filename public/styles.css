@@ -125,3 +125,7 @@ table.t input,table.t select{padding:4px 8px}
 }
 .bar{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}.bar span{display:block;height:100%;background:var(--green)}
 .step-field{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:6px 0;flex-wrap:wrap}.step-field select{max-width:260px}
+.split-in{display:flex;gap:6px;margin-top:6px}.split-in label{display:flex;flex-direction:column;gap:2px}.split-in input{width:80px;padding:3px 6px}
+.exp-form{background:#f8fafc}
+.exp-table{min-width:980px}.exp-table td{padding:6px 8px}.exp-table select[data-path$=".type"]{min-width:190px}.exp-table input[data-path$=".note"]{min-width:170px}.exp-table input[type=date]{min-width:140px}
+table.t td.n,table.t th.n,.nw{white-space:nowrap}
