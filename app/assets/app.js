@@ -1,6 +1,7 @@
 import { analyzeDeal, scoreDeals, mergeSettings, deadlinesFor, tradeInValuation, capitalPosition, DEFAULT_SETTINGS } from './lib/costs.js';
 import { processFor, progressOf } from './lib/process.js';
 import { icon, hydrateIcons } from './icons.js';
+import { buildDemo } from './demo.js';
 // pre-rendered icons used inside templates
 const I = { ext: icon('ext', 14), check: icon('check', 13), checkC: icon('checkCircle', 16).replace('class="i"', 'class="i i-ok"'), circle: icon('circle', 16), x: icon('x', 13), trash: icon('trash', 15), clock: icon('clock', 16).replace('class="i"', 'class="i i-warn"'), heart: icon('heart', 13, true), heartBtn: icon('heart', 18), heartOn: icon('heart', 18, true), clip: icon('clip', 14), file: icon('file', 13), image: icon('image', 13), pin: icon('pin', 15) };
 import { EXPENSE_TYPES, CATEGORY_LABELS, CASH, SPLIT, balances, settleTransfers, paidBy, expenseStatus, expenseLabel, expenseCategory, allExpenses, estimateVsReal, toCSV } from './lib/ledger.js';
@@ -100,6 +101,7 @@ function dealRow(d, { compare = false } = {}) {
     d.status !== 'new' ? `<span class="badge">${esc(STATUS[d.status])} · ${Math.round(progressOf(d).pct * 100)}%</span>` : '',
     d.priceHistory?.length && d.price < d.priceHistory.at(-1).price ? `<span class="badge warn">Preço ↓ ${eur(d.priceHistory.at(-1).price - d.price)}</span>` : '',
     d.favorite ? `<span class="badge fav">${I.heart}</span>` : '',
+    d.demo ? '<span class="badge info">Demonstração</span>' : '',
   ].join('');
   return `<div class="deal-row" data-open="${d.id}">
     <div class="thumb" ${thumbStyle(d)}>${d.images?.[0] ? '' : icon('car', 30)}</div>
@@ -114,6 +116,23 @@ function bindRows(root) {
   root.querySelectorAll('[data-open]').forEach((el) => el.addEventListener('click', (e) => { if (e.target.closest('[data-stop]')) return; location.hash = `#/deal/${el.dataset.open}`; }));
   root.querySelectorAll('[data-cmp]').forEach((el) => el.addEventListener('change', () => { el.checked ? S.compare.add(el.dataset.cmp) : S.compare.delete(el.dataset.cmp); keep('compare', [...S.compare]); }));
 }
+
+// ---------- demo car (from the workbook) ----------
+async function loadDemo() {
+  const existing = S.deals.find((d) => d.demo);
+  if (existing) { toast('O carro de demonstração já está carregado'); location.hash = `#/deal/${existing.id}`; return; }
+  let partners = settings().partners;
+  if (!partners.includes('Calado') && confirm('Na folha de cálculo há 3 sócios: António, Tono e Calado (o Calado pagou a entrada de 1000 € e as deslocações).\n\nOK = adicionar o Calado aos sócios\nCancelar = atribuir essas despesas à caixa da empresa')) {
+    const next = mergeSettings(S.settings); next.partners = [...partners, 'Calado'];
+    S.settings = await api('api/settings', { method: 'PUT', body: next }); S.settingsVer = (S.settingsVer || 0) + 1;
+    partners = settings().partners;
+  }
+  const saved = await api('api/deals', { method: 'POST', body: buildDemo(partners) });
+  await refresh(); S.modalFor = null; toast('Carro de demonstração carregado');
+  location.hash = `#/deal/${saved.id}?tab=sale`;
+}
+const demoButton = (cls = 'btn') => S.deals.some((d) => d.demo) ? '' : `<button class="${cls}" data-demo>${icon('car', 16)} Carregar carro de demonstração (da folha)</button>`;
+function bindDemo(root = document) { root.querySelectorAll('[data-demo]').forEach((b) => (b.onclick = () => loadDemo().catch((e) => toast(e.message)))); }
 
 // ---------- home ----------
 function viewHome() {
@@ -144,7 +163,7 @@ function viewHome() {
       <div class="card kpi"><div class="lbl">Lucro realizado</div><div class="val ${cls(sold.length ? realised : null)}">${sold.length ? signed(realised) : '—'}</div></div>
     </div>
     <div class="sec-h"><div><h2>${top.length ? `Top ${top.length} negócios` : 'Melhores negócios'}</h2>${avg != null ? `<div class="muted">lucro líquido médio <b class="${cls(avg)} mono">${signed(Math.round(avg))}</b> · melhor <b class="pos mono">${signed(best)}</b> ${esc(title(ranked[0][0]))}</div>` : ''}</div><a class="btn dark" href="#/deals">Ver todos</a></div>
-    <div id="topList">${top.length ? top.map(([d]) => dealRow(d)).join('') : `<div class="empty">Ainda não há negócios com preço. <a href="#/import">Importe anúncios do leboncoin</a> e depois adicione comparáveis portugueses no separador <b>Mercado PT</b> de cada carro.</div>`}</div>
+    <div id="topList">${top.length ? top.map(([d]) => dealRow(d)).join('') : `<div class="empty">Ainda não há negócios com preço. <a href="#/import">Importe anúncios do leboncoin</a> e depois adicione comparáveis portugueses no separador <b>Mercado PT</b> de cada carro.<div style="margin-top:14px">${demoButton('btn primary')}</div></div>`}</div>
     ${unpriced.length ? `<div class="sec-h"><h3>À espera de preço de mercado PT</h3></div><div id="unpriced">${unpriced.map((d) => dealRow(d)).join('')}</div>` : ''}
   </div>
   <div>
@@ -166,7 +185,7 @@ function viewHome() {
       <a class="btn primary" href="#/import" style="width:100%">Criar pesquisa no leboncoin</a>
     </div>
   </div></div>`;
-  bindRows($('#view'));
+  bindRows($('#view')); bindDemo($('#view'));
   $('#qGo').onclick = () => fetchUrl($('#qUrl').value, $('#qGo'));
 }
 
@@ -236,6 +255,7 @@ function viewImport() {
   const appUrl = new URL('.', location.href.split('#')[0]).href;
   const bm = `javascript:(()=>{var n=document.getElementById('__NEXT_DATA__');var c=n?n.textContent:document.documentElement.outerHTML;var w=window.open(${JSON.stringify(appUrl + 'bridge.php')},'vroom');var h=function(e){if(e.source!==w)return;if(e.data==='vroom-ready'){w.postMessage({type:'vroom-import',content:c,url:location.href},'*')}if(e.data&&e.data.type==='vroom-done'){removeEventListener('message',h)}};addEventListener('message',h)})()`;
   $('#view').innerHTML = `
+  ${demoButton() ? `<div class="card" style="margin-bottom:16px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap"><div><b>Experimentar com um exemplo</b><div class="small muted">Carrega o Renault Kadjar da folha de cálculo, com todos os passos, despesas e venda (os valores que faltavam na folha são simulados).</div></div>${demoButton('btn primary')}</div>` : ''}
   <div class="grid cols-2">
     <div class="card"><h3>1 · Criar uma pesquisa no leboncoin a partir dos alvos</h3>
       <p class="muted small">Zona: ${esc(s.acquisition.zone)} (escolha a localização no leboncoin). Passo 1 da folha de cálculo: ${s.targets.minAgeYears} a ${s.targets.maxAgeYears} anos, &lt;${s.targets.maxCc} cm³, &lt;${s.targets.maxCo2} g/km, vendedores profissionais.</p>
@@ -273,6 +293,7 @@ function viewImport() {
         <label class="f">Vendedor<select id="m_sellerType"><option value="pro">Profissional</option><option value="private">Particular</option></select></label>
       </div><button class="btn primary" id="m_go" style="margin-top:12px">Adicionar carro</button></div>
   </div>`;
+  bindDemo($('#view'));
   $('#bm').setAttribute('href', bm);
   $('#bm').onclick = (e) => { e.preventDefault(); toast('Arraste este botão para a barra de marcadores'); };
   $('#s_go').onclick = async () => {
@@ -328,7 +349,7 @@ function drawModal(d) {
   const months = ageInMonths(d.firstRegistration || d.year);
   const tabs = [['details', 'Dados do anúncio'], ['costs', 'Custos'], ['market', 'Mercado PT'], ['pipeline', 'Processo (checklist)'], ['sale', 'Venda e retoma'], ['expenses', 'Despesas']];
   $('#modalBody').innerHTML = `
-  <div class="m-head"><h2>${esc(title(d))}</h2>${d.favorite ? `<span class="badge fav">${I.heart} favorito</span>` : ''}<span class="badge">${esc(STATUS[d.status] || d.status)}</span><div style="margin-left:auto"></div><button class="icon-btn" id="mClose" aria-label="Fechar">${icon('x', 18)}</button></div>
+  <div class="m-head"><h2>${esc(title(d))}</h2>${d.favorite ? `<span class="badge fav">${I.heart} favorito</span>` : ''}<span class="badge">${esc(STATUS[d.status] || d.status)}</span>${d.demo ? '<span class="badge info">Demonstração</span>' : ''}<div style="margin-left:auto"></div><button class="icon-btn" id="mClose" aria-label="Fechar">${icon('x', 18)}</button></div>
   <div class="m-body"><div>
     <div class="gallery"><div class="main-img" style="${img ? `background-image:url('${esc(img)}')` : ''}">${imgs.length ? `<span class="count">${S.modalImg + 1} / ${imgs.length}</span>` : '<div class="empty" style="height:100%;display:flex;align-items:center;justify-content:center;border:0;background:none">Sem fotos</div>'}</div>
       ${imgs.length > 1 ? `<div class="thumbs">${imgs.map((u, i) => `<button data-img="${i}" class="${i === S.modalImg ? 'on' : ''}" style="background-image:url('${esc(u)}')" aria-label="Foto ${i + 1}"></button>`).join('')}</div>` : ''}</div>
@@ -361,7 +382,7 @@ function drawModal(d) {
     ${a.market.avg ? `<div class="eyebrow">Cenários de venda (passo 9)</div><div class="scen">${[['conservative', 'Conservador'], ['medium', 'Médio'], ['high', 'Alto']].map(([k, l]) => `<div><div class="small muted">${l}</div><div class="p">${eur(a.scenarios[k]?.sale)}</div><div class="small ${cls(a.scenarios[k]?.profit)}">${signed(a.scenarios[k]?.profit)}</div></div>`).join('')}</div>` : ''}
     ${a.warnings.length ? `<div class="card" style="margin-top:14px;background:#fffbeb;border-color:#fde68a"><ul class="ul small">${a.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>` : ''}
     <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px">
-      ${d.url ? `<a class="btn primary" href="${esc(d.url)}" target="_blank" rel="noopener">Ver anúncio em ${esc(d.source === 'manual' ? 'site' : d.source)} ${I.ext}</a>` : '<span></span>'}
+      ${d.url ? `<a class="btn primary" href="${esc(d.url)}" target="_blank" rel="noopener">Ver anúncio em ${esc((() => { try { return new URL(d.url).hostname.replace(/^www\./, ''); } catch { return 'site'; } })())} ${I.ext}</a>` : '<span></span>'}
       <button class="btn fav-btn ${d.favorite ? 'on' : ''}" id="mFav" title="${d.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}" aria-label="Favorito">${d.favorite ? I.heartOn : I.heartBtn}</button></div>
     <label class="f" style="margin-top:12px">Estado${sel(d, 'status', STATUSES)}</label>
     <div class="card" style="margin-top:14px"><div class="eyebrow">Verificar antes de comprar</div>

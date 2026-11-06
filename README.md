@@ -21,6 +21,10 @@ Cada carro tem ainda uma **checklist do processo completo** (separador *Processo
 
 As fórmulas do ISV e do IUC foram validadas com a folha de cálculo (1968 cm³ · 119 g/km NEDC gasóleo → ISV 2 830,86 €, IUC 241,50 €). Confirme sempre o ISV final na DAV.
 
+## Carro de demonstração
+
+Em **Importar anúncios** (ou no Início, enquanto não houver carros) há o botão **Carregar carro de demonstração (da folha)**. Cria o Renault Kadjar da folha *Vroom.Pt* com todo o processo concluído: custos dos passos 1–9, ISV 2 830,86 €, IUC 241,50 €, venda por 27 500 € e as despesas com quem pagou segundo o Balanço de Despesas. Os valores que não existiam na folha (comparáveis StandVirtual, carVertical, deslocações, dormidas, matrícula temporária, mecânico, pintura, extras e datas) são simulados e marcados "(simulado)". Pode apagá-lo como qualquer outro carro.
+
 ## Como entram os anúncios
 
 O leboncoin protege-se contra robôs (DataDome), por isso um servidor recebe normalmente **HTTP 403**. Há quatro formas:
