@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Builds dist/vroom-pt.tar.gz with only what the server needs (upload & extract in cPanel File Manager).
+// Builds dist/vroom-pt.zip from app/ (without data) — upload it in cPanel File Manager and Extract.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-const files = ['app.js', 'server.cjs', 'package.json', 'src', 'public', 'bin', '.env.example', 'DEPLOY-CPANEL.md', 'README.md'];
 fs.mkdirSync('dist', { recursive: true });
-execFileSync('tar', ['-czf', 'dist/vroom-pt.tar.gz', ...files.filter((f) => fs.existsSync(f))], { stdio: 'inherit' });
-console.log('Created dist/vroom-pt.tar.gz');
+fs.rmSync('dist/vroom-pt.zip', { force: true });
+execFileSync('zip', ['-qr', '../dist/vroom-pt.zip', '.', '-x', 'data/db.json', 'data/auth.json', 'data/secrets.json', 'data/attempts.json', 'data/.lock', 'data/sessions/*', 'data/backups/*', 'config.php'], { cwd: 'app', stdio: 'inherit' });
+console.log('Created dist/vroom-pt.zip');

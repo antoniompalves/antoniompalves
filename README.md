@@ -27,7 +27,7 @@ O leboncoin protege-se contra robôs (DataDome), por isso um servidor recebe nor
 
 1. **Marcador / bookmarklet (recomendado).** Página *Importar anúncios* → arraste *Enviar para o Vroom.pt* para a barra de marcadores. Em qualquer página de resultados ou de anúncio do leboncoin, carregue nele: todos os carros da página são importados a partir do **seu** navegador. Também funciona no AutoScout24, mobile.de, coches.net e Marktplaats (dados schema.org).
 2. **Colar o código-fonte** da página (Ctrl+U → copiar tudo → colar).
-3. **Obter pelo servidor** um URL do leboncoin: tenta um pedido direto e depois o [Firecrawl](https://firecrawl.dev), se `FIRECRAWL_API_KEY` estiver configurada.
+3. **Obter pelo servidor** um URL do leboncoin: tenta um pedido direto e depois o [Firecrawl](https://firecrawl.dev), se a chave estiver guardada em Definições.
 4. **Introdução manual**, ou **calculadora** → *Guardar como negócio*.
 
 Voltar a importar o mesmo anúncio atualiza-o e regista as descidas de preço.
@@ -37,41 +37,44 @@ O CO2 e a cilindrada raramente vêm estruturados no leboncoin. A aplicação ten
 Linha de comandos (também para cron):
 
 ```bash
-npm run fetch -- "https://www.leboncoin.fr/recherche?category=2&owner_type=pro&regdate=2011-2021"
-npm run fetch -- --list data/searches.txt
-npm run fetch -- --file pagina-guardada.html
+php app/cron/fetch.php "https://www.leboncoin.fr/recherche?category=2&owner_type=pro&regdate=2011-2021"
+php app/cron/fetch.php                      # lê data/searches.txt
+php app/cron/fetch.php --file pagina.html
 ```
 
 ## Correr localmente
 
-Requer Node.js 18.17 ou superior. Não tem dependências, por isso não é preciso `npm install`.
+Requer PHP 7.4 ou superior. Não há base de dados nem dependências.
 
 ```bash
-npm start            # http://localhost:3000
-npm test
+npm run serve        # = php -S localhost:8000 -t app  →  http://localhost:8000
+npm test             # testes (Node.js 18+ e PHP no PATH)
+npm run package      # cria dist/vroom-pt.zip para o cPanel
 ```
 
-A configuração está em `.env` (ver `.env.example`): `APP_PASSWORD`, `SESSION_SECRET`, `BASE_PATH`, `DATA_DIR`, `FIRECRAWL_API_KEY`.
-
-Todos os dados ficam em `data/db.json`. Em Definições → *Descarregar cópia* exporta tudo.
+Na primeira utilização a aplicação pede para escolher a palavra-passe. Todos os dados ficam em `app/data/db.json`. Em Definições → *Descarregar cópia* exporta tudo.
 
 ## Instalar no cPanel
 
-Ver [DEPLOY-CPANEL.md](DEPLOY-CPANEL.md).
+Ver [DEPLOY-CPANEL.md](DEPLOY-CPANEL.md): enviar o zip para `public_html`, extrair, abrir no navegador.
 
 ## Estrutura
 
 ```
-app.js               servidor HTTP + API (sem dependências)
-server.cjs           ficheiro de arranque para cPanel/Passenger (carrega app.js)
-src/tax.js           ISV + IUC 2026
-src/costs.js         modelo de custos, pontuação, prazos, retomas, capital (partilhado com o navegador)
-src/process.js       checklist do Esquema de Execução
-src/ledger.js        despesas, quem pagou, saldos e acertos entre sócios
-src/leboncoin.js     obtenção/leitura do leboncoin + criador de URL de pesquisa
-src/generic.js       leitor schema.org JSON-LD para outros portais
-src/store.js         armazenamento em ficheiro JSON
-public/              interface, login, ponte do marcador
-bin/                 linha de comandos e script de empacotamento
-test/                testes (node:test)
+app/                      ← o que vai para o cPanel (public_html/vroom)
+  index.php               aplicação (exige sessão)
+  login.php / logout.php  entrada; na 1.ª vez escolhe a palavra-passe
+  api.php                 API JSON (api.php?r=...)
+  bridge.php              recebe a página enviada pelo marcador
+  .htaccess               protege data/, inc/, cron/ e config
+  config.sample.php       opcional: pasta de dados fora de public_html, chave Firecrawl
+  assets/app.js           interface (HTML/JS)
+  assets/lib/tax.js       ISV + IUC 2026
+  assets/lib/costs.js     modelo de custos, pontuação, prazos, retomas, capital
+  assets/lib/process.js   checklist do Esquema de Execução
+  assets/lib/ledger.js    despesas, quem pagou, saldos e acertos entre sócios
+  inc/                    PHP interno: sessão/login, armazenamento JSON, leboncoin + JSON-LD
+  cron/fetch.php          atualização de pesquisas (linha de comandos / cron)
+  data/                   dados (protegido)
+test/                     testes (node:test; os do leboncoin e do servidor correm o PHP)
 ```

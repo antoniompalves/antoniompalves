@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeDeal, scoreDeals, deadlinesFor, addBusinessDays, haversineKm, HOME_BASE } from '../src/costs.js';
+import { analyzeDeal, scoreDeals, deadlinesFor, addBusinessDays, haversineKm, HOME_BASE } from '../app/assets/lib/costs.js';
 
 const deal = { id: 'a', price: 19300, cc: 1968, co2: 119, co2Standard: 'NEDC', fuel: 'diesel', firstRegistration: '2019-12', km: 165000, country: 'FR', lat: 48.5734, lng: 7.7521, sellerType: 'pro', market: { comps: [{ price: 26000 }, { price: 30000 }] } };
 
@@ -50,8 +50,8 @@ test('haversine sanity: Porto–Madrid ≈ 420 km', () => {
   assert.ok(km > 400 && km < 440);
 });
 
-import { tradeInValuation, capitalPosition } from '../src/costs.js';
-import { processFor, progressOf } from '../src/process.js';
+import { tradeInValuation, capitalPosition } from '../app/assets/lib/costs.js';
+import { processFor, progressOf } from '../app/assets/lib/process.js';
 
 test('profit split: 20% cash reserve, 80% between partners', () => {
   const a = analyzeDeal({ ...deal, market: { target: 40000 } }, { partners: ['A', 'B'] });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { computeISV, computeIUC, ageInMonths, ageDiscount, vatApplies } from '../src/tax.js';
+import { computeISV, computeIUC, ageInMonths, ageDiscount, vatApplies } from '../app/assets/lib/tax.js';
 
 test('ISV matches the workbook simulation (1968 cm3, 119 g/km NEDC diesel, 6-7 years)', () => {
   const r = computeISV({ cc: 1968, co2: 119, fuel: 'diesel', standard: 'NEDC', firstRegistration: '2019-12', at: new Date('2026-03-06') });

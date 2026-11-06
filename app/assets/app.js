@@ -28,9 +28,12 @@ const STATUSES = [
 const STATUS = Object.fromEntries(STATUSES);
 const ACTIVE = ['reserved', 'bought', 'transit', 'legalising', 'for_sale'];
 
+// 'api/deals/x' → 'api.php?r=deals/x'. PUT/DELETE travel as POST + _method (some hosts block other verbs).
+const apiUrl = (path, method = 'GET') => `api.php?r=${path.replace(/^api\//, '')}${['PUT', 'DELETE'].includes(method) ? `&_method=${method}` : ''}`;
 async function api(path, opts = {}) {
-  const r = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) }, body: opts.body && typeof opts.body !== 'string' ? JSON.stringify(opts.body) : opts.body });
-  if (r.status === 401) { location.href = 'login'; throw new Error('login'); }
+  const method = (opts.method || 'GET').toUpperCase();
+  const r = await fetch(apiUrl(path, method), { ...opts, method: method === 'GET' ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Vroom': '1', ...(opts.headers || {}) }, body: opts.body && typeof opts.body !== 'string' ? JSON.stringify(opts.body) : opts.body });
+  if (r.status === 401) { location.href = 'login.php'; throw new Error('login'); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
   return j;
@@ -44,7 +47,19 @@ async function saveDeal(d) {
   return saved;
 }
 const getPath = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
-function setPath(o, p, v) { const ks = p.split('.'); let c = o; ks.slice(0, -1).forEach((k) => { c[k] = c[k] && typeof c[k] === 'object' ? c[k] : {}; c = c[k]; }); c[ks.at(-1)] = v; }
+function setPath(o, p, v) {
+  const ks = p.split('.'); let c = o;
+  ks.slice(0, -1).forEach((k, i) => {
+    const nextIsIndex = /^\d+$/.test(ks[i + 1]);
+    let cur = c[k];
+    // an empty object saved by the server can come back as [] — turn it back into an object before adding named keys
+    if (Array.isArray(cur) && !nextIsIndex) cur = Object.assign({}, cur);
+    else if (!cur || typeof cur !== 'object') cur = nextIsIndex ? [] : {};
+    c[k] = cur; c = cur;
+  });
+  c[ks.at(-1)] = v;
+}
+const b64 = (str) => btoa(unescape(encodeURIComponent(str)));
 const thumbStyle = (d) => (d.images?.[0] ? `style="background-image:url('${esc(d.images[0])}')"` : '');
 const flag = (c) => `<span class="flag">${esc(c || '?')}</span>`;
 const title = (d) => d.title || [d.make, d.model, d.version].filter(Boolean).join(' ') || 'Carro sem título';
@@ -215,8 +230,8 @@ function viewDeals(r) {
 // ---------- import ----------
 function viewImport() {
   const s = settings(); const y = new Date().getFullYear();
-  const appUrl = new URL('.', location.href).href;
-  const bm = `javascript:(()=>{var n=document.getElementById('__NEXT_DATA__');var c=n?n.textContent:document.documentElement.outerHTML;var w=window.open(${JSON.stringify(appUrl + 'bridge')},'vroom');var h=function(e){if(e.source!==w)return;if(e.data==='vroom-ready'){w.postMessage({type:'vroom-import',content:c,url:location.href},'*')}if(e.data&&e.data.type==='vroom-done'){removeEventListener('message',h)}};addEventListener('message',h)})()`;
+  const appUrl = new URL('.', location.href.split('#')[0]).href;
+  const bm = `javascript:(()=>{var n=document.getElementById('__NEXT_DATA__');var c=n?n.textContent:document.documentElement.outerHTML;var w=window.open(${JSON.stringify(appUrl + 'bridge.php')},'vroom');var h=function(e){if(e.source!==w)return;if(e.data==='vroom-ready'){w.postMessage({type:'vroom-import',content:c,url:location.href},'*')}if(e.data&&e.data.type==='vroom-done'){removeEventListener('message',h)}};addEventListener('message',h)})()`;
   $('#view').innerHTML = `
   <div class="grid cols-2">
     <div class="card"><h3>1 · Criar uma pesquisa no leboncoin a partir dos alvos</h3>
@@ -238,7 +253,7 @@ function viewImport() {
       <p><a class="bm" id="bm" href="#">⇣ Enviar para o Vroom.pt</a></p>
       <ol class="steps small"><li>Entre no Vroom.pt neste navegador.</li><li>Abra o leboncoin e faça a pesquisa.</li><li>Carregue no marcador → abre-se uma pequena janela → <b>Importar</b>.</li></ol></div>
     <div class="card"><h3>3 · Obter um URL a partir do servidor</h3>
-      <p class="muted small">URL de anúncio ou de pesquisa do leboncoin. ${S.firecrawl ? '<span class="badge ok">Firecrawl ativo</span> usado se o leboncoin devolver 403.' : '<span class="badge warn">Firecrawl não configurado</span> O leboncoin costuma bloquear pedidos diretos do servidor; configure <code>FIRECRAWL_API_KEY</code> para isto funcionar de forma fiável.'}</p>
+      <p class="muted small">URL de anúncio ou de pesquisa do leboncoin. ${S.firecrawl ? '<span class="badge ok">Firecrawl ativo</span> usado se o leboncoin devolver 403.' : '<span class="badge warn">Firecrawl não configurado</span> O leboncoin costuma bloquear pedidos diretos do servidor; configure a chave Firecrawl nas <a href="#/settings">Definições</a> para isto funcionar de forma fiável.'}</p>
       <input id="u_url" placeholder="https://www.leboncoin.fr/recherche?category=2&…"><button class="btn primary" id="u_go" style="margin-top:8px">Obter</button></div>
     <div class="card"><h3>4 · Colar o código-fonte da página</h3>
       <p class="muted small">Funciona com o leboncoin e a maioria dos portais (AutoScout24, mobile.de, coches.net, Marktplaats). Abra o anúncio, carregue em <b>Ctrl+U</b>, selecione tudo, copie e cole aqui.</p>
@@ -264,7 +279,7 @@ function viewImport() {
   };
   $('#u_go').onclick = () => fetchUrl($('#u_url').value, $('#u_go'));
   $('#p_go').onclick = async () => {
-    try { const r = await api('api/import/paste', { method: 'POST', body: { content: $('#p_content').value, url: $('#p_url').value, country: $('#p_country').value } }); await refresh(); toast(`Importados: ${r.created} novos, ${r.updated} atualizados`); location.hash = r.ids.length === 1 ? `#/deal/${r.ids[0]}` : '#/deals?sort=new'; } catch (e) { toast(e.message, 8000); }
+    try { const r = await api('api/import/paste', { method: 'POST', body: { content_b64: b64($('#p_content').value), url: $('#p_url').value, country: $('#p_country').value } }); await refresh(); toast(`Importados: ${r.created} novos, ${r.updated} atualizados`); location.hash = r.ids.length === 1 ? `#/deal/${r.ids[0]}` : '#/deals?sort=new'; } catch (e) { toast(e.message, 8000); }
   };
   $('#m_go').onclick = async () => {
     const d = {}; for (const k of ['make', 'model', 'version', 'firstRegistration', 'km', 'fuel', 'cc', 'co2', 'price', 'country', 'city', 'url', 'sellerType']) d[k] = $(`#m_${k}`).value || null;
@@ -721,8 +736,14 @@ function viewSettings() {
         <div class="eyebrow" style="margin-top:14px">Pesos da pontuação (passo 3)</div><div class="form-grid">${Object.keys(s.weights).map((k) => f(`weights.${k}`, { age: 'Idade', location: 'Local', quality: 'Qualidade', km: 'Km', price: 'Preço' }[k] || k)).join('')}</div></div>
       <div class="card" style="grid-column:1/-1"><h3>Por país</h3><div style="overflow-x:auto"><table class="t"><thead><tr><th>País</th><th class="n">Voos €</th><th class="n">Deslocações €</th><th class="n">Km por omissão</th><th class="n">Portagens €/km</th><th class="n">Matrícula temp. €</th><th class="n">Transportadora €</th></tr></thead><tbody>
         ${Object.entries(s.countries).map(([k, c]) => `<tr><td>${flag(k)} ${esc(c.name)}</td>${['flight', 'localTransport', 'defaultKm', 'tollPerKm', 'tempPlates', 'truck'].map((x) => `<td><input data-s="countries.${k}.${x}" type="number" step="any" value="${esc(c[x])}"></td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
+      <div class="card"><h3>Acesso e integrações</h3>
+        <div class="form-grid"><label class="f">Palavra-passe atual<input type="password" id="pw_cur" autocomplete="current-password"></label><label class="f">Nova palavra-passe (mín. 8)<input type="password" id="pw_new" autocomplete="new-password"></label></div>
+        <button class="btn" id="pw_go" style="margin-top:8px">Alterar palavra-passe</button>
+        <div class="form-grid" style="margin-top:16px"><label class="f">Chave Firecrawl ${S.firecrawl ? '<span class="badge ok">configurada</span>' : '<span class="badge">não configurada</span>'}<input type="password" id="fc_key" placeholder="fc-…" autocomplete="off"></label></div>
+        <p class="small muted">Opcional. Permite ao servidor obter páginas do leboncoin quando este o bloqueia. Fica guardada só no servidor (pasta data/). Deixe vazio e guarde para remover.</p>
+        <button class="btn" id="fc_go">Guardar chave</button></div>
       <div class="card"><h3>Cópia de segurança</h3><p class="muted small">Descarregue todos os negócios e definições em JSON, ou reponha uma cópia (substitui os dados atuais; fica guardada uma cópia dos dados atuais no servidor).</p>
-        <a class="btn" href="api/export">⇣ Descarregar cópia</a> <label class="btn">⇡ Repor<input type="file" id="restore" accept=".json" hidden></label> <button class="btn danger" id="reset">Repor definições de origem</button></div>
+        <a class="btn" href="api.php?r=export">⇣ Descarregar cópia</a> <label class="btn">⇡ Repor<input type="file" id="restore" accept=".json" hidden></label> <button class="btn danger" id="reset">Repor definições de origem</button></div>
     </div>`;
   $('#view').querySelectorAll('[data-s]').forEach((el) => el.addEventListener('change', async () => {
     const next = mergeSettings(S.settings);
@@ -732,6 +753,8 @@ function viewSettings() {
     setPath(next, el.dataset.s, v);
     S.settings = await api('api/settings', { method: 'PUT', body: next }); S.settingsVer = (S.settingsVer || 0) + 1; toast('Guardado');
   }));
+  $('#pw_go').onclick = async () => { try { await api('api/password', { method: 'PUT', body: { current: $('#pw_cur').value, new: $('#pw_new').value } }); toast('Palavra-passe alterada'); $('#pw_cur').value = $('#pw_new').value = ''; } catch (e) { toast(e.message); } };
+  $('#fc_go').onclick = async () => { const r = await api('api/secrets', { method: 'PUT', body: { firecrawl: $('#fc_key').value } }); S.firecrawl = r.firecrawl; toast(r.firecrawl ? 'Chave Firecrawl guardada' : 'Chave Firecrawl removida'); viewSettings(); };
   $('#reset').onclick = async () => { if (!confirm('Repor todas as definições?')) return; S.settings = await api('api/settings', { method: 'PUT', body: structuredClone(DEFAULT_SETTINGS) }); S.settingsVer = (S.settingsVer || 0) + 1; viewSettings(); };
   $('#restore').onchange = async (e) => { const file = e.target.files[0]; if (!file) return; try { const r = await api('api/restore', { method: 'POST', body: await file.text() }); await refresh(); toast(`Repostos ${r.deals} negócios`); } catch (err) { toast(err.message); } };
 }

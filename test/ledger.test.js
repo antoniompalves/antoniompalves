@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { balances, settleTransfers, paidBy, expenseStatus, allExpenses, estimateVsReal, toCSV, CASH, SPLIT } from '../src/ledger.js';
-import { analyzeDeal } from '../src/costs.js';
+import { balances, settleTransfers, paidBy, expenseStatus, allExpenses, estimateVsReal, toCSV, CASH, SPLIT } from '../app/assets/lib/ledger.js';
+import { analyzeDeal } from '../app/assets/lib/costs.js';
 
 const P = ['António', 'Tono', 'Calado'];
 

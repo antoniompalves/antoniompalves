@@ -1,5 +1,7 @@
 node_modules/
-data/
 dist/
-.env
+app/config.php
+app/data/*
+!app/data/.htaccess
+!app/data/index.html
 *.tmp

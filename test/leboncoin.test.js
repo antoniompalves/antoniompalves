@@ -1,11 +1,22 @@
+// Runs the PHP leboncoin / JSON-LD parsers (app/inc/leboncoin.php) on fixtures.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseLeboncoinHtml, parseLeboncoinPayload, parseSpecsFromText, buildSearchUrl, normFuel } from '../src/leboncoin.js';
-import { parseJsonLdCars } from '../src/generic.js';
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { lbcAd, lbcPage } from './fixtures/make-lbc.js';
 
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vroom-php-'));
+let n = 0;
+function php(mode, content, url = '') {
+  const f = path.join(tmp, `in${n++}.txt`);
+  fs.writeFileSync(f, content);
+  return JSON.parse(execFileSync('php', ['test/php-helper.php', mode, f, url], { encoding: 'utf8' }));
+}
+
 test('parses a leboncoin search page', () => {
-  const deals = parseLeboncoinHtml(lbcPage([lbcAd(), lbcAd({ id: 2, owner: 'private', fuel: 'Essence', subject: 'Peugeot 308 1.2 PureTech 130', body: 'Moteur 1199 cm3' })]));
+  const deals = php('lbc', lbcPage([lbcAd(), lbcAd({ id: 2, owner: 'private', fuel: 'Essence', subject: 'Peugeot 308 1.2 PureTech 130', body: 'Moteur 1199 cm3' })]));
   assert.equal(deals.length, 2);
   const [a, b] = deals;
   assert.equal(a.make, 'Renault');
@@ -28,20 +39,19 @@ test('parses a leboncoin search page', () => {
 });
 
 test('accepts raw __NEXT_DATA__ JSON (bookmarklet payload) and single ad pages', () => {
-  const next = JSON.stringify({ props: { pageProps: { ad: lbcAd({ id: 99 }) } } });
-  const deals = parseLeboncoinPayload(next);
+  const deals = php('lbc', JSON.stringify({ props: { pageProps: { ad: lbcAd({ id: 99 }) } } }));
   assert.equal(deals.length, 1);
   assert.equal(deals[0].sourceId, '99');
 });
 
-test('text spec extraction', () => {
-  assert.deepEqual(parseSpecsFromText('2.0 TDI 150 ch, émissions CO2 132 g/km WLTP'), { co2: 132, cc: 2000, ccEstimated: true, co2Standard: 'WLTP' });
-  assert.equal(normFuel('Hybride Rechargeable'), 'phev');
-  assert.equal(normFuel('Électrique'), 'electric');
+test('text spec extraction and fuels', () => {
+  assert.deepEqual(php('specs', '2.0 TDI 150 ch, émissions CO2 132 g/km WLTP'), { co2: 132, cc: 2000, ccEstimated: true, co2Standard: 'WLTP' });
+  assert.equal(php('fuel', 'Hybride Rechargeable'), 'phev');
+  assert.equal(php('fuel', 'Électrique'), 'electric');
 });
 
 test('search URL builder', () => {
-  const u = new URL(buildSearchUrl({ text: 'kadjar', minYear: 2011, maxYear: 2021, maxKm: 150000, maxPrice: 20000, fuels: ['gasoline', 'diesel'] }));
+  const u = new URL(php('search', JSON.stringify({ text: 'kadjar', minYear: 2011, maxYear: 2021, maxKm: 150000, maxPrice: 20000, fuels: ['gasoline', 'diesel'] })));
   assert.equal(u.hostname, 'www.leboncoin.fr');
   assert.equal(u.searchParams.get('category'), '2');
   assert.equal(u.searchParams.get('regdate'), '2011-2021');
@@ -53,8 +63,7 @@ test('search URL builder', () => {
 
 test('generic JSON-LD parser (AutoScout24 / mobile.de style)', () => {
   const ld = { '@context': 'https://schema.org', '@type': ['Car', 'Product'], name: 'Volkswagen Golf 1.5 TSI', brand: { name: 'Volkswagen' }, model: 'Golf', mileageFromOdometer: { value: 85000, unitCode: 'KMT' }, fuelType: 'Benzin', dateVehicleFirstRegistered: '2019-05-01', vehicleEngine: { engineDisplacement: { value: 1498, unitCode: 'CMQ' } }, emissionsCO2: 118, offers: { price: 16900, priceCurrency: 'EUR', seller: { '@type': 'AutoDealer', name: 'Autohaus X' } } };
-  const html = `<html><script type="application/ld+json">${JSON.stringify(ld)}</script></html>`;
-  const [d] = parseJsonLdCars(html, 'https://www.autoscout24.de/angebote/x');
+  const [d] = php('jsonld', `<html><script type="application/ld+json">${JSON.stringify(ld)}</script></html>`, 'https://www.autoscout24.de/angebote/x');
   assert.equal(d.country, 'DE');
   assert.equal(d.price, 16900);
   assert.equal(d.km, 85000);
