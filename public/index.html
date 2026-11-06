@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vroom.pt</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="styles.css"></head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="#/"><img src="assets/logo.svg" width="28" height="28" alt=""> VROOM<span>.PT</span></a>
+  <nav>
+    <div class="nav-h">Descobrir</div>
+    <a href="#/" data-nav="home">⌂ <span>Início</span></a>
+    <a href="#/deals" data-nav="deals">⌕ <span>Negócios</span></a>
+    <a href="#/import" data-nav="import">⇣ <span>Importar anúncios</span></a>
+    <a href="#/calculator" data-nav="calculator">∑ <span>Calculadora ISV / custos</span></a>
+    <div class="nav-h">A minha atividade</div>
+    <a href="#/compare" data-nav="compare">⚖ <span>Comparar e pontuar</span></a>
+    <a href="#/deals?fav=1" data-nav="fav">♡ <span>Favoritos</span></a>
+    <div class="nav-h">O meu negócio</div>
+    <a href="#/pipeline" data-nav="pipeline">▦ <span>Processo</span></a>
+    <a href="#/ledger" data-nav="ledger">€ <span>Despesas e resultados</span></a>
+    <a href="#/settings" data-nav="settings">⚙ <span>Definições</span></a>
+  </nav>
+  <a class="nav-foot" href="logout">⎋ <span>Terminar sessão</span></a>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="icon-btn menu" id="menuBtn" aria-label="Menu">☰</button>
+    <div><div class="tb-title" id="tbTitle">Início</div><div class="tb-sub">Vroom.pt · análise de importação</div></div>
+    <div class="tb-actions"><a class="btn primary" href="#/import">+ Importar anúncios</a></div>
+  </header>
+  <main id="view"></main>
+</div>
+<div class="modal-back" id="modal" hidden><div class="modal" role="dialog" aria-modal="true"><div id="modalBody"></div></div></div>
+<div class="toast" id="toast" hidden></div>
+<script type="module" src="app.js"></script>
+</body></html>

@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vroom.pt · Entrar</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="styles.css"></head>
+<body class="login-page">
+<form class="login-card" method="post" action="login">
+  <img src="assets/logo.svg" width="48" height="48" alt="">
+  <h1>Vroom.pt</h1>
+  <p class="muted">Análise de importação · França · Espanha · Alemanha · Países Baixos → Portugal</p>
+  <p class="error" id="err" hidden>Palavra-passe errada.</p>
+  <input type="password" name="password" placeholder="Palavra-passe" autofocus required>
+  <button class="btn primary" type="submit">Entrar</button>
+</form>
+<script>if (location.search.includes('e=1')) document.getElementById('err').hidden = false;</script>
+</body></html>

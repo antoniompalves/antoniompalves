@@ -1,0 +1,16 @@
+{
+  "name": "vroom-pt",
+  "version": "1.0.0",
+  "description": "Car import analysis platform: find cars in FR/ES/DE/NL, compute landed cost in Portugal (ISV, IUC, trip, legalisation) and track them to sale.",
+  "type": "module",
+  "main": "app.js",
+  "private": true,
+  "engines": { "node": ">=18.17" },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "test": "node --test",
+    "fetch": "node bin/fetch-leboncoin.js",
+    "package": "node bin/package.js"
+  }
+}

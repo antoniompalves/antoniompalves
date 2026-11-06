@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vroom.pt · Importar</title><link rel="icon" href="assets/logo.svg"><link rel="stylesheet" href="styles.css"></head>
+<body class="login-page">
+<div class="login-card">
+  <img src="assets/logo.svg" width="48" height="48" alt="">
+  <h1>Importar anúncio</h1>
+  <p id="msg" class="muted">À espera dos dados da página do anúncio…</p>
+  <button id="go" class="btn primary" hidden>Importar</button>
+  <a id="open" class="btn" href="./" hidden>Abrir o Vroom.pt</a>
+</div>
+<script>
+const msg = document.getElementById('msg'), go = document.getElementById('go'), open = document.getElementById('open');
+let payload = null;
+const countryOf = (u) => { try { const h = new URL(u).hostname; return (h.match(/\.(fr|es|de|nl|be)$/) || [])[1]?.toUpperCase(); } catch { return null; } };
+window.addEventListener('message', (e) => {
+  if (e.source !== window.opener || !e.data || e.data.type !== 'vroom-import') return;
+  payload = { content: e.data.content, url: e.data.url, country: countryOf(e.data.url) };
+  let host = e.origin; try { host = new URL(e.data.url).hostname; } catch {}
+  msg.textContent = `Recebida uma página de ${host}. Importar o(s) anúncio(s)?`;
+  go.hidden = false;
+});
+go.onclick = async () => {
+  go.disabled = true; msg.textContent = 'A importar…';
+  const r = await fetch('api/import/paste', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { msg.textContent = 'Entre primeiro no Vroom.pt (nesta janela) e volte a carregar no marcador.'; open.hidden = false; open.href = 'login'; return; }
+  msg.textContent = r.ok ? `Concluído: ${j.created} novos, ${j.updated} atualizados.` : (j.error || 'A importação falhou');
+  go.hidden = true; open.hidden = false;
+  if (r.ok && j.ids?.length === 1) open.href = `./#/deal/${j.ids[0]}`;
+  else if (r.ok) open.href = './#/deals';
+  window.opener?.postMessage({ type: 'vroom-done' }, '*');
+};
+if (window.opener) window.opener.postMessage('vroom-ready', '*');
+else msg.textContent = 'Abra esta página através do marcador do Vroom.pt numa página do leboncoin (ou de outro portal).';
+</script>
+</body></html>
