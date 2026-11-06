@@ -70,7 +70,28 @@ test('first-run password, login, import, update, ledger, export', async () => {
   const led = await (await fetch(`${base}/api.php?r=ledger&_method=PUT`, { method: 'POST', headers: h, body: JSON.stringify({ general: [{ type: 'other', amount: 60, payer: 'Caixa' }], settlements: [] }) })).json();
   assert.equal(led.general[0].amount, 60);
 
+  // receipts: upload, serve only when logged in, reject unsafe types, removed with the deal
+  const up = async (name, type, bytes) => { const fd = new FormData(); fd.append('file', new Blob([bytes], { type }), name); return fetch(`${base}/api.php?r=receipts`, { method: 'POST', headers: { Cookie: cookie, 'X-Vroom': '1' }, body: fd }); };
+  const pdf = await (await up('Fatura IPO.pdf', 'application/pdf', '%PDF-1.4\n1 0 obj<<>>endobj\n%%EOF')).json();
+  assert.match(pdf.id, /^[a-f0-9]{24}$/);
+  assert.equal(pdf.mime, 'application/pdf');
+  assert.equal(pdf.name, 'Fatura IPO.pdf');
+  const svg = await up('x.svg', 'image/svg+xml', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  assert.equal(svg.status, 400);
+  assert.equal((await up('x.pdf', 'application/pdf', 'MZ not really a pdf')).status, 400, 'type is checked from the content, not the name');
+  assert.equal((await fetch(`${base}/api.php?r=receipts`, { method: 'POST', headers: { Cookie: cookie }, body: new FormData() })).status, 403, 'CSRF header required');
+  const got = await fetch(`${base}/api.php?r=receipt&id=${pdf.id}`, { headers: { Cookie: cookie } });
+  assert.equal(got.status, 200);
+  assert.equal(got.headers.get('content-type'), 'application/pdf');
+  assert.match(await got.text(), /^%PDF/);
+  assert.equal((await fetch(`${base}/api.php?r=receipt&id=${pdf.id}`)).status, 401, 'not without login');
+  assert.equal((await fetch(`${base}/api.php?r=receipt&id=../auth`, { headers: { Cookie: cookie } })).status, 404);
+  const target = st.deals[1];
+  await fetch(`${base}/api.php?r=deals/${target.id}&_method=PUT`, { method: 'POST', headers: h, body: JSON.stringify({ ...target, expenses: [{ type: 'inspection', amount: 100, payer: 'Tono', receipts: [pdf] }] }) });
+  assert.ok(fs.readdirSync(path.join(dataDir, 'receipts')).some((f) => f.startsWith(pdf.id)));
+
   const del = await fetch(`${base}/api.php?r=deals/${st.deals[1].id}&_method=DELETE`, { method: 'POST', headers: h });
+  assert.ok(!fs.readdirSync(path.join(dataDir, 'receipts')).some((f) => f.startsWith(pdf.id)), 'receipt file removed with the deal');
   assert.equal(del.status, 200);
   const exp = await (await fetch(`${base}/api.php?r=export`, { headers: h })).json();
   assert.equal(exp.deals.length, 1);

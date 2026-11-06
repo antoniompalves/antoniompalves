@@ -129,12 +129,12 @@ export function estimateVsReal(deal, analysis) {
 }
 
 export function toCSV(rows, partners) {
-  const head = ['Data', 'Carro', 'Tipo', 'Descrição', 'Categoria', 'Montante', 'Quem pagou', ...partners, 'Forma de pagamento', 'Estado'];
+  const head = ['Data', 'Carro', 'Tipo', 'Descrição', 'Categoria', 'Montante', 'Quem pagou', ...partners, 'Forma de pagamento', 'Estado', 'Faturas'];
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const fmt = (v) => String(r2(n(v))).replace('.', ',');
   const lines = rows.map((e) => {
     const pb = paidBy(e, partners);
-    return [e.date || '', e.car, EXPENSE_TYPES[expenseType(e)][0], e.note || e.label || '', CATEGORY_LABELS[expenseCategory(e)] || '', fmt(e.amount), e.payer || '', ...partners.map((p) => fmt(pb[p])), e.method || '', expenseStatus(e, partners)].map(q).join(';');
+    return [e.date || '', e.car, EXPENSE_TYPES[expenseType(e)][0], e.note || e.label || '', CATEGORY_LABELS[expenseCategory(e)] || '', fmt(e.amount), e.payer || '', ...partners.map((p) => fmt(pb[p])), e.method || '', expenseStatus(e, partners), (e.receipts || []).map((r) => r.name).join(', ')].map(q).join(';');
   });
   return '﻿' + [head.map(q).join(';'), ...lines].join('\r\n');
 }

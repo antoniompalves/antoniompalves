@@ -15,7 +15,7 @@ Segue os 9 passos da folha de cálculo *Vroom.Pt*:
 | 7 · Vinda | Distância do local do anúncio até ao Porto × consumo × preço do combustível + portagens + dormidas, ou transportadora |
 | 8 · Legalização | Inspeção, homologação, chapas, registo, agência, IUC + lista de tarefas e prazos legais (DAV 20 dias úteis, ISV 10, DUA 30 dias, registo 60 dias) |
 | 9 · Venda | Cenários conservador / médio / alto, preço real de venda, lucro % |
-| Balanço de despesas | **Controlo de despesas**: cada despesa com tipo (portagens, combustível, inspeção, ISV…), data, forma de pagamento e quem pagou (um sócio, vários ou a caixa). Estimado vs. real por carro, despesas gerais, saldo entre sócios, acertos sugeridos e registados, exportação CSV para Excel |
+| Balanço de despesas | **Controlo de despesas**: cada despesa com tipo (portagens, combustível, inspeção, ISV…), data, forma de pagamento e quem pagou (um sócio, vários ou a caixa). Estimado vs. real por carro, despesas gerais, saldo entre sócios, acertos sugeridos e registados, exportação CSV para Excel. **Faturas e recibos** (PDF ou foto, também pela câmara do telemóvel) anexados a cada despesa, com aviso e filtro das despesas sem fatura |
 
 Cada carro tem ainda uma **checklist do processo completo** (separador *Processo (checklist)*), igual ao *Esquema de Execução*: Aquisição → Transporte (ramo estrada ou transportadora) → Legalização (ramo com/sem COC) → Preparação (com fornecedores) → Venda (marketing, comercial, legal, financeiro) → Custos e lucros. O progresso e o próximo passo aparecem no quadro *Processo* e no início. O separador *Venda e retoma* mostra a divisão do lucro (20% caixa, 80% pelos sócios) e avalia retomas (referência −30% na compra, média −10% na revenda).
 
@@ -73,8 +73,8 @@ app/                      ← o que vai para o cPanel (public_html/vroom)
   assets/lib/costs.js     modelo de custos, pontuação, prazos, retomas, capital
   assets/lib/process.js   checklist do Esquema de Execução
   assets/lib/ledger.js    despesas, quem pagou, saldos e acertos entre sócios
-  inc/                    PHP interno: sessão/login, armazenamento JSON, leboncoin + JSON-LD
+  inc/                    PHP interno: sessão/login, armazenamento JSON, faturas, leboncoin + JSON-LD
   cron/fetch.php          atualização de pesquisas (linha de comandos / cron)
-  data/                   dados (protegido)
+  data/                   dados (protegido): db.json + receipts/ (faturas)
 test/                     testes (node:test; os do leboncoin e do servidor correm o PHP)
 ```

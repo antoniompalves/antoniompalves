@@ -27,11 +27,12 @@ Entre na aplicação → **Importar anúncios** → arraste **Enviar para o Vroo
 
 ## Segurança e dados
 
-* Tudo fica na pasta `data/`: `db.json` (carros, despesas, definições), `auth.json` (hash da palavra-passe), `secrets.json` (chave Firecrawl), `sessions/` e `backups/`.
+* Tudo fica na pasta `data/`: `db.json` (carros, despesas, definições), `receipts/` (faturas e recibos anexados), `auth.json` (hash da palavra-passe), `secrets.json` (chave Firecrawl), `sessions/` e `backups/`.
+* As faturas só abrem com sessão iniciada: são servidas pelo `api.php`, nunca diretamente. Aceita PDF, JPG, PNG, WEBP e HEIC; o conteúdo do ficheiro é verificado (não só a extensão).
 * O `.htaccess` bloqueia o acesso web a `data/`, `inc/`, `cron/` e `config*.php`. Para confirmar, abra `https://seudominio.pt/vroom/data/db.json`: tem de dar **403 Forbidden**.
 * **Ainda mais seguro (opcional):** guarde os dados fora de `public_html`. Copie `config.sample.php` para `config.php` e ative a linha
   `define('DATA_DIR', '/home/SEU_UTILIZADOR/vroom-data');`
-* **Cópias de segurança:** em **Definições → Descarregar cópia** exporta tudo em JSON. Inclua também a pasta `data/` nos backups do cPanel.
+* **Cópias de segurança:** em **Definições → Descarregar cópia** exporta os dados em JSON, **mas não inclui os ficheiros das faturas**. Para guardar tudo, faça backup da pasta `data/` inteira (cPanel → **Backup** ou **File Manager → Compress** da pasta `data` e descarregar o zip).
 
 ## Chave Firecrawl (opcional)
 
@@ -59,6 +60,7 @@ Envie o novo `vroom-pt.zip` para a mesma pasta → **Extract** → substituir fi
 | "500 Internal Server Error" logo ao abrir | Versão do PHP antiga: cPanel → **MultiPHP Manager** (ou *Select PHP Version*) → escolha 8.1 ou superior para o domínio |
 | "Não foi possível criar a pasta de dados" / "gravar os dados" | Permissões: no File Manager, a pasta `data/` deve ter permissão **755** (ou 750) e pertencer ao seu utilizador |
 | Volta sempre para o login | Cookies bloqueados, ou a pasta `data/sessions` sem permissão de escrita |
+| "Ficheiro demasiado grande para o alojamento" ao anexar fatura | Muitos alojamentos limitam envios a 2 MB. As fotos são reduzidas automaticamente; para PDFs grandes, cPanel → **MultiPHP INI Editor** → aumente `upload_max_filesize` e `post_max_size` (ex.: 16M) |
 | "pedido recusado" (403) ao importar | Firewall do alojamento (ModSecurity). A aplicação já envia o HTML codificado; se persistir, peça ao alojamento para criar uma exceção para `api.php` |
 | "Bloqueado pelo leboncoin (HTTP 403)" | Normal a partir de servidores: use o marcador ou configure a chave Firecrawl |
 | Ecrã branco no navegador | Abra a consola do navegador (F12). Os ficheiros `.js` têm de ser servidos como JavaScript (o `.htaccess` já trata disto) |

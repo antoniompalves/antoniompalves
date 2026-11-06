@@ -4,6 +4,7 @@
 declare(strict_types=1);
 require __DIR__ . '/inc/bootstrap.php';
 require __DIR__ . '/inc/leboncoin.php';
+require __DIR__ . '/inc/receipts.php';
 
 set_exception_handler(function ($e) { json_out(['error' => $e->getMessage()], $e instanceof InvalidArgumentException ? 400 : 500); });
 if (!is_authed()) json_out(['error' => 'sessão necessária'], 401);
@@ -46,6 +47,17 @@ if ($route === 'import/leboncoin' && $method === 'POST') {
     json_out(import_deals(vroom_store(), $deals));
 }
 
+// invoices / receipts (files in data/receipts, only served to a logged-in user)
+if ($route === 'receipt' && $method === 'GET') receipt_send((string)($_GET['id'] ?? ''), isset($_GET['dl']));
+if ($route === 'receipts' && $method === 'POST') {
+    if (empty($_FILES['file'])) {
+        // post_max_size exceeded: PHP drops the whole body
+        json_out(['error' => upload_error_message(UPLOAD_ERR_INI_SIZE)], 413);
+    }
+    json_out(receipt_save($_FILES['file']), 201);
+}
+if (preg_match('~^receipts/([a-f0-9]{24})$~', $route, $m) && $method === 'DELETE') json_out(['ok' => receipt_delete($m[1])]);
+
 $s = vroom_store();
 
 if ($route === 'state' && $method === 'GET') {
@@ -59,7 +71,13 @@ if ($route === 'deals' && $method === 'POST') {
 }
 if (preg_match('~^deals/([\w-]+)$~', $route, $m)) {
     if ($method === 'PUT') { $d = $s->update($m[1], json_body()); $d ? json_out(objectify($d)) : json_out(['error' => 'não encontrado'], 404); }
-    if ($method === 'DELETE') $s->remove($m[1]) ? json_out(['ok' => true]) : json_out(['error' => 'não encontrado'], 404);
+    if ($method === 'DELETE') {
+        $d = $s->find($m[1]);
+        if (!$d) json_out(['error' => 'não encontrado'], 404);
+        foreach ($d['expenses'] ?? [] as $e) foreach ($e['receipts'] ?? [] as $r) receipt_delete((string)($r['id'] ?? ''));
+        $s->remove($m[1]);
+        json_out(['ok' => true]);
+    }
 }
 if ($route === 'settings' && $method === 'PUT') { $s->data['settings'] = json_body(); $s->save(); json_out(obj($s->data['settings'])); }
 if ($route === 'ledger' && $method === 'PUT') {

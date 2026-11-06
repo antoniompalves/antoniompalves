@@ -370,6 +370,65 @@ function drawModal(d) {
 }
 
 
+// ---------- receipts (faturas / recibos) ----------
+// Photos are shrunk in the browser (max 1800 px, JPEG) so they fit typical hosting upload limits (often 2 MB).
+async function shrinkImage(file) {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 400 * 1024) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.82));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
+  } catch { return file; }
+}
+async function uploadReceipts(files) {
+  const out = [];
+  for (const f of files) {
+    const fd = new FormData();
+    fd.append('file', await shrinkImage(f));
+    const r = await fetch('api.php?r=receipts', { method: 'POST', headers: { 'X-Vroom': '1' }, body: fd });
+    if (r.status === 401) { location.href = 'login.php'; throw new Error('login'); }
+    const j = await r.json().catch(() => ({ error: `Erro no envio (HTTP ${r.status})` }));
+    if (!r.ok) throw new Error(`${f.name}: ${j.error}`);
+    out.push(j);
+  }
+  return out;
+}
+const deleteReceiptFiles = (list = []) => Promise.all((list || []).map((r) => api(`api/receipts/${r.id}`, { method: 'DELETE' }).catch(() => null)));
+const receiptUrl = (r, dl = false) => `api.php?r=receipt&id=${encodeURIComponent(r.id)}&name=${encodeURIComponent(r.name || 'fatura')}${dl ? '&dl=1' : ''}`;
+function receiptChips(e, ref) {
+  const list = e.receipts || [];
+  return `<div class="rc">${list.map((r, j) => `<span class="rchip"><a href="${receiptUrl(r)}" target="_blank" rel="noopener" title="${esc(r.name)}">${r.mime === 'application/pdf' ? '📄' : '🖼'} ${esc(r.name.length > 18 ? r.name.slice(0, 16) + '…' : r.name)}</a><button data-rdel="${ref}|${j}" aria-label="Remover anexo">✕</button></span>`).join('')}
+    <label class="btn sm rattach" title="Anexar fatura ou recibo">📎 ${list.length ? '+' : 'anexar'}<input type="file" accept="image/*,application/pdf" multiple hidden data-rattach="${ref}"></label></div>`;
+}
+function expenseByRef(ref) {
+  const [dealId, i] = ref.split('|');
+  if (dealId) { const d = S.deals.find((x) => x.id === dealId); return { e: d.expenses[Number(i)], save: () => saveDeal(d) }; }
+  return { e: S.ledger.general[Number(i)], save: () => saveLedger() };
+}
+function bindReceiptControls(root, after) {
+  root.querySelectorAll('[data-rattach]').forEach((inp) => inp.addEventListener('change', async () => {
+    const files = [...inp.files]; if (!files.length) return;
+    try {
+      toast('A enviar…', 20000);
+      const recs = await uploadReceipts(files);
+      const { e, save } = expenseByRef(inp.dataset.rattach);
+      e.receipts = [...(e.receipts || []), ...recs]; await save();
+      toast(`${recs.length} anexo${recs.length === 1 ? '' : 's'} guardado${recs.length === 1 ? '' : 's'}`); after();
+    } catch (err) { toast(err.message, 9000); }
+  }));
+  root.querySelectorAll('[data-rdel]').forEach((btn) => (btn.onclick = async () => {
+    if (!confirm('Remover este anexo?')) return;
+    const parts = btn.dataset.rdel.split('|'); const j = Number(parts.pop());
+    const { e, save } = expenseByRef(parts.join('|'));
+    const [r] = e.receipts.splice(j, 1); await deleteReceiptFiles([r]); await save(); after();
+  }));
+}
+
 // ---------- expense helpers ----------
 const today = () => new Date().toISOString().slice(0, 10);
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
@@ -391,6 +450,7 @@ function expenseForm({ withCar = false } = {}) {
     <label class="f">Data<input id="xe_date" type="date" value="${today()}"></label>
     <label class="f">Forma de pagamento<select id="xe_method">${METHODS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
     <label class="f">Descrição / notas<input id="xe_note" placeholder="ex.: A63 Bordéus–Bayonne"></label>
+    <label class="f">Fatura / recibo (PDF ou foto)<input id="xe_files" type="file" accept="image/*,application/pdf" multiple></label>
   </div><div id="xe_split" class="form-grid" hidden style="margin-top:8px">${P.map((p) => `<label class="f">${esc(p)} pagou €<input type="number" step="0.01" data-share="${esc(p)}"></label>`).join('')}</div>
   <button class="btn primary" id="xe_add" style="margin-top:10px">+ Adicionar despesa</button></div>`;
 }
@@ -409,7 +469,15 @@ function readExpenseForm() {
 function bindExpenseForm(onAdd) {
   const payer = $('#xe_payer'); if (!payer) return;
   payer.onchange = () => { $('#xe_split').hidden = payer.value !== SPLIT; };
-  $('#xe_add').onclick = async () => { const e = readExpenseForm(); if (e) await onAdd(e, $('#xe_car')?.value || null); };
+  $('#xe_add').onclick = async () => {
+    const e = readExpenseForm(); if (!e) return;
+    const btn = $('#xe_add'); btn.disabled = true; btn.textContent = 'A guardar…';
+    try {
+      const files = [...($('#xe_files')?.files || [])];
+      if (files.length) e.receipts = await uploadReceipts(files);
+      await onAdd(e, $('#xe_car')?.value || null);
+    } catch (err) { toast(err.message, 9000); } finally { btn.disabled = false; btn.textContent = '+ Adicionar despesa'; }
+  };
 }
 function balanceBlock(b, transfers, { record = false } = {}) {
   return `<div class="grid cols-2" style="margin-top:14px"><div class="kv">
@@ -523,17 +591,18 @@ const TAB = {
     const evr = estimateVsReal(d, an(d));
     return `<p class="small muted" style="margin-top:0">Registe cada despesa real à medida que acontece e quem a pagou (o "Balanço de Despesas" da folha). Os custos dividem-se em partes iguais pelos sócios; o que é pago pela caixa da empresa não conta para nenhum.</p>
     ${expenseForm()}
-    <div style="overflow-x:auto;margin-top:14px"><table class="t exp-table"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th class="n">Montante €</th><th>Quem pagou</th><th>Pagamento</th><th>Estado</th><th></th></tr></thead><tbody>
+    <div style="overflow-x:auto;margin-top:14px"><table class="t exp-table"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th class="n">Montante €</th><th>Quem pagou</th><th>Pagamento</th><th>Fatura</th><th>Estado</th><th></th></tr></thead><tbody>
     ${ex.map((e, i) => `<tr><td><input type="date" data-path="expenses.${i}.date" value="${esc(e.date || '')}"></td>
       <td><select data-path="expenses.${i}.type">${typeOptions(e.type || 'other')}</select></td>
       <td><input data-path="expenses.${i}.note" value="${esc(e.note ?? e.label ?? '')}"></td>
       <td><input type="number" step="0.01" data-path="expenses.${i}.amount" value="${esc(e.amount ?? '')}" style="max-width:110px"></td>
       <td><select data-path="expenses.${i}.payer">${payerOptions(P, e.payer)}</select>${e.payer === SPLIT ? `<div class="split-in">${P.map((p) => `<label class="small">${esc(p)}<input type="number" step="0.01" data-path="expenses.${i}.shares.${p}" value="${esc(e.shares?.[p] ?? '')}"></label>`).join('')}</div>` : ''}</td>
       <td><select data-path="expenses.${i}.method">${METHODS.map(([k, l]) => `<option value="${k}" ${k === (e.method || '') ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+      <td>${receiptChips(e, `${d.id}|${i}`)}</td>
       <td><span class="badge ${expenseStatus(e, P) === 'ok' ? 'ok' : 'bad'}">${expenseStatus(e, P)}</span></td>
-      <td><button class="btn sm danger" data-delexp="${i}" aria-label="Apagar">✕</button></td></tr>`).join('') || '<tr><td colspan="8" class="muted">Ainda sem despesas. Use o formulário acima ou pré-preencha a partir da estimativa.</td></tr>'}
+      <td><button class="btn sm danger" data-delexp="${i}" aria-label="Apagar">✕</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Ainda sem despesas. Use o formulário acima ou pré-preencha a partir da estimativa.</td></tr>'}
     </tbody></table></div>
-    <div style="margin-top:8px"><button class="btn sm" id="fillExp">Pré-preencher a partir da estimativa</button></div>
+    <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm" id="fillExp">Pré-preencher a partir da estimativa</button>${ex.length ? (() => { const miss = ex.filter((e) => !(e.receipts || []).length).length; return miss ? `<span class="badge warn">${miss} despesa${miss === 1 ? '' : 's'} sem fatura</span>` : '<span class="badge ok">Todas as despesas com fatura ✓</span>'; })() : ''}</div>
     ${balanceBlock(b, settleTransfers(b.balance))}
     <div class="eyebrow" style="margin-top:18px">Estimado vs. real</div>
     <div style="overflow-x:auto"><table class="t"><thead><tr><th>Linha</th><th class="n">Estimado</th><th class="n">Real</th><th class="n">Diferença</th></tr></thead><tbody>
@@ -577,7 +646,12 @@ function bindModal(d) {
     d.expenses = [...(d.expenses || []), ...lines.map((i) => ({ id: uid(), type: typeOf[i.key], amount: Math.round(i.amount * 100) / 100, payer: p, date: today(), note: 'estimativa — confirmar' }))];
     commit();
   };
-  body.querySelectorAll('[data-delexp]').forEach((b) => (b.onclick = () => { d.expenses.splice(Number(b.dataset.delexp), 1); commit(); }));
+  body.querySelectorAll('[data-delexp]').forEach((b) => (b.onclick = async () => {
+    const e = d.expenses[Number(b.dataset.delexp)];
+    if ((e.receipts || []).length && !confirm('Apagar esta despesa e as faturas anexadas?')) return;
+    await deleteReceiptFiles(e.receipts); d.expenses.splice(Number(b.dataset.delexp), 1); commit();
+  }));
+  bindReceiptControls(body, () => drawModal(S.deals.find((x) => x.id === d.id)));
   $('#mFav').onclick = () => { d.favorite = !d.favorite; commit(); };
   $('#mDel').onclick = async () => { if (!confirm('Eliminar este negócio?')) return; await api(`api/deals/${d.id}`, { method: 'DELETE' }); S.deals = S.deals.filter((x) => x.id !== d.id); closeModal(); };
 }
@@ -613,7 +687,7 @@ function viewPipeline() {
 // ---------- ledger ----------
 function viewLedger() {
   const s = settings(); const P = s.partners;
-  const f = { car: '', payer: '', cat: '', month: '', ...load('ledgerFilters', {}) };
+  const f = { car: '', payer: '', cat: '', month: '', norec: false, ...load('ledgerFilters', {}) };
   const cars = S.deals.filter((d) => ACTIVE.includes(d.status) || d.status === 'sold');
   const rows = cars.map((d) => { const a = an(d); const spent = (d.expenses || []).reduce((x, e) => x + (Number(e.amount) || 0), 0); const profit = d.salePrice ? d.salePrice + a.otherIncome - (spent || a.totalInvestment) : null; return { d, a, spent, profit }; });
   const tot = rows.reduce((x, r) => x + (r.profit || 0), 0);
@@ -631,7 +705,8 @@ function viewLedger() {
       <label class="f">Carro<select id="lf_car"><option value="">Todos</option><option value="__general" ${f.car === '__general' ? 'selected' : ''}>Geral</option>${carsWithExp.map(([id, n]) => `<option value="${id}" ${f.car === id ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
       <label class="f">Quem pagou<select id="lf_payer"><option value="">Todos</option>${[...P, CASH].map((p) => `<option ${f.payer === p ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select></label>
       <label class="f">Categoria<select id="lf_cat"><option value="">Todas</option>${Object.entries(CATEGORY_LABELS).map(([k, l]) => `<option value="${k}" ${f.cat === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-      <label class="f">Mês<input id="lf_month" type="month" value="${esc(f.month)}"></label></div></div>
+      <label class="f">Mês<input id="lf_month" type="month" value="${esc(f.month)}"></label></div>
+      <label class="chk" style="margin-top:10px"><input type="checkbox" id="lf_norec" ${f.norec ? 'checked' : ''}> Só despesas sem fatura</label></div>
     <div id="expList" style="margin-top:12px"></div>
     <div class="sec-h"><h3>Saldo entre sócios (todas as despesas)</h3></div>
     ${balanceBlock(b, transfers, { record: true })}
@@ -641,26 +716,28 @@ function viewLedger() {
     <div class="sec-h"><h3>Resultado por carro</h3></div>
     <div style="overflow-x:auto"><table class="t"><thead><tr><th>Carro</th><th>Estado</th><th class="n">Custo estimado</th><th class="n">Gasto real</th><th class="n">Venda</th><th class="n">Lucro</th><th class="n">%</th><th class="n">Por sócio</th></tr></thead><tbody>
     ${rows.map(({ d, a, spent, profit }) => `<tr><td><a href="#/deal/${d.id}?tab=expenses">${esc(title(d))}</a></td><td>${esc(STATUS[d.status])}</td><td class="n">${eur(a.totalInvestment)}</td><td class="n">${spent ? eur(spent) : '—'}</td><td class="n">${eur(d.salePrice)}</td><td class="n ${cls(profit)}">${signed(profit)}</td><td class="n">${profit != null ? pct(profit / (spent || a.totalInvestment)) : '—'}</td><td class="n">${profit != null ? eur(Math.round((profit - (profit > 0 ? profit * s.cashReservePct : 0)) / P.length)) : '—'}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">Ainda não há carros comprados.</td></tr>'}</tbody></table></div>`;
-  const filtered = () => all.filter((e) => (!f.car || (f.car === '__general' ? !e.dealId : e.dealId === f.car)) && (!f.payer || e.payer === f.payer || (e.payer === SPLIT && Number(e.shares?.[f.payer]))) && (!f.cat || expenseCategory(e) === f.cat) && (!f.month || String(e.date || '').startsWith(f.month))).sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')));
+  const filtered = () => all.filter((e) => (!f.car || (f.car === '__general' ? !e.dealId : e.dealId === f.car)) && (!f.payer || e.payer === f.payer || (e.payer === SPLIT && Number(e.shares?.[f.payer]))) && (!f.cat || expenseCategory(e) === f.cat) && (!f.month || String(e.date || '').startsWith(f.month)) && (!f.norec || !(e.receipts || []).length)).sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')));
   const draw = () => {
-    for (const k of Object.keys(f)) f[k] = $(`#lf_${k}`).value;
+    for (const k of Object.keys(f)) { const el = $(`#lf_${k}`); f[k] = el.type === 'checkbox' ? el.checked : el.value; }
     keep('ledgerFilters', f);
     const list = filtered();
     const sum = list.reduce((x, e) => x + (Number(e.amount) || 0), 0);
     const byCat = {}; for (const e of list) byCat[expenseCategory(e)] = (byCat[expenseCategory(e)] || 0) + (Number(e.amount) || 0);
     const byPartner = Object.fromEntries([...P, CASH].map((p) => [p, 0]));
     for (const e of list) { if (e.payer === CASH) byPartner[CASH] += Number(e.amount) || 0; for (const [p, v] of Object.entries(paidBy(e, P))) byPartner[p] += v; }
-    $('#expList').innerHTML = `<div class="badges" style="margin-bottom:10px">${Object.entries(byPartner).filter(([, v]) => v).map(([p, v]) => `<span class="badge info">${esc(p)}: ${eur(v, 2)}</span>`).join('')}${Object.entries(byCat).map(([c, v]) => `<span class="badge">${esc(CATEGORY_LABELS[c] || c)}: ${eur(v, 2)}</span>`).join('')}</div>
-    <div style="overflow-x:auto"><table class="t"><thead><tr><th>Data</th><th>Carro</th><th>Tipo</th><th>Descrição</th><th class="n">Montante</th><th>Quem pagou</th><th>Pagamento</th><th>Estado</th><th></th></tr></thead><tbody>
-    ${list.map((e) => `<tr><td class="nw">${esc(e.date ? e.date.split('-').reverse().join('/') : '—')}</td><td>${e.dealId ? `<a href="#/deal/${e.dealId}?tab=expenses">${esc(e.car)}</a>` : 'Geral'}</td><td>${esc(EXPENSE_TYPES[e.type]?.[0] || 'Outra')}</td><td>${esc(e.note ?? e.label ?? '')}</td><td class="n">${eur(Number(e.amount) || 0, 2)}</td><td>${e.payer === SPLIT ? esc(Object.entries(e.shares || {}).filter(([, v]) => v).map(([p, v]) => `${p} ${eur(v, 2)}`).join(' + ')) : esc(e.payer || '—')}</td><td>${esc(e.method || '')}</td><td><span class="badge ${expenseStatus(e, P) === 'ok' ? 'ok' : 'bad'}">${expenseStatus(e, P)}</span></td><td><button class="btn sm danger" data-delrow="${e.dealId || ''}|${e.index}" aria-label="Apagar">✕</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Sem despesas para estes filtros.</td></tr>'}
-    <tr><th colspan="4">Total (${list.length})</th><th class="n">${eur(sum, 2)}</th><th colspan="4"></th></tr></tbody></table></div>`;
+    const missing = list.filter((e) => !(e.receipts || []).length).length;
+    $('#expList').innerHTML = `<div class="badges" style="margin-bottom:10px">${missing ? `<span class="badge warn">${missing} sem fatura</span>` : list.length ? '<span class="badge ok">todas com fatura ✓</span>' : ''}${Object.entries(byPartner).filter(([, v]) => v).map(([p, v]) => `<span class="badge info">${esc(p)}: ${eur(v, 2)}</span>`).join('')}${Object.entries(byCat).map(([c, v]) => `<span class="badge">${esc(CATEGORY_LABELS[c] || c)}: ${eur(v, 2)}</span>`).join('')}</div>
+    <div style="overflow-x:auto"><table class="t"><thead><tr><th>Data</th><th>Carro</th><th>Tipo</th><th>Descrição</th><th class="n">Montante</th><th>Quem pagou</th><th>Pagamento</th><th>Fatura</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${list.map((e) => `<tr><td class="nw">${esc(e.date ? e.date.split('-').reverse().join('/') : '—')}</td><td>${e.dealId ? `<a href="#/deal/${e.dealId}?tab=expenses">${esc(e.car)}</a>` : 'Geral'}</td><td>${esc(EXPENSE_TYPES[e.type]?.[0] || 'Outra')}</td><td>${esc(e.note ?? e.label ?? '')}</td><td class="n">${eur(Number(e.amount) || 0, 2)}</td><td>${e.payer === SPLIT ? esc(Object.entries(e.shares || {}).filter(([, v]) => v).map(([p, v]) => `${p} ${eur(v, 2)}`).join(' + ')) : esc(e.payer || '—')}</td><td>${esc(e.method || '')}</td><td>${receiptChips(e, `${e.dealId || ''}|${e.index}`)}</td><td><span class="badge ${expenseStatus(e, P) === 'ok' ? 'ok' : 'bad'}">${expenseStatus(e, P)}</span></td><td><button class="btn sm danger" data-delrow="${e.dealId || ''}|${e.index}" aria-label="Apagar">✕</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">Sem despesas para estes filtros.</td></tr>'}
+    <tr><th colspan="4">Total (${list.length})</th><th class="n">${eur(sum, 2)}</th><th colspan="5"></th></tr></tbody></table></div>`;
     $('#expList').querySelectorAll('[data-delrow]').forEach((btn) => (btn.onclick = async () => {
-      if (!confirm('Apagar esta despesa?')) return;
+      if (!confirm('Apagar esta despesa (e as faturas anexadas)?')) return;
       const [dealId, idx] = btn.dataset.delrow.split('|');
-      if (dealId) { const d = S.deals.find((x) => x.id === dealId); d.expenses.splice(Number(idx), 1); await saveDeal(d); }
-      else { S.ledger.general.splice(Number(idx), 1); await saveLedger(); }
+      if (dealId) { const d = S.deals.find((x) => x.id === dealId); const [e] = d.expenses.splice(Number(idx), 1); await deleteReceiptFiles(e.receipts); await saveDeal(d); }
+      else { const [e] = S.ledger.general.splice(Number(idx), 1); await deleteReceiptFiles(e.receipts); await saveLedger(); }
       viewLedger();
     }));
+    bindReceiptControls($('#expList'), viewLedger);
   };
   $('#view').querySelectorAll('[id^=lf_]').forEach((el) => el.addEventListener('change', draw));
   draw();
