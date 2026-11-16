@@ -296,7 +296,7 @@ export function PublishBar(props: BarProps) {
       <div className="min-w-0 max-mobile:px-1.5">
         <p className={kicker}>
           {props.approval ? <Shield size={16} aria-hidden /> : <Zap size={16} aria-hidden />}
-          {props.approval ? b.approval : b.direct}
+          {props.approval ? b.approval : props.planner ? t.planner.direct : b.direct}
         </p>
         <p className="mt-1 text-lg font-semibold tracking-[-0.01em] max-mobile:m-0 max-mobile:truncate max-mobile:text-2xs max-mobile:leading-[1.3]">
           <b className="mr-0.5 inline-block text-[28px] font-bold tracking-[-0.02em] max-mobile:inline max-mobile:text-base">{props.channels}</b> {b.channels(props.channels)} · {props.when}
