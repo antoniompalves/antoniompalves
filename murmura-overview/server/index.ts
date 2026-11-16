@@ -21,7 +21,8 @@ const media = new MediaLibrary(config.dataDir, store, `${config.publicUrl}${conf
 const db = config.accounts.enabled ? await openDb(config.accounts.databaseUrl) : null
 const kataru = db ? await createKataru(config, { db, media }) : undefined
 const deps = { store, providers, media, kataru }
-const scheduler = startScheduler(deps)
+// Planner mode publishes nothing, so nothing is scheduled.
+const scheduler = config.planner ? { stop: () => undefined } : startScheduler(deps)
 // Originals go once their posts are out; the light copies stay.
 const sweep = setInterval(() => void media.sweep().catch((e) => console.log(`[media] ${(e as Error).message}`)), 60 * 60_000)
 sweep.unref()
@@ -32,7 +33,7 @@ server.listen(config.port, () => {
     .map(([p, ok]) => `${p} ${ok ? '✓' : '·'}`)
     .join('  ')
   const accounts = db ? `accounts on ${db.dialect}${config.accounts.staticDir ? ', serving the app' : ''}` : 'accounts off'
-  console.log(`Kataru server on :${config.port} (public ${config.publicUrl}) — ${accounts}\n  publishing: ${on}`)
+  console.log(`Kataru server on :${config.port} (public ${config.publicUrl}) — ${accounts}\n  ${config.planner ? 'planner mode: no publishing, no network sign-ins' : `publishing: ${on}`}`)
 })
 
 const stop = () => {

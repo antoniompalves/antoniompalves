@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import type { ReactNode } from 'react'
 import { revertOf } from './reducer'
 import type { WorkspaceAction } from './reducer'
+import { plannerView } from './planner'
 import { personal, scopeView } from './scope'
 import { api } from './server'
 import type { SessionInfo, SessionUser, Snapshot } from './server'
@@ -107,6 +108,6 @@ export function ServerWorkspaceProvider({ first, user, session, events, signOut,
   const [clock] = useState<ClockOrigin>(() => ({ mock: Date.now(), real: Date.now() }))
   const reset = useCallback(() => undefined, [])
   const server: ServerLink = useMemo(() => ({ status, settled, user, company: all.settings.name, sso: session.sso, mail: session.mail, signOut, presence }), [status, settled, user, all.settings.name, session.sso, session.mail, signOut, presence])
-  const view = useMemo(() => personal(scopeView(all)), [all])
+  const view = useMemo(() => plannerView(personal(scopeView(all))), [all])
   return <WorkspaceContext.Provider value={{ ws: view, all, dispatch, undoable, clock, reset, mode: 'server', server }}>{children}</WorkspaceContext.Provider>
 }

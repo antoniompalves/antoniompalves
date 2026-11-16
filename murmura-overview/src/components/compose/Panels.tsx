@@ -239,6 +239,8 @@ interface BarProps {
   blockedNow: number
   /** "Publish now" is off under the "everyone needs approval" rule. */
   nowLocked: boolean
+  /** Planner mode: nothing publishes from here, so no "Publish now". */
+  planner?: boolean
   why: string
   onAction: (a: BarAction) => void
   readOnly: null | { published: boolean; when: string; onOpen?: () => void; onDuplicate: () => void; onNew: () => void }
@@ -290,7 +292,7 @@ export function PublishBar(props: BarProps) {
 
   const names = props.approvers.map((m) => m.name.split(' ')[0])
   return (
-    <section aria-label={props.approval ? b.approval : b.direct} className={box}>
+    <section aria-label={props.approval ? b.approval : props.planner ? t.planner.direct : b.direct} className={box}>
       <div className="min-w-0 max-mobile:px-1.5">
         <p className={kicker}>
           {props.approval ? <Shield size={16} aria-hidden /> : <Zap size={16} aria-hidden />}
@@ -319,18 +321,20 @@ export function PublishBar(props: BarProps) {
           {props.approval ? <Shield size={20} aria-hidden /> : <Calendar size={20} aria-hidden />}
           <span className="truncate">{props.mainLabel}</span>
         </button>
-        <button
-          type="button"
-          aria-label={b.now}
-          disabled={props.nowLocked}
-          title={props.nowLocked ? b.ruleAll : undefined}
-          aria-disabled={!props.nowLocked && props.blockedNow > 0}
-          onClick={() => props.onAction('now')}
-          className={onInk}
-        >
-          <Send size={16} aria-hidden />
-          <span className={label}>{b.now}</span>
-        </button>
+        {!props.planner && (
+          <button
+            type="button"
+            aria-label={b.now}
+            disabled={props.nowLocked}
+            title={props.nowLocked ? b.ruleAll : undefined}
+            aria-disabled={!props.nowLocked && props.blockedNow > 0}
+            onClick={() => props.onAction('now')}
+            className={onInk}
+          >
+            <Send size={16} aria-hidden />
+            <span className={label}>{b.now}</span>
+          </button>
+        )}
         <button type="button" aria-label={b.draft} onClick={() => props.onAction('draft')} className={onInk}>
           <FileText size={16} aria-hidden />
           <span className={label}>{b.draft}</span>

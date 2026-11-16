@@ -78,6 +78,7 @@ KATARU_SECRET=…                 # 32+ random characters; keep a copy somewhere
 DATABASE_URL=mysql://cpuser_kataru:PASSWORD@localhost:3306/cpuser_kataru
 KATARU_STATIC_DIR=./public
 KATARU_SETUP_CODE=…             # anything; asked once on the setup screen
+KATARU_MODE=planner             # optional: planner only, no network connections (docs/PLANNER.md)
 ```
 
 - For the secret, `openssl rand -base64 32` (or any password generator, 32+ characters).

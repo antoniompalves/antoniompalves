@@ -139,6 +139,8 @@ export interface PublisherHealth {
   version: number
   /** Which sign-ins have credentials on the server. */
   providers: Record<PublishProvider, boolean>
+  /** KATARU_MODE=planner: nothing publishes, no network can be connected. */
+  planner?: boolean
 }
 
 /** What the sign-in popup posts back to the app. */

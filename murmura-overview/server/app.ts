@@ -205,11 +205,11 @@ export function createHandler(config: Config, deps: Deps & { media: MediaLibrary
     if (method === 'OPTIONS') return res.writeHead(204).end()
 
     if (path === '/health' && method === 'GET') {
-      const health: PublisherHealth = { ok: true, version: API_VERSION, providers: configured(config) }
+      const health: PublisherHealth = { ok: true, version: API_VERSION, providers: configured(config), ...(config.planner && { planner: true }) }
       return send(res, 200, health)
     }
     let m = path.match(/^\/auth\/(\w+)\/callback$/)
-    if (m && method === 'GET' && PROVIDERS.includes(m[1] as PublishProvider)) return callback(res, m[1] as PublishProvider, url)
+    if (m && method === 'GET' && PROVIDERS.includes(m[1] as PublishProvider) && !config.planner) return callback(res, m[1] as PublishProvider, url)
     m = path.match(/^\/media\/([\w-]+)$/)
     if (m && method === 'GET') {
       const rec = deps.media.record(m[1])
@@ -221,6 +221,8 @@ export function createHandler(config: Config, deps: Deps & { media: MediaLibrary
     // Accounts, the shared workspace and the built app.
     if (deps.kataru && (await deps.kataru.handle(req, res, path, url))) return
     if (!path.startsWith('/api/')) return fail(res, 404, 'not_found', 'Not found')
+    // Planner mode: only the light copies of photos and covers are stored; nothing connects or publishes.
+    if (config.planner && !(path === '/api/media' && method === 'POST')) return fail(res, 404, 'planner_mode', 'Kataru is a planner only on this server (KATARU_MODE=planner)')
     const auth = req.headers.authorization ?? ''
     const keyed = !!config.apiKey && auth.startsWith('Bearer ') && safeEqual(auth.slice(7), config.apiKey)
     // Without the key, someone signed in whose role allows it.
@@ -251,7 +253,7 @@ export function createHandler(config: Config, deps: Deps & { media: MediaLibrary
 
     if (path === '/api/media' && method === 'POST') {
       const mime = String(req.headers['content-type'] ?? '').split(';')[0]
-      const role = url.searchParams.get('role') === 'preview' ? 'preview' : 'original'
+      const role = config.planner || url.searchParams.get('role') === 'preview' ? 'preview' : 'original'
       const rec = await deps.media.save(await read(req, config.maxMediaBytes), mime, role, now())
       return send(res, 201, { id: rec.id, url: rec.url, mime: rec.mime, size: rec.size })
     }

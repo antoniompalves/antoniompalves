@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Clock, Copy, Leaf, MessageSquare, PenLine, Recycle, Repeat, Send, ShieldCheck, Trash2, TriangleAlert, X } from 'lucide-react'
+import { ClipboardCopy, Clock, Copy, Hand, Leaf, MessageSquare, PenLine, Recycle, Repeat, Send, ShieldCheck, Trash2, TriangleAlert, X } from 'lucide-react'
 import { PostNotes } from '../collab/Notes'
+import { LiveLink, MarkPublishedDialog, useCopyText } from '../collab/Planner'
 import { RecycleDialog } from '../collab/Recycle'
 import { useToast } from '../Toast'
+import { isPlanner } from '../../data/planner'
 import { clientsOf, mayGoOut, needsClient, stageOf } from '../../data/workflow'
 import type { Brand, NetworkId, Post, TeamMember } from '../../data/types'
 import { NETWORK_LABEL, clip } from '../../data/selectors'
@@ -19,7 +21,8 @@ interface PostDrawerProps {
   author?: TeamMember
   now: Date
   onClose: () => void
-  onPublish: (id: string) => void
+  /** In planner mode, marks a post published by hand (with the link to it). */
+  onPublish: (id: string, url?: string) => void
   onDuplicate: (id: string) => void
   onDelete: (id: string) => void
 }
@@ -36,6 +39,9 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
   const ref = useRef<HTMLDialogElement>(null)
   const [network, setNetwork] = useState<NetworkId | null>(null)
   const [recycling, setRecycling] = useState(false)
+  const [marking, setMarking] = useState(false)
+  const planner = isPlanner(all)
+  const copy = useCopyText()
 
   useEffect(() => {
     const d = ref.current
@@ -47,7 +53,8 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
 
   const when = post ? new Date(post.scheduledAt) : now
   const stamp = `${t.dates.relativeDay(when, now)} · ${t.dates.time(when)}`
-  const m = post?.metrics
+  // Planner mode reads nothing from the networks.
+  const m = planner ? undefined : post?.metrics
 
   return (
     <dialog
@@ -83,6 +90,14 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
               {t.failure(NETWORK_LABEL[post.failure.network], brand.name)}
             </p>
           )}
+
+          {planner && post.status === 'scheduled' && (
+            <p className="flex items-start gap-2.5 rounded-2xl bg-glass-2 px-3.5 py-2.5 text-xs font-semibold">
+              <Hand size={17} aria-hidden className="mt-px shrink-0" />
+              {t.planner.byHand}
+            </p>
+          )}
+          {post.status === 'published' && post.publishedUrl && <LiveLink url={post.publishedUrl} />}
 
           {post.networks.length > 1 && network && (
             <div className="overflow-x-auto [scrollbar-width:none]">
@@ -181,8 +196,13 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
           <footer className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
             {post.status !== 'published' && (
               <>
-                <Button icon={Send} onClick={() => onPublish(post.id)} disabled={!mayGoOut(all, { ...post, status: 'published' })} title={mayGoOut(all, post) ? undefined : c.client.mustWait}>
-                  {t.drawer.publishNow}
+                <Button
+                  icon={Send}
+                  onClick={() => (planner ? setMarking(true) : onPublish(post.id))}
+                  disabled={!mayGoOut(all, { ...post, status: 'published' })}
+                  title={mayGoOut(all, post) ? undefined : c.client.mustWait}
+                >
+                  {planner ? t.planner.markPublished : t.drawer.publishNow}
                 </Button>
                 <Button variant="ghost" icon={PenLine} href={`#/compose/${post.id}`}>
                   {t.drawer.edit}
@@ -190,12 +210,14 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
               </>
             )}
             <span className="flex-1" />
+            {planner && <IconButton label={t.planner.copyText} icon={ClipboardCopy} onClick={() => copy(post)} />}
             <IconButton label={t.drawer.duplicate} icon={Copy} onClick={() => onDuplicate(post.id)} />
             <IconButton label={t.drawer.delete} icon={Trash2} onClick={() => onDelete(post.id)} />
           </footer>
         </div>
       )}
       {recycling && post && <RecycleDialog post={post} now={now} onClose={() => setRecycling(false)} />}
+      <MarkPublishedDialog post={marking ? post : null} onClose={() => setMarking(false)} onDone={onPublish} />
     </dialog>
   )
 }

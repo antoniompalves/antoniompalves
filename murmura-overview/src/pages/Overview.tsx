@@ -12,6 +12,7 @@ import {
   Handshake,
   Inbox,
   KeyRound,
+  Lightbulb,
   Link,
   PenLine,
   Reply,
@@ -44,6 +45,8 @@ import {
   toneFill,
 } from '../components/ui'
 import { PostDrawer } from '../components/calendar/PostDrawer'
+import { ToPostCard } from '../components/collab/Planner'
+import { isPlanner, toPostByHand } from '../data/planner'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
 import { approveStep } from '../data/approvals'
@@ -66,6 +69,8 @@ interface OverviewProps {
  * collapsing to 2 columns ≤1279px and 1 column ≤860px.
  */
 export function Overview({ model, now }: OverviewProps) {
+  const { ws } = useWorkspace()
+  if (isPlanner(ws)) return <PlannerOverview model={model} now={now} />
   return (
     <>
       <OverviewHead model={model} />
@@ -79,6 +84,60 @@ export function Overview({ model, now }: OverviewProps) {
         <InboxPulse model={model} className="desk:col-span-4" />
         <TeamActivity model={model} now={now} className="tablet:col-span-2 desk:col-span-4" />
       </div>
+    </>
+  )
+}
+
+/**
+ * Planner mode: nothing comes from the networks (no audience, reach or
+ * inbox), so the overview is about the work — what's next, what needs you,
+ * what to post by hand — in a 12-column grid:
+ *   next(7) needs(5) / topost(7) team(5) / week(12)
+ */
+function PlannerOverview({ model, now }: OverviewProps) {
+  const { t } = useI18n()
+  const { ws } = useWorkspace()
+  const [openId, setOpenId] = useState<string | null>(null)
+  const { publish, duplicate, remove } = usePostActions(now, () => setOpenId(null))
+  const [salute, name] = model.greeting.split(', ')
+  const nowMs = now.getTime()
+  const today = toPostByHand(ws, nowMs, new Date(now).setHours(23, 59, 59, 999) - nowMs).length
+  const waiting = ws.posts.filter((p) => p.status === 'awaiting_approval').length
+  const ideas = (ws.ideas ?? []).filter((i) => i.status === 'new').length
+  const open = openId ? (ws.posts.find((p) => p.id === openId) ?? null) : null
+  return (
+    <>
+      <header className="mb-6 flex flex-wrap items-center gap-x-[clamp(28px,4vw,72px)] gap-y-[18px] max-mobile:mb-[18px] max-mobile:gap-y-3">
+        <PageTitle lines={[`${salute},`, name]} label={model.greeting} />
+        <dl className="flex flex-wrap gap-x-[clamp(24px,3.2vw,56px)] gap-y-3.5 max-mobile:grid max-mobile:w-full max-mobile:grid-cols-2 max-mobile:gap-x-3.5 max-mobile:gap-y-2.5">
+          <Stat icon={Send} value={String(today)} label={t.planner.toPostStat} />
+          <Stat icon={ShieldCheck} value={String(waiting)} label={t.planner.waitingStat} />
+          <Stat icon={Lightbulb} value={String(ideas)} label={t.planner.ideasStat} />
+          <Stat icon={CalendarDays} value={String(model.stats.postsThisWeek)} label={t.overview.postsThisWeek} />
+        </dl>
+        <div className="ml-auto flex flex-wrap items-center gap-2.5">
+          <Button icon={PenLine} href="#/compose">
+            {t.common.newPost}
+          </Button>
+        </div>
+      </header>
+      <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2 desk:grid-cols-12">
+        <UpNext model={model} now={now} className="tablet:col-span-2 desk:col-span-7" />
+        <NeedsYou model={model} now={now} className="desk:col-span-5" />
+        <ToPostCard now={now} onOpen={setOpenId} onPublish={publish} className="desk:col-span-7" />
+        <TeamActivity model={model} now={now} className="desk:col-span-5" />
+        <WeekAhead model={model} className="col-span-full" />
+      </div>
+      <PostDrawer
+        post={open}
+        brand={open ? ws.brands.find((b) => b.id === open.brandId) : undefined}
+        author={open ? ws.team.find((m) => m.id === open.authorId) : undefined}
+        now={now}
+        onClose={() => setOpenId(null)}
+        onPublish={publish}
+        onDuplicate={duplicate}
+        onDelete={remove}
+      />
     </>
   )
 }

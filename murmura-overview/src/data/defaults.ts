@@ -128,7 +128,8 @@ export function emptyWorkspace(n: NewWorkspace): Workspace {
     campaigns: [],
     team: [owner],
     roles: DEFAULT_ROLES,
-    settings: defaultSettings(n.company, n.currency),
+    // A new company starts by planning only; connecting the networks is a choice made later.
+    settings: { ...defaultSettings(n.company, n.currency), mode: 'planner' },
     channels: [],
     websites: [],
     posts: [],

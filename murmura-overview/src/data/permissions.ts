@@ -1,6 +1,7 @@
 import type { Messages } from '../i18n'
 import type { RouteId } from './routes'
 import { can, member, seesBrand } from './access.ts'
+import { routeShown } from './planner.ts'
 import type { Permission, SystemRole, Workspace } from './types'
 
 /**
@@ -85,4 +86,4 @@ export const ROUTE_NEEDS: Partial<Record<RouteId, Permission[]>> = {
   creators: ['creators.manage', 'analytics.view'],
 }
 
-export const canOpen = (ws: Workspace, memberId: string, route: RouteId) => !ROUTE_NEEDS[route] || ROUTE_NEEDS[route]!.some((p) => can(ws, memberId, p))
+export const canOpen = (ws: Workspace, memberId: string, route: RouteId) => routeShown(ws, route) && (!ROUTE_NEEDS[route] || ROUTE_NEEDS[route]!.some((p) => can(ws, memberId, p)))

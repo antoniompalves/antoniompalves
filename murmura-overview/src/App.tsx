@@ -14,6 +14,7 @@ import { usePostActions } from './components/usePostActions'
 import { I18nProvider, useI18n } from './i18n'
 import { workspace } from './data/mock'
 import { loadSetting, saveSetting } from './storage'
+import { isPlanner, routeShown } from './data/planner'
 import { matchRoute, tabRoutes } from './data/routes'
 import type { RouteId } from './data/routes'
 import { selectOverview } from './data/selectors'
@@ -191,7 +192,9 @@ function Shell() {
   const [openPost, setOpenPost] = useState<string | null>(null)
 
   const route = matchRoute(hash)
-  const routeId = route.id
+  // Planner mode has no inbox, analytics or listening: those links land on the overview.
+  const routeId = routeShown(ws, route.id) ? route.id : 'overview'
+  const planner = isPlanner(ws)
   const page = t.routes[routeId]
 
   const openContact = routeId === 'inbox' ? ws.conversations.find((c) => c.id === hash.split('/')[2])?.contact.name : undefined
@@ -200,7 +203,7 @@ function Shell() {
     document.title = t.shell.documentTitle(page.label, openContact)
   }, [t, page, openContact])
 
-  const tabs: NavItem[] = tabRoutes.map((r) => ({
+  const tabs: NavItem[] = tabRoutes.filter((r) => routeShown(ws, r.id)).map((r) => ({
     id: r.id,
     label: t.routes[r.id].label,
     href: r.path,
@@ -268,6 +271,7 @@ function Shell() {
         onToggleTheme={toggleTheme}
         inboxUnread={model.badges.inbox}
         approvals={model.badges.approvals}
+        planner={planner}
         now={now}
         onOpenPost={setOpenPost}
         onSearch={() => setFinder(true)}

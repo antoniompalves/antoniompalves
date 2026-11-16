@@ -124,6 +124,9 @@ export interface Channel {
   lastSyncAt: ISODate
   /** Posting paused: the channel stays connected, scheduled posts wait. */
   paused?: boolean
+  /** Planner mode: a profile added by hand (no connection), with its address. */
+  manual?: boolean
+  url?: string
 }
 
 /**
@@ -200,6 +203,8 @@ export interface Post {
   /** Instagram only: posted as the first comment, right after the post. */
   firstComment?: string
   link?: string
+  /** Where the post went live, when someone posted it by hand and marked it published. */
+  publishedUrl?: string
   metrics?: PostMetrics
   /** Why publishing failed; the UI words it per language. */
   failure?: { network: NetworkId; code: 'disconnected' }
@@ -431,6 +436,14 @@ export interface WorkspaceSettings {
   requireMfa: boolean
   /** Days after which old posts, conversations and the like move to the archive (0: never). Default 365. */
   archiveDays?: number
+  /**
+   * 'planner': Kataru only plans — no network is connected, nothing is posted
+   * automatically; the team posts by hand and marks the post as published.
+   * Missing means 'connected'.
+   */
+  mode?: 'planner' | 'connected'
+  /** Set by the server (KATARU_MODE=planner): the mode can't be changed from the app. */
+  modeLocked?: boolean
 }
 
 export interface SavedReply {

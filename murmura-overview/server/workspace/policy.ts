@@ -36,6 +36,7 @@ const RULES: Record<WorkspaceAction['type'], Rule> = {
   setWebsites: ['analytics.export', 'settings.manage'],
   channel: ['channels.manage'],
   saveChannel: ['channels.manage'],
+  removeChannel: ['channels.manage'],
   saveInboxAccount: ['channels.manage'],
   removeInboxAccount: ['channels.manage'],
   saveCreator: ['creators.manage'],
@@ -139,6 +140,7 @@ export function vet(ws: Workspace, memberId: string, actions: unknown): { action
         if (!listRule || !allowed(next, memberId, listRule)) throw new Refused('forbidden', `Your role can't undo changes to ${key}`)
       }
     }
+    if (a.type === 'settings' && a.patch && 'modeLocked' in a.patch) throw new Refused('forbidden', 'Only the server locks the working mode')
     if (a.type === 'deleteComment' && next.posts.find((p) => p.id === a.postId)?.comments?.some((x) => x.id === a.id && x.by !== memberId)) throw new Refused('forbidden', 'Only your own notes can be deleted')
     if (a.type === 'saveIdea') {
       const was = (next.ideas ?? []).find((i) => i.id === a.idea.id)

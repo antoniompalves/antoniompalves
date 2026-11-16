@@ -12,6 +12,7 @@ import type {
   Tone,
   Workspace,
 } from './types'
+import { isPlanner } from './planner'
 import { addDays, dayKey, startOfDay } from './calendar'
 import { byActivity, lastMessage } from './inbox'
 import { activeNetworks, daily, engagementRate, engagements, networkRows, publishedIn } from './analytics'
@@ -146,7 +147,7 @@ export function selectOverview(ws: Workspace, now: Date, t: Messages, everyBrand
         : { id: `cn-${channel.id}`, kind: 'channel', channel, title: t.overview.todo.disconnected(b.name, net), detail: t.overview.todo.disconnectedDetail },
     )
   }
-  if (can(ws, me, 'inbox.reply'))
+  if (can(ws, me, 'inbox.reply') && !isPlanner(ws))
     for (const c of ws.conversations.filter((x) => x.status === 'open' && x.sentiment === 'negative' && (!x.assigneeId || x.assigneeId === me)).slice(0, 2))
       todos.push({ id: `cv-${c.id}`, kind: 'unhappy', conversation: c, title: t.overview.todo.unhappy(c.contact.name), detail: `“${clip(lastMessage(c).text, 70)}”` })
   const mineWaiting = ws.posts.filter((x) => x.status === 'awaiting_approval' && x.authorId === me).length

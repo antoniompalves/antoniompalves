@@ -4,6 +4,7 @@ import { Calendar, CalendarDays, Check, Copy, FileText, History, Image as ImageI
 import { PageTitle, Stat } from '../components/PageHead'
 import { useToast } from '../components/Toast'
 import { usePostActions } from '../components/usePostActions'
+import { isPlanner } from '../data/planner'
 import { PostDrawer } from '../components/calendar/PostDrawer'
 import { Editor, issueText } from '../components/compose/Editor'
 import { DraftsCard, PreviewCard, PublishBar, WhenCard } from '../components/compose/Panels'
@@ -344,7 +345,8 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
     setUploading(true)
     try {
       // The original goes to the server only when posts are published from Kataru (connected accounts).
-      const keepOriginal = mode === 'server' && (await api<unknown[]>('GET', '/accounts').catch(() => [])).length > 0
+      // Originals are kept only for automatic publishing; planner mode keeps the light copy alone.
+      const keepOriginal = mode === 'server' && !isPlanner(ws) && (await api<unknown[]>('GET', '/accounts').catch(() => [])).length > 0
       const added: string[] = []
       for (const f of files) {
         try {
@@ -608,6 +610,7 @@ export function Compose({ now, hash }: { now: Date; hash: string }) {
           blocked={blocking.length}
           blockedNow={blockingNow.length}
           nowLocked={approval && (ws.settings.approval === 'all' || clientStep)}
+          planner={isPlanner(ws)}
           why={why}
           onAction={onAction}
           readOnly={readOnly ? { published: true, when: t.dates.dayStamp(new Date(post!.scheduledAt), now), onOpen: () => setOpenId(post!.id), onDuplicate: duplicateIntoNew, onNew: startNew } : null}

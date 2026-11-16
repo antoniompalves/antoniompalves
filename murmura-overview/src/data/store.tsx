@@ -3,6 +3,7 @@ import type { Dispatch, ReactNode } from 'react'
 import { STORAGE_KEY, fingerprint, loadWorkspace, parseSaved, saveWorkspace } from './persist'
 import { reduce, revertOf } from './reducer'
 import type { WorkspaceAction } from './reducer'
+import { plannerView } from './planner'
 import { personal, scopeView } from './scope'
 import type { SessionUser } from './server'
 import type { SyncStatus } from './syncEngine'
@@ -119,7 +120,7 @@ export function WorkspaceProvider({ seed, withSettings = (ws) => ws, children }:
     return () => dispatch(undo)
   }, [])
 
-  const view = useMemo(() => personal(scopeView(ws)), [ws])
+  const view = useMemo(() => plannerView(personal(scopeView(ws))), [ws])
   return <WorkspaceContext.Provider value={{ ws: view, all: ws, dispatch, undoable, clock, reset, mode: 'demo' }}>{children}</WorkspaceContext.Provider>
 }
 

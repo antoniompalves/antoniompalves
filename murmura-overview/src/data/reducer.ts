@@ -36,7 +36,7 @@ import type {
 
 export type WorkspaceAction =
   | { type: 'move'; id: string; to: string }
-  | { type: 'publish'; id: string; at: string }
+  | { type: 'publish'; id: string; at: string; /** Planner mode: where it went live. */ url?: string }
   | { type: 'duplicate'; id: string; newId: string; at: string }
   | { type: 'delete'; id: string }
   /**
@@ -69,6 +69,8 @@ export type WorkspaceAction =
   | { type: 'channel'; id: string; patch: Partial<Channel> }
   /** Add a channel, or replace the one with its id. */
   | { type: 'saveChannel'; channel: Channel }
+  /** Planner mode: a profile added by hand goes away. */
+  | { type: 'removeChannel'; id: string }
   /** A WhatsApp number or Google location for a brand's inbox: add, or remove by id. */
   | { type: 'saveInboxAccount'; account: InboxAccount }
   | { type: 'removeInboxAccount'; id: string }
@@ -190,7 +192,7 @@ export function reduce(ws: Workspace, action: WorkspaceAction): Workspace {
     case 'move':
       return update(action.id, (p) => ({ ...p, scheduledAt: action.to }))
     case 'publish':
-      return update(action.id, (p) => ({ ...p, status: 'published', scheduledAt: action.at, failure: undefined }))
+      return update(action.id, (p) => ({ ...p, status: 'published', scheduledAt: action.at, failure: undefined, ...(action.url && { publishedUrl: action.url }) }))
     case 'duplicate': {
       const source = ws.posts.find((p) => p.id === action.id)
       if (!source) return ws
@@ -257,6 +259,8 @@ export function reduce(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, channels: ws.channels.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
     case 'saveChannel':
       return { ...ws, channels: upsert(ws.channels, action.channel) }
+    case 'removeChannel':
+      return { ...ws, channels: ws.channels.filter((c) => c.id !== action.id) }
     case 'saveCreator':
       return { ...ws, creators: upsert(ws.creators, action.creator) }
     case 'saveCreatorCampaign':

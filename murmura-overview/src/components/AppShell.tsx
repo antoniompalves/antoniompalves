@@ -273,6 +273,8 @@ interface MobileNavProps {
   onToggleTheme: () => void
   inboxUnread: number
   approvals: number
+  /** Planner mode: no inbox, analytics or listening. */
+  planner?: boolean
   now: Date
   onOpenPost: (id: string) => void
   onSearch: () => void
@@ -292,7 +294,7 @@ const MORE_PAGES: { id: RouteId; icon: LucideIcon }[] = [
 ]
 
 /** Below 761px the dock collapses into a bottom bar, as in the reference: four destinations plus "More". */
-export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals, now, onOpenPost, onSearch }: MobileNavProps) {
+export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals, planner, now, onOpenPost, onSearch }: MobileNavProps) {
   const { t } = useI18n()
   const [sheet, setSheet] = useState(false)
   const [menu, setMenu] = useState<'new' | 'today' | null>(null)
@@ -301,9 +303,12 @@ export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals,
   const items: { id: string; label: string; icon: LucideIcon; href: string; count?: number }[] = [
     { id: 'overview', label: t.shell.mobileHome, icon: House, href: '#/overview' },
     { id: 'calendar', label: t.routes.calendar.label, icon: CalendarDays, href: '#/calendar' },
-    { id: 'inbox', label: t.shell.mobileInbox, icon: Inbox, href: '#/inbox', count: inboxUnread },
+    planner
+      ? { id: 'approvals', label: t.routes.approvals.label, icon: ShieldCheck, href: '#/approvals', count: approvals }
+      : { id: 'inbox', label: t.shell.mobileInbox, icon: Inbox, href: '#/inbox', count: inboxUnread },
   ]
-  const onMore = MORE_PAGES.some((p) => p.id === route)
+  const morePages = MORE_PAGES.filter((p) => !planner || !['approvals', 'analytics', 'listening'].includes(p.id))
+  const onMore = morePages.some((p) => p.id === route)
   const item = (current: boolean) =>
     cn(
       'relative flex flex-col items-center justify-center gap-[3px] text-[11.5px] font-semibold',
@@ -355,6 +360,7 @@ export function MobileNav({ route, theme, onToggleTheme, inboxUnread, approvals,
         theme={theme}
         onToggleTheme={onToggleTheme}
         approvals={approvals}
+        pages={morePages}
         onSearch={() => {
           setSheet(false)
           window.setTimeout(onSearch, 260)
@@ -432,12 +438,13 @@ function SheetTile({ href, icon: Icon, label, count, current, onClick }: SheetTi
 /** Bottom sheet behind "More" (".msheet" in a ".drawer"): every other page, then search, today and the theme. */
 interface MoreSheetProps extends Pick<MobileNavProps, 'route' | 'theme' | 'onToggleTheme' | 'approvals'> {
   open: boolean
+  pages: typeof MORE_PAGES
   onClose: () => void
   onSearch: () => void
   onToday: () => void
 }
 
-function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals, onSearch, onToday }: MoreSheetProps) {
+function MoreSheet({ open, pages, onClose, route, theme, onToggleTheme, approvals, onSearch, onToday }: MoreSheetProps) {
   const { t } = useI18n()
   const ref = useRef<HTMLDialogElement>(null)
 
@@ -464,7 +471,7 @@ function MoreSheet({ open, onClose, route, theme, onToggleTheme, approvals, onSe
         </span>
         <h2 className="pr-[52px] text-[23px] font-bold leading-[1.4] tracking-[-0.02em]">{t.shell.more}</h2>
         <nav aria-label={t.shell.morePages} className="grid grid-cols-2 gap-2">
-          {MORE_PAGES.map(({ id, icon }) => (
+          {pages.map(({ id, icon }) => (
             <SheetTile
               key={`${id}-${t.routes[id].label}`}
               href={`#/${id}`}

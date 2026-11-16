@@ -9,6 +9,8 @@ import { usePostActions } from '../components/usePostActions'
 import { useMediaQuery } from '../components/useMediaQuery'
 import { PostDrawer } from '../components/calendar/PostDrawer'
 import { ChannelCard } from '../components/channels/ChannelCard'
+import { Profiles } from '../components/channels/Profiles'
+import { isPlanner } from '../data/planner'
 import { ConnectDialog } from '../components/channels/ConnectDialog'
 import { AttentionBanner, BrandSection, NoChannels, PhoneBrandSection } from '../components/channels/Sections'
 import { AudienceCard, NetworksCard } from '../components/channels/Side'
@@ -32,6 +34,12 @@ const TABS: ChannelTab[] = ['all', 'attention', 'paused']
  * disconnect; everyone else can look.
  */
 export function Channels({ now, hash }: { now: Date; hash: string }) {
+  const { ws } = useWorkspace()
+  // Planner mode: profiles kept by hand, nothing to connect.
+  return isPlanner(ws) ? <Profiles now={now} /> : <Connected now={now} hash={hash} />
+}
+
+function Connected({ now, hash }: { now: Date; hash: string }) {
   const { ws, all, dispatch } = useWorkspace()
   const { t } = useI18n()
   const toast = useToast()

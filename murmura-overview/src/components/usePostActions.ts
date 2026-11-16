@@ -1,4 +1,5 @@
 import { Send } from 'lucide-react'
+import { isPlanner } from '../data/planner'
 import { NETWORK_LABEL } from '../data/selectors'
 import { useWorkspace } from '../data/store'
 import type { WorkspaceAction } from '../data/store'
@@ -14,9 +15,11 @@ export function usePostActions(now: Date, afterChange: () => void) {
   const change = (text: string, action: WorkspaceAction, icon?: typeof Send) => toast({ text, icon, undo: undoable(action) })
 
   return {
-    publish: (id: string) => {
+    /** In planner mode this marks a post someone published by hand, with the link to it when given. */
+    publish: (id: string, url?: string) => {
       const p = ws.posts.find((x) => x.id === id)
-      change(t.postActions.published(p?.networks.map((n) => NETWORK_LABEL[n]) ?? []), { type: 'publish', id, at: now.toISOString() }, Send)
+      const text = isPlanner(ws) ? t.planner.marked : t.postActions.published(p?.networks.map((n) => NETWORK_LABEL[n]) ?? [])
+      change(text, { type: 'publish', id, at: now.toISOString(), ...(url && { url }) }, Send)
       afterChange()
     },
     duplicate: (id: string) => change(t.postActions.duplicated, { type: 'duplicate', id, newId: `p${Date.now()}`, at: now.toISOString() }),

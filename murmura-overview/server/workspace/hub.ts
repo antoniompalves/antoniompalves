@@ -6,7 +6,7 @@ import type { Patch } from '../../src/data/sync.ts'
 import type { Workspace } from '../../src/data/types.ts'
 import type { Db } from '../db.ts'
 import { upsert } from '../db.ts'
-import { vet } from './policy.ts'
+import { Refused, vet } from './policy.ts'
 
 /**
  * The company's one shared workspace. Changes arrive as actions (the same
@@ -66,8 +66,12 @@ export class Hub {
   private now: () => number
   private log: (s: string) => void
 
-  constructor(db: Db, opts: { now?: () => number; log?: (s: string) => void } = {}) {
+  /** KATARU_MODE=planner: everyone sees planner mode, and nobody can switch it off. */
+  private planner: boolean
+
+  constructor(db: Db, opts: { now?: () => number; log?: (s: string) => void; planner?: boolean } = {}) {
     this.db = db
+    this.planner = !!opts.planner
     this.now = opts.now ?? Date.now
     this.log = opts.log ?? ((s) => console.log(s))
   }
@@ -156,6 +160,7 @@ export class Hub {
         await this.refresh()
         const before = this.ws
         if (!before) throw new Error('The workspace has not been set up')
+        if (this.planner && actor.memberId && actions.some((a) => a?.type === 'settings' && a.patch && 'mode' in a.patch && a.patch.mode !== 'planner')) throw new Refused('forbidden', 'Kataru is set to planner mode on the server')
         const checked = actor.memberId ? vet(before, actor.memberId, actions) : { actions, next: actions.reduce(reduce, before) }
         const from = this.version
         const to = from + 1
@@ -170,16 +175,22 @@ export class Hub {
         this.version = to
         this.broadcast(before, checked.next, from, to)
         this.scheduleSnapshot()
-        return { from, to, patch: actor.memberId ? diff(viewFor(before, actor.memberId), viewFor(checked.next, actor.memberId)) : null }
+        return { from, to, patch: actor.memberId ? diff(this.seen(before, actor.memberId), this.seen(checked.next, actor.memberId)) : null }
       }
       throw new Error('The workspace is too busy, try again')
     })
   }
 
+  /** What `memberId` sees of `ws`: their brands, and the mode the server holds it to. */
+  private seen(ws: Workspace, memberId: string): Workspace {
+    const v = viewFor(ws, memberId)
+    return this.planner ? { ...v, settings: { ...v.settings, mode: 'planner', modeLocked: true } } : v
+  }
+
   /** The workspace as `memberId` sees it, right now. */
   view(memberId: string) {
     const ws = this.ws!
-    return { version: this.version, ws: { ...viewFor(ws, memberId), now: new Date(this.now()).toISOString() } }
+    return { version: this.version, ws: { ...this.seen(ws, memberId), now: new Date(this.now()).toISOString() } }
   }
 
   private broadcast(before: Workspace, after: Workspace, from: number, to: number) {
@@ -191,7 +202,7 @@ export class Hub {
         this.subs.delete(s)
         continue
       }
-      if (!cache.has(s.memberId)) cache.set(s.memberId, diff(viewFor(before, s.memberId), viewFor(after, s.memberId)))
+      if (!cache.has(s.memberId)) cache.set(s.memberId, diff(this.seen(before, s.memberId), this.seen(after, s.memberId)))
       try {
         s.send({ from, to, patch: cache.get(s.memberId)! })
       } catch {

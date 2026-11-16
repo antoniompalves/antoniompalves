@@ -78,7 +78,7 @@ export async function createKataru(config: Config, deps: KataruDeps) {
   const log = deps.log ?? ((s: string) => console.log(s))
   const db = deps.db
   const accounts = new Accounts(db, keyFrom(config.secret), now)
-  const hub = new Hub(db, { now, log })
+  const hub = new Hub(db, { now, log, planner: config.planner })
   const mail = deps.mailer ?? mailer(a.smtpUrl, a.mailFrom, log)
   const sso = ssoProviders(a.env)
   const oidc = new Oidc(deps.fetch ?? fetch, now)

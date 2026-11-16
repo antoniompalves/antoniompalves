@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeftRight, Command, Database, Languages, Link2, LogOut, MonitorSmartphone, Moon, RefreshCw, ShieldCheck, Sun, UserRound, Users } from 'lucide-react'
+import { ArrowLeftRight, Command, Database, Languages, Link2, LogOut, MonitorSmartphone, Moon, RefreshCw, ShieldCheck, SlidersHorizontal, Sun, UserRound, Users } from 'lucide-react'
 import { AccountDialog } from '../auth/AccountDialog'
 import { DataDialog } from '../collab/DataDialog'
+import { ModeDialog } from '../collab/Planner'
+import { isPlanner } from '../../data/planner'
 import { TeamDialog } from '../auth/TeamDialog'
 import { ConfirmDialog } from '../Modal'
 import { MenuDivider, MenuItem, Popover } from '../Popover'
@@ -32,7 +34,7 @@ export function AccountButton({ user, theme, onTheme, onShortcuts }: Props) {
   const toast = useToast()
   const [menu, setMenu] = useState<'menu' | 'switch' | null>(null)
   const [resetting, setResetting] = useState(false)
-  const [dialog, setDialog] = useState<'account' | 'team' | 'data' | null>(null)
+  const [dialog, setDialog] = useState<'account' | 'team' | 'data' | 'mode' | null>(null)
   const dataManager = can(all, user.id, 'settings.manage')
   const demo = mode === 'demo'
   const admin = can(all, user.id, 'team.manage') || can(all, user.id, 'settings.manage')
@@ -124,6 +126,12 @@ export function AccountButton({ user, theme, onTheme, onShortcuts }: Props) {
               {t.data.menu}
             </MenuItem>
           )}
+          {dataManager && (
+            <MenuItem icon={SlidersHorizontal} onClick={() => (close(), setDialog('mode'))}>
+              {t.planner.menu}
+              <small className="ml-auto pl-3 text-2xs font-normal text-muted">{isPlanner(all) ? t.planner.plannerName : t.planner.connectedName}</small>
+            </MenuItem>
+          )}
           <MenuItem
             icon={Command}
             onClick={() => {
@@ -207,6 +215,7 @@ export function AccountButton({ user, theme, onTheme, onShortcuts }: Props) {
         </div>
       </Popover>
 
+      {dataManager && dialog === 'mode' && <ModeDialog open onClose={() => setDialog(null)} />}
       {dataManager && <DataDialog open={dialog === 'data'} onClose={() => setDialog(null)} now={new Date(clock.mock + Date.now() - clock.real)} />}
       {!demo && <AccountDialog open={dialog === 'account'} onClose={() => setDialog(null)} />}
       {!demo && admin && <TeamDialog open={dialog === 'team'} onClose={() => setDialog(null)} />}
