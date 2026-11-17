@@ -2483,7 +2483,7 @@ export const en = {
     schedule: 'Read every hour for the first two days, then daily until it is 30 days old.',
     none: 'No numbers yet.',
     needsServer: 'Numbers are read from the link on the Kataru server; here you can log them by hand.',
-    trend: 'Views per day',
+    trend: 'Total views, day by day',
     error: {
       link: "That link isn't a post Kataru recognises.",
       unsupported: (network: string) => `Kataru can't read ${network} numbers from a link: log them by hand.`,

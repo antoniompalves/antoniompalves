@@ -2455,7 +2455,7 @@ export const ptPT: Messages = {
     schedule: 'Lidos de hora a hora nos dois primeiros dias, depois uma vez por dia até aos 30 dias.',
     none: 'Ainda sem números.',
     needsServer: 'Os números são lidos a partir do link no servidor do Kataru; aqui pode registá-los à mão.',
-    trend: 'Visualizações por dia',
+    trend: 'Visualizações acumuladas, dia a dia',
     error: {
       link: 'Esse link não é de uma publicação que o Kataru reconheça.',
       unsupported: (network: string) => `O Kataru não consegue ler os números do ${network} a partir de um link: registe-os à mão.`,

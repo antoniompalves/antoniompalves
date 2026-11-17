@@ -3,7 +3,6 @@ import { BarChart3, Check, ExternalLink, Link2, PenLine, RefreshCw } from 'lucid
 import { Modal } from '../Modal'
 import { useToast } from '../Toast'
 import { Button, cn } from '../ui'
-import { Sparkline } from '../analytics/Sparkline'
 import { can } from '../../data/access'
 import { isPlanner } from '../../data/planner'
 import { READABLE, parsePostLink } from '../../data/postLinks'
@@ -90,7 +89,8 @@ export function PostStatsPanel({ post, now }: { post: Post; now: Date }) {
   const values: Partial<Record<Metric, number>> = s ? s : !planner && m ? { views: m.views || m.impressions, reach: m.reach, likes: m.likes, comments: m.comments, shares: m.shares, saves: m.saves } : {}
   const shown = METRICS.filter((x) => values[x] !== undefined)
   const line = statsLine(t, s, post.publishedUrl, now)
-  const views = days.map((d) => d.views).filter((v): v is number => v !== undefined)
+  const series = days.filter((d): d is { day: string; views: number } => d.views !== undefined).map((d) => ({ ...d, label: t.dates.monthDay(new Date(`${d.day}T12:00:00Z`)), short: String(Number(d.day.slice(8))) }))
+  const views = series.map((d) => d.views)
   const top = Math.max(1, ...views)
 
   const saveLink = () => {
@@ -161,10 +161,18 @@ export function PostStatsPanel({ post, now }: { post: Post; now: Date }) {
       )}
 
       {views.length > 1 && (
-        <div className="flex items-center gap-3 text-2xs text-muted">
-          <Sparkline values={views.map((v) => v / top)} tone="pine" />
-          <span>{k.trend}</span>
-        </div>
+        <figure className="grid gap-1.5">
+          <figcaption className="text-2xs font-semibold text-muted">{k.trend}</figcaption>
+          {/* One bar per day with a snapshot (the total so far), the day under it. */}
+          <ol className="flex h-[76px] items-end gap-1" aria-label={k.trend}>
+            {series.slice(-14).map((d) => (
+              <li key={d.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${d.label}: ${t.numbers.compact(d.views)}`}>
+                <span className="w-full rounded-t-[6px] bg-pine/80" style={{ height: `${Math.max(4, (d.views / top) * 56)}px` }} />
+                <small className="text-[10.5px] leading-none text-muted tabular-nums">{d.short}</small>
+              </li>
+            ))}
+          </ol>
+        </figure>
       )}
 
       {line && <p className={cn('text-2xs font-semibold', line.bad ? 'text-bad' : 'text-muted')}>{line.text}</p>}
