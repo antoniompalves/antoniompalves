@@ -119,7 +119,7 @@ first comment only follows Instagram posts and Reels.
 3. Add the **Instagram** product → *API setup with Facebook login*.
 4. Copy the App ID and App Secret to `META_APP_ID` / `META_APP_SECRET`.
 
-**Permissions requested:** `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `business_management`, `instagram_basic`, `instagram_content_publish`, `instagram_manage_comments` (first comment). People whose Page access comes through a Business Manager may also need `ads_management` / `ads_read` (Meta's note).
+**Permissions requested:** `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `business_management`, `instagram_basic`, `instagram_content_publish`, `instagram_manage_comments` (first comment), `instagram_manage_insights` and `read_insights` (post numbers, [STATS.md](STATS.md)). People whose Page access comes through a Business Manager may also need `ads_management` / `ads_read` (Meta's note).
 
 **Before real customers:** in development mode only people with a role on the app can connect. Everyone else needs **Advanced Access** for each permission through **App Review** (screencast of the flow, privacy policy, data deletion URL), and Meta generally asks for **Business Verification**. Instagram accounts linked to a Page that requires **Page Publishing Authorization** can't be posted to until it's done.
 
@@ -150,7 +150,7 @@ captions, 30 hashtags. Media must be on a public server when Meta fetches it.
 
 **Set up:** in the same Meta app (or a new one) add the **Access the Threads API** use case. Redirect callback URL: `<PUBLISHER_PUBLIC_URL>/auth/threads/callback`. Its *Threads App ID* and *Threads App secret* go in `THREADS_APP_ID` / `THREADS_APP_SECRET` (they differ from the Facebook ones).
 
-**Permissions:** `threads_basic`, `threads_content_publish`. During development only people added as **Threads testers** (and who accept the invite in Threads) can connect; public use needs App Review.
+**Permissions:** `threads_basic`, `threads_content_publish`, `threads_manage_insights` (post numbers). During development only people added as **Threads testers** (and who accept the invite in Threads) can connect; public use needs App Review.
 
 **Tokens:** one hour → exchanged for 60 days (`th_exchange_token`) → refreshed (`th_refresh_token`) once at least a day old; the service does it in its hourly sweep.
 
@@ -196,7 +196,7 @@ announces a sunset.
 **Set up**
 1. [developers.tiktok.com](https://developers.tiktok.com) → Manage apps → Connect an app; platform **Web**.
 2. Products: **Login Kit** (redirect URI `<PUBLISHER_PUBLIC_URL>/auth/tiktok/callback`) and **Content Posting API** with **Direct Post** turned on.
-3. Scopes: `user.info.basic`, `user.info.profile` (for the @handle in links), `video.publish`.
+3. Scopes: `user.info.basic`, `user.info.profile` (for the @handle in links), `video.publish`, `video.list` (post numbers).
 4. Client key/secret → `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET`.
 5. **Photo posts and pulled videos:** verify the URL prefix media is served from (e.g. `<PUBLISHER_PUBLIC_URL>/media/`) under *URL properties* and list it in `TIKTOK_PULL_PREFIXES`.
 6. Submit the app for review, then the **Content Posting API audit**.

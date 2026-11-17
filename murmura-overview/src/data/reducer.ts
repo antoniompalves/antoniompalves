@@ -4,6 +4,7 @@ import type {
   Campaign,
   Idea,
   KeyDate,
+  LiveStats,
   MediaAsset,
   PostComment,
   Channel,
@@ -71,6 +72,8 @@ export type WorkspaceAction =
   | { type: 'saveChannel'; channel: Channel }
   /** Planner mode: a profile added by hand goes away. */
   | { type: 'removeChannel'; id: string }
+  /** A link's numbers (read by the server, or logged by hand): kept on the post or deliverable, and filling its metrics. */
+  | { type: 'liveStats'; kind: 'post' | 'deliverable'; id: string; stats: LiveStats }
   /** A WhatsApp number or Google location for a brand's inbox: add, or remove by id. */
   | { type: 'saveInboxAccount'; account: InboxAccount }
   | { type: 'removeInboxAccount'; id: string }
@@ -259,6 +262,32 @@ export function reduce(ws: Workspace, action: WorkspaceAction): Workspace {
       return { ...ws, channels: ws.channels.map((c) => (c.id === action.id ? { ...c, ...action.patch } : c)) }
     case 'saveChannel':
       return { ...ws, channels: upsert(ws.channels, action.channel) }
+    case 'liveStats': {
+      const s = action.stats
+      const pick = (v: number | undefined, old: number | undefined) => (v ?? old ?? 0)
+      if (action.kind === 'post')
+        return update(action.id, (p) => {
+          // A failed read keeps the numbers from before; only the error changes.
+          if (s.error) return { ...p, liveStats: { ...(p.liveStats ?? { source: s.source }), at: s.at, error: s.error, ...(s.remoteId && { remoteId: s.remoteId }) } as LiveStats }
+          const m = p.metrics
+          const views = s.views ?? m?.views
+          return {
+            ...p,
+            liveStats: s,
+            metrics: { impressions: pick(views, m?.impressions), reach: pick(s.reach ?? views, m?.reach), views: views ?? 0, likes: pick(s.likes, m?.likes), comments: pick(s.comments, m?.comments), shares: pick(s.shares, m?.shares), saves: pick(s.saves, m?.saves), clicks: m?.clicks ?? 0 },
+          }
+        })
+      return {
+        ...ws,
+        deliverables: ws.deliverables.map((d) => {
+          if (d.id !== action.id) return d
+          if (s.error) return { ...d, liveStats: { ...(d.liveStats ?? { source: s.source }), at: s.at, error: s.error, ...(s.remoteId && { remoteId: s.remoteId }) } as LiveStats }
+          const r = d.results ?? {}
+          const known = Object.fromEntries((['reach', 'views', 'likes', 'comments', 'shares', 'saves'] as const).filter((k) => s[k] !== undefined).map((k) => [k, s[k]]))
+          return { ...d, liveStats: s, results: { ...r, ...known }, resultsAt: s.at }
+        }),
+      }
+    }
     case 'removeChannel':
       return { ...ws, channels: ws.channels.filter((c) => c.id !== action.id) }
     case 'saveCreator':

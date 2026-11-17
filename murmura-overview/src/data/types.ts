@@ -153,6 +153,43 @@ export type PostStatus =
   | 'failed'
 
 /** Lifetime totals of a published post across its networks. Engagements = likes + comments + shares + saves. */
+/** Why a link's numbers couldn't be read. */
+export type StatsError =
+  /** The link isn't a post Kataru recognises. */
+  | 'link'
+  /** Kataru can't read this network's numbers (LinkedIn, X, Pinterest): log them by hand. */
+  | 'unsupported'
+  /** Not one of the brand's connected accounts, and the network shows no public numbers for it. */
+  | 'notOwn'
+  /** The post wasn't found (deleted, private, or too old for the account's recent posts). */
+  | 'notFound'
+  /** The connection has expired or lacks the insights permission. */
+  | 'auth'
+  /** The network refused or failed for now; tried again later. */
+  | 'failed'
+  /** YouTube needs YOUTUBE_API_KEY on the server. */
+  | 'noKey'
+
+/**
+ * A live post's numbers, read from its link (or logged by hand). Missing
+ * values are unknown, not zero: each network reports a different set.
+ */
+export interface LiveStats {
+  at: ISODate
+  /** 'own': the brand's connected account (full insights); 'public': numbers anyone can see; 'manual': typed in. */
+  source: 'own' | 'public' | 'manual'
+  views?: number
+  reach?: number
+  likes?: number
+  comments?: number
+  shares?: number
+  saves?: number
+  /** The last read failed (the numbers above are from the read before). */
+  error?: StatsError
+  /** The network's id for the post, once found, so later reads go straight to it. */
+  remoteId?: string
+}
+
 export interface PostMetrics {
   impressions: number
   reach: number
@@ -203,8 +240,10 @@ export interface Post {
   /** Instagram only: posted as the first comment, right after the post. */
   firstComment?: string
   link?: string
-  /** Where the post went live, when someone posted it by hand and marked it published. */
+  /** Where the post went live: given when marking it published by hand, or added afterwards. Its numbers are read from it. */
   publishedUrl?: string
+  /** The numbers read from `publishedUrl`. */
+  liveStats?: LiveStats
   metrics?: PostMetrics
   /** Why publishing failed; the UI words it per language. */
   failure?: { network: NetworkId; code: 'disconnected' }
@@ -587,6 +626,8 @@ export interface Deliverable {
   results?: DeliverableResults
   /** When the results were last logged. */
   resultsAt?: ISODate
+  /** The numbers read from `url` (they also fill `results`). */
+  liveStats?: LiveStats
 }
 
 /* ───────────── listening ───────────── */

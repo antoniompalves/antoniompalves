@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { ClipboardCopy, Clock, Copy, Hand, Leaf, MessageSquare, PenLine, Recycle, Repeat, Send, ShieldCheck, Trash2, TriangleAlert, X } from 'lucide-react'
 import { PostNotes } from '../collab/Notes'
-import { LiveLink, MarkPublishedDialog, useCopyText } from '../collab/Planner'
+import { PostStatsPanel } from '../collab/LiveStats'
+import { MarkPublishedDialog, useCopyText } from '../collab/Planner'
 import { RecycleDialog } from '../collab/Recycle'
 import { useToast } from '../Toast'
 import { isPlanner } from '../../data/planner'
 import { clientsOf, mayGoOut, needsClient, stageOf } from '../../data/workflow'
 import type { Brand, NetworkId, Post, TeamMember } from '../../data/types'
 import { NETWORK_LABEL, clip } from '../../data/selectors'
-import { engagementRate, engagements } from '../../data/analytics'
 import { FORMATS, viewOn } from '../../data/formats'
 import { useWorkspace } from '../../data/store'
 import { useI18n } from '../../i18n'
@@ -53,8 +53,6 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
 
   const when = post ? new Date(post.scheduledAt) : now
   const stamp = `${t.dates.relativeDay(when, now)} · ${t.dates.time(when)}`
-  // Planner mode reads nothing from the networks.
-  const m = planner ? undefined : post?.metrics
 
   return (
     <dialog
@@ -97,7 +95,6 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
               {t.planner.byHand}
             </p>
           )}
-          {post.status === 'published' && post.publishedUrl && <LiveLink url={post.publishedUrl} />}
 
           {post.networks.length > 1 && network && (
             <div className="overflow-x-auto [scrollbar-width:none]">
@@ -118,21 +115,7 @@ export function PostDrawer({ post, brand, author, now, onClose, onPublish, onDup
             <PostPreview view={viewOn(post, network ?? post.networks[0], all.media)} brand={brand} network={network ?? post.networks[0]} stamp={stamp} />
           </div>
 
-          {m && (
-            <dl className="grid grid-cols-3 gap-2 max-[480px]:grid-cols-2">
-              {[
-                [t.drawer.impressions, t.numbers.compact(m.impressions)],
-                [t.drawer.reach, t.numbers.compact(m.reach)],
-                [t.drawer.engagements, t.numbers.compact(engagements(m))],
-                [t.drawer.engRate, t.numbers.pct1(engagementRate(m))],
-              ].map(([k, v]) => (
-                <div key={k} className="rounded-2xl border border-line bg-glass-2 p-3">
-                  <dt className="text-2xs text-muted">{k}</dt>
-                  <dd className="text-xl font-bold tracking-[-0.01em] tabular-nums">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
+          {post.status === 'published' && <PostStatsPanel post={post} now={now} />}
 
           <div className="flex items-center gap-2.5 text-2xs text-muted">
             <NetStack networks={post.networks} />

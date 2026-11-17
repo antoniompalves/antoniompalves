@@ -1749,6 +1749,7 @@ export const ptPT: Messages = {
   },
 
   creators: {
+    readAuto: (when: string) => `Lido do link ${when}`,
     title: 'Criadores',
     stats: {
       active: 'Criadores ativos',
@@ -2430,6 +2431,42 @@ export const ptPT: Messages = {
       leave: 'Ainda há alterações a ser guardadas.',
     },
     signedOut: 'Sessão terminada',
+  },
+
+  stats: {
+    title: 'Números',
+    link: 'Link da publicação',
+    addLink: 'Adicionar link',
+    editLink: 'Mudar o link',
+    saveLink: 'Guardar',
+    linkSaved: 'Link guardado: os números passam a ser lidos daqui',
+    badLink: 'Isso não é um link de uma publicação no Instagram, Facebook, Threads, TikTok, YouTube, LinkedIn, X ou Pinterest',
+    refresh: 'Atualizar agora',
+    refreshed: 'Números atualizados',
+    logByHand: 'Registar à mão',
+    manualTitle: 'Registar os números',
+    manualSub: 'Das estatísticas da rede. Deixe em branco o que não tiver.',
+    logged: 'Números registados',
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    metric: { views: 'Visualizações', reach: 'Alcance', likes: 'Gostos', comments: 'Comentários', shares: 'Partilhas', saves: 'Guardados' },
+    source: { own: 'da conta da marca', public: 'números públicos', manual: 'registados à mão' },
+    updated: (when: string, source: string) => `Atualizado ${when} · ${source}`,
+    schedule: 'Lidos de hora a hora nos dois primeiros dias, depois uma vez por dia até aos 30 dias.',
+    none: 'Ainda sem números.',
+    needsServer: 'Os números são lidos a partir do link no servidor do Kataru; aqui pode registá-los à mão.',
+    trend: 'Visualizações por dia',
+    error: {
+      link: 'Esse link não é de uma publicação que o Kataru reconheça.',
+      unsupported: (network: string) => `O Kataru não consegue ler os números do ${network} a partir de um link: registe-os à mão.`,
+      notOwn: 'Não está numa das contas ligadas da marca, e a rede não mostra números públicos dela.',
+      notFound: 'A publicação não foi encontrada: apagada, privada ou fora das publicações recentes da conta.',
+      auth: 'A ligação expirou ou não tem permissão para ler números: volte a ligá-la em Canais.',
+      failed: 'A rede não respondeu. O Kataru tenta outra vez mais tarde.',
+      noKey: 'Os números do YouTube precisam de uma YOUTUBE_API_KEY no servidor.',
+    },
+    fromLink: 'Atualizar números pelo link',
+    readAgo: (when: string) => `Lido do link ${when}`,
   },
 
   planner: {

@@ -101,7 +101,7 @@ export function threadsProvider(c: Config['threads'], opts: { pollMs?: number } 
         url: withQuery('https://threads.com/oauth/authorize', {
           client_id: c.appId,
           redirect_uri: redirectUri,
-          scope: 'threads_basic,threads_content_publish',
+          scope: 'threads_basic,threads_content_publish,threads_manage_insights',
           response_type: 'code',
           state,
         }),

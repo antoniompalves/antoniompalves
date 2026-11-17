@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Copy, ExternalLink, Link2, Lock, PenLine, Send } from 'lucide-react'
+import { Check, Copy, Link2, Lock, PenLine, Send } from 'lucide-react'
 import { Modal } from '../Modal'
 import { useToast } from '../Toast'
 import { BrandMark, Button, Card, NetStack, Thumb, cn } from '../ui'
@@ -193,17 +193,5 @@ export function ModeDialog({ open, onClose }: { open: boolean; onClose: () => vo
         </p>
       )}
     </Modal>
-  )
-}
-
-/** The live post's link, on a published post marked by hand. */
-export function LiveLink({ url }: { url: string }) {
-  const { t } = useI18n()
-  return (
-    <a href={url} target="_blank" rel="noreferrer noopener" className="inline-flex min-w-0 items-center gap-2 rounded-2xl bg-glass-2 px-3.5 py-2.5 text-xs font-semibold hover:bg-glass-3">
-      <ExternalLink size={16} aria-hidden className="shrink-0" />
-      <span className="shrink-0">{t.planner.viewLive}</span>
-      <span className="truncate font-normal text-muted">{url.replace(/^https?:\/\/(www\.)?/, '')}</span>
-    </a>
   )
 }

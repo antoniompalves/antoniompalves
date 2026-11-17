@@ -36,7 +36,7 @@ export function chunksFor(size: number) {
  */
 export function tiktokProvider(c: Config['tiktok'], opts: { pollMs?: number } = {}): Provider & { creatorInfo(token: string): Promise<CreatorInfo> } {
   const pollMs = opts.pollMs ?? 5000
-  const scopes = ['user.info.basic', 'user.info.profile', 'video.publish']
+  const scopes = ['user.info.basic', 'user.info.profile', 'video.publish', 'video.list']
 
   const toTokens = (d: Record<string, unknown>): Tokens => {
     const now = Date.now()

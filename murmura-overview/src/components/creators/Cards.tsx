@@ -1,9 +1,12 @@
 import { useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
-import { BarChart3, Check, ChevronDown, Download, ExternalLink, Lock, MoreHorizontal, PenLine, Plus, Trash2, UserMinus, UserPlus } from 'lucide-react'
+import { BarChart3, Check, ChevronDown, Download, ExternalLink, Lock, MoreHorizontal, PenLine, Plus, RefreshCw, Trash2, UserMinus, UserPlus } from 'lucide-react'
 import { MenuDivider, MenuItem, Popover } from '../Popover'
 import { Avatar, Badge, BrandMark, Button, IconButton, NetIcon, StatusPill, cn } from '../ui'
 import { deliverableWhere } from './Dialogs'
+import { statsLine, useRefreshStats } from '../collab/LiveStats'
+import { READABLE, parsePostLink } from '../../data/postLinks'
+import { useWorkspace } from '../../data/store'
 import { avatar } from '../../data/assets'
 import { STATUS_ORDER, campaignState, creatorRecord, deliverablesOf, hasResults, isOverdue, rateOf, totals } from '../../data/creators'
 import type { Creator, CreatorCampaign, Deliverable, DeliverableStatus, Tone, Workspace } from '../../data/types'
@@ -97,6 +100,10 @@ function DeliverableRow({ d, ws, now, h }: { d: Deliverable; ws: Workspace; now:
   const profile = creator?.profiles.find((p) => p.network === d.network)
   const late = isOverdue(d, now)
   const rate = rateOf(d.results)
+  const { mode } = useWorkspace()
+  const refresh = useRefreshStats()
+  const readable = mode === 'server' && !!d.url && READABLE.includes(parsePostLink(d.url)?.network ?? 'x')
+  const auto = d.liveStats && d.liveStats.source !== 'manual' ? statsLine(t, d.liveStats, d.url, new Date(now)) : null
   return (
     <li className="grid grid-cols-[minmax(150px,1.3fr)_minmax(140px,1.1fr)_96px_minmax(120px,0.9fr)_118px_minmax(150px,1.2fr)_34px] items-center gap-3 border-t border-line py-3 first:border-t-0 max-[1100px]:grid-cols-[minmax(150px,1.3fr)_minmax(140px,1fr)_96px_minmax(120px,0.9fr)_110px_34px] max-[900px]:flex max-[900px]:flex-wrap max-[900px]:items-start max-[900px]:gap-x-4 max-[900px]:gap-y-2.5">
       <span className="flex min-w-0 items-center gap-2.5 max-[900px]:basis-[calc(100%-64px)]">
@@ -153,6 +160,7 @@ function DeliverableRow({ d, ws, now, h }: { d: Deliverable; ws: Workspace; now:
         {hasResults(d) ? (
           <>
             <b className="truncate font-semibold tabular-nums">{c.results(t.numbers.compact(d.results?.reach || d.results?.views || 0), rate === null ? '—' : t.numbers.pct1(rate))}</b>
+            {auto && <small className={cn('truncate text-[12.5px]', auto.bad ? 'text-bad' : 'text-muted')} title={auto.text}>{auto.bad ? auto.text : c.readAuto(t.dates.ago(d.liveStats!.at, new Date(now)))}</small>}
             {(d.results?.conversions || d.results?.revenue) && (
               <small className="truncate text-[12.5px] text-muted tabular-nums">
                 {[d.results?.conversions ? c.campaign.conversions(t.numbers.int(d.results.conversions)) : '', d.results?.revenue ? h.money(d.results.revenue) : ''].filter(Boolean).join(' · ')}
@@ -182,6 +190,18 @@ function DeliverableRow({ d, ws, now, h }: { d: Deliverable; ws: Workspace; now:
               >
                 {hasResults(d) ? c.editResults : c.logResults}
               </MenuItem>
+              {readable && (
+                <MenuItem
+                  icon={RefreshCw}
+                  disabled={refresh.busy}
+                  onClick={() => {
+                    close()
+                    void refresh.run('deliverable', d.id)
+                  }}
+                >
+                  {t.stats.fromLink}
+                </MenuItem>
+              )}
               {d.url && (
                 <MenuItem
                   icon={ExternalLink}

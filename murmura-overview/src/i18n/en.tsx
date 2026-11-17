@@ -1773,6 +1773,7 @@ export const en = {
 
   /** Creators (#/creators): creator campaigns, tracked by hand. */
   creators: {
+    readAuto: (when: string) => `Read from the link ${when}`,
     title: 'Creators',
     stats: {
       active: 'Active creators',
@@ -2457,6 +2458,43 @@ export const en = {
       leave: 'Some changes are still being saved.',
     },
     signedOut: 'Signed out',
+  },
+
+  /** Live posts' numbers, read from the post's link (server/stats, docs/STATS.md). */
+  stats: {
+    title: 'Numbers',
+    link: 'Link to the live post',
+    addLink: 'Add link',
+    editLink: 'Change link',
+    saveLink: 'Save',
+    linkSaved: 'Link saved: numbers will be read from it',
+    badLink: "That isn't a link to a post on Instagram, Facebook, Threads, TikTok, YouTube, LinkedIn, X or Pinterest",
+    refresh: 'Refresh now',
+    refreshed: 'Numbers updated',
+    logByHand: 'Log by hand',
+    manualTitle: 'Log the numbers',
+    manualSub: "From the network's insights. Leave blank what you don't have.",
+    logged: 'Numbers logged',
+    save: 'Save',
+    cancel: 'Cancel',
+    metric: { views: 'Views', reach: 'Reach', likes: 'Likes', comments: 'Comments', shares: 'Shares', saves: 'Saves' },
+    source: { own: "from the brand's account", public: 'public numbers', manual: 'logged by hand' },
+    updated: (when: string, source: string) => `Updated ${when} · ${source}`,
+    schedule: 'Read every hour for the first two days, then daily until it is 30 days old.',
+    none: 'No numbers yet.',
+    needsServer: 'Numbers are read from the link on the Kataru server; here you can log them by hand.',
+    trend: 'Views per day',
+    error: {
+      link: "That link isn't a post Kataru recognises.",
+      unsupported: (network: string) => `Kataru can't read ${network} numbers from a link: log them by hand.`,
+      notOwn: "It isn't on one of the brand's connected accounts, and the network shows no public numbers for it.",
+      notFound: "The post wasn't found: deleted, private, or not among the account's recent posts.",
+      auth: 'The connection has expired or may not read numbers: reconnect it on Channels.',
+      failed: "The network didn't answer. Kataru tries again later.",
+      noKey: 'YouTube numbers need a YOUTUBE_API_KEY on the server.',
+    },
+    fromLink: 'Refresh numbers from the link',
+    readAgo: (when: string) => `Read from the link ${when}`,
   },
 
   /** Planner mode: no network connected, posts go out by hand (data/planner.ts). */

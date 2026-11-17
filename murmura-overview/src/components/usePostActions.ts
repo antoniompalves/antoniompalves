@@ -1,5 +1,7 @@
 import { Send } from 'lucide-react'
 import { isPlanner } from '../data/planner'
+import { READABLE, parsePostLink } from '../data/postLinks'
+import { api } from '../data/server'
 import { NETWORK_LABEL } from '../data/selectors'
 import { useWorkspace } from '../data/store'
 import type { WorkspaceAction } from '../data/store'
@@ -8,7 +10,7 @@ import { useToast } from './Toast'
 
 /** Undoable post actions shared by every place that opens the post drawer. */
 export function usePostActions(now: Date, afterChange: () => void) {
-  const { ws, undoable } = useWorkspace()
+  const { ws, undoable, mode } = useWorkspace()
   const toast = useToast()
   const { t } = useI18n()
 
@@ -20,6 +22,9 @@ export function usePostActions(now: Date, afterChange: () => void) {
       const p = ws.posts.find((x) => x.id === id)
       const text = isPlanner(ws) ? t.planner.marked : t.postActions.published(p?.networks.map((n) => NETWORK_LABEL[n]) ?? [])
       change(text, { type: 'publish', id, at: now.toISOString(), ...(url && { url }) }, Send)
+      // The first numbers straight away, once the change has reached the server.
+      const net = url ? parsePostLink(url)?.network : undefined
+      if (mode === 'server' && net && READABLE.includes(net)) window.setTimeout(() => void api('POST', `/stats/post/${id}/refresh`).catch(() => undefined), 1500)
       afterChange()
     },
     duplicate: (id: string) => change(t.postActions.duplicated, { type: 'duplicate', id, newId: `p${Date.now()}`, at: now.toISOString() }),

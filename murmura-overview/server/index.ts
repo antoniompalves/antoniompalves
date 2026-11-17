@@ -19,7 +19,7 @@ const store = await new Store(config.dataDir, keyFrom(config.secret)).load()
 const providers = buildProviders(config)
 const media = new MediaLibrary(config.dataDir, store, `${config.publicUrl}${config.accounts.basePath}`, config.maxMediaBytes, config.keepOriginalDays)
 const db = config.accounts.enabled ? await openDb(config.accounts.databaseUrl) : null
-const kataru = db ? await createKataru(config, { db, media }) : undefined
+const kataru = db ? await createKataru(config, { db, media, publisher: () => store.data }) : undefined
 const deps = { store, providers, media, kataru }
 // Planner mode publishes nothing, so nothing is scheduled.
 const scheduler = config.planner ? { stop: () => undefined } : startScheduler(deps)

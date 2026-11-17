@@ -35,7 +35,7 @@ export async function freshDb(kind: 'sqlite' | 'mysql'): Promise<{ url: string; 
   }
   const url = process.env.TEST_MYSQL_URL!
   const probe = await openDb(url)
-  for (const t of ['kt_users', 'kt_sessions', 'kt_tokens', 'kt_identities', 'kt_attempts', 'kt_ephemeral', 'kt_workspace', 'kt_events', 'kt_archive', 'kt_backups', 'kt_meta']) await probe.run(`DROP TABLE IF EXISTS ${t}`)
+  for (const t of ['kt_users', 'kt_sessions', 'kt_tokens', 'kt_identities', 'kt_attempts', 'kt_ephemeral', 'kt_workspace', 'kt_events', 'kt_archive', 'kt_backups', 'kt_stats', 'kt_meta']) await probe.run(`DROP TABLE IF EXISTS ${t}`)
   await probe.close()
   return { url, db: await openDb(url) }
 }
@@ -51,7 +51,7 @@ export interface Booted {
   close(): Promise<void>
 }
 
-export async function boot(o: { db: Db; url: string; env?: Record<string, string>; clock?: { now: number }; fetch?: typeof fetch }): Promise<Booted> {
+export async function boot(o: { db: Db; url: string; env?: Record<string, string>; clock?: { now: number }; fetch?: typeof fetch; publisher?: () => { connections: any[]; jobs: any[] } }): Promise<Booted> {
   const server = createServer()
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
@@ -75,7 +75,7 @@ export async function boot(o: { db: Db; url: string; env?: Record<string, string
     },
   }
   const clock = o.clock ?? { now: Date.now() }
-  const kataru = await createKataru(config, { db: o.db, mailer, now: () => clock.now, log: () => undefined, fetch: o.fetch })
+  const kataru = await createKataru(config, { db: o.db, mailer, now: () => clock.now, log: () => undefined, fetch: o.fetch, publisher: o.publisher })
   const store = await new Store(dir, keyFrom(config.secret)).load()
   const media = new MediaLibrary(dir, store, config.publicUrl, config.maxMediaBytes)
   server.on('request', createHandler(config, { store, providers: {} as never, media, kataru }))

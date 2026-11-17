@@ -258,6 +258,20 @@ MIGRATIONS.push((d) => {
   ]
 })
 
+MIGRATIONS.push((d) => {
+  const tail = d === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : ''
+  return [
+    // One snapshot a day of a live post's numbers (server/stats).
+    `CREATE TABLE IF NOT EXISTS kt_stats (
+      kind VARCHAR(16) NOT NULL,
+      id VARCHAR(100) NOT NULL,
+      day CHAR(10) NOT NULL,
+      data VARCHAR(1000) NOT NULL,
+      PRIMARY KEY (kind, id, day)
+    )${tail}`,
+  ]
+})
+
 async function migrate(db: Db) {
   await db.run(`CREATE TABLE IF NOT EXISTS kt_meta (k VARCHAR(64) NOT NULL PRIMARY KEY, v TEXT NOT NULL)${db.dialect === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4' : ''}`)
   const row = await db.get<{ v: string }>('SELECT v FROM kt_meta WHERE k = ?', ['schema'])

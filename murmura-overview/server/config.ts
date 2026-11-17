@@ -13,6 +13,8 @@ export interface Config {
   keepOriginalDays: number
   /** KATARU_MODE=planner: a planner only — no network sign-ins, no automatic publishing, and the app can't switch it. */
   planner: boolean
+  /** YouTube Data API key: public numbers of any video from its link (docs/STATS.md). */
+  youtubeKey: string
   meta: { appId: string; appSecret: string; configId: string; version: string }
   threads: { appId: string; appSecret: string }
   linkedin: { clientId: string; clientSecret: string; version: string; organizations: boolean }
@@ -62,6 +64,7 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     maxMediaBytes: Number(e('PUBLISHER_MAX_MEDIA_MB', '512')) * 1024 * 1024,
     keepOriginalDays: Number(e('PUBLISHER_KEEP_ORIGINAL_DAYS', '30')),
     planner: e('KATARU_MODE').toLowerCase() === 'planner',
+    youtubeKey: e('YOUTUBE_API_KEY'),
     meta: { appId: e('META_APP_ID'), appSecret: e('META_APP_SECRET'), configId: e('META_CONFIG_ID'), version: e('META_GRAPH_VERSION', 'v26.0') },
     threads: { appId: e('THREADS_APP_ID'), appSecret: e('THREADS_APP_SECRET') },
     linkedin: {

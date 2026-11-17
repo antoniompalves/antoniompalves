@@ -1,5 +1,5 @@
-import type { RouteId } from './routes'
-import type { Post, Workspace } from './types'
+import type { RouteId } from './routes.ts'
+import type { Post, Workspace } from './types.ts'
 
 /**
  * Planner mode: Kataru as a planner shared by the team and its clients. No

@@ -19,6 +19,10 @@ import { keyFrom, pkce, safeEqual } from './crypto.ts'
 import type { Db } from './db.ts'
 import { upsert } from './db.ts'
 import { HttpError, clientIp, cookie, cookies, isEmail, readJson, send, str } from './http.ts'
+import { createStats } from './stats/service.ts'
+import type { StatsKind } from './stats/service.ts'
+import type { Connection } from './providers/types.ts'
+import type { Job } from './store.ts'
 import { Hub } from './workspace/hub.ts'
 import { Refused } from './workspace/policy.ts'
 import { DEFAULT_ARCHIVE_DAYS, allArchived, archiveStats, archived, daily, listArchive, listBackups, makeBackup, readBackup, restoreArchived, restoreWorkspace, runArchive, workspaceOf } from './workspace/archive.ts'
@@ -45,6 +49,8 @@ export interface KataruDeps {
   log?: (s: string) => void
   mailer?: Mailer
   fetch?: typeof fetch
+  /** The publishing service's connections and jobs, for reading the brand's own posts' numbers. */
+  publisher?: () => { connections: Connection[]; jobs: Job[] }
 }
 
 interface Me {
@@ -107,6 +113,10 @@ export async function createKataru(config: Config, deps: KataruDeps) {
   dailyTimer.unref?.()
   const firstDaily = setTimeout(runDaily, 15_000)
   firstDaily.unref?.()
+  // Live posts' numbers, read from their links (stats/).
+  const stats = createStats({ db, hub, now, log, fetch: deps.fetch ?? fetch, metaVersion: config.meta.version, youtubeKey: config.youtubeKey || undefined, source: deps.publisher })
+  const statsTimer = setInterval(() => void stats.tick(), 10 * MIN)
+  statsTimer.unref?.()
 
   /* ───── helpers ───── */
 
@@ -824,7 +834,7 @@ export async function createKataru(config: Config, deps: KataruDeps) {
     const method = req.method ?? 'GET'
     if (!path.startsWith('/api/')) return serveStatic(req, res, path)
     const r = path.slice(4)
-    const known = /^\/(session|setup|auth|workspace|account|team|presence|data|export|backups|archive)(\/|$)/.test(r)
+    const known = /^\/(session|setup|auth|workspace|account|team|presence|data|export|backups|archive|stats)(\/|$)/.test(r)
     if (!known) return false
     try {
       // Changes need the app's own header: another site can't send it without asking first (CORS).
@@ -952,6 +962,24 @@ export async function createKataru(config: Config, deps: KataruDeps) {
         return send(res, 200, { ok: true })
       }
     }
+    m = r.match(/^\/stats\/(post|deliverable)\/([\w:.-]{1,100})(\/refresh)?$/)
+    if (m) {
+      const m_ = await me(req)
+      const kind = m[1] as StatsKind
+      // The item must be one this person sees (their brands), and their role reads numbers.
+      const seen = hub.view(m_.member.id).ws
+      const item = kind === 'post' ? seen.posts.find((p) => p.id === m![2]) : seen.deliverables.find((d) => d.id === m![2])
+      if (!item) throw new HttpError(404, 'not_found', 'No such post')
+      const reads = kind === 'deliverable' ? ['creators.manage', 'analytics.view'] : ['analytics.view', 'post.create', 'post.publish', 'post.approve']
+      if (!reads.some((p) => can(m_.ws, m_.member.id, p as Permission))) throw new HttpError(403, 'forbidden', "Your role can't see these numbers")
+      if (!m[3] && method === 'GET') return send(res, 200, { days: await stats.history(kind, m[2]!) })
+      if (m[3] && method === 'POST') {
+        await guard(`stats:${kind}:${m[2]}`, 6, 10 * MIN)
+        const s = await stats.refresh(kind, m[2]!)
+        if (!s) throw new HttpError(409, 'no_link', 'Add the link to the live post first')
+        return send(res, 200, { stats: s })
+      }
+    }
     if (is('GET', '/team')) return team(req, res)
     if (is('POST', '/team/invite')) return invite(req, res)
     m = r.match(/^\/team\/([\w-]{1,64})(?:\/(resend|reset-link|mfa-off))?$/)
@@ -981,11 +1009,13 @@ export async function createKataru(config: Config, deps: KataruDeps) {
     allows,
     hub,
     accounts,
+    stats,
     setupCode,
     async close() {
       clearInterval(sweeper)
       clearInterval(dailyTimer)
       clearTimeout(firstDaily)
+      clearInterval(statsTimer)
       await hub.close()
     },
     sessionHash,

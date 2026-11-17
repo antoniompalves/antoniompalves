@@ -12,6 +12,9 @@ export const META_SCOPES = [
   'instagram_basic',
   'instagram_content_publish',
   'instagram_manage_comments',
+  // Post numbers for the live-post stats (docs/STATS.md).
+  'instagram_manage_insights',
+  'read_insights',
 ]
 
 interface PageNode {

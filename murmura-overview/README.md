@@ -61,6 +61,11 @@ Planner mode: Kataru as a planner between the team and its clients — no
 network connected, nothing posted automatically; posts are approved, posted by
 hand and marked published with their link: [`docs/PLANNER.md`](docs/PLANNER.md).
 
+Numbers from the post's link (views, reach, likes, comments, shares, saves),
+read from the brand's own accounts, from YouTube for any video, and from
+creators' Instagram posts; hourly at first, then daily up to 30 days; logged by
+hand where a network gives nothing: [`docs/STATS.md`](docs/STATS.md).
+
 How it works, settings and the API: [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md).
 Putting it on cPanel hosting (Node.js App + MySQL), step by step:
 [`docs/CPANEL.md`](docs/CPANEL.md).

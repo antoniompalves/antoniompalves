@@ -37,6 +37,8 @@ const RULES: Record<WorkspaceAction['type'], Rule> = {
   channel: ['channels.manage'],
   saveChannel: ['channels.manage'],
   removeChannel: ['channels.manage'],
+  // Logged by hand from the post drawer or a creator's deliverable (checked per kind below).
+  liveStats: ['post.create', 'post.publish', 'analytics.view', 'creators.manage'],
   saveInboxAccount: ['channels.manage'],
   removeInboxAccount: ['channels.manage'],
   saveCreator: ['creators.manage'],
@@ -139,6 +141,10 @@ export function vet(ws: Workspace, memberId: string, actions: unknown): { action
         const listRule = LIST_RULES[key]
         if (!listRule || !allowed(next, memberId, listRule)) throw new Refused('forbidden', `Your role can't undo changes to ${key}`)
       }
+    }
+    if (a.type === 'liveStats') {
+      if (a.kind === 'deliverable' ? !can(next, memberId, 'creators.manage') : !['post.create', 'post.publish', 'analytics.view'].some((p) => can(next, memberId, p as Permission))) throw new Refused('forbidden', "Your role can't log these numbers")
+      if (a.stats?.source !== 'manual') throw new Refused('forbidden', 'Only numbers typed in can be logged')
     }
     if (a.type === 'settings' && a.patch && 'modeLocked' in a.patch) throw new Refused('forbidden', 'Only the server locks the working mode')
     if (a.type === 'deleteComment' && next.posts.find((p) => p.id === a.postId)?.comments?.some((x) => x.id === a.id && x.by !== memberId)) throw new Refused('forbidden', 'Only your own notes can be deleted')

@@ -39,4 +39,9 @@ client's sign-off when the brand asks for it; the server enforces this too.
   - saves uploads only as light copies;
   - makes `/health` report `"planner": true`.
 
+In planner mode, no network is connected, so the numbers of a live post come
+from its link only for YouTube (with `YOUTUBE_API_KEY`). For the other
+networks, someone logs them by hand in the post's **Numbers** panel. See
+[STATS.md](STATS.md).
+
 Switching back to **Connected** brings back everything that was hidden; no data is lost.
