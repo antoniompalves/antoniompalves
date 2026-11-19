@@ -75,7 +75,7 @@ async function mount3D(after, cls) {
   try {
     C3D = C3D || await import('./car3d.js');
     const host = document.createElement('div'); host.className = 'car3d-host ' + cls; after.after(host);
-    const ctl = await C3D.create(host, P.info.modelo_3d, { color: P.info.modelo_3d_cor || '#0c0d10', maxDpr: innerWidth < 700 ? 1.3 : 1.6 });
+    const ctl = await C3D.create(host, P.info.modelo_3d, { color: P.info.modelo_3d_cor || '#0c0d10', maxDpr: innerWidth < 700 ? 1.3 : 1.6, room: cls === 'c3-hero' });
     host.classList.add('on'); return ctl;
   } catch (e) { console.warn('3D indisponível:', e); return null; }
 }
@@ -118,6 +118,15 @@ function bindBA(v) {
   // revela com o scroll enquanto o utilizador não arrasta
   const onS = () => { if (drag || !el.isConnected) return; const r = el.getBoundingClientRect(), p = 1 - (r.top + r.height / 2) / innerHeight; el.style.setProperty('--x', Math.max(8, Math.min(92, 100 - p * 100)) + '%'); };
   addEventListener('scroll', onS, { passive: true }); onS();
+  if (P.stats.ad) return;                                                   // fotos reais têm prioridade
+  let car = null;
+  const push = () => car?.set({ split: parseFloat(el.style.getPropertyValue('--x')) / 100 });
+  new MutationObserver(push).observe(el, { attributes: true, attributeFilter: ['style'] });
+  const io = new IntersectionObserver(es => { if (!es[0].isIntersecting) return; io.disconnect();
+    mount3D($('.ba-r', el), 'c3-ba').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d');
+      car.set({ cam: [8.4, 1.15, .4], target: [0, .7, 0], fov: 30, wash: 99, env: 'studio', exposure: 1.05,
+        left: { dirt: 1, rough: .55, cc: .2, ccr: .5, envI: .9 }, right: { dirt: 0, rough: .22, cc: 1, ccr: .02, envI: 1.6 } }); push(); }); }, { rootMargin: '300px' });
+  io.observe(el);
 }
 function faqHTML() {
   const L = String(P.info.portal_faq || '').split('\n').map(l => l.split('|').map(x => x.trim())).filter(x => x[0] && x[1]);
@@ -322,7 +331,7 @@ function heroStory(svcIds) {
   const svcs = svcIds.map(id => P.svcs.find(s => s.id === id)).filter(Boolean);
   return `<section class="hero3" id="hero3"><div class="h3-stick">
     <div class="h3-room"><div class="h3-wall"></div>${hexCeiling()}<div class="h3-floor"></div><div class="h3-sun"></div></div>
-    <div class="h3-car"><div class="h3-zoom">${carSVG('gloss', extra)}<div class="h3-jet"><i></i></div></div></div><div class="h3-jet3d"><i></i></div>
+    <div class="h3-car"><div class="h3-zoom">${carSVG('gloss', extra)}<div class="h3-jet"><i></i></div></div></div><canvas class="h3-water" aria-hidden="true"></canvas>
     <div class="h3-txt">${HERO_CH.map(([a, b, c], i) => `<div class="h3-h" data-i="${i}"><h1 class="disp">${esc(a)} <em>${esc(b)}</em></h1><p>${esc(c)}</p></div>`).join('')}</div>
     <div class="h3-brand lbl">/ ${esc(P.info.empresa_nome || '')} — ${esc(P.info.slogan || 'detailing automóvel')}</div>
     <div class="h3-prog">${HERO_CH.map(() => '<i></i>').join('')}</div><div class="h3-hint lbl">Deslize para lavar ↓</div>
@@ -335,6 +344,41 @@ function heroStory(svcIds) {
       <input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
       <button class="pill ac" type="submit" style="width:100%;justify-content:center;margin-top:12px">${icon('calendar')} Pedir esta vaga</button><p class="tiny2">Confirmamos por telefone a hora exata e o valor final.</p></form>
     </div></section>`;
+}
+/* Cortina de água: jato orgânico com gotas, salpicos e névoa (canvas 2D) */
+function waterFx(cv) {
+  const g = cv.getContext('2d'); let on = false, raf = 0, X = 0, X2 = 0, Y1 = 0, Y2 = 0, t = 0; const drops = [];
+  const size = () => { const r = cv.parentElement.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 1.5); cv.width = r.width * d; cv.height = r.height * d; cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; g.setTransform(d, 0, 0, d, 0, 0); };
+  size(); addEventListener('resize', size);
+  function draw() {
+    raf = 0; t += .016; const w = cv.width, h = cv.height; g.clearRect(0, 0, w, h);
+    if (!on) { if (drops.length) drops.length = 0; return; }
+    g.globalCompositeOperation = 'lighter';
+    const top = Math.max(0, Y1 - 160), bot = Y2 + 30;
+    // vários fios de água ondulados à volta do eixo do jato
+    for (let k = 0; k < 9; k++) {
+      g.beginPath(); const off = (k - 4) * 3.2, ph = k * 1.7;
+      for (let y = top; y <= bot; y += 6) { const f = (y - top) / (bot - top), cx = X + (X2 - X) * f;
+        const x = cx + off * (1 + f * 2.2) + Math.sin(y * .035 + t * 9 + ph) * (2 + f * 7) + Math.sin(y * .011 - t * 4 + ph) * 4;
+        y === top ? g.moveTo(x, y) : g.lineTo(x, y); }
+      g.strokeStyle = `rgba(215,236,255,${k === 4 ? .85 : .16 + Math.random() * .1})`; g.lineWidth = k === 4 ? 2.6 : 1 + Math.random() * 1.6; g.stroke();
+    }
+    // brilho central suave
+    const gr = g.createLinearGradient(X - 26, 0, X + 26, 0); gr.addColorStop(0, 'rgba(160,210,255,0)'); gr.addColorStop(.5, 'rgba(190,225,255,.22)'); gr.addColorStop(1, 'rgba(160,210,255,0)');
+    g.fillStyle = gr; g.fillRect(X - 26, top, 52, bot - top);
+    // gotas e salpicos que saltam da carroçaria
+    for (let i = 0; i < 14; i++) { const y = Y1 + Math.random() * (Y2 - Y1), f = (y - top) / (bot - top), cx = X + (X2 - X) * f;
+      drops.push({ x: cx, y, vx: (Math.random() - .35) * 7, vy: -Math.random() * 3.5, l: 1, r: .6 + Math.random() * 1.8 }); }
+    for (const d of drops) { d.x += d.vx; d.y += d.vy; d.vy += .45; d.l -= .035; g.fillStyle = `rgba(225,240,255,${Math.max(0, d.l) * .8})`; g.beginPath(); g.arc(d.x, d.y, d.r, 0, 7); g.fill(); }
+    for (let i = drops.length - 1; i >= 0; i--) if (drops[i].l <= 0) drops.splice(i, 1);
+    if (drops.length > 500) drops.splice(0, drops.length - 500);
+    // névoa no chão
+    const mg = g.createRadialGradient(X2, bot - 10, 4, X2, bot - 10, 120); mg.addColorStop(0, 'rgba(210,232,255,.38)'); mg.addColorStop(1, 'rgba(210,232,255,0)');
+    g.fillStyle = mg; g.fillRect(X2 - 130, bot - 130, 260, 160);
+    g.globalCompositeOperation = 'source-over';
+    raf = requestAnimationFrame(draw);
+  }
+  return { at(x1, x2, y1, y2) { X = x1; X2 = x2; Y1 = y1; Y2 = y2; }, on(v) { if (v === on) return; on = v; if (!raf) raf = requestAnimationFrame(draw); } };
 }
 function bindHero(v) {
   const el = $('#hero3', v); if (!el) return;
@@ -358,7 +402,7 @@ function bindHero(v) {
     swirls.forEach(c => c.setAttribute('stroke-opacity', ci < 3 ? .09 : (.09 * (1 - gloss)).toFixed(3)));
     el.classList.toggle('sunset', ci === 4); el.classList.toggle('booking', ci === 4 && lp > .35);
     if (car) {
-      const K = [[8.8, 1.3, .5], [3.6, 1.45, 4.3], [1.7, 1.18, 3.7], [6.4, 1.75, 6.6]], T = [[0, .65, 0], [0, .78, 1.4], [0, .86, 1.0], [0, .62, 0]];
+      const K = [[8.6, 1.05, 1.2], [3.6, 1.35, 4.3], [1.7, 1.18, 3.7], [6.6, 1.25, 6.4]], T = [[0, 1.05, 0], [0, .9, 1.4], [0, .86, 1.0], [-.6, 1.0, 0]];
       const g = ci < 3 ? 0 : ci === 3 ? ease(lp) : 1, washZ = 2.75 - wash * 5.5;
       let cam = K[0], tg = T[0];
       if (ci === 2) { cam = lerp(K[0], K[1], ease(lp)); tg = lerp(T[0], T[1], ease(lp)); }
@@ -366,10 +410,11 @@ function bindHero(v) {
       if (ci === 4) { const t = ease(clamp(lp * 1.5)); cam = lerp(K[2], K[3], t); tg = lerp(T[2], T[3], t); }
       car.set({ cam, target: tg, fov: ci === 3 ? 27 : 30, dirt: ci < 2 ? 1 : 0, wash: ci === 1 ? washZ : 99,
         rough: .5 - g * .28, cc: .3 + g * .7, ccr: .42 - g * .4, envI: 1 + g * .6, env: ci === 4 ? 'sunset' : 'studio', exposure: ci === 4 ? 1.12 : 1.05, yaw: 0 });
-      if (ci === 1) el.style.setProperty('--jetx', car.project([0, .7, washZ])[0].toFixed(0) + 'px');
+      if (ci === 1) { const a = car.project([0, 1.45, washZ]), b = car.project([0, 0, washZ]); water.at(a[0], b[0], a[1], b[1]); }
+      water.on(ci === 1 && lp > .02 && lp < .98);
     }
   }
-  let car = null;
+  let car = null; const water = waterFx($('.h3-water', el));
   mount3D($('.h3-room', el), 'c3-hero').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d'); frame(); });
   const onS = () => requestAnimationFrame(frame);
   addEventListener('scroll', onS, { passive: true }); addEventListener('resize', onS); frame();
