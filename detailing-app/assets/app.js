@@ -378,7 +378,9 @@ async function openForm(e, row = null, preset = {}) {
   const val = {};
   E.fields.forEach(f => {
     let v = row ? row[f.k] : (preset[f.k] !== undefined ? preset[f.k] : defVal(f));
+    if (row && (v === null || v === undefined) && f.t === 'bool' && f.def !== undefined) v = f.def; // campos novos em registos antigos
     if (['lines', 'checklist', 'photos', 'timeline', 'payments', 'damagemap'].includes(f.t)) v = jparse(v);
+    if (f.t === 'jsonmap') { try { v = typeof v === 'object' && v ? v : JSON.parse(v || '{}') || {}; } catch { v = {}; } if (Array.isArray(v)) v = {}; }
     val[f.k] = v ?? '';
   });
   if (e === 'faturas' && !val.pagamentos.length && +row?.valor_pago > 0) val.pagamentos = [{ d: row.data_pagamento || row.data, v: +row.valor_pago, m: row.metodo || '' }];
@@ -442,7 +444,7 @@ async function openForm(e, row = null, preset = {}) {
     if (e === 'trabalhos') {
       if (!+val.valor) set('valor', sizePrice(s, size));
       if (!+val.custo_produtos && s.custo_produtos) set('custo_produtos', s.custo_produtos);
-      if (!val.tarefas.length && s.tarefas_padrao) { val.tarefas = s.tarefas_padrao.split('\n').map(t => t.trim()).filter(Boolean).map(t => ({ t, d: false })); editors.tarefas?.(); }
+      if (!val.tarefas.some(x => x.s === s.nome) && s.tarefas_padrao) { val.tarefas = [...val.tarefas, ...svcTasks(s)]; editors.tarefas?.(); }
     }
     if (e === 'marcacoes') { if (!+val.valor_previsto) set('valor_previsto', sizePrice(s, size)); if (!+val.duracao_h && s.duracao_h) set('duracao_h', s.duracao_h); }
   }
@@ -454,7 +456,7 @@ async function openForm(e, row = null, preset = {}) {
     if (f.t === 'payments') editors[f.k] = () => paymentsEditor(box, val, f.k, renderCalc);
     if (f.t === 'damagemap') editors[f.k] = () => damageEditor(box, val, f.k, locked);
     if (f.t === 'lines') editors[f.k] = () => linesEditor(box, val, f.k, renderCalc);
-    if (f.t === 'checklist') editors[f.k] = () => checklistEditor(box, val, f.k);
+    if (f.t === 'checklist') editors[f.k] = () => checklistEditor(box, val, f.k, f.grupos ? { notes: 'notas_servicos', size: () => byId('veiculos', val.veiculo_id)?.tamanho } : null);
     if (f.t === 'photos') editors[f.k] = () => photosEditor(box, val, f.k);
     if (f.t === 'signature') editors[f.k] = () => signatureEditor(box, val, f.k);
     editors[f.k]?.();
@@ -609,21 +611,55 @@ function linesEditor(box, val, k, onChange) {
   };
   draw();
 }
-function checklistEditor(box, val, k) {
+const svcTasks = s => String(s.tarefas_padrao || '').split('\n').map(t => t.trim()).filter(Boolean).map(t => ({ t, d: false, s: s.nome }));
+/* Checklist. Com opts (trabalhos): tarefas agrupadas por serviço, carregamento a partir do catálogo e notas por serviço/tarefa. */
+function checklistEditor(box, val, k, opts = null) {
+  const notes = () => (opts && (val[opts.notes] = val[opts.notes] && typeof val[opts.notes] === 'object' && !Array.isArray(val[opts.notes]) ? val[opts.notes] : {}));
+  const open = new Set(), extra = new Set();
   const draw = () => {
-    const done = val[k].filter(x => x.d).length;
-    box.innerHTML = `<div class="row small muted" style="margin-bottom:6px"><span>${done}/${val[k].length} concluídas</span><div class="bar grow" style="max-width:240px"><i style="width:${val[k].length ? done / val[k].length * 100 : 0}%"></i></div></div>
-      <div class="chk">${val[k].map((x, i) => `<div class="chk-i ${x.d ? 'done' : ''}" data-i="${i}"><input type="checkbox" ${x.d ? 'checked' : ''}><input type="text" value="${esc(x.t)}"><button type="button" class="btn icon ghost sm" data-rm>${icon('x')}</button></div>`).join('')}</div>
-      <div class="row" style="margin-top:8px"><input class="inp grow" placeholder="Nova tarefa… (Enter)" data-new><button type="button" class="btn sm" data-add>${icon('plus')}</button></div>`;
+    const L = val[k], done = L.filter(x => x.d).length;
+    const groups = opts ? [...new Set([...L.map(x => x.s || ''), ...extra])] : [''];
+    if (opts && !groups.length) groups.push('');
+    const item = (x, i) => `<div class="chk-i ${x.d ? 'done' : ''}" data-i="${i}"><input type="checkbox" ${x.d ? 'checked' : ''} aria-label="Feito"><input type="text" value="${esc(x.t)}">
+      ${opts ? `<button type="button" class="btn icon ghost sm ${x.n ? 'has' : ''}" data-note title="Nota da tarefa">${icon('chat')}</button>` : ''}<button type="button" class="btn icon ghost sm" data-rm title="Remover">${icon('x')}</button></div>
+      ${opts && (x.n || open.has(i)) ? `<div class="chk-note"><input class="inp" data-tn="${i}" value="${esc(x.n || '')}" placeholder="Nota desta tarefa (ex.: material usado, observação)"></div>` : ''}`;
+    const groupHTML = g => {
+      const idx = L.map((x, i) => [x, i]).filter(([x]) => (x.s || '') === g);
+      const gd = idx.filter(([x]) => x.d).length;
+      return `<div class="chk-g" data-g="${esc(g)}">${opts ? `<div class="chk-gh"><b class="grow">${esc(g || 'Tarefas gerais')}</b><span class="small muted">${gd}/${idx.length}</span>
+          <button type="button" class="btn sm ghost" data-allg="${esc(g)}" title="Marcar todas">${icon('check')}</button><button type="button" class="btn icon ghost sm" data-rmg="${esc(g)}" title="Remover serviço">${icon('trash')}</button></div>` : ''}
+        <div class="chk">${idx.map(([x, i]) => item(x, i)).join('')}</div>
+        <div class="row" style="margin-top:6px"><input class="inp grow" placeholder="Nova tarefa${opts && g ? ' em ' + esc(g) : ''}… (Enter)" data-new="${esc(g)}"><button type="button" class="btn sm" data-add="${esc(g)}">${icon('plus')}</button></div>
+        ${opts ? `<label class="f" style="margin-top:8px"><span>Notas do serviço${g ? ' · ' + esc(g) : ''}</span><textarea class="inp" style="min-height:60px" data-gn="${esc(g)}" placeholder="Produtos usados, medições, observações para o cliente…">${esc(notes()[g || ''] || '')}</textarea></label>` : ''}</div>`;
+    };
+    const svcs = opts ? (A.cache.servicos || []).filter(s => +s.ativo && s.tarefas_padrao) : [];
+    box.innerHTML = `<div class="row small muted" style="margin-bottom:8px"><span>${done}/${L.length} concluídas</span><div class="bar grow" style="max-width:260px"><i style="width:${L.length ? done / L.length * 100 : 0}%"></i></div></div>
+      ${opts ? `<div class="row" style="margin-bottom:10px"><select class="inp" data-load style="max-width:360px"><option value="">+ Carregar tarefas de um serviço contratado…</option>${svcs.map(s => `<option value="${s.id}">${s.tipo === 'Extra' ? '➕ ' : ''}${esc(s.nome)} (${s.tarefas_padrao.split('\n').filter(x => x.trim()).length} tarefas)</option>`).join('')}</select>
+        <input class="inp" data-newg placeholder="ou criar grupo/serviço livre…" style="max-width:240px"><button type="button" class="btn sm" data-addg>${icon('plus')} Grupo</button></div>` : ''}
+      ${groups.map(groupHTML).join('')}`;
     $$('.chk-i', box).forEach(r => {
       const i = +r.dataset.i;
-      $('input[type=checkbox]', r).onchange = ev => { val[k][i].d = ev.target.checked; draw(); };
-      $('input[type=text]', r).oninput = ev => { val[k][i].t = ev.target.value; };
-      $('[data-rm]', r).onclick = () => { val[k].splice(i, 1); draw(); };
+      $('input[type=checkbox]', r).onchange = ev => { L[i].d = ev.target.checked; draw(); };
+      $('input[type=text]', r).oninput = ev => { L[i].t = ev.target.value; };
+      $('[data-rm]', r).onclick = () => { L.splice(i, 1); open.clear(); draw(); };
+      $('[data-note]', r)?.addEventListener('click', () => { open.add(i); draw(); $(`[data-tn="${i}"]`, box)?.focus(); });
     });
-    const add = () => { const v = $('[data-new]', box).value.trim(); if (v) { val[k].push({ t: v, d: false }); draw(); $('[data-new]', box).focus(); } };
-    $('[data-add]', box).onclick = add;
-    $('[data-new]', box).onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); add(); } };
+    $$('[data-tn]', box).forEach(x => x.oninput = () => { L[+x.dataset.tn].n = x.value; });
+    $$('[data-gn]', box).forEach(x => x.oninput = () => { notes()[x.dataset.gn] = x.value; });
+    const addTo = g => { const inp = $(`[data-new="${CSS.escape(g)}"]`, box); const v = inp.value.trim(); if (!v) return;
+      let at = -1; L.forEach((x, i) => { if ((x.s || '') === g) at = i; });
+      const it = { t: v, d: false }; if (opts && g) it.s = g;
+      if (at < 0) L.push(it); else L.splice(at + 1, 0, it); draw(); $(`[data-new="${CSS.escape(g)}"]`, box)?.focus(); };
+    $$('[data-add]', box).forEach(b => b.onclick = () => addTo(b.dataset.add));
+    $$('[data-new]', box).forEach(x => x.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); addTo(x.dataset.new); } });
+    $$('[data-allg]', box).forEach(b => b.onclick = () => { const g = b.dataset.allg; const all = L.filter(x => (x.s || '') === g).every(x => x.d); L.forEach(x => { if ((x.s || '') === g) x.d = !all; }); draw(); });
+    $$('[data-rmg]', box).forEach(b => b.onclick = async () => { const g = b.dataset.rmg; if (!await confirmBox(`Remover as tarefas de “${g || 'Tarefas gerais'}”?`, 'Remover')) return;
+      val[k] = L.filter(x => (x.s || '') !== g); delete notes()[g]; open.clear(); draw(); });
+    $('[data-load]', box)?.addEventListener('change', ev => { const s = byId('servicos', ev.target.value); if (!s) return;
+      if (L.some(x => x.s === s.nome)) { toast('As tarefas deste serviço já estão carregadas.', true); ev.target.value = ''; return; }
+      val[k] = [...L, ...svcTasks(s)]; draw(); toast(`${svcTasks(s).length} tarefas de “${s.nome}” carregadas.`); });
+    $('[data-addg]', box)?.addEventListener('click', () => { const g = $('[data-newg]', box).value.trim(); if (!g) return;
+      extra.add(g); $('[data-newg]', box).value = ''; draw(); $(`[data-new="${CSS.escape(g)}"]`, box)?.focus(); });
   };
   draw();
 }
@@ -717,7 +753,8 @@ function bindExtras(e, r, m) {
     if (e === 'orcamentos') {
       p.valor = r._c?.subtotal; p.extras = 'Orçamento ' + r.numero;
       await load('servicos');
-      p.tarefas = jparse(r.linhas).flatMap(l => { const s = (A.cache.servicos || []).find(x => x.nome === l.d); const t = s?.tarefas_padrao ? s.tarefas_padrao.split('\n').map(x => x.trim()).filter(Boolean) : [l.d]; return t.map(x => ({ t: x, d: false })); });
+      p.tarefas = jparse(r.linhas).flatMap(l => { const s = (A.cache.servicos || []).find(x => x.nome === l.d); return s?.tarefas_padrao ? svcTasks(s) : [{ t: l.d, d: false, s: l.d }]; });
+      p.servico_id = (A.cache.servicos || []).find(x => jparse(r.linhas).some(l => l.d === x.nome) && x.tipo !== 'Extra')?.id || '';
       if (r.estado !== 'Aceite') api('save', { e: 'orcamentos' }, { id: r.id, estado: 'Aceite' }).catch(() => { });
     }
     if (e === 'marcacoes') p.valor = r.valor_previsto;
@@ -891,8 +928,11 @@ route(/^#\/doc\/(\w+)\/(\d+)$/, async (view, e, id) => {
     body = `<table><tbody><tr><td class="muted">Serviço</td><td><b>${esc(refLabel('servicos', r.servico_id))}</b> ${esc(r.extras || '')}</td></tr>
       <tr><td class="muted">Técnico</td><td>${esc(refLabel('equipa', r.tecnico_id) || '—')}</td></tr><tr><td class="muted">Estado</td><td>${esc(r.estado)}</td></tr>
       <tr><td class="muted">Entrega prevista</td><td>${fdate(r.data_entrega)}</td></tr></tbody></table>
-      <h3 style="margin:20px 0 8px">Checklist de tarefas (${r._c.progresso || '0/0'})</h3>
-      <div class="chkp">${T.map(t => `<div>${t.d ? '☑' : '☐'} ${esc(t.t)}</div>`).join('') || '<div class="muted">—</div>'}</div>
+      <h3 style="margin:20px 0 8px">Ficha de intervenção (${r._c.progresso || '0/0'})</h3>
+      ${(() => { const NS = (() => { try { return JSON.parse(r.notas_servicos || '{}') || {}; } catch { return {}; } })(); const G = [...new Set(T.map(t => t.s || ''))];
+        return G.map(g => { const it = T.filter(t => (t.s || '') === g); return `${g || G.length > 1 ? `<div style="margin:14px 0 4px;font-weight:700;border-bottom:1px solid #ddd">${esc(g || 'Tarefas gerais')} <span class="muted" style="font-weight:400">${it.filter(t => t.d).length}/${it.length}</span></div>` : ''}
+          <div class="chkp">${it.map(t => `<div>${t.d ? '☑' : '☐'} ${esc(t.t)}${t.n ? `<div class="muted" style="font-size:11px;margin-left:18px">${esc(t.n)}</div>` : ''}</div>`).join('')}</div>
+          ${NS[g] ? `<p class="muted" style="font-size:12px;margin:4px 0 0;white-space:pre-line"><b>Notas:</b> ${esc(NS[g])}</p>` : ''}`; }).join('') || '<div class="muted">—</div>'; })()}
       ${r.notas_trabalho ? `<h3 style="margin:20px 0 6px">Trabalho realizado</h3><p style="white-space:pre-line">${esc(r.notas_trabalho)}</p>` : ''}
       ${r.notas_aftercare ? `<h3 style="margin:20px 0 6px">Cuidados pós-serviço</h3><p style="white-space:pre-line">${esc(r.notas_aftercare)}</p>` : ''}
       ${F.length ? `<h3 style="margin:20px 0 8px">Fotos</h3><div class="photos" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${F.map(p => `<div><img src="${imgURL(p.f)}"><div class="muted" style="font-size:11px">${esc(p.tipo || '')}</div></div>`).join('')}</div>` : ''}

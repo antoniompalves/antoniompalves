@@ -2,7 +2,7 @@
 /* Dados iniciais: serviços, modelos de mensagem e (opcional) dados de demonstração. */
 function seed_insert(string $e, array $r): int {
     $r['created_at'] = $r['updated_at'] = now();
-    foreach ($r as $k => $v) if (is_array($v)) $r[$k] = json_encode($v, JSON_UNESCAPED_UNICODE);
+    foreach ($r as $k => $v) if (is_array($v)) $r[$k] = json_encode(($k === 'notas_servicos') ? (object)$v : $v, JSON_UNESCAPED_UNICODE);
     $cols = implode(',', array_map(fn($k) => "`$k`", array_keys($r)));
     db()->prepare('INSERT INTO ' . T($e) . " ($cols) VALUES (" . implode(',', array_fill(0, count($r), '?')) . ')')->execute(array_values($r));
     return (int)db()->lastInsertId();
@@ -78,8 +78,13 @@ function seed_demo(): void {
     $vid = [];
     foreach ($vs as $v) $vid[] = seed_insert('veiculos', ['cliente_id' => $v[0], 'marca' => $v[1], 'modelo' => $v[2], 'ano' => $v[3], 'matricula' => $v[4], 'cor' => $v[5], 'tamanho' => $v[6], 'proximo_servico' => $d('+10 days')]);
     $porsche = ["Pintar 2 pinças / desmontar e montar", "Estufador", "Lavagem + proteção chassis e cavas de rodas", "Restaurar pinças", "Mudança de óleo / sangrar travões", "Correção de pintura", "Proteção cerâmica: vidros / plásticos / pintura / jantes e pinças", "Restauro plásticos / plásticos interior da mala e escovas", "Desmontar bancos, quartelas", "Limpar material antigo", "Pintar / restaurar bancos / quartelas / moca velocidades / cinzeiro / travão de mão", "Limpeza completa interior", "Hidratação plásticos e pele", "Tratamento cofre do motor", "Micro retoque na pintura", "PPF nas óticas", "Plástico embaladeiras", "Limpar botões do rádio", "Limpeza AC", "Pintar calhas", "Pintar logótipo emblemas", "Vidros", "Polimento ponteiras escape"];
-    $tarefas = array_map(fn($t, $i) => ['t' => $t, 'd' => $i < 20], $porsche, array_keys($porsche));
-    seed_insert('trabalhos', ['numero' => 'OT-' . date('Y') . '-0006', 'data' => $d('-3 days'), 'cliente_id' => $cl[4], 'veiculo_id' => $vid[4], 'servico_id' => 16, 'tecnico_id' => $tec1, 'estado' => 'Controlo de qualidade', 'box' => 'Box 4', 'extras' => 'Restauro completo Porsche 911 (996) preto', 'tarefas' => $tarefas, 'valor' => 2850, 'custo_produtos' => 420, 'horas' => 62, 'outros_custos' => 180, 'data_entrega' => $d('+2 days')]);
+    $grp = fn($i) => $i <= 4 ? 'Mecânica & travões' : ($i <= 6 ? 'Correção de pintura & proteção cerâmica' : ($i <= 12 ? 'Interior & estofador' : 'Exterior & acabamentos'));
+    $tarefas = array_map(fn($t, $i) => ['t' => $t, 'd' => $i < 20, 's' => $grp($i)] + ($i === 9 ? ['n' => 'Material antigo dos bancos retirado e guardado para o cliente.'] : []), $porsche, array_keys($porsche));
+    $notasServ = ['Mecânica & travões' => 'Óleo 5W-40 (8,5 L). Líquido de travões DOT 4. Pinças pintadas em vermelho a pedido do cliente.',
+        'Correção de pintura & proteção cerâmica' => 'Espessura média do verniz 118 µm. Correção em 2 fases; 2 camadas de cerâmico na pintura, 1 nas jantes e vidros.',
+        'Interior & estofador' => 'Bancos enviados ao estofador dia 12 — regressaram dia 15.',
+        'Exterior & acabamentos' => 'Faltam: emblemas, vidros e ponteiras de escape. Entrega prevista após controlo de qualidade.'];
+    seed_insert('trabalhos', ['numero' => 'OT-' . date('Y') . '-0006', 'data' => $d('-3 days'), 'cliente_id' => $cl[4], 'veiculo_id' => $vid[4], 'servico_id' => 16, 'tecnico_id' => $tec1, 'estado' => 'Controlo de qualidade', 'box' => 'Box 4', 'portal_visivel' => 1, 'extras' => 'Restauro completo Porsche 911 (996) preto', 'tarefas' => $tarefas, 'notas_servicos' => $notasServ, 'valor' => 2850, 'custo_produtos' => 420, 'horas' => 62, 'outros_custos' => 180, 'data_entrega' => $d('+2 days')]);
     $jobs = [
         [$d('-25 days'), 0, 3, 'Concluído', 130, 12, 5], [$d('-20 days'), 1, 4, 'Concluído', 220, 18, 8], [$d('-14 days'), 2, 1, 'Concluído', 30, 2.5, 1],
         [$d('-9 days'), 3, 6, 'Concluído', 620, 60, 15], [$d('-5 days'), 0, 8, 'Concluído', 40, 3, 1.5], [$d('-40 days'), 1, 3, 'Concluído', 130, 12, 5],
@@ -89,7 +94,7 @@ function seed_demo(): void {
         $sv = db()->query('SELECT tarefas_padrao FROM ' . T('servicos') . ' WHERE id = ' . $j[2])->fetchColumn();
         $t = array_values(array_filter(array_map('trim', explode("\n", (string)$sv))));
         seed_insert('trabalhos', ['numero' => 'OT-' . date('Y') . '-' . str_pad((string)($i + 7), 4, '0', STR_PAD_LEFT), 'data' => $j[0], 'cliente_id' => $cl[$j[1]], 'veiculo_id' => $vid[$j[1]], 'servico_id' => $j[2], 'tecnico_id' => $i % 2 ? $tec2 : $tec1, 'estado' => $j[3], 'valor' => $j[4], 'custo_produtos' => $j[5], 'horas' => $j[6], 'gorjeta' => $i % 3 ? 0 : 10,
-            'tarefas' => array_map(fn($x) => ['t' => $x, 'd' => $j[3] === 'Concluído'], $t)]);
+            'tarefas' => array_map(fn($x) => ['t' => $x, 'd' => $j[3] === 'Concluído', 's' => db()->query('SELECT nome FROM ' . T('servicos') . ' WHERE id = ' . $j[2])->fetchColumn()], $t)]);
     }
     foreach ([[0, '+0 days', '10:00', 8, 'Confirmada', 40, 0, 'Box 1'], [1, '+1 days', '09:00', 3, 'Confirmada', 130, 0, 'Box 2'], [2, '+2 days', '14:30', 4, 'Pendente', 220, 50, 'Box 1'], [3, '+4 days', '09:30', 6, 'Pendente', 620, 150, 'Box 3'], [2, '-6 days', '11:00', 1, 'Faltou', 30, 0, 'Box 2']] as $m)
         seed_insert('marcacoes', ['cliente_id' => $cl[$m[0]], 'veiculo_id' => $vid[$m[0]], 'data' => $d($m[1]), 'hora' => $m[2], 'servico_id' => $m[3], 'tecnico_id' => $tec1, 'estado' => $m[4], 'local' => 'Oficina', 'duracao_h' => 3, 'valor_previsto' => $m[5], 'sinal' => $m[6] ?: null, 'sinal_pago' => $m[6] > 100 ? 1 : 0, 'box' => $m[7]]);

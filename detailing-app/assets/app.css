@@ -270,3 +270,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 :root[data-theme="light"] .gres{background:rgba(255,255,255,.98)}
 h3>svg,h4>svg,.row>svg,a.row>svg,.ic{width:18px;height:18px;flex:none}
 .card h3>svg{color:var(--ac)}
+
+.chk-g{padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.14);margin-bottom:10px}
+.chk-gh{display:flex;align-items:center;gap:8px;margin-bottom:8px}.chk-gh b{font-size:14px}
+.chk-note{margin:-2px 0 4px 38px}.chk-note .inp{min-height:36px;padding:7px 10px;font-size:13px}
+.btn.has{color:var(--ac)}
+:root[data-theme="light"] .chk-g{background:rgba(255,255,255,.5)}

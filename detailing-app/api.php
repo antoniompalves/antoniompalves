@@ -108,7 +108,7 @@ try {
             foreach ($by('trabalhos', " AND estado <> 'Cancelado'") as $j) {
                 if ($j['portal_visivel'] !== null && !$j['portal_visivel']) continue;
                 $jobs[] = ['id' => (int)$j['id'], 'numero' => $j['numero'], 'data' => $j['data'], 'data_entrega' => $j['data_entrega'], 'estado' => $j['estado'], 'veiculo_id' => (int)$j['veiculo_id'],
-                    'servico' => $sv[$j['servico_id']] ?? '', 'extras' => $j['extras'], 'tarefas' => jdec($j['tarefas']), 'fotos' => jdec($j['fotos']),
+                    'servico' => $sv[$j['servico_id']] ?? '', 'extras' => $j['extras'], 'tarefas' => jdec($j['tarefas']), 'notas_servicos' => (object)jdec($j['notas_servicos']), 'fotos' => jdec($j['fotos']),
                     'notas_trabalho' => $j['notas_trabalho'], 'notas_aftercare' => $j['notas_aftercare'], 'valor' => $j['valor'] !== null ? round(num($j['valor']) * (1 + num(settings()['iva']) / 100), 2) : null];
             }
             $orc = array_map(fn($o) => ['id' => (int)$o['id'], 'numero' => $o['numero'], 'data' => $o['data'], 'validade' => $o['validade'], 'estado' => $o['estado'], 'veiculo_id' => (int)$o['veiculo_id'],
@@ -381,6 +381,7 @@ function clean_value(array $f, $v) {
         case 'date': return valid_date($v);
         case 'time': return preg_match('/^\d{2}:\d{2}$/', (string)$v) ? $v : null;
         case 'select': return in_array($v, $f['opts'], true) ? $v : null;
+        case 'jsonmap': return is_array($v) ? json_encode((object)array_map(fn($x) => mb_substr((string)$x, 0, 5000), $v), JSON_UNESCAPED_UNICODE) : null;
         case 'lines': case 'checklist': case 'photos': case 'timeline': case 'payments': case 'damagemap': return is_array($v) ? json_encode(array_values($v), JSON_UNESCAPED_UNICODE) : null;
         case 'signature': return (is_string($v) && str_starts_with($v, 'data:image/png;base64,') && strlen($v) < 600000) ? $v : null;
         case 'textarea': return mb_substr(trim((string)$v), 0, 20000);

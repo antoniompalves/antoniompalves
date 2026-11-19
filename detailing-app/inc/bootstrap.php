@@ -45,7 +45,7 @@ function col_sql(string $type): string {
         case 'int': case 'ref': case 'bool': case 'rating': return $lite ? 'INTEGER' : 'INT';
         case 'date': return $lite ? 'TEXT' : 'DATE';
         case 'time': return $lite ? 'TEXT' : 'VARCHAR(5)';
-        case 'textarea': case 'lines': case 'checklist': case 'photos': case 'timeline': case 'payments': case 'damagemap': return $lite ? 'TEXT' : 'MEDIUMTEXT';
+        case 'textarea': case 'lines': case 'checklist': case 'photos': case 'timeline': case 'payments': case 'damagemap': case 'jsonmap': return $lite ? 'TEXT' : 'MEDIUMTEXT';
         case 'signature': return $lite ? 'TEXT' : 'LONGTEXT';
         default: return $lite ? 'TEXT' : 'VARCHAR(255)';
     }
