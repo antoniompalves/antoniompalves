@@ -276,3 +276,6 @@ h3>svg,h4>svg,.row>svg,a.row>svg,.ic{width:18px;height:18px;flex:none}
 .chk-note{margin:-2px 0 4px 38px}.chk-note .inp{min-height:36px;padding:7px 10px;font-size:13px}
 .btn.has{color:var(--ac)}
 :root[data-theme="light"] .chk-g{background:rgba(255,255,255,.5)}
+.doc.inv-logo .doc-logo{filter:invert(1)}
+:root[data-theme="light"] .brand .logo img{filter:var(--logo-filter,none)}
+.stars-big{display:flex;gap:6px}.stars-big button{background:none;border:0;font-size:38px;line-height:1;cursor:pointer;color:#3f3f46;padding:0;transition:transform .15s}.stars-big button.on{color:#fbbf24}.stars-big button:hover{transform:scale(1.12)}

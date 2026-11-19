@@ -66,7 +66,7 @@ try {
                     'precos' => $p ? ['Pequeno' => $r['preco_pequeno'], 'Médio' => $r['preco_medio'], 'Grande / SUV' => $r['preco_grande'], 'Desportivo / Luxo' => $r['preco_luxo'], 'Mota' => $r['preco_moto']] : null,
                     'fotos' => array_map(fn($f) => $f['f'] ?? '', jdec($r['fotos']))];
             }
-            $keys = ['app_nome', 'empresa_nome', 'empresa_telefone', 'empresa_email', 'empresa_morada', 'empresa_web', 'cor', 'portal_titulo', 'portal_texto', 'portal_horario', 'portal_instagram', 'portal_whatsapp', 'link_avaliacao'];
+            $keys = ['app_nome', 'slogan', 'iva_isento', 'logo_inverter', 'link_facebook', 'empresa_nome', 'empresa_telefone', 'empresa_email', 'empresa_morada', 'empresa_web', 'cor', 'portal_titulo', 'portal_texto', 'portal_horario', 'portal_instagram', 'portal_whatsapp', 'link_avaliacao'];
             $reviews = array_values(array_map(fn($r) => ['texto' => $r['texto'], 'pontuacao' => (int)$r['pontuacao'], 'plataforma' => $r['plataforma']],
                 array_filter(all_rows('avaliacoes'), fn($r) => $r['testemunho_ok'] && $r['texto'])));
             out(['info' => array_intersect_key($S, array_flip($keys)) + ['logo' => $S['logo'] ? 'api.php?a=logo' : ''], 'servicos' => $sv, 'avaliacoes' => array_slice($reviews, 0, 6)]);
@@ -118,7 +118,9 @@ try {
             $marc = array_map(fn($m) => ['data' => $m['data'], 'hora' => $m['hora'], 'estado' => $m['estado'], 'servico' => $sv[$m['servico_id']] ?? '', 'veiculo_id' => (int)$m['veiculo_id']],
                 $by('marcacoes', " AND data >= '" . date('Y-m-d') . "' AND estado IN ('Pendente','Confirmada')"));
             $subs = array_map(fn($x) => ['plano' => $x['plano'], 'valor' => $x['valor'], 'frequencia' => $x['frequencia'], 'proxima_visita' => $x['proxima_visita'], 'veiculo_id' => (int)$x['veiculo_id']], $by('subscricoes', " AND estado = 'Ativa'"));
-            out(['cliente' => ['nome' => $cli['nome'], 'email' => $cli['email'], 'telefone' => $cli['telefone']], 'veiculos' => $veic, 'trabalhos' => $jobs,
+            $rev = db()->query('SELECT pontuacao, texto, data FROM ' . T('avaliacoes') . ' WHERE cliente_id = ' . $cid . " AND plataforma = 'Website' ORDER BY id DESC LIMIT 1")->fetch() ?: null;
+            out(['cliente' => ['nome' => $cli['nome'], 'email' => $cli['email'], 'telefone' => $cli['telefone']], 'veiculos' => $veic, 'trabalhos' => $jobs, 'avaliacao' => $rev,
+                 'links' => ['google' => settings()['link_avaliacao'], 'facebook' => settings()['link_facebook']],
                  'orcamentos' => $orc, 'faturas' => $fat, 'marcacoes' => $marc, 'subscricoes' => $subs, 'iban' => settings()['empresa_iban']]);
         }
         if ($a === 'portal_file') {
@@ -126,6 +128,20 @@ try {
             foreach (['trabalhos', 'inspecoes'] as $e) foreach (db()->query('SELECT fotos FROM ' . T($e) . ' WHERE cliente_id = ' . (int)$cli['id'])->fetchAll() as $r)
                 if (in_array($f, array_column(jdec($r['fotos']), 'f'), true)) send_file($f);
             http_response_code(404); exit;
+        }
+        if ($a === 'portal_review') {
+            $b = body(); $plat = in_array($b['plataforma'] ?? '', ['Google', 'Facebook'], true) ? $b['plataforma'] : null;
+            if ($plat) { // o cliente abriu o link do Google/Facebook
+                $st = db()->prepare('SELECT COUNT(*) FROM ' . T('avaliacoes') . " WHERE cliente_id = ? AND plataforma = ? AND data >= ?");
+                $st->execute([$cli['id'], $plat, date('Y-m-d', strtotime('-30 days'))]);
+                if (!$st->fetchColumn()) seed_like_insert('avaliacoes', ['data' => date('Y-m-d'), 'tipo' => 'Avaliação', 'cliente_id' => $cli['id'], 'plataforma' => $plat, 'estado' => 'Pedido enviado',
+                    'texto' => 'O cliente abriu o link de avaliação no portal.']);
+                out(['ok' => true]);
+            }
+            $n = max(1, min(5, (int)($b['pontuacao'] ?? 0)));
+            seed_like_insert('avaliacoes', ['data' => date('Y-m-d'), 'tipo' => 'Avaliação', 'cliente_id' => $cli['id'], 'plataforma' => 'Website', 'pontuacao' => $n,
+                'estado' => 'Recebida', 'texto' => mb_substr(trim((string)($b['texto'] ?? '')), 0, 3000) ?: null, 'testemunho_ok' => !empty($b['testemunho']) ? 1 : 0]);
+            out(['ok' => true, 'publica' => $n >= 4]);
         }
         if ($a === 'portal_accept') {
             $id = (int)(body()['id'] ?? 0);

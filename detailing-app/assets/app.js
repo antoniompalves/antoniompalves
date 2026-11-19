@@ -795,7 +795,7 @@ function msgCtx(e, r) {
 }
 async function openMessage(ctx) {
   const tpls = await load('mensagens');
-  const fill = t => t.replace(/\{(\w+)\}/g, (_, k) => ({ ...ctx, primeiro_nome: (ctx.cliente || '').split(' ')[0], empresa: A.S.empresa_nome, telefone_empresa: A.S.empresa_telefone, link_avaliacao: A.S.link_avaliacao })[k] ?? '');
+  const fill = t => t.replace(/\{(\w+)\}/g, (_, k) => ({ ...ctx, primeiro_nome: (ctx.cliente || '').split(' ')[0], empresa: A.S.empresa_nome, telefone_empresa: A.S.empresa_telefone, link_avaliacao: A.S.link_avaliacao, link_facebook: A.S.link_facebook })[k] ?? '');
   const m = modal('Enviar mensagem · ' + esc(ctx.cliente), `
     <label class="f"><span>Modelo</span><select class="inp" id="mt"><option value="">— Mensagem livre —</option>${tpls.map(t => `<option value="${t.id}">${esc(t.nome)} (${esc(t.canal)})</option>`).join('')}</select></label>
     <label class="f" style="margin-top:12px"><span>Texto</span><textarea class="inp" id="mx" style="min-height:170px"></textarea></label>
@@ -878,7 +878,7 @@ route(/^#\/doc\/(\w+)\/(\d+)$/, async (view, e, id) => {
   const titles = { garantias: 'Certificado de proteção cerâmica', orcamentos: 'Orçamento', faturas: 'Resumo de serviços / recibo interno', trabalhos: gate ? 'Guia de saída' : 'Ordem de trabalho', inspecoes: 'Ficha de inspeção do veículo' };
   setPage(titles[e] + ' ' + (r.numero || ''), '', `<button class="btn ghost" onclick="history.back()">${icon('left')} Voltar</button><button class="btn pri" onclick="print()">${icon('print')} Imprimir / PDF</button>`);
   const head = `<div style="display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap">
-      <div>${S.logo ? `<img src="api.php?a=logo" style="max-height:64px;max-width:200px;margin-bottom:8px;display:block">` : ''}<b style="font-size:16px">${esc(S.empresa_nome)}</b>
+      <div>${S.logo ? `<img src="api.php?a=logo" class="doc-logo" style="max-height:72px;max-width:200px;margin-bottom:8px;display:block">` : ''}<b style="font-size:16px">${esc(S.empresa_nome)}</b>
         <div class="muted">${esc(S.empresa_morada)}<br>${S.empresa_nif ? 'NIF ' + esc(S.empresa_nif) + ' · ' : ''}${esc(S.empresa_telefone)} · ${esc(S.empresa_email)}</div></div>
       <div style="text-align:right"><h1>${titles[e]}</h1><div class="acc" style="font-weight:700;font-size:15px">${esc(r.numero || '')}</div>
         <div class="muted">Data: ${fdate(r.data)}${r.validade ? '<br>Válido até: ' + fdate(r.validade) : ''}${r.vencimento && e === 'faturas' ? '<br>Vencimento: ' + fdate(r.vencimento) : ''}</div></div></div>
@@ -891,7 +891,9 @@ route(/^#\/doc\/(\w+)\/(\d+)$/, async (view, e, id) => {
     body = `<table><thead><tr><th>Descrição</th><th class="num">Qtd.</th><th class="num">Preço</th><th class="num">Total</th></tr></thead><tbody>
       ${L.map(l => { const s = (A.cache.servicos || []).find(x => x.nome === l.d); return `<tr><td><b>${esc(l.d)}</b>${s?.descricao && e === 'orcamentos' ? `<div class="muted" style="font-size:12px">${esc(s.descricao)}</div>` : ''}</td><td class="num">${n2(l.q)}</td><td class="num">${money(l.p)}</td><td class="num">${money((+l.q || 0) * (+l.p || 0))}</td></tr>`; }).join('')}
       ${+r.deslocacao ? `<tr><td>Taxa de deslocação</td><td class="num">1</td><td class="num">${money(r.deslocacao)}</td><td class="num">${money(r.deslocacao)}</td></tr>` : ''}
-      ${+r.desconto ? `<tr><td>Desconto</td><td></td><td></td><td class="num">−${money(r.desconto)}</td></tr>` : ''}</tbody></table>
+      ${+r.desconto_pct ? `<tr><td>Desconto (${n2(r.desconto_pct)}%)</td><td></td><td></td><td class="num">−${money(t.desc_pct)}</td></tr>` : ''}
+      ${+r.desconto ? `<tr><td>Desconto</td><td></td><td></td><td class="num">−${money(r.desconto)}</td></tr>` : ''}
+      ${+r.gorjeta ? `<tr><td>Gorjeta</td><td></td><td></td><td class="num">${money(r.gorjeta)}</td></tr>` : ''}</tbody></table>
       <div class="tot"><div><span>Subtotal</span><span>${money(t.subtotal)}</span></div><div><span>IVA (${n2(r.iva_pct)}%)</span><span>${money(t.iva)}</span></div><div class="g"><span>Total</span><span>${money(t.total)}</span></div>
       ${e === 'faturas' ? `<div><span>Recebido</span><span>${money(r.valor_pago)}</span></div><div><b>Em dívida</b><b>${money(t.em_divida)}</b></div>` : ''}</div>
       ${A.S.iva_isento === '1' ? '<p class="muted">IVA — regime de isenção (art.º 53.º do CIVA).</p>' : ''}
@@ -901,8 +903,8 @@ route(/^#\/doc\/(\w+)\/(\d+)$/, async (view, e, id) => {
       ${e === 'faturas' ? `<p class="muted" style="font-size:11px;margin-top:24px">Documento interno sem validade fiscal.${r.ref_externa ? ' Fatura certificada nº ' + esc(r.ref_externa) + '.' : ''}</p>` : ''}`;
   } else if (e === 'garantias') {
     const g = r._c;
-    view.innerHTML = `<div class="doc cert"><div class="cert-in">
-      <div style="text-align:center">${S.logo ? `<img src="api.php?a=logo" style="max-height:56px;margin-bottom:6px">` : ''}<div><b>${esc(S.empresa_nome)}</b></div><div class="muted" style="font-size:11px">${esc([S.empresa_morada, S.empresa_telefone, S.empresa_web].filter(Boolean).join(' · '))}</div>
+    view.innerHTML = `<div class="doc cert ${S.logo_inverter === '1' ? 'inv-logo' : ''}"><div class="cert-in">
+      <div style="text-align:center">${S.logo ? `<img src="api.php?a=logo" class="doc-logo" style="max-height:80px;margin-bottom:6px">` : ''}<div><b>${esc(S.empresa_nome)}</b></div><div class="muted" style="font-size:11px">${esc([S.empresa_morada, S.empresa_telefone, S.empresa_web].filter(Boolean).join(' · '))}</div>
         <h1 style="font-size:30px;letter-spacing:.06em;margin:18px 0 4px">CERTIFICADO DE PROTEÇÃO CERÂMICA</h1><div class="muted" style="letter-spacing:.3em;font-size:10px">GARANTIA & PLANO DE MANUTENÇÃO · Nº ${esc(r.numero)}</div>
         <svg viewBox="0 0 120 120" width="110" style="margin:16px auto;display:block"><defs><path id="cpath" d="M60 60 m-44 0 a44 44 0 1 1 88 0 a44 44 0 1 1 -88 0"/></defs><circle cx="60" cy="60" r="56" fill="none" stroke="#dc2626" stroke-width="3"/><circle cx="60" cy="60" r="34" fill="none" stroke="#dc2626" stroke-width="1"/>
           <text font-size="9" letter-spacing="2" fill="#111"><textPath href="#cpath">PROTEÇÃO CERÂMICA · CERTIFICADA · INSTALADOR AUTORIZADO ·</textPath></text><path d="M60 38l6 13 14 1-11 9 4 14-13-8-13 8 4-14-11-9 14-1z" fill="#dc2626"/><text x="60" y="88" text-anchor="middle" font-size="9" font-weight="700">${+r.anos} ANO${+r.anos > 1 ? 'S' : ''}</text></svg>
@@ -951,7 +953,7 @@ route(/^#\/doc\/(\w+)\/(\d+)$/, async (view, e, id) => {
       <p class="muted" style="font-size:11.5px;margin-top:20px">O cliente declara que o estado do veículo descrito acima corresponde ao verificado no momento da ${/Saída/.test(r.momento || '') ? 'entrega' : 'receção'}.</p>
       <div style="margin-top:20px">${r.assinatura ? `<img src="${r.assinatura}" style="height:90px">` : '<div class="sigimg"></div>'}<div class="muted">Assinatura do cliente</div></div>`;
   }
-  view.innerHTML = `<div class="doc">${head}${body}<div class="muted" style="margin-top:36px;font-size:11px;text-align:center">${esc(S.empresa_nome)} · ${esc(S.empresa_web || '')}</div></div>`;
+  view.innerHTML = `<div class="doc ${S.logo_inverter === '1' ? 'inv-logo' : ''}">${head}${body}<div class="muted" style="margin-top:36px;font-size:11px;text-align:center">${esc(S.empresa_nome)} · ${esc(S.empresa_web || '')}</div></div>`;
 });
 
 /* ---------- Gráfico de barras (SVG) ---------- */
@@ -1321,12 +1323,15 @@ route(/^#\/definicoes$/, async view => {
   view.innerHTML = `<div class="grid cols-2e">
     <div class="glass card"><h3>${icon('users')} Empresa</h3><div class="form">
       ${I('empresa_nome', 'Nome comercial')}${I('empresa_nif', 'NIF')}<div class="full">${I('empresa_morada', 'Morada')}</div>${I('empresa_telefone', 'Telefone')}${I('empresa_email', 'Email', 'email')}${I('empresa_web', 'Website / Instagram')}${I('empresa_iban', 'IBAN (para pagamentos)')}
-      <div class="full">${I('link_avaliacao', 'Link para avaliações Google', 'url', 'Usado na mensagem {link_avaliacao}.')}</div></div></div>
+      <div class="full">${I('slogan', 'Slogan (ex.: Restauro | Detalhe Auto)')}</div>
+      <div class="full">${I('link_avaliacao', 'Link para avaliações no Google Maps', 'url', 'Google Business Profile → “Pedir avaliações” → copiar link. Usado no portal e em {link_avaliacao}.')}</div>
+      <div class="full">${I('link_facebook', 'Link para avaliações no Facebook', 'url', 'Página do Facebook → separador Avaliações / Recomendações. Usado no portal e em {link_facebook}.')}</div></div></div>
     <div class="glass card"><h3>${icon('sparkle')} Marca & aplicação (white-label)</h3><div class="form">
       ${I('app_nome', 'Nome da aplicação')}<label class="f"><span>Tema por defeito</span><select class="inp" data-s="tema"><option value="escuro" ${S.tema !== 'claro' ? 'selected' : ''}>Escuro</option><option value="claro" ${S.tema === 'claro' ? 'selected' : ''}>Claro</option></select></label>
       <label class="f"><span>Cor principal</span><input class="inp" type="color" data-s="cor" value="${esc(S.cor)}" style="height:42px;padding:4px"></label>
       <div class="full"><span class="small muted">Logótipo</span><div class="row" style="margin-top:6px"><div class="brand"><div class="logo" id="lgPrev">${S.logo ? `<img src="api.php?a=logo&t=${Date.now()}">` : icon('car')}</div></div>
-        <label class="btn sm">${icon('upload')} Carregar logótipo<input type="file" accept="image/*" hidden id="lgF"></label>${S.logo ? '<button class="btn sm ghost danger" id="lgX">Remover</button>' : ''}</div></div></div></div>
+        <label class="btn sm">${icon('upload')} Carregar logótipo<input type="file" accept="image/*" hidden id="lgF"></label>${S.logo ? '<button class="btn sm ghost danger" id="lgX">Remover</button>' : ''}</div>
+        <small class="muted">Use PNG com fundo transparente.</small></div>${B('logo_inverter', 'Logótipo branco — inverter para preto nos documentos impressos')}</div></div>
     <div class="glass card"><h3>${icon('wallet')} Finanças & cálculos</h3><div class="form">
       ${I('iva', 'Taxa de IVA (%)', 'number')}${B('iva_isento', 'Isento de IVA (art.º 53.º CIVA)')}
       ${I('reserva_impostos', 'Reserva para impostos (% do lucro)', 'number', 'IRS/IRC + Seg. Social estimados.')}${I('custo_km', 'Custo por km (€)', 'number', 'Ex.: 0,40 €/km.')}
@@ -1422,7 +1427,7 @@ route(/^#\/lembretes$/, async view => {
     add('dep' + r.id, 'Pedido de sinal', c, r.data, car(r.veiculo_id), `Olá ${first(c)}, para garantir a marcação de ${refLabel('servicos', r.servico_id) || 'serviço'} no dia ${dl(r.data)} às ${r.hora || ''}, pedimos um sinal de ${money(r.sinal)} (descontado no valor final). Pode pagar por MB Way${S.empresa_iban ? ' ou transferência para ' + S.empresa_iban : ''}. Obrigado! ${S.empresa_nome}`); });
   jobs.filter(j => j.estado === 'Concluído' && j.data >= addDays(t, -10)).forEach(j => { const c = cli(j.cliente_id);
     if ((A.cache.avaliacoes || []).some(a => +a.cliente_id === +j.cliente_id && a.data >= addDays(j.data, -1))) return;
-    add('rev' + j.id, 'Pedido de avaliação', c, addDays(j.data, 1), car(j.veiculo_id), `Olá ${first(c)}! Esperamos que esteja a gostar do resultado no ${car(j.veiculo_id) || 'seu automóvel'} ✨ Se puder deixar-nos uma avaliação, ajuda imenso: ${S.link_avaliacao || '(link)'} Obrigado! ${S.empresa_nome}`); });
+    add('rev' + j.id, 'Pedido de avaliação', c, addDays(j.data, 1), car(j.veiculo_id), `Olá ${first(c)}! Esperamos que esteja a gostar do resultado no ${car(j.veiculo_id) || 'seu automóvel'} ✨ Se puder deixar-nos uma avaliação, ajuda imenso:\n⭐ Google: ${S.link_avaliacao || '(link)'}${S.link_facebook ? '\n👍 Facebook: ' + S.link_facebook : ''}\nObrigado! ${S.empresa_nome}`); });
   mc.filter(r => r.estado === 'Faltou' && r.data >= addDays(t, -30)).forEach(r => { const c = cli(r.cliente_id);
     add('nos' + r.id, 'Remarcar falta', c, r.data, car(r.veiculo_id), `Olá ${first(c)}, sentimos a sua falta no dia ${dl(r.data)}. Quer remarcar o ${refLabel('servicos', r.servico_id) || 'serviço'}? Temos disponibilidade esta semana. ${S.empresa_nome}`); });
   (A.cache.veiculos || []).filter(v => v.proximo_servico && v.proximo_servico <= addDays(t, 14)).forEach(v => { const c = cli(v.cliente_id);

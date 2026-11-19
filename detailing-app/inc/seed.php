@@ -8,7 +8,7 @@ function seed_insert(string $e, array $r): int {
     return (int)db()->lastInsertId();
 }
 
-function seed_base(string $ownerName): void {
+function seed_base(string $ownerName, bool $services = true, string $cor = '#ef4444'): void {
     $serv = [
         ['Lavagem Exterior Premium', 'Pacote', 'Lavagem', 25, 30, 38, 1, 2.5, "Pré-lavagem com snow foam\nLavagem com método dos 2 baldes\nLimpeza de jantes e pneus\nSecagem com microfibra / ar\nVidros exteriores\nDressing de pneus"],
         ['Limpeza Interior Completa', 'Pacote', 'Interior', 50, 60, 75, 2.5, 6, "Aspiração completa\nLimpeza de plásticos e tablier\nLimpeza de vidros interiores\nLimpeza de tapetes\nHidratação de plásticos\nAmbientador"],
@@ -36,6 +36,7 @@ function seed_base(string $ownerName): void {
         'PPF Frente Completa' => ['Escudo invisível contra pedras.', 'Película PPF auto-regenerativa', '2–3 dias', 'Película de proteção de pintura transparente na frente do veículo, contra lascas de pedras, insetos e riscos.', 0],
         'Manutenção Mensal' => ['Sempre impecável, sem esforço.', 'Manutenção da proteção', '1–2 horas', 'Plano de manutenção regular que conserva a proteção aplicada e mantém o carro sempre apresentável.', 0],
     ];
+    if ($services) {
     $i = 0;
     foreach ($serv as $s) { $x = $extra[$s[0]] ?? ['', '', '', '', 0]; $i++;
         seed_insert('servicos', ['nome' => $s[0], 'tipo' => $s[1], 'categoria' => $s[2], 'preco_pequeno' => $s[3], 'preco_medio' => $s[4], 'preco_grande' => $s[5], 'duracao_h' => $s[6], 'custo_produtos' => $s[7], 'tarefas_padrao' => $s[8], 'ativo' => 1, 'publico' => 1,
@@ -46,19 +47,20 @@ function seed_base(string $ownerName): void {
         'descricao' => 'O nosso serviço mais completo, pensado para clássicos e desportivos: desmontagem, restauro de interiores e mecânica ligeira, correção de pintura e proteção cerâmica integral. Cada tarefa é registada e pode acompanhá-la na sua área de cliente.',
         'tarefas_padrao' => "Pintura das pinças de travão (desmontar e montar)\nEstofador — restauro de bancos\nLavagem e proteção do chassis e cavas de rodas\nRestauro de pinças\nMudança de óleo e sangria de travões\nCorreção de pintura\nProteção cerâmica em vidros, plásticos, pintura, jantes e pinças\nRestauro de plásticos interiores, mala e escovas\nDesmontagem de bancos e quartelas\nLimpeza de material antigo\nRestauro de bancos, quartelas, manete, cinzeiro e travão de mão\nLimpeza completa do interior\nHidratação de plásticos e pele\nTratamento do compartimento do motor\nMicro-retoque na pintura\nPPF nas óticas\nProteção das embaladeiras\nLimpeza dos botões do rádio\nLimpeza do sistema de AC\nPintura das calhas\nPintura dos emblemas\nVidros\nPolimento das ponteiras de escape"]);
 
+    }
     $msg = [
         ['Confirmação de marcação', 'WhatsApp', 'Confirmação da sua marcação', "Olá {primeiro_nome}! 👋\nConfirmamos a sua marcação de *{servico}* para o {veiculo} no dia {data} às {hora}.\nQualquer alteração, responda a esta mensagem.\n{empresa}"],
         ['Lembrete (véspera)', 'WhatsApp', 'Lembrete da sua marcação', "Olá {primeiro_nome}, lembramos que amanhã ({data}) às {hora} temos a marcação de {servico} para o seu {veiculo}. Até amanhã! 🚗✨\n{empresa}"],
         ['Viatura pronta', 'WhatsApp', 'A sua viatura está pronta', "Olá {primeiro_nome}! O seu {veiculo} está pronto para levantamento. 🙌\nValor: {valor}\nObrigado pela preferência!\n{empresa}"],
         ['Envio de orçamento', 'Email', 'Orçamento {empresa}', "Olá {primeiro_nome},\n\nConforme combinado, segue o orçamento para o {veiculo} no valor de {valor}.\nEstamos disponíveis para qualquer esclarecimento.\n\nCumprimentos,\n{empresa}\n{telefone_empresa}"],
         ['Follow-up de orçamento', 'WhatsApp', 'Seguimento do orçamento', "Olá {primeiro_nome}, tudo bem? Queria saber se teve oportunidade de ver o orçamento para o {veiculo}. Temos disponibilidade nas próximas semanas — quer que reserve uma data? 🙂"],
-        ['Pedido de avaliação', 'WhatsApp', 'A sua opinião é importante', "Olá {primeiro_nome}! Esperamos que esteja a gostar do resultado no seu {veiculo}. ✨\nSe puder deixar uma avaliação, ajuda-nos imenso: {link_avaliacao}\nObrigado! {empresa}"],
+        ['Pedido de avaliação', 'WhatsApp', 'A sua opinião é importante', "Olá {primeiro_nome}! Esperamos que esteja a gostar do resultado no seu {veiculo}. ✨\nSe puder deixar uma avaliação, ajuda-nos imenso:\n⭐ Google: {link_avaliacao}\n👍 Facebook: {link_facebook}\nObrigado! {empresa}"],
         ['Lembrete de manutenção', 'SMS', 'Está na hora da manutenção', "Olá {primeiro_nome}, já passou algum tempo desde o último tratamento do seu {veiculo}. Para manter a proteção em dia, recomendamos uma manutenção. Quer marcar? {empresa}"],
         ['Pedido de referência', 'WhatsApp', 'Recomende-nos', "Olá {primeiro_nome}! Se conhecer alguém que queira o carro como novo, recomende-nos 🙌 Por cada amigo que marcar, oferecemos-lhe 10% de desconto no próximo serviço. {empresa}"],
         ['Aniversário', 'WhatsApp', 'Parabéns!', "Parabéns {primeiro_nome}! 🎉 Para celebrar, tem 15% de desconto em qualquer serviço este mês. {empresa}"],
     ];
     foreach ($msg as $m) seed_insert('mensagens', ['nome' => $m[0], 'canal' => $m[1], 'assunto' => $m[2], 'texto' => $m[3]]);
-    seed_insert('equipa', ['nome' => $ownerName ?: 'Proprietário', 'funcao' => 'Proprietário / Detailer', 'custo_hora' => 12, 'comissao_pct' => 0, 'cor' => '#22d3ee', 'ativo' => 1]);
+    seed_insert('equipa', ['nome' => $ownerName ?: 'Proprietário', 'funcao' => 'Proprietário / Detailer', 'custo_hora' => 12, 'comissao_pct' => 0, 'cor' => $cor, 'ativo' => 1]);
 }
 
 function seed_demo(): void {

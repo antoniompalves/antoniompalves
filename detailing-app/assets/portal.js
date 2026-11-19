@@ -37,11 +37,11 @@ function lightbox(src) { const d = document.createElement('div'); d.className = 
 
 function svcCard(s, i) {
   const p = fromPrice(s);
-  return `<a class="svc" href="#/servico/${s.id}"><div class="img">${art(s, i)}${p ? `<span class="price">Desde ${money(p)}</span>` : ''}<span class="go">↗</span></div>
+  return `<a class="svc" href="#/servico/${s.id}"><div class="img">${art(s, i)}<span class="price">${p ? 'Desde ' + money(p) : 'Por orçamento'}</span><span class="go">↗</span></div>
     <h3>${esc(s.nome)}</h3><p>${esc(s.slogan || s.categoria || '')}</p></a>`;
 }
 function extrasList(list) {
-  return `<div class="extras">${list.map(s => `<a class="extra" href="#/servico/${s.id}"><span class="t">${esc(s.nome)}</span><span class="v">${fromPrice(s) ? '+ desde ' + money(fromPrice(s)) : ''}</span></a>`).join('')}</div>`;
+  return `<div class="extras">${list.map(s => `<a class="extra" href="#/servico/${s.id}"><span class="t">${esc(s.nome)}</span><span class="v">${fromPrice(s) ? (s.tipo === 'Extra' ? '+ ' : '') + 'desde ' + money(fromPrice(s)) : 'por orçamento'}</span></a>`).join('')}</div>`;
 }
 
 /* ---------- Páginas ---------- */
@@ -50,13 +50,13 @@ function pgHome(v) {
   const feat = (pk.filter(s => s.destaque).length ? pk.filter(s => s.destaque) : pk).slice(0, 6);
   const words = (I.portal_titulo || '').split(' ');
   v.innerHTML = `<div class="p-wrap">
-    <section class="p-hero"><div class="lbl">/ ${esc(I.empresa_nome)} · Detailing automóvel</div>
+    <section class="p-hero"><div class="lbl">/ ${esc(I.empresa_nome)} · ${esc(I.slogan || 'Detailing automóvel')}</div>
       <h1 class="disp" style="margin-top:16px">${esc(words.slice(0, -2).join(' '))} <em>${esc(words.slice(-2).join(' '))}</em></h1>
       <p>${esc(I.portal_texto)}</p>
       <div class="row"><a class="pill solid" href="#/marcar">${icon('calendar')} Pedir marcação</a><a class="pill" href="#/servicos">Ver todos os serviços</a>${P.t ? `<a class="pill" href="#/area">${icon('user')} A minha área</a>` : ''}</div></section>
     <section class="p-sec"><div class="p-sec-h"><h2 class="disp">Serviços</h2><a class="pill" href="#/servicos">${icon('sparkle')} Todos os serviços</a></div>
       <div class="svc-grid">${feat.map(svcCard).join('')}</div></section>
-    ${ex.length ? `<section class="p-sec"><div class="p-sec-h"><h2 class="disp">Extras</h2><span class="lbl">Complementos para qualquer pacote</span></div>${extrasList(ex)}</section>` : ''}
+    ${ex.length ? `<section class="p-sec"><div class="p-sec-h"><h2 class="disp">Outros serviços</h2><span class="lbl">Soluções por orçamento e complementos</span></div>${extrasList(ex)}</section>` : ''}
     ${P.reviews.length ? `<section class="p-sec"><div class="p-sec-h"><h2 class="disp">Clientes</h2></div><div class="svc-grid">${P.reviews.map(r => `<div class="glass rev"><div style="color:#fbbf24">${'★'.repeat(r.pontuacao || 5)}</div><q>“${esc(r.texto)}”</q><div class="lbl" style="margin-top:12px">${esc(r.plataforma || '')}</div></div>`).join('')}</div></section>` : ''}
     <section class="p-sec"><div class="p-sec-h"><h2 class="disp">Já é cliente?</h2></div>
       <p class="muted" style="max-width:640px">Acompanhe em tempo real os trabalhos no seu automóvel, consulte a ficha de intervenções com fotos antes/depois, aceite orçamentos e peça novas marcações. Peça-nos o seu link pessoal de acesso.</p>
@@ -66,7 +66,7 @@ function pgServicos(v) {
   const pk = P.svcs.filter(s => s.tipo !== 'Extra'), ex = P.svcs.filter(s => s.tipo === 'Extra');
   const cats = [...new Set(pk.map(s => s.categoria).filter(Boolean))];
   v.innerHTML = `<div class="p-wrap"><section class="p-hero" style="padding-bottom:10px"><div class="lbl">/ Catálogo</div><h1 class="disp" style="margin-top:14px">Todos os serviços</h1>
-    <p>Preços “desde” para veículos pequenos — o valor final depende do tamanho e estado do veículo. Inspeção gratuita em todas as marcações.</p></section>
+    <p>Preços “desde” — o valor final depende do tamanho e do estado do veículo${P.info.iva_isento === '1' ? ' (regime de isenção de IVA)' : ''}. Inspeção gratuita em todas as marcações.</p></section>
     ${cats.map(c => `<section class="p-sec"><div class="p-sec-h"><h2 class="disp" style="font-size:clamp(34px,5vw,64px)">${esc(c)}</h2></div><div class="svc-grid">${pk.filter(s => s.categoria === c).map(svcCard).join('')}</div></section>`).join('')}
     ${pk.filter(s => !s.categoria).length ? `<section class="p-sec"><div class="svc-grid">${pk.filter(s => !s.categoria).map(svcCard).join('')}</div></section>` : ''}
     ${ex.length ? `<section class="p-sec"><div class="p-sec-h"><h2 class="disp" style="font-size:clamp(34px,5vw,64px)">Outros serviços & extras</h2></div>${extrasList(ex)}</section>` : ''}</div>`;
@@ -76,18 +76,19 @@ function pgServico(v, id) {
   if (!s) { v.innerHTML = '<div class="p-wrap empty">Serviço não encontrado.</div>'; return; }
   const p = fromPrice(s);
   const more = P.svcs.filter(x => x.id !== s.id && x.tipo === 'Pacote').sort((a, b) => b.destaque - a.destaque).slice(0, 3);
-  const sizes = s.precos ? Object.entries(s.precos).filter(([, v]) => +v > 0) : [];
+  let sizes = s.precos ? Object.entries(s.precos).filter(([, v]) => +v > 0) : [];
+  if (new Set(sizes.map(([, v]) => +v)).size < 2) sizes = [];
   v.innerHTML = `<div class="p-wrap">
     <div class="sd-top"><a class="lbl" href="#/servicos">← Todos os serviços</a><span class="num">${String(i + 1).padStart(2, '0')}</span></div>
     <h1 class="disp sd-title">${esc(s.nome)}</h1>
     <div class="sd-row"><div class="sd-slogan">${esc(s.slogan || s.categoria || '')}</div>
-      <div class="facts"><div class="fact"><span class="lbl">Preço</span><b>${p ? 'Desde ' + money(p) : 'Sob consulta'}</b></div>
+      <div class="facts"><div class="fact"><span class="lbl">Preço</span><b>${p ? 'Desde ' + money(p) : 'Por orçamento'}</b></div>
         <div class="fact"><span class="lbl">Duração</span><b>${esc(dur(s))}</b></div>
         <div class="fact"><span class="lbl">${s.tipo === 'Extra' ? 'Tipo' : 'Resultado'}</span><b>${esc(s.resultado || s.categoria || s.tipo)}</b></div></div></div>
     <div class="sd-img">${art(s, i)}</div>
     <div class="incl"><div><div class="lbl">/ O que inclui</div>
         ${s.inclui.length ? `<ol>${s.inclui.map(t => `<li><span>${esc(t)}</span></li>`).join('')}</ol>` : `<p class="muted" style="margin-top:16px">${esc(s.descricao || 'Fale connosco para mais detalhes.')}</p>`}
-        ${sizes.length > 1 ? `<div class="lbl" style="margin-top:34px">/ Preço por tamanho de veículo</div><div class="facts" style="margin-top:12px">${sizes.map(([k, val]) => `<div class="fact"><span class="lbl">${esc(k)}</span><b>${money(val)}</b></div>`).join('')}</div><p class="small muted">Valores sem IVA. Estado do veículo pode alterar o orçamento final.</p>` : ''}
+        ${sizes.length > 1 ? `<div class="lbl" style="margin-top:34px">/ Preço por tamanho de veículo</div><div class="facts" style="margin-top:12px">${sizes.map(([k, val]) => `<div class="fact"><span class="lbl">${esc(k)}</span><b>${money(val)}</b></div>`).join('')}</div><p class="small muted">${P.info.iva_isento === '1' ? 'Valores sem IVA — regime de isenção de IVA.' : 'Valores sem IVA.'} O valor final depende do tamanho e do estado do veículo.</p>` : ''}
         ${s.fotos?.length > 1 ? `<div class="gallery" style="margin-top:30px">${s.fotos.slice(1).map(f => `<img src="api.php?a=pub_file&f=${encodeURIComponent(f)}" loading="lazy">`).join('')}</div>` : ''}</div>
       <aside><p>${esc(s.descricao || '')}</p><a class="pill solid" href="#/marcar/${s.id}">${icon('calendar')} Marcar este serviço</a>
         <span class="lbl">Inspeção gratuita em todas as marcações${P.info.portal_horario ? ' · ' + esc(P.info.portal_horario) : ''}</span></aside></div>
@@ -157,6 +158,7 @@ async function pgArea(v) {
       <div style="margin:10px 0">${o.linhas.map(l => `<div class="list-i small"><span class="grow">${esc(l.d)}</span><span class="mono">${money((+l.q || 0) * (+l.p || 0))}</span></div>`).join('')}${+o.deslocacao ? `<div class="list-i small"><span class="grow">Deslocação</span><span>${money(o.deslocacao)}</span></div>` : ''}${+o.desconto ? `<div class="list-i small"><span class="grow">Desconto</span><span>−${money(o.desconto)}</span></div>` : ''}<div class="list-i small"><span class="grow">IVA ${o.iva_pct}%</span><span>${money(o.iva)}</span></div></div>
       <button class="pill ac" data-acc="${o.id}">Aceitar orçamento</button></div>`).join('')}</section>` : ''}
     ${divida > 0 ? `<section class="p-sec"><div class="glass" style="padding:18px"><div class="lbl">/ Pagamentos pendentes</div>${M.faturas.filter(f => f.em_divida > 0).map(f => `<div class="list-i"><span class="grow">${esc(f.numero)} · ${fdate(f.data)}</span><b class="mono">${money(f.em_divida)}</b></div>`).join('')}${M.iban ? `<p class="small muted">IBAN para transferência: <b class="mono">${esc(M.iban)}</b></p>` : ''}</div></section>` : ''}
+    ${reviewHTML(M)}
     <section class="p-sec"><div class="p-sec-h"><h2 class="disp" style="font-size:clamp(40px,6vw,80px)">As minhas viaturas</h2></div>
       ${M.veiculos.map(vh => { const js = M.trabalhos.filter(j => j.veiculo_id === vh.id); const sub = M.subscricoes.find(s => s.veiculo_id === vh.id); return `<div class="glass veh">
         <div class="veh-h"><span class="disp">${esc(vh.marca)} ${esc(vh.modelo)}</span>${vh.matricula ? `<span class="plate">${esc(vh.matricula)}</span>` : ''}<a class="pill right" href="#/marcar?v=${vh.id}">${icon('calendar')} Agendar</a></div>
@@ -166,9 +168,48 @@ async function pgArea(v) {
         ${js.map(j => jobHTML(j, vh)).join('') || '<p class="muted small">Ainda sem intervenções registadas.</p>'}</div>`; }).join('') || '<p class="muted">Sem viaturas registadas.</p>'}
       ${M.trabalhos.filter(j => !M.veiculos.some(x => x.id === j.veiculo_id)).map(j => `<div class="glass veh">${jobHTML(j, null)}</div>`).join('')}
     </section></div>`;
+  bindReview(v, M);
   $('#sair').onclick = () => { localStorage.removeItem('dp_portal_t'); P.t = null; P.me = null; location.hash = '#/'; render(); };
   $$('[data-acc]').forEach(b => b.onclick = async () => { try { await api('portal_accept', {}, { t: P.t, id: +b.dataset.acc }); toast('Orçamento aceite! Vamos contactá-lo para agendar.'); P.me = null; pgArea(v); } catch (e) { toast(e.message, true); } });
   $$('.gallery img', v).forEach(im => im.onclick = () => lightbox(im.src));
+}
+
+/* ---------- Avaliações (Google Maps / Facebook) ---------- */
+const GLOGO = '<svg viewBox="0 0 48 48" width="22" height="22"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+const FLOGO = '<svg viewBox="0 0 48 48" width="22" height="22"><circle cx="24" cy="24" r="20" fill="#1877F2"/><path fill="#fff" d="M26.7 38V26.6h3.8l.6-4.4h-4.4v-2.8c0-1.3.4-2.2 2.2-2.2h2.3v-3.9c-.4-.1-1.8-.2-3.4-.2-3.4 0-5.7 2.1-5.7 5.9v3.2h-3.8v4.4h3.8V38h4.6z"/></svg>';
+function reviewHTML(M) {
+  const L = M.links || {}, done = M.avaliacao, hasJob = M.trabalhos.some(j => ['Concluído', 'Pronto'].includes(j.estado));
+  if (!L.google && !L.facebook && !hasJob) return '';
+  return `<section class="p-sec" id="rev"><div class="glass" style="padding:26px;border-color:color-mix(in srgb,var(--ac) 35%,transparent)">
+    <div class="lbl">/ A sua opinião conta</div><h2 class="disp" style="font-size:clamp(36px,6vw,72px);margin:12px 0 8px">Avalie-nos</h2>
+    <p class="muted" style="max-width:640px;margin:0 0 18px">Ficou satisfeito com o cuidado que tivemos com o seu automóvel? Uma avaliação no Google Maps ou no Facebook ajuda outros condutores a conhecer o nosso trabalho — e demora menos de um minuto. Obrigado!</p>
+    <div id="revStep1" class="${done ? 'hide' : ''}"><div class="stars-big" id="revStars">${[1, 2, 3, 4, 5].map(i => `<button type="button" data-v="${i}" aria-label="${i} estrelas">★</button>`).join('')}</div>
+      <textarea class="inp" id="revTxt" style="margin-top:14px;max-width:680px" placeholder="Conte-nos como correu (opcional)…"></textarea>
+      <label class="switch" style="margin-top:8px"><input type="checkbox" id="revOk"><span class="small">Autorizo a publicação do meu comentário como testemunho.</span></label>
+      <div class="row" style="margin-top:12px"><button class="pill solid" id="revSend" disabled>Enviar avaliação</button></div></div>
+    <div id="revStep2" class="${done && done.pontuacao >= 4 ? '' : 'hide'}"><p style="margin:0 0 14px;color:var(--paper)">🙏 Obrigado${done ? ' pela sua avaliação de ' + '★'.repeat(done.pontuacao) : ''}! Partilhe-a também publicamente:</p>
+      ${done?.texto ? `<div class="note" style="max-width:680px;margin-bottom:12px">“${esc(done.texto)}” <button class="pill" id="revCopy" style="margin-left:8px;padding:5px 10px">Copiar texto</button></div>` : ''}</div>
+    <div id="revLow" class="hide note" style="max-width:680px">Lamentamos que a experiência não tenha sido perfeita. A sua mensagem foi enviada diretamente à nossa equipa e vamos contactá-lo para resolver.</div>
+    <div class="row" style="margin-top:6px;gap:12px">
+      ${L.google ? `<a class="pill rv" data-p="Google" href="${esc(L.google)}" target="_blank" rel="noopener" style="background:#fff;color:#111;border-color:#fff;padding:12px 18px">${GLOGO} Avaliar no Google Maps</a>` : ''}
+      ${L.facebook ? `<a class="pill rv" data-p="Facebook" href="${esc(L.facebook)}" target="_blank" rel="noopener" style="background:#1877F2;color:#fff;border-color:#1877F2;padding:12px 18px">${FLOGO} Recomendar no Facebook</a>` : ''}</div>
+  </div></section>`;
+}
+function bindReview(v, M) {
+  let n = 0;
+  $$('#revStars button', v).forEach(b => b.onclick = () => { n = +b.dataset.v; $$('#revStars button', v).forEach(x => x.classList.toggle('on', +x.dataset.v <= n)); $('#revSend', v).disabled = false; });
+  $('#revSend', v)?.addEventListener('click', async () => {
+    try {
+      const txt = $('#revTxt', v).value.trim();
+      const r = await api('portal_review', {}, { t: P.t, pontuacao: n, texto: txt, testemunho: $('#revOk', v).checked ? 1 : 0 });
+      $('#revStep1', v).classList.add('hide');
+      if (r.publica) { $('#revStep2', v).classList.remove('hide'); if (txt) { try { await navigator.clipboard.writeText(txt); toast('Texto copiado — basta colar no Google ou Facebook.'); } catch { } } }
+      else $('#revLow', v).classList.remove('hide');
+      P.me.avaliacao = { pontuacao: n, texto: txt };
+    } catch (e) { toast(e.message, true); }
+  });
+  $('#revCopy', v)?.addEventListener('click', () => { navigator.clipboard?.writeText(M.avaliacao.texto); toast('Texto copiado.'); });
+  $$('.rv', v).forEach(a => a.addEventListener('click', () => { api('portal_review', {}, { t: P.t, plataforma: a.dataset.p }).catch(() => { }); }));
 }
 
 /* ---------- Estrutura ---------- */
@@ -177,7 +218,7 @@ function shell() {
   document.documentElement.style.setProperty('--ac', I.cor || '#ef4444');
   document.title = I.empresa_nome + ' · Serviços de detailing';
   $('#root').innerHTML = `
-    <header class="p-top"><div class="p-wrap"><a href="#/" class="brand" style="padding:0">${I.logo ? `<div class="logo"><img src="${I.logo}" alt=""></div>` : ''}<div><b style="color:var(--paper)">${esc(I.empresa_nome)}</b><span>${esc(I.portal_horario || '')}</span></div></a>
+    <header class="p-top"><div class="p-wrap"><a href="#/" class="brand" style="padding:0">${I.logo ? `<div class="logo"><img src="${I.logo}" alt=""></div>` : ''}<div><b style="color:var(--paper)">${esc(I.empresa_nome)}</b><span>${esc(I.slogan || I.portal_horario || '')}</span></div></a>
       <nav><a href="#/" data-h="#/">Início</a><a href="#/servicos" data-h="#/servicos">Serviços</a><a href="#/marcar" data-h="#/marcar">Marcar</a><a href="#/area" data-h="#/area">${P.t ? 'A minha área' : 'Área de cliente'}</a></nav>
       <a class="pill solid" href="#/marcar" style="margin-left:8px">Marcar</a></div></header>
     <main id="pv"></main>

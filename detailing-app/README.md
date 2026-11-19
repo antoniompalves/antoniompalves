@@ -15,7 +15,7 @@ Aplicação web em **PT-PT** para gerir uma empresa de detailing automóvel: CRM
 2. **Ficheiros**: em *Gestor de ficheiros*, carregue o conteúdo desta pasta (ex.: para `public_html/gestao/`) e extraia.
 3. **Permissões**: as pastas `uploads/` e `data/` e a pasta raiz da aplicação têm de permitir escrita (normalmente 755 já basta).
 4. **PHP**: em *Selecionar versão do PHP*, escolha PHP 8.1 ou superior, com as extensões `pdo_mysql` (ou `pdo_sqlite`) ativas.
-5. Abra `https://o-seu-dominio.pt/gestao/install.php`, preencha os dados da base de dados, da empresa e do administrador. Pode também carregar **dados de demonstração**.
+5. Abra `https://o-seu-dominio.pt/gestao/install.php`, preencha os dados da base de dados, da empresa e do administrador. Em *Dados iniciais* escolha: instalação limpa, demonstração genérica, ou **demonstração AV Car Detail** (marca, logótipo, serviços e preços reais da tabela + clientes fictícios).
 6. Depois de instalar, **apague o `install.php`** do servidor.
 7. Ative o SSL (AutoSSL) e descomente as linhas de *Forçar HTTPS* no `.htaccess`.
 
@@ -59,6 +59,9 @@ Em *Administração → Cópias de segurança* descarregue um JSON com todos os 
 
 ### Cálculos automáticos
 Receita, lucro bruto, lucro operacional, lucro por trabalho e por hora, ticket médio, valores por receber, conversão de leads e de orçamentos, taxa de clientes recorrentes, receita recorrente mensal (MRR), reserva para impostos, custos de deslocação e de químicos, alertas de stock, manutenção de equipamentos e de garantias.
+
+### Avaliações no portal
+Na área pessoal do cliente há uma secção **“Avalie-nos”**: o cliente dá estrelas e um comentário (fica registado em *Avaliações & Referências*). Com 4–5 estrelas é convidado a publicar no **Google Maps** e no **Facebook** (o texto é copiado automaticamente); com 1–3 estrelas a mensagem fica só para a equipa. Os cliques nos links também ficam registados. Configure os dois links em *Definições → Empresa*.
 
 ### Perfis de utilizador
 - **Administrador** — tudo.

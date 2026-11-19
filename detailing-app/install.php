@@ -36,8 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setting_set('empresa_nome', trim($_POST['empresa']) ?: 'A Minha Empresa de Detailing');
             setting_set('app_nome', $config['app_name']);
             setting_set('empresa_email', $email);
-            seed_base(trim($_POST['aname']));
-            if (!empty($_POST['demo'])) seed_demo();
+            $demo = $_POST['demo'] ?? '';
+            if ($demo === 'av') { require __DIR__ . '/inc/demo_av.php'; seed_av(trim($_POST['aname'])); }
+            else { seed_base(trim($_POST['aname'])); if ($demo === '1') seed_demo(); }
         } catch (Throwable $e) { @unlink(__DIR__ . '/config.php'); throw $e; }
         $ok = true;
     } catch (Throwable $e) { $err = $e->getMessage(); }
@@ -71,7 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <label class="f"><span>O seu nome</span><input class="inp" name="aname" value="<?= $P('aname') ?>" required></label>
     <label class="f"><span>Email (login)</span><input class="inp" type="email" name="email" value="<?= $P('email') ?>" required></label>
     <label class="f full"><span>Palavra-passe (mín. 8)</span><input class="inp" type="password" name="apass" required minlength="8"></label>
-    <label class="switch full"><input type="checkbox" name="demo" value="1" <?= !empty($_POST['demo']) ? 'checked' : '' ?>><span>Carregar dados de demonstração (clientes, trabalhos, despesas…)</span></label>
+    <label class="f full"><span>Dados iniciais</span><select class="inp" name="demo">
+      <option value="">Só serviços e modelos de mensagem (instalação limpa)</option>
+      <option value="1" <?= ($_POST['demo'] ?? '') === '1' ? 'selected' : '' ?>>Demonstração genérica (clientes, trabalhos, despesas…)</option>
+      <option value="av" <?= ($_POST['demo'] ?? '') === 'av' ? 'selected' : '' ?>>Demonstração AV Car Detail (marca, serviços e preços reais + clientes fictícios)</option></select></label>
     <div class="full"><button class="btn pri" style="width:100%;justify-content:center;padding:12px">Instalar</button></div>
   </form>
   <script>document.querySelector('[name=driver]').dispatchEvent(new Event('change'))</script>
