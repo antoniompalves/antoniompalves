@@ -145,6 +145,66 @@ function app_schema() {
         ],
         'calc' => [['k' => 'validade', 'l' => 'Válido até', 't' => 'date'], ['k' => 'proxima', 'l' => 'Próx. manutenção', 't' => 'date'], ['k' => 'alerta', 'l' => 'Alerta', 't' => 'text']],
     ],
+    'receitas' => [
+        'label' => 'Outras Receitas', 'one' => 'Receita', 'icon' => 'download', 'group' => 'Dinheiro',
+        'tpl' => '{descricao}', 'search' => ['descricao', 'categoria'], 'sort' => 'data',
+        'fields' => [
+            fd('data', 'Data', 'date', ['def' => '@today', 'list' => 1, 'half' => 1]),
+            fd('categoria', 'Categoria', 'select', ['opts' => ['Venda de produtos', 'Vales / vouchers', 'Formação', 'Aluguer de espaço', 'Parcerias / comissões', 'Subsídios', 'Outros'], 'list' => 1, 'half' => 1]),
+            fd('descricao', 'Descrição', 'text', ['req' => 1, 'list' => 1]),
+            fd('cliente_id', 'Cliente', 'ref', ['ref' => 'clientes', 'list' => 1, 'half' => 1]),
+            fd('valor', 'Valor', 'money', ['req' => 1, 'list' => 1, 'half' => 1]),
+            fd('custo', 'Custo associado (ex.: custo do produto vendido)', 'money', ['half' => 1]),
+            fd('metodo', 'Método de pagamento', 'select', ['opts' => METODOS, 'half' => 1]),
+            fd('documento', 'Nº documento', 'text', ['half' => 1]),
+            fd('notas', 'Notas', 'textarea'),
+        ],
+        'calc' => [['k' => 'margem', 'l' => 'Margem', 't' => 'money']],
+    ],
+    'fornecedores' => [
+        'label' => 'Fornecedores', 'one' => 'Fornecedor', 'icon' => 'truck', 'group' => 'Oficina',
+        'tpl' => '{nome}', 'search' => ['nome', 'contacto', 'categoria', 'nif'],
+        'fields' => [
+            fd('nome', 'Nome', 'text', ['req' => 1, 'list' => 1]),
+            fd('categoria', 'Categoria', 'select', ['opts' => ['Químicos & ceras', 'Microfibras & acessórios', 'Equipamento', 'PPF & películas', 'Peças', 'Serviços (estofador, pintura…)', 'Outro'], 'list' => 1, 'half' => 1]),
+            fd('nif', 'NIF', 'text', ['half' => 1]),
+            fd('contacto', 'Pessoa de contacto', 'text', ['list' => 1, 'half' => 1]),
+            fd('telefone', 'Telefone', 'tel', ['list' => 1, 'half' => 1]),
+            fd('email', 'Email', 'email', ['half' => 1]),
+            fd('website', 'Website / loja online', 'text', ['half' => 1]),
+            fd('condicoes', 'Condições (prazo, portes, descontos)', 'text'),
+            fd('notas', 'Notas', 'textarea'),
+        ],
+        'calc' => [['k' => 'compras', 'l' => 'Compras (total)', 't' => 'money']],
+    ],
+    'compras' => [
+        'label' => 'Compras & Encomendas', 'one' => 'Compra', 'icon' => 'box', 'group' => 'Oficina', 'status' => 'estado',
+        'tpl' => '{documento}', 'search' => ['documento', 'notas'], 'sort' => 'data',
+        'fields' => [
+            fd('data', 'Data', 'date', ['def' => '@today', 'list' => 1, 'half' => 1]),
+            fd('estado', 'Estado', 'select', ['opts' => ['Encomendada', 'Recebida', 'Cancelada'], 'def' => 'Encomendada', 'list' => 1, 'half' => 1]),
+            fd('fornecedor_id', 'Fornecedor', 'ref', ['ref' => 'fornecedores', 'req' => 1, 'list' => 1, 'half' => 1]),
+            fd('documento', 'Nº encomenda / fatura', 'text', ['list' => 1, 'half' => 1]),
+            fd('artigo_id', 'Artigo do inventário', 'ref', ['ref' => 'inventario', 'list' => 1, 'half' => 1]),
+            fd('quantidade', 'Quantidade', 'number', ['list' => 1, 'half' => 1]),
+            fd('valor', 'Valor total (c/ IVA)', 'money', ['req' => 1, 'list' => 1, 'half' => 1]),
+            fd('criar_despesa', 'Registar como despesa ao receber', 'bool', ['def' => 1, 'half' => 1]),
+            fd('notas', 'Notas', 'textarea'),
+            fd('lancado', 'Lançado no stock', 'bool', ['hide' => 1]),
+        ],
+    ],
+    'objetivos' => [
+        'label' => 'Objetivos', 'one' => 'Objetivo', 'icon' => 'target', 'group' => 'Oficina',
+        'tpl' => '{titulo}', 'search' => ['titulo'], 'sort' => 'mes',
+        'fields' => [
+            fd('titulo', 'Objetivo', 'text', ['req' => 1, 'list' => 1, 'ph' => 'Ex.: Faturar 5.000 € em dezembro']),
+            fd('metrica', 'Métrica', 'select', ['opts' => ['Receita', 'Lucro bruto', 'Lucro operacional', 'Trabalhos concluídos', 'Ticket médio', 'Novos clientes', 'Novas leads', 'Avaliações recebidas', 'Receita recorrente (MRR)'], 'def' => 'Receita', 'list' => 1, 'half' => 1]),
+            fd('alvo', 'Meta', 'number', ['req' => 1, 'list' => 1, 'half' => 1]),
+            fd('mes', 'Mês (qualquer dia do mês)', 'date', ['def' => '@today', 'list' => 1, 'half' => 1]),
+            fd('notas', 'Plano de ação', 'textarea'),
+        ],
+        'calc' => [['k' => 'atual', 'l' => 'Atual', 't' => 'text'], ['k' => 'pct', 'l' => 'Progresso', 't' => 'pct']],
+    ],
     'faturas' => [
         'label' => 'Faturação & Recebimentos', 'one' => 'Documento', 'icon' => 'receipt', 'group' => 'Vendas', 'status' => 'estado',
         'tpl' => '{numero}', 'num' => 'fat', 'print' => 1, 'search' => ['numero', 'ref_externa', 'notas'],
@@ -395,7 +455,41 @@ function app_schema() {
         'calc' => [['k' => 'roi', 'l' => 'ROI', 't' => 'pct'], ['k' => 'cac', 'l' => 'Custo/cliente', 't' => 'money']],
     ],
     ];
+    return $S = apply_custom_schema($S);
+}
+
+/** Personalização por cliente: listas de opções editáveis e campos personalizados (definições). */
+function apply_custom_schema(array $S): array {
+    if (!function_exists('settings') || !function_exists('has_config') || !has_config()) return $S;
+    $st = settings();
+    $lists = json_decode((string)($st['listas'] ?? ''), true) ?: [];
+    foreach ($lists as $key => $opts) {
+        [$e, $k] = array_pad(explode('.', (string)$key, 2), 2, '');
+        if (!isset($S[$e]) || !is_array($opts)) continue;
+        foreach ($S[$e]['fields'] as &$f) if ($f['k'] === $k && $f['t'] === 'select' && $k !== 'estado') {
+            $o = array_values(array_unique(array_filter(array_map(fn($x) => mb_substr(trim((string)$x), 0, 80), $opts), 'strlen')));
+            if ($o) { $f['opts_base'] = $f['opts']; $f['opts'] = $o; }
+        }
+        unset($f);
+    }
+    $custom = json_decode((string)($st['campos_extra'] ?? ''), true) ?: [];
+    foreach ($custom as $c) {
+        $e = $c['e'] ?? ''; $k = preg_replace('/[^a-z0-9_]/', '', strtolower((string)($c['k'] ?? '')));
+        if (!isset($S[$e]) || !$k || !str_starts_with($k, 'cx_')) continue;
+        $t = in_array($c['t'] ?? '', ['text', 'textarea', 'number', 'money', 'date', 'bool', 'select', 'tel', 'email'], true) ? $c['t'] : 'text';
+        $f = fd($k, mb_substr((string)($c['l'] ?? $k), 0, 80), $t, ['half' => $t !== 'textarea' ? 1 : 0, 'custom' => 1] + (!empty($c['list']) ? ['list' => 1] : []));
+        if ($t === 'select') $f['opts'] = array_values(array_filter(array_map('trim', (array)($c['opts'] ?? [])), 'strlen')) ?: ['—'];
+        $S[$e]['fields'][] = $f;
+    }
     return $S;
+}
+
+/** Listas que podem ser editadas em Definições → Categorias & listas. */
+function editable_lists(): array {
+    $out = [];
+    foreach (app_schema() as $e => $E) foreach ($E['fields'] as $f)
+        if ($f['t'] === 'select' && $f['k'] !== 'estado' && empty($f['custom'])) $out["$e.{$f['k']}"] = $E['label'] . ' → ' . $f['l'];
+    return $out;
 }
 
 function schema_hash() { return substr(md5(json_encode(app_schema())), 0, 12); }

@@ -42,6 +42,10 @@ const IC = {
   shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
   db: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/>',
   globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>',
+  truck: '<path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+  card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   plus: '<path d="M12 5v14M5 12h14"/>', menu: '<path d="M3 6h18M3 12h18M3 18h18"/>', x: '<path d="M18 6 6 18M6 6l12 12"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>', download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
   upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>', print: '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
@@ -105,20 +109,20 @@ function toast(msg, err) {
 const fail = e => toast(e.message || String(e), true);
 const isAdmin = () => A.user?.role === 'admin';
 const isTec = () => A.user?.role === 'tecnico';
-const TEC_BLOCK = ['faturas', 'despesas', 'marketing', 'subscricoes', 'orcamentos', 'leads', '#/', '#/relatorios', '#/calc-precos'];
+const TEC_BLOCK = ['faturas', 'despesas', 'marketing', 'subscricoes', 'orcamentos', 'leads', 'receitas', 'objetivos', '#/', '#/relatorios', '#/calc-precos', '#/pagamentos', '#/frotas'];
 const settingsJSON = (k, d) => { try { return JSON.parse(A.S[k] || '') ?? d; } catch { return d; } };
 const today = () => A.today || iso(new Date());
 const imgURL = f => 'api.php?a=file&f=' + encodeURIComponent(f);
 
 /* ---------- Navegação ---------- */
 const NAV = [
-  ['Painel', [['#/', 'Centro de comando', 'grid'], ['#/agenda', 'Agenda', 'calendar'], ['#/quadro', 'Quadro de trabalhos', 'kanban'], ['#/rota', 'Rota do dia', 'route'], ['#/lembretes', 'Lembretes & follow-ups', 'chat']]],
-  ['Clientes', ['clientes', 'veiculos', 'leads', 'subscricoes', 'avaliacoes']],
-  ['Vendas', ['orcamentos', 'faturas', 'servicos', 'garantias', 'mensagens']],
-  ['Operação', ['trabalhos', 'marcacoes', 'inspecoes', 'equipa']],
-  ['Custos & Stock', ['despesas', 'deslocacoes', 'inventario', 'equipamentos', 'marketing']],
-  ['Ferramentas', [['#/calc-precos', 'Calculadora de preços', 'calc'], ['#/calc-quimicos', 'Custo de químicos', 'flask'], ['#/relatorios', 'Relatórios', 'chart'], ['portal.php', 'Portal do cliente ↗', 'globe'], ['#/guia', 'Guia de início', 'book']]],
-  ['Administração', [['#/definicoes', 'Definições', 'cog'], ['#/utilizadores', 'Utilizadores', 'shield'], ['#/backup', 'Cópias de segurança', 'db']]],
+  ['Painel', [['#/', 'Centro de comando', 'grid'], ['#/agenda', 'Agenda', 'calendar'], 'marcacoes', ['#/quadro', 'Quadro de trabalhos', 'kanban'], ['#/rota', 'Rota do dia', 'route']]],
+  ['Clientes', ['leads', 'clientes', 'veiculos', ['#/frotas', 'Frotas & empresas', 'truck'], 'subscricoes', ['#/lembretes', 'Lembretes & follow-ups', 'chat'], 'avaliacoes']],
+  ['Trabalho', ['trabalhos', 'inspecoes', ['#/antes-depois', 'Antes / depois', 'image'], 'garantias', 'servicos']],
+  ['Dinheiro', ['orcamentos', 'faturas', ['#/pagamentos', 'Pagamentos', 'card'], 'despesas', 'receitas', ['#/relatorios', 'Resultados & relatórios', 'chart'], 'deslocacoes']],
+  ['Oficina', ['inventario', 'equipamentos', 'fornecedores', 'compras', 'equipa', 'marketing', 'objetivos']],
+  ['Ferramentas', [['#/calc-precos', 'Calculadora de preços', 'calc'], ['#/calc-quimicos', 'Custo de químicos', 'flask'], 'mensagens', ['portal.php', 'Portal do cliente ↗', 'globe'], ['#/guia', 'Guia de início', 'book']]],
+  ['Administração', [['#/definicoes', 'Definições & dados', 'cog'], ['#/utilizadores', 'Utilizadores', 'shield']]],
 ];
 function navItems() {
   const off = settingsJSON('modulos_off', []);
@@ -137,7 +141,7 @@ function renderShell() {
       <div class="brand"><div class="logo">${S.logo ? `<img src="api.php?a=logo" alt="">` : icon('car')}</div>
         <div><b>${esc(S.app_nome)}</b><span>${esc(S.empresa_nome)}</span></div></div>
       <nav class="nav">${navItems().map(([g, items]) => `<div class="nav-g">${esc(g)}</div>` + items.map(([h, l, i]) =>
-        `<a href="${h}" ${h.startsWith('#') ? '' : 'target="_blank"'} data-h="${h}">${icon(i)}<span>${esc(l)}</span></a>`).join('')).join('')}</nav>
+        `<a href="${h}" ${h.startsWith('#') ? '' : 'target="_blank"'} data-h="${h}">${icon(i)}<span>${esc(l)}</span><b class="cnt hide" data-cnt="${esc(h.replace('#/e/', ''))}"></b></a>`).join('')).join('')}</nav>
       <div style="margin:18px 8px 0" class="small muted">
         <a href="#/conta" class="row" style="color:var(--tx2)">${icon('team', 'ic')}<span>${esc(A.user.nome || A.user.email)}</span></a>
         <a href="#" id="logout" class="row" style="color:var(--tx2);margin-top:8px">${icon('logout')}<span>Terminar sessão</span></a>
@@ -169,7 +173,7 @@ function renderShell() {
   $('#logout').onclick = async e => { e.preventDefault(); await api('logout', {}, {}).catch(() => { }); location.reload(); };
   $('#fab').onclick = e => { e.preventDefault(); quickAdd(); };
   $('#thm').onclick = toggleTheme;
-  bindSearch();
+  bindSearch(); loadBadges();
 }
 function setPage(title, sub = '', acts = '') {
   $('#pgTitle').textContent = title; $('#pgSub').innerHTML = sub; $('#pgActs').innerHTML = acts;
@@ -505,7 +509,7 @@ async function openForm(e, row = null, preset = {}) {
       const r = await api('save', { e }, data);
       const list = A.cache[e] || (A.cache[e] = []);
       const i = list.findIndex(x => +x.id === +r.row.id); if (i >= 0) list[i] = r.row; else list.unshift(r.row);
-      m.close(); toast(isNew ? E.one + ' criado.' : 'Alterações guardadas.');
+      m.close(); toast(isNew ? E.one + ' criado.' : 'Alterações guardadas.'); loadBadges();
       if (preset._after) preset._after(r.row); else router();
     } catch (err) { fail(err); $('#save', el).disabled = false; }
   };
@@ -982,7 +986,9 @@ const greet = () => { const h = new Date().getHours(); return h < 13 ? 'Bom dia'
 route(/^#\/$/, async view => {
   if (isTec()) { location.hash = '#/agenda'; return; }
   const st = A.ui.dash = A.ui.dash || { m: today().slice(0, 7) };
-  const [D] = await Promise.all([api('dashboard', { m: st.m }), load('servicos'), load('clientes', true), load('veiculos', true), load('equipa')]);
+  const [D] = await Promise.all([api('dashboard', { m: st.m }), load('servicos'), load('clientes', true), load('veiculos', true), load('equipa'), load('objetivos', true)]);
+  const goalsHTML = () => { const G = (A.cache.objetivos || []).filter(g => (g.mes || '').slice(0, 7) === st.m); if (!G.length) return '';
+    return `<div class="glass card" style="margin-bottom:14px"><h3>${icon('target')} Objetivos do mês <a href="#/e/objetivos" class="right small">Gerir →</a></h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${G.map(g => `<div><div class="row small"><b class="grow">${esc(g.titulo)}</b><span class="muted">${esc(g._c.atual)} / ${g._c.dinheiro ? money(g.alvo) : n2(g.alvo)}</span></div><div class="bar" style="margin-top:6px"><i style="width:${Math.min(100, g._c.pct || 0)}%"></i></div><div class="small muted" style="margin-top:3px">${n2(g._c.pct || 0)}% · ${esc(g.metrica)}</div></div>`).join('')}</div></div>`; };
   const m = D.m, p = D.prev;
   const delta = (a, b) => b ? `<span class="${a >= b ? 'up' : 'down'}">${a >= b ? '▲' : '▼'} ${n2(Math.abs((a - b) / b * 100))}%</span> vs mês ant.` : '';
   const pct = D.objetivo ? Math.min(100, Math.round(m.receita / D.objetivo * 100)) : 0;
@@ -1045,6 +1051,7 @@ route(/^#\/$/, async view => {
       ${D.proximas.slice(0, 7).map(a => `<div class="list-i" data-m="${a.id}" style="cursor:pointer"><span class="t">${a.data === today() ? (a.hora || '') : fdate(a.data).slice(0, 5)}</span>
         <div class="grow"><b>${esc(refLabel('clientes', a.cliente_id))}</b><div class="small muted">${esc(refLabel('veiculos', a.veiculo_id))} · ${esc(svc(a.servico_id))}</div></div>${badge(a.estado)}</div>`).join('') || '<div class="empty">Sem marcações nos próximos 7 dias.</div>'}</div>
   </div>
+  ${goalsHTML()}
   <div class="glass card" style="margin-bottom:14px"><h3>${icon('kanban')} Pipeline de trabalhos <a href="#/quadro" class="right small">Quadro →</a></h3>
     <div class="pipe">${PIPE.map((s, i) => `<a href="#/quadro"><b>${D.pipeline[s] || 0}</b><span>${s}</span><i style="background:${PC[i]}"></i></a>`).join('')}</div></div>
   <div class="grid cols-2e">
@@ -1195,8 +1202,8 @@ route(/^#\/calc-precos$/, async view => {
       <button class="btn pri" id="toSvc" style="margin-top:12px">${icon('plus')} Criar serviço com este preço</button>`;
     $('#toSvc').onclick = () => openForm('servicos', null, { preco_medio: Math.ceil(preco / mu / 5) * 5, preco_pequeno: Math.ceil(preco / mu * (+mult.Pequeno || .9) / 5) * 5, preco_grande: Math.ceil(preco / mu * (+mult.SUV || 1.25) / 5) * 5, duracao_h: v.horas, custo_produtos: v.prod });
   };
-  view.addEventListener('input', ev => { const k = ev.target.dataset.c; if (!k) return; v[k] = ev.target.type === 'checkbox' ? ev.target.checked : (k === 'tam' ? ev.target.value : +ev.target.value); calc(); });
-  view.addEventListener('change', ev => { if (ev.target.dataset.c) ev.target.dispatchEvent(new Event('input', { bubbles: true })); });
+  const calcRoot = view.firstElementChild; calcRoot.addEventListener('input', ev => { const k = ev.target.dataset.c; if (!k) return; v[k] = ev.target.type === 'checkbox' ? ev.target.checked : (k === 'tam' ? ev.target.value : +ev.target.value); calc(); });
+  calcRoot.addEventListener('change', ev => { if (ev.target.dataset.c) ev.target.dispatchEvent(new Event('input', { bubbles: true })); });
   calc();
 });
 const TAMANHOS_JS = () => A.schema.veiculos.fields.find(f => f.k === 'tamanho').opts;
@@ -1314,51 +1321,101 @@ route(/^#\/guia$/, async view => {
 route(/^#\/definicoes$/, async view => {
   if (!isAdmin()) throw new Error('Apenas administradores.');
   const S = { ...A.S };
-  setPage('Definições', 'Empresa, marca, finanças, documentos, portal e módulos', `<button class="btn pri" id="sv">${icon('check')} Guardar</button>`);
+  setPage('Definições & dados', 'Personalize a aplicação: empresa, aparência, finanças, listas, campos, mensagens e dados', `<button class="btn pri" id="sv">${icon('check')} Guardar</button>`);
   const I = (k, l, t = 'text', help = '') => `<label class="f ${t === 'textarea' ? 'full' : ''}"><span>${l}</span>${t === 'textarea' ? `<textarea class="inp" data-s="${k}">${esc(S[k])}</textarea>` : `<input class="inp" type="${t}" step="0.01" data-s="${k}" value="${esc(S[k])}">`}${help ? `<small>${help}</small>` : ''}</label>`;
   const B = (k, l) => `<label class="switch"><input type="checkbox" data-s="${k}" ${S[k] === '1' ? 'checked' : ''}><span>${l}</span></label>`;
   const off = settingsJSON('modulos_off', []);
   const mods = [...Object.entries(A.schema).map(([k, E]) => [k, E.label]), ['#/calc-precos', 'Calculadora de preços'], ['#/calc-quimicos', 'Custo de químicos'], ['#/relatorios', 'Relatórios'], ['portal.php', 'Portal do cliente (menu)']];
   const mult = settingsJSON('mult_tamanho', {});
-  view.innerHTML = `<div class="grid cols-2e">
-    <div class="glass card"><h3>${icon('users')} Empresa</h3><div class="form">
-      ${I('empresa_nome', 'Nome comercial')}${I('empresa_nif', 'NIF')}<div class="full">${I('empresa_morada', 'Morada')}</div>${I('empresa_telefone', 'Telefone')}${I('empresa_email', 'Email', 'email')}${I('empresa_web', 'Website / Instagram')}${I('empresa_iban', 'IBAN (para pagamentos)')}
+  const TABS = [['emp', 'Empresa'], ['apa', 'Aparência'], ['fin', 'Finanças & operação'], ['lst', 'Categorias & listas'], ['cmp', 'Campos personalizados'], ['msg', 'Mensagens & termos'], ['dat', 'Dados & cópias'], ['sob', 'Sobre']];
+  const tab = A.ui.setTab || 'emp';
+  view.innerHTML = `<div class="tabs">${TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div><div class="grid cols-2e" id="setGrid">
+    <div class="glass card" data-p="emp"><h3>${icon('users')} Empresa</h3><div class="form">
+      ${I('empresa_nome', 'Nome comercial')}${I('empresa_responsavel', 'Responsável / proprietário')}${I('empresa_nif', 'NIF')}<div class="full">${I('empresa_morada', 'Morada')}</div>${I('empresa_telefone', 'Telefone')}${I('empresa_email', 'Email', 'email')}${I('empresa_web', 'Website / Instagram')}${I('empresa_iban', 'IBAN (para pagamentos)')}
       <div class="full">${I('slogan', 'Slogan (ex.: Restauro | Detalhe Auto)')}</div>
       <div class="full">${I('link_avaliacao', 'Link para avaliações no Google Maps', 'url', 'Google Business Profile → “Pedir avaliações” → copiar link. Usado no portal e em {link_avaliacao}.')}</div>
       <div class="full">${I('link_facebook', 'Link para avaliações no Facebook', 'url', 'Página do Facebook → separador Avaliações / Recomendações. Usado no portal e em {link_facebook}.')}</div></div></div>
-    <div class="glass card"><h3>${icon('sparkle')} Marca & aplicação (white-label)</h3><div class="form">
+    <div class="glass card" data-p="apa"><h3>${icon('sparkle')} Marca & aplicação (white-label)</h3><div class="form">
       ${I('app_nome', 'Nome da aplicação')}<label class="f"><span>Tema por defeito</span><select class="inp" data-s="tema"><option value="escuro" ${S.tema !== 'claro' ? 'selected' : ''}>Escuro</option><option value="claro" ${S.tema === 'claro' ? 'selected' : ''}>Claro</option></select></label>
       <label class="f"><span>Cor principal</span><input class="inp" type="color" data-s="cor" value="${esc(S.cor)}" style="height:42px;padding:4px"></label>
       <div class="full"><span class="small muted">Logótipo</span><div class="row" style="margin-top:6px"><div class="brand"><div class="logo" id="lgPrev">${S.logo ? `<img src="api.php?a=logo&t=${Date.now()}">` : icon('car')}</div></div>
         <label class="btn sm">${icon('upload')} Carregar logótipo<input type="file" accept="image/*" hidden id="lgF"></label>${S.logo ? '<button class="btn sm ghost danger" id="lgX">Remover</button>' : ''}</div>
         <small class="muted">Use PNG com fundo transparente.</small></div>${B('logo_inverter', 'Logótipo branco — inverter para preto nos documentos impressos')}</div></div>
-    <div class="glass card"><h3>${icon('wallet')} Finanças & cálculos</h3><div class="form">
+    <div class="glass card" data-p="fin"><h3>${icon('wallet')} Finanças & cálculos</h3><div class="form">
       ${I('iva', 'Taxa de IVA (%)', 'number')}${B('iva_isento', 'Isento de IVA (art.º 53.º CIVA)')}
       ${I('reserva_impostos', 'Reserva para impostos (% do lucro)', 'number', 'IRS/IRC + Seg. Social estimados.')}${I('custo_km', 'Custo por km (€)', 'number', 'Ex.: 0,40 €/km.')}
       ${I('custo_hora', 'Custo/hora padrão de mão de obra (€)', 'number')}${I('margem_alvo', 'Margem alvo (%)', 'number')}
       ${I('custos_fixos', 'Custos fixos mensais (€)', 'number', 'Renda, seguros, software, contabilidade…')}${I('horas_mes', 'Horas faturáveis por mês', 'number')}
       ${I('objetivo_mensal', 'Objetivo de receita mensal (€)', 'number')}
       <div class="full"><span class="small muted">Multiplicadores por tamanho (calculadora)</span><div class="row" style="margin-top:6px">${TAMANHOS_JS().map(t => `<label class="f" style="width:110px"><span>${t}</span><input class="inp" type="number" step="0.05" data-mult="${esc(t)}" value="${mult[t] ?? 1}"></label>`).join('')}</div></div></div></div>
-    <div class="glass card"><h3>${icon('file')} Documentos</h3><div class="form">
+    <div class="glass card" data-p="msg"><h3>${icon('file')} Documentos & termos</h3><div class="form">
       ${I('prefixo_orc', 'Prefixo orçamentos')}${I('prefixo_trab', 'Prefixo ordens de trabalho')}${I('prefixo_fat', 'Prefixo docs. faturação')}${I('prefixo_gar', 'Prefixo certificados')}${I('validade_dias', 'Validade dos orçamentos (dias)', 'number')}
       ${I('termos_garantia', 'Condições da garantia cerâmica (certificado)', 'textarea')}
       ${I('rodape_orc', 'Rodapé / condições do orçamento', 'textarea')}${I('chk_ext', 'Checklist padrão de inspeção — exterior (uma por linha)', 'textarea')}${I('chk_int', 'Checklist padrão de inspeção — interior', 'textarea')}</div></div>
-    <div class="glass card"><h3>${icon('globe')} Portal do cliente</h3><div class="form">
+    <div class="glass card" data-p="msg"><h3>${icon('globe')} Portal do cliente</h3><div class="form">
       ${B('portal_ativo', 'Portal ativo')}${B('portal_precos', 'Mostrar preços “a partir de”')}
       <div class="full">${I('portal_titulo', 'Título principal')}</div>${I('portal_texto', 'Texto de apresentação', 'textarea')}
       ${I('portal_horario', 'Horário')}${I('portal_whatsapp', 'WhatsApp (nº)', 'tel')}<div class="full">${I('portal_instagram', 'Instagram (URL)', 'url')}</div>
       <div class="full note">Endereço público: <a href="portal.php" target="_blank">${esc(new URL('portal.php', location.href).href)}</a></div></div></div>
-    <div class="glass card"><h3>${icon('grid')} Módulos ativos</h3><p class="small muted">Desative módulos que o cliente não usa (os dados são mantidos).</p>
+    <div class="glass card" data-p="apa"><h3>${icon('grid')} Módulos ativos</h3><p class="small muted">Desative módulos que o cliente não usa (os dados são mantidos).</p>
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:4px">${mods.map(([k, l]) => `<label class="switch"><input type="checkbox" data-mod="${esc(k)}" ${off.includes(k) ? '' : 'checked'}><span class="small">${esc(l)}</span></label>`).join('')}</div></div>
+    <div class="glass card full-span" data-p="lst"><h3>${icon('menu')} Categorias & listas</h3><p class="small muted">Edite as opções das listas (uma por linha). Os estados dos fluxos (ex.: estados dos trabalhos) não são editáveis porque comandam os cálculos.</p>
+      <div class="row" style="margin-bottom:10px"><select class="inp" id="lstSel" style="max-width:420px">${Object.entries(A.listas || {}).map(([k, l]) => `<option value="${esc(k)}">${esc(l)}</option>`).join('')}</select><button class="btn sm ghost" id="lstReset">Repor original</button></div>
+      <textarea class="inp" id="lstTxt" style="min-height:220px"></textarea><input type="hidden" data-s="listas" id="lstJson"></div>
+    <div class="glass card full-span" data-p="cmp"><h3>${icon('plus')} Campos personalizados</h3><p class="small muted">Acrescente campos próprios a qualquer módulo (ex.: “Código da chave” nos veículos, “Instagram” nos clientes). Aparecem nos formulários, na exportação CSV e, se quiser, na lista.</p>
+      <div id="cxList"></div><button class="btn sm" id="cxAdd" style="margin-top:8px">${icon('plus')} Novo campo</button><input type="hidden" data-s="campos_extra" id="cxJson"></div>
+    <div class="glass card" data-p="msg"><h3>${icon('chat')} Modelos de mensagem</h3><p class="muted small">Textos de WhatsApp/SMS/Email (confirmações, lembretes, avaliações…) com variáveis como {primeiro_nome}, {veiculo}, {data}.</p><a class="btn" href="#/e/mensagens">Gerir modelos de mensagem →</a></div>
+    <div class="glass card" data-p="dat"><h3>${icon('download')} Cópia de segurança</h3><p class="muted small">Descarrega todos os registos e definições num ficheiro JSON. As fotos ficam na pasta <code>uploads/</code> — inclua-a no backup do cPanel.</p><a class="btn pri" href="api.php?a=backup">${icon('download')} Descarregar cópia</a>
+      <h3 style="margin-top:18px">${icon('upload')} Restaurar</h3><p class="muted small">⚠️ Substitui todos os dados atuais.</p><input type="file" accept=".json" class="inp" id="rstF"><button class="btn danger" id="rstGo" style="margin-top:8px">Restaurar</button></div>
+    <div class="glass card" data-p="dat"><h3>${icon('trash')} Remover dados de demonstração</h3><p class="muted small">Apaga clientes, viaturas, trabalhos, marcações, documentos, despesas e restantes movimentos para começar a usar com dados reais. Mantém as definições, serviços, modelos de mensagem, equipa, fornecedores, inventário e equipamentos.</p>
+      <label class="switch"><input type="checkbox" id="wipeAll"><span class="small">Apagar também equipa, fornecedores, inventário e equipamentos</span></label>
+      <button class="btn danger" id="wipe" style="margin-top:10px">Remover dados</button></div>
+    <div class="glass card" data-p="sob"><h3>${icon('info')} Sobre</h3>
+      ${[['Aplicação', esc(A.S.app_nome)], ['Versão', esc(A.version)], ['Empresa', esc(A.S.empresa_nome)], ['Base de dados', esc(A.db || '')], ['PHP', esc(A.php || '')], ['Módulos', Object.keys(A.schema).length + ' + ferramentas'], ['Idioma', 'Português (Portugal)']].map(([a, b]) => `<div class="list-i"><span class="muted grow">${a}</span><b>${b}</b></div>`).join('')}
+      <p class="small muted" style="margin-top:12px">Faturação: controlo interno de recebimentos — as faturas legais devem ser emitidas em software certificado pela AT. Dados guardados no seu próprio servidor (RGPD).</p></div>
   </div>`;
+  const showTab = k => { A.ui.setTab = k; $$('.tab', view).forEach(b => b.classList.toggle('on', b.dataset.tab === k)); $$('[data-p]', view).forEach(p => p.classList.toggle('hide', p.dataset.p !== k)); };
+  $$('.tab', view).forEach(b => b.onclick = () => showTab(b.dataset.tab)); showTab(tab);
+  // listas editáveis
+  const LST = settingsJSON('listas', {}); const baseOpts = k => { const [e, f] = k.split('.'); const F = A.schema[e]?.fields.find(x => x.k === f); return F?.opts_base || F?.opts || []; };
+  const curOpts = k => LST[k] || A.schema[k.split('.')[0]].fields.find(x => x.k === k.split('.')[1])?.opts || [];
+  const syncL = () => { $('#lstJson').value = JSON.stringify(LST); };
+  const showL = () => { $('#lstTxt').value = curOpts($('#lstSel').value).join('\n'); };
+  $('#lstSel').onchange = showL; showL(); syncL();
+  $('#lstTxt').oninput = () => { const v = $('#lstTxt').value.split('\n').map(x => x.trim()).filter(Boolean); LST[$('#lstSel').value] = v; syncL(); };
+  $('#lstReset').onclick = () => { delete LST[$('#lstSel').value]; syncL(); $('#lstTxt').value = baseOpts($('#lstSel').value).join('\n'); toast('Guarde para repor a lista original.'); };
+  // campos personalizados
+  const CX = settingsJSON('campos_extra', []); const TY = [['text', 'Texto'], ['textarea', 'Texto longo'], ['number', 'Número'], ['money', 'Valor (€)'], ['date', 'Data'], ['bool', 'Sim/Não'], ['select', 'Lista de opções'], ['tel', 'Telefone'], ['email', 'Email']];
+  const slug = t => 'cx_' + t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 30);
+  const drawCX = () => {
+    $('#cxList').innerHTML = CX.map((c, i) => `<div class="line" data-i="${i}" style="grid-template-columns:1.2fr 1.4fr 1fr 1.4fr auto 34px;margin-bottom:6px">
+      <select class="inp" data-c="e">${Object.entries(A.schema).map(([k, E]) => `<option value="${k}" ${c.e === k ? 'selected' : ''}>${esc(E.label)}</option>`).join('')}</select>
+      <input class="inp" data-c="l" value="${esc(c.l || '')}" placeholder="Nome do campo"><select class="inp" data-c="t">${TY.map(([k, l]) => `<option value="${k}" ${c.t === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+      <input class="inp" data-c="opts" value="${esc((c.opts || []).join(', '))}" placeholder="Opções (separadas por vírgula)" ${c.t === 'select' ? '' : 'disabled'}>
+      <label class="switch small"><input type="checkbox" data-c="list" ${c.list ? 'checked' : ''}><span>Na lista</span></label><button class="btn icon ghost" data-rm>${icon('x')}</button></div>`).join('') || '<p class="small muted">Ainda não há campos personalizados.</p>';
+    $('#cxJson').value = JSON.stringify(CX);
+    $$('#cxList [data-i]').forEach(r => { const i = +r.dataset.i;
+      $$('[data-c]', r).forEach(x => x.onchange = x.oninput = () => { const k = x.dataset.c; CX[i][k] = k === 'list' ? x.checked : k === 'opts' ? x.value.split(',').map(s => s.trim()).filter(Boolean) : x.value;
+        if (k === 'l' && !CX[i].fixed) CX[i].k = slug(x.value); if (k === 't') drawCX(); else $('#cxJson').value = JSON.stringify(CX); });
+      $('[data-rm]', r).onclick = () => { CX.splice(i, 1); drawCX(); }; });
+  };
+  CX.forEach(c => c.fixed = true); drawCX();
+  $('#cxAdd').onclick = () => { CX.push({ e: 'clientes', l: '', k: '', t: 'text', list: false }); drawCX(); };
+  // dados
+  $('#rstGo').onclick = async () => { const f = $('#rstF').files[0]; if (!f) return toast('Escolha um ficheiro.', true);
+    if (!await confirmBox('Todos os dados atuais serão substituídos. Continuar?', 'Restaurar')) return;
+    try { await api('restore', {}, JSON.parse(await f.text())); A.cache = {}; toast('Dados restaurados.'); location.hash = '#/'; } catch (er) { fail(er); } };
+  $('#wipe').onclick = async () => { if (!await confirmBox('Apagar os dados de demonstração? Faça antes uma cópia de segurança. Esta ação não pode ser anulada.', 'Apagar dados')) return;
+    try { await api('wipe', {}, { tudo: $('#wipeAll').checked ? 1 : 0 }); A.cache = {}; toast('Dados removidos. Pode começar a usar com dados reais.'); location.hash = '#/'; } catch (er) { fail(er); } };
   $('#lgF').onchange = async ev => { try { const f = await uploadImage(ev.target.files[0]); await api('settings', {}, { logo: f }); A.S.logo = f; toast('Logótipo atualizado.'); renderShell(); router(); } catch (er) { fail(er); } };
   $('#lgX')?.addEventListener('click', async () => { await api('settings', {}, { logo: '' }); A.S.logo = ''; renderShell(); router(); });
   $('#sv').onclick = async () => {
     const out = {};
     $$('[data-s]', view).forEach(i => out[i.dataset.s] = i.type === 'checkbox' ? (i.checked ? '1' : '0') : i.value);
     out.modulos_off = JSON.stringify($$('[data-mod]', view).filter(i => !i.checked).map(i => i.dataset.mod));
+    if (JSON.parse(out.campos_extra || '[]').some(c => !c.l || !c.k)) return toast('Dê um nome a todos os campos personalizados.', true);
     const m = {}; $$('[data-mult]', view).forEach(i => m[i.dataset.mult] = +i.value || 1); out.mult_tamanho = JSON.stringify(m);
-    try { await api('settings', {}, out); Object.assign(A.S, out); toast('Definições guardadas.'); renderShell(); router(); } catch (er) { fail(er); }
+    try { await api('settings', {}, out); toast('Definições guardadas.'); await boot(); } catch (er) { fail(er); }
   };
 });
 
@@ -1389,6 +1446,7 @@ route(/^#\/utilizadores$/, async view => {
 /* ---------- Cópias de segurança ---------- */
 route(/^#\/backup$/, async view => {
   if (!isAdmin()) throw new Error('Apenas administradores.');
+  A.ui.setTab = 'dat'; location.replace('#/definicoes'); return;
   setPage('Cópias de segurança', 'Exportar e restaurar todos os dados');
   view.innerHTML = `<div class="grid cols-2e"><div class="glass card"><h3>${icon('download')} Exportar</h3><p class="muted">Descarrega um ficheiro JSON com todos os registos e definições (as fotos ficam na pasta <code>uploads/</code> do servidor — inclua-a no backup do cPanel).</p>
     <a class="btn pri" href="api.php?a=backup">${icon('download')} Descarregar cópia</a></div>
@@ -1505,6 +1563,11 @@ function socialExport(job) {
   draw();
 }
 
+/* ---------- Contadores no menu ---------- */
+async function loadBadges() {
+  try { const b = await api('badges'); Object.entries(b).forEach(([k, n]) => { const el = $(`[data-cnt="${CSS.escape(k)}"]`); if (el) { el.textContent = n; el.classList.toggle('hide', !n); } }); } catch { }
+}
+
 /* ---------- Pesquisa global ---------- */
 function bindSearch() {
   const q = $('#gq'), box = $('#gr'), gs = $('#gs');
@@ -1559,6 +1622,78 @@ route(/^#\/rota$/, async view => {
   $$('[data-id]', view).forEach(b => b.onclick = () => openForm('marcacoes', byId('marcacoes', b.dataset.id)));
 });
 
+
+/* ---------- Frotas & empresas ---------- */
+route(/^#\/frotas$/, async view => {
+  await Promise.all(['clientes', 'veiculos', 'trabalhos', 'faturas', 'subscricoes'].map(e => load(e, true)));
+  const F = A.cache.clientes.filter(c => ['Frota', 'Empresa', 'Stand'].includes(c.tipo));
+  setPage('Frotas & empresas', `${F.length} contas`, `<button class="btn pri" id="nf">${icon('plus')}<span class="btn-txt-m">Conta de frota</span></button>`);
+  const rows = F.map(c => { const vs = A.cache.veiculos.filter(v => +v.cliente_id === +c.id), js = A.cache.trabalhos.filter(j => +j.cliente_id === +c.id && j.estado === 'Concluído');
+    const sub = A.cache.subscricoes.find(x => +x.cliente_id === +c.id && x.estado === 'Ativa');
+    return { c, vs, n: js.length, rec: js.reduce((s, j) => s + (+j.valor || 0), 0), div: +c._c?.em_divida || 0, last: js.map(j => j.data).sort().pop(), sub }; });
+  view.innerHTML = `<div class="grid kpis" style="margin-bottom:14px"><div class="glass kpi"><div class="l">Contas</div><div class="v">${F.length}</div></div>
+    <div class="glass kpi k-vio"><div class="l">Viaturas em frota</div><div class="v">${rows.reduce((s, r) => s + r.vs.length, 0)}</div></div>
+    <div class="glass kpi k-ok"><div class="l">Receita total</div><div class="v">${money(rows.reduce((s, r) => s + r.rec, 0))}</div></div>
+    <div class="glass kpi k-bad"><div class="l">Em dívida</div><div class="v">${money(rows.reduce((s, r) => s + r.div, 0))}</div></div></div>
+    ${rows.map(r => `<div class="glass card" style="margin-bottom:10px"><div class="row"><span class="avatar">${icon('truck')}</span><div class="grow" style="min-width:200px"><b style="font-size:15px">${esc(r.c.nome)}</b> <span class="badge t-mut">${esc(r.c.tipo)}</span>
+      <div class="small muted">${esc([r.c.telefone, r.c.email, r.c.nif && 'NIF ' + r.c.nif].filter(Boolean).join(' · '))}</div></div>
+      <div class="row" style="gap:18px"><div><div class="tiny">Viaturas</div><b>${r.vs.length}</b></div><div><div class="tiny">Serviços</div><b>${r.n}</b></div><div><div class="tiny">Receita</div><b>${money(r.rec)}</b></div><div><div class="tiny">Em dívida</div><b class="${r.div ? 'down' : ''}">${money(r.div)}</b></div></div>
+      <a class="btn sm" href="#/cliente/${r.c.id}">Abrir ficha</a></div>
+      <div class="row small" style="margin-top:10px;gap:6px">${r.vs.map(v => `<span class="badge t-mut">${esc(v.marca)} ${esc(v.modelo)} · ${esc(v.matricula || '')}</span>`).join('')}${r.sub ? `<span class="badge t-ok">Plano: ${esc(r.sub.plano)}</span>` : ''}<span class="muted right">Último serviço: ${fdate(r.last)}</span></div></div>`).join('')
+      || '<div class="empty">Sem contas de frota. Crie um cliente com o tipo “Frota”, “Empresa” ou “Stand”.</div>'}`;
+  $('#nf').onclick = () => openForm('clientes', null, { tipo: 'Frota' });
+});
+
+/* ---------- Galeria antes / depois ---------- */
+route(/^#\/antes-depois$/, async view => {
+  await Promise.all(['clientes', 'veiculos', 'servicos'].map(e => load(e)));
+  const jobs = (await load('trabalhos', true)).filter(j => jparse(j.fotos).length);
+  const st = A.ui.ba = A.ui.ba || { q: '', t: '' };
+  setPage('Antes / depois', `${jobs.length} trabalhos com fotos`);
+  const draw = () => {
+    const L = jobs.filter(j => (!st.q || [refLabel('clientes', j.cliente_id), refLabel('veiculos', j.veiculo_id), refLabel('servicos', j.servico_id)].join(' ').toLowerCase().includes(st.q.toLowerCase()))
+      && (!st.t || jparse(j.fotos).some(f => f.tipo === st.t)));
+    $('#gal').innerHTML = L.map(j => { const F = jparse(j.fotos), a = F.find(f => f.tipo === 'Antes') || F[0], d = F.find(f => f.tipo === 'Depois') || F[1];
+      return `<div class="glass ba"><div class="ba-img">${a ? `<div class="ph"><img src="${imgURL(a.f)}" loading="lazy"><span class="tag">${esc(a.tipo || 'Foto')}</span></div>` : ''}${d && d !== a ? `<div class="ph"><img src="${imgURL(d.f)}" loading="lazy"><span class="tag depois">${esc(d.tipo || 'Foto')}</span></div>` : ''}</div>
+        <div style="padding:12px"><b>${esc(refLabel('veiculos', j.veiculo_id))}</b><div class="small muted">${esc(refLabel('clientes', j.cliente_id))} · ${esc(refLabel('servicos', j.servico_id))} · ${fdate(j.data)} · ${F.length} fotos</div>
+        <div class="row" style="margin-top:8px"><button class="btn sm" data-job="${j.id}">Abrir trabalho</button><button class="btn sm pri" data-soc="${j.id}">${icon('upload')} Exportar p/ redes</button></div></div></div>`; }).join('')
+      || '<div class="empty">Sem fotos. Carregue fotos “Antes” e “Depois” em cada trabalho.</div>';
+    $$('[data-job]', view).forEach(b => b.onclick = () => openForm('trabalhos', byId('trabalhos', b.dataset.job)));
+    $$('[data-soc]', view).forEach(b => b.onclick = () => socialExport(byId('trabalhos', b.dataset.soc)));
+    $$('.ba img', view).forEach(i => i.onclick = () => lightbox(i.src));
+  };
+  view.innerHTML = `<div class="row" style="margin-bottom:12px"><div class="search">${icon('search')}<input class="inp" id="q" placeholder="Pesquisar cliente, viatura, serviço…" value="${esc(st.q)}"></div>
+    <div class="chips">${['', 'Antes', 'Depois', 'Dano', 'Portfólio'].map(t => `<button class="chip ${st.t === t ? 'on' : ''}" data-t="${t}">${t || 'Todas'}</button>`).join('')}</div></div><div class="grid" id="gal" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))"></div>`;
+  $('#q').oninput = ev => { st.q = ev.target.value; draw(); };
+  $$('[data-t]').forEach(b => b.onclick = () => { st.t = b.dataset.t; $$('[data-t]').forEach(x => x.classList.toggle('on', x === b)); draw(); });
+  draw();
+});
+
+/* ---------- Pagamentos (todos os recebimentos) ---------- */
+route(/^#\/pagamentos$/, async view => {
+  await load('clientes');
+  const fat = await load('faturas', true), rec = await load('receitas', true);
+  const st = A.ui.pg = A.ui.pg || { from: today().slice(0, 8) + '01', to: today() };
+  const P = [];
+  fat.filter(f => f.estado !== 'Anulada').forEach(f => { const L = jparse(f.pagamentos); (L.length ? L : (+f.valor_pago ? [{ d: f.data_pagamento || f.data, v: f.valor_pago, m: f.metodo }] : []))
+    .forEach(p => P.push({ d: p.d, v: +p.v || 0, m: p.m || 'Não indicado', n: p.n || '', doc: f.ref_externa || f.numero, cli: refLabel('clientes', f.cliente_id), e: 'faturas', id: f.id })); });
+  rec.forEach(r => P.push({ d: r.data, v: +r.valor || 0, m: r.metodo || 'Não indicado', n: r.categoria, doc: r.descricao, cli: refLabel('clientes', r.cliente_id), e: 'receitas', id: r.id }));
+  const L = P.filter(p => p.d >= st.from && p.d <= st.to).sort((a, b) => b.d.localeCompare(a.d));
+  const by = {}; L.forEach(p => by[p.m] = (by[p.m] || 0) + p.v);
+  setPage('Pagamentos', `${fdate(st.from)} – ${fdate(st.to)}`, `<button class="btn ghost" id="csv">${icon('download')}<span class="btn-txt-m">CSV</span></button>`);
+  view.innerHTML = `<div class="row" style="margin-bottom:12px"><label class="f"><span>De</span><input class="inp" type="date" id="pf" value="${st.from}"></label><label class="f"><span>Até</span><input class="inp" type="date" id="pt" value="${st.to}"></label></div>
+    <div class="grid kpis" style="margin-bottom:14px"><div class="glass kpi k-ok"><div class="l">Total recebido</div><div class="v">${money(L.reduce((s, p) => s + p.v, 0))}</div><div class="s">${L.length} pagamentos</div></div>
+      ${Object.entries(by).sort((a, b) => b[1] - a[1]).map(([m, v]) => `<div class="glass kpi"><div class="l">${esc(m)}</div><div class="v">${money(v)}</div></div>`).join('')}</div>
+    <div class="glass tbl-wrap"><table class="tbl"><thead><tr><th>Data</th><th>Cliente</th><th>Documento</th><th>Método</th><th>Nota</th><th class="num">Valor</th></tr></thead><tbody>
+    ${L.map((p, i) => `<tr data-i="${i}"><td>${fdate(p.d)}</td><td>${esc(p.cli)}</td><td>${esc(p.doc)}</td><td>${esc(p.m)}</td><td class="muted">${esc(p.n)}</td><td class="num"><b>${money(p.v)}</b></td></tr>`).join('') || '<tr><td colspan="6" class="muted">Sem pagamentos no período.</td></tr>'}</tbody></table></div>`;
+  const go = () => { st.from = $('#pf').value; st.to = $('#pt').value; router(); };
+  $('#pf').onchange = go; $('#pt').onchange = go;
+  $$('tr[data-i]', view).forEach(tr => tr.onclick = () => { const p = L[+tr.dataset.i]; openForm(p.e, byId(p.e, p.id)); });
+  $('#csv').onclick = () => { const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const blob = new Blob(['﻿' + [['Data', 'Cliente', 'Documento', 'Método', 'Nota', 'Valor'].map(q).join(';'), ...L.map(p => [p.d, p.cli, p.doc, p.m, p.n, String(p.v).replace('.', ',')].map(q).join(';'))].join('\r\n')], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `pagamentos-${st.from}-${st.to}.csv`; a.click(); };
+});
+
 /* ---------- Tema claro / escuro ---------- */
 function applyTheme() { let t; try { t = localStorage.getItem('dp_theme'); } catch { } t = t || (A.S.tema === 'claro' ? 'light' : 'dark'); document.documentElement.dataset.theme = t; }
 function toggleTheme() { const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; try { localStorage.setItem('dp_theme', t); } catch { } applyTheme(); }
@@ -1585,7 +1720,7 @@ async function boot() {
   try { b = await api('boot'); } catch (e) { $('#root').innerHTML = `<div class="login"><div class="glass box"><h1>Erro</h1><p>${esc(e.message)}</p></div></div>`; return; }
   A.brand = b.brand;
   if (!b.auth) return showLogin('', b.brand);
-  Object.assign(A, { user: b.user, csrf: b.csrf, S: b.settings, schema: b.schema, version: b.version, today: b.today, cache: {} });
+  Object.assign(A, { user: b.user, csrf: b.csrf, S: b.settings, schema: b.schema, listas: b.listas_editaveis, version: b.version, php: b.php, db: b.db, today: b.today, cache: {} });
   applyTheme(); renderShell();
   if (!window._routerBound) { addEventListener('hashchange', router); window._routerBound = true; }
   router();

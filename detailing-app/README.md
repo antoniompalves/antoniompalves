@@ -43,19 +43,21 @@ Em *Administração → Cópias de segurança* descarregue um JSON com todos os 
 
 ---
 
-## Módulos
+## Módulos (menu)
 
-**Painel** — centro de comando (resumo do dia, ações rápidas, KPIs, gráfico de 12 meses, pipeline, alertas), agenda (mês/semana/dia/lista, folha do dia), quadro kanban com cronómetros, rota do dia, lembretes & follow-ups com textos prontos (WhatsApp/SMS/Email).
+**Painel** — Centro de comando (resumo do dia, ações rápidas, KPIs, objetivos do mês, gráfico de 12 meses, pipeline, alertas) · Agenda (mês/semana/dia/lista, folha do dia) · Marcações (conflitos, sinais, faltas) · Quadro de trabalhos (kanban com cronómetros) · Rota do dia.
 
-**Clientes** — CRM (etiquetas, visitas, total gasto, em dívida, faltas), veículos, leads, subscrições (MRR, visitas incluídas/usadas), avaliações & referências.
+**Clientes** — Leads · Clientes (etiquetas, visitas, total gasto, em dívida, faltas, link do portal) · Veículos · Frotas & empresas · Subscrições (MRR, visitas incluídas/usadas) · Lembretes & follow-ups (textos prontos WhatsApp/SMS/Email) · Avaliações & referências.
 
-**Vendas** — orçamentos (construtor com serviços do catálogo, preço por tamanho, deslocação, desconto %/€, IVA, folha para o cliente em PDF), faturação & recebimentos (pagamentos parciais, sinais creditados automaticamente, gorjetas), serviços & extras (preços por tipo de veículo, o que inclui, fotos para o portal), garantias cerâmicas (certificado com plano de manutenção), modelos de mensagem.
+**Trabalho** — Trabalhos & lucro (ficha de intervenção por serviço com notas, fotos, box, cronologia, ordem de trabalho, guia de saída) · Fichas de inspeção (mapa de danos, assinatura que bloqueia) · Antes / depois (galeria + exportação para Instagram) · Garantias cerâmicas (certificado + plano de manutenção) · Serviços & extras.
 
-**Operação** — trabalhos & lucro (checklist, fotos antes/depois, box, técnico, cronologia de estados, cronómetro, ordem de trabalho, guia de saída, exportação antes/depois para Instagram), marcações (avisos de conflito, sinal), fichas de inspeção (mapa de danos tocável, assinatura do cliente que bloqueia o registo), equipa.
+**Dinheiro** — Orçamentos · Faturação & recebimentos (pagamentos parciais, sinais, gorjetas) · Pagamentos (todos os recebimentos por método, CSV) · Despesas · Outras receitas (vendas de produtos, vales…) · Resultados & relatórios (P&L, fluxo de caixa, por serviço/técnico/origem/cliente/mês) · Quilómetros.
 
-**Custos & stock** — despesas, quilómetros, inventário (alertas de stock, custo por utilização), equipamentos (manutenção preventiva), marketing (ROI, custo por cliente).
+**Oficina** — Inventário (alertas, custo por uso) · Equipamentos (manutenção) · Fornecedores · Compras & encomendas (ao receber soma ao stock e regista a despesa) · Equipa · Marketing (ROI) · Objetivos (receita, lucro, trabalhos, clientes, avaliações… com progresso automático).
 
-**Ferramentas** — calculadora de preços, calculadora de custo de químicos, relatórios (resultados, fluxo de caixa, por serviço/técnico/origem/cliente/mês), guia de início.
+**Ferramentas** — Calculadora de preços · Custo de químicos · Modelos de mensagem · Portal do cliente · Guia de início.
+
+**Definições & dados** (separadores) — Empresa (incl. responsável, links de avaliação) · Aparência (marca, logótipo, cor, tema, módulos ativos) · Finanças & operação · Categorias & listas (editar as opções de qualquer lista) · Campos personalizados (acrescentar campos a qualquer módulo) · Mensagens & termos · Dados & cópias (backup, restauro, remover dados de demonstração) · Sobre.
 
 ### Cálculos automáticos
 Receita, lucro bruto, lucro operacional, lucro por trabalho e por hora, ticket médio, valores por receber, conversão de leads e de orçamentos, taxa de clientes recorrentes, receita recorrente mensal (MRR), reserva para impostos, custos de deslocação e de químicos, alertas de stock, manutenção de equipamentos e de garantias.

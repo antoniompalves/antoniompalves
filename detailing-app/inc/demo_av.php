@@ -14,7 +14,7 @@ function seed_av(string $ownerName): void {
     $logo = 'av_logo_' . bin2hex(random_bytes(4)) . '.png';
     @copy(APP_ROOT . '/demo/av-car-detail/logo.png', APP_ROOT . '/uploads/' . $logo);
     foreach ([
-        'empresa_nome' => 'AV Car Detail', 'app_nome' => 'AV Car Detail', 'slogan' => 'Restauro | Detalhe Auto',
+        'empresa_nome' => 'AV Car Detail', 'empresa_responsavel' => $owner, 'app_nome' => 'AV Car Detail', 'slogan' => 'Restauro | Detalhe Auto',
         'cor' => '#e11d2a', 'tema' => 'escuro', 'logo' => is_file(APP_ROOT . '/uploads/' . $logo) ? $logo : '', 'logo_inverter' => '1',
         'iva_isento' => '1', 'reserva_impostos' => '25', 'custo_hora' => '10', 'custos_fixos' => '650', 'horas_mes' => '150', 'objetivo_mensal' => '4500', 'margem_alvo' => '45',
         'empresa_telefone' => '912 000 000', 'empresa_email' => 'geral@avcardetail.pt', 'empresa_web' => 'instagram.com/avcardetail',
@@ -235,6 +235,17 @@ function seed_av(string $ownerName): void {
                   ['Marketing / publicidade', 'Anúncios Instagram', 'Meta', 40], ['Contabilidade', 'Contabilista', 'Gabinete', 60]] as $k => $x)
             if ($m > 0 || date('j') > 3 + $k) seed_insert('despesas', ['data' => date('Y-m-d', min(time(), $b + (2 + $k * 3) * 86400)), 'categoria' => $x[0], 'descricao' => $x[1], 'fornecedor' => $x[2], 'valor' => $x[3]]);
     }
+    // Fornecedores, compras, outras receitas e objetivos
+    $f1 = seed_insert('fornecedores', ['nome' => 'Distribuidora de Químicos (exemplo)', 'categoria' => 'Químicos & ceras', 'contacto' => 'Comercial', 'telefone' => '210 000 101', 'condicoes' => 'Portes grátis acima de 150 €']);
+    $f2 = seed_insert('fornecedores', ['nome' => 'Microfibras & Acessórios (exemplo)', 'categoria' => 'Microfibras & acessórios', 'telefone' => '210 000 102', 'website' => 'loja-exemplo.pt']);
+    seed_insert('fornecedores', ['nome' => 'Estofador parceiro (exemplo)', 'categoria' => 'Serviços (estofador, pintura…)', 'contacto' => 'Sr. Manuel', 'telefone' => '916 000 103', 'notas' => 'Restauro de bancos e pele — prazo médio 3 dias.']);
+    $inv = fn($n) => (int)db()->query('SELECT id FROM ' . T('inventario') . ' WHERE nome = ' . db()->quote($n))->fetchColumn();
+    seed_insert('compras', ['data' => $d('-8 days'), 'estado' => 'Recebida', 'fornecedor_id' => $f1, 'documento' => 'FT A/2231', 'artigo_id' => $inv('Pré-lavagem ácida'), 'quantidade' => 2, 'valor' => 48, 'criar_despesa' => 0, 'lancado' => 1]);
+    seed_insert('compras', ['data' => $d('-2 days'), 'estado' => 'Encomendada', 'fornecedor_id' => $f2, 'documento' => 'ENC 118', 'artigo_id' => $inv('Microfibras 40x40'), 'quantidade' => 30, 'valor' => 48, 'criar_despesa' => 1]);
+    seed_insert('receitas', ['data' => $d('-10 days'), 'categoria' => 'Venda de produtos', 'descricao' => 'Kit de manutenção (champô + quick detailer)', 'cliente_id' => $cl[0], 'valor' => 35, 'custo' => 18, 'metodo' => 'MB Way']);
+    seed_insert('receitas', ['data' => $d('-4 days'), 'categoria' => 'Vales / vouchers', 'descricao' => 'Vale-oferta Prestige', 'valor' => 70, 'metodo' => 'Transferência']);
+    foreach ([['Faturar 4.500 € este mês', 'Receita', 4500], ['20 trabalhos concluídos', 'Trabalhos concluídos', 20], ['5 novas avaliações no Google', 'Avaliações recebidas', 5]] as $o)
+        seed_insert('objetivos', ['titulo' => $o[0], 'metrica' => $o[1], 'alvo' => $o[2], 'mes' => date('Y-m-d'), 'notas' => $o[1] === 'Avaliações recebidas' ? 'Enviar pedido de avaliação no dia seguinte a cada entrega (Lembretes).' : null]);
     seed_insert('deslocacoes', ['data' => $d('-9 days'), 'origem' => 'Oficina', 'destino' => 'Stand Auto Prime', 'km' => 24, 'finalidade' => 'Serviço de frota', 'tecnico_id' => $tiago]);
     seed_insert('marketing', ['campanha' => 'Pacotes de lavagem — campanha de lançamento', 'canal' => 'Instagram', 'data_inicio' => $d('-45 days'), 'data_fim' => $d('-15 days'), 'custo' => 80, 'leads' => 14, 'clientes' => 5, 'receita' => 610, 'codigo' => 'AVSTART']);
     seed_insert('marketing', ['campanha' => 'Parceria com stand automóvel', 'canal' => 'Parceria', 'data_inicio' => $d('-45 days'), 'custo' => 0, 'leads' => 2, 'clientes' => 1, 'receita' => 240]);

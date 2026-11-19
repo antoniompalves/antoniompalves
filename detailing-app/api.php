@@ -27,7 +27,8 @@ try {
         if (!$user) out(['auth' => false, 'brand' => $brand]);
         unset($S['schema_version']);
         out(['auth' => true, 'brand' => $brand, 'user' => $user, 'csrf' => $_SESSION['csrf'], 'settings' => $S,
-             'schema' => app_schema(), 'version' => APP_VERSION, 'today' => date('Y-m-d')]);
+             'schema' => app_schema(), 'listas_editaveis' => editable_lists(), 'version' => APP_VERSION, 'php' => PHP_VERSION,
+             'db' => db()->getAttribute(PDO::ATTR_DRIVER_NAME), 'today' => date('Y-m-d')]);
     }
     if ($a === 'logo') {
         $f = settings()['logo'];
@@ -161,7 +162,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !hash_equals($_SESSION['csrf'], $_SERVER['HTTP_X_CSRF'] ?? '')) fail('Token de segurança inválido. Recarregue a página.', 403);
 
     if (($user['role'] ?? '') === 'tecnico') {
-        $blocked = ['faturas', 'despesas', 'marketing', 'subscricoes', 'orcamentos', 'leads'];
+        $blocked = ['faturas', 'despesas', 'marketing', 'subscricoes', 'orcamentos', 'leads', 'receitas', 'objetivos'];
         if (in_array($a, ['dashboard', 'report', 'backup', 'restore'], true) || in_array($_GET['e'] ?? '', $blocked, true)) fail('Sem permissão para esta área.', 403);
     }
 
@@ -185,7 +186,7 @@ try {
         }
         if (!$id && !empty($E['num']) && empty($vals['numero'])) $vals['numero'] = next_number($e, $E['num']);
         $pdo = db();
-        unset($vals['historico'], $vals['timer_inicio'], $vals['assinado_em']);
+        unset($vals['historico'], $vals['timer_inicio'], $vals['assinado_em'], $vals['lancado']);
         if ($e === 'trabalhos' && isset($vals['estado'])) {
             $old = $id ? $pdo->query('SELECT estado, historico, timer_inicio, horas FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch() : null;
             if (!$old || $old['estado'] !== $vals['estado']) {
@@ -231,6 +232,19 @@ try {
             $r = $pdo->query('SELECT veiculo_id, data FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
             if ($r && $r['veiculo_id']) $pdo->prepare('UPDATE ' . T('veiculos') . ' SET ultimo_servico = ? WHERE id = ? AND (ultimo_servico IS NULL OR ultimo_servico < ?)')->execute([$r['data'], $r['veiculo_id'], $r['data']]);
         }
+        if ($e === 'compras') {
+            $c = $pdo->query('SELECT * FROM ' . T('compras') . ' WHERE id = ' . $id)->fetch();
+            if ($c && $c['estado'] === 'Recebida' && !$c['lancado']) {
+                if ($c['artigo_id'] && num($c['quantidade']) > 0) $pdo->prepare('UPDATE ' . T('inventario') . ' SET quantidade = COALESCE(quantidade,0) + ? WHERE id = ?')->execute([num($c['quantidade']), $c['artigo_id']]);
+                if ($c['criar_despesa']) {
+                    $forn = $pdo->query('SELECT nome, nif FROM ' . T('fornecedores') . ' WHERE id = ' . (int)$c['fornecedor_id'])->fetch() ?: [];
+                    $art = $c['artigo_id'] ? $pdo->query('SELECT nome FROM ' . T('inventario') . ' WHERE id = ' . (int)$c['artigo_id'])->fetchColumn() : '';
+                    seed_like_insert('despesas', ['data' => $c['data'] ?: date('Y-m-d'), 'categoria' => 'Produtos / stock', 'descricao' => 'Compra' . ($art ? ': ' . $art : '') . ($c['documento'] ? ' (' . $c['documento'] . ')' : ''),
+                        'fornecedor' => $forn['nome'] ?? null, 'nif_fornecedor' => $forn['nif'] ?? null, 'valor' => num($c['valor']), 'documento' => $c['documento']]);
+                }
+                $pdo->exec('UPDATE ' . T('compras') . ' SET lancado = 1 WHERE id = ' . $id);
+            }
+        }
         $row = $pdo->query('SELECT * FROM ' . T($e) . ' WHERE id = ' . $id)->fetch();
         out(['row' => with_calc($e, [$row])[0]]);
 
@@ -262,6 +276,27 @@ try {
         if (count($m) > 800) $m = array_slice($m, -600, null, true);
         setting_set('lembretes_ok', json_encode($m, JSON_UNESCAPED_UNICODE));
         out(['ok' => true]);
+
+    case 'badges':
+        $t = date('Y-m-d'); $c = fn($sql) => (int)db()->query($sql)->fetchColumn();
+        $fat = 0; foreach (with_calc('faturas', all_rows('faturas')) as $f) if ($f['_c']['vencida']) $fat++;
+        $gar = 0; foreach (with_calc('garantias', all_rows('garantias')) as $g) if (str_starts_with($g['_c']['alerta'], 'Manutenção')) $gar++;
+        $stock = 0; foreach (with_calc('inventario', all_rows('inventario')) as $i) if ($i['_c']['alerta']) $stock++;
+        out(['#/quadro' => $c('SELECT COUNT(*) FROM ' . T('trabalhos') . " WHERE estado NOT IN ('Concluído','Cancelado','Agendado')"),
+             'faturas' => $fat, 'garantias' => $gar, 'inventario' => $stock,
+             'leads' => $c('SELECT COUNT(*) FROM ' . T('leads') . " WHERE estado NOT IN ('Ganho','Perdido') AND data_followup <= '$t'"),
+             '#/lembretes' => $c('SELECT COUNT(*) FROM ' . T('marcacoes') . " WHERE estado IN ('Pendente','Confirmada') AND data BETWEEN '$t' AND '" . date('Y-m-d', strtotime('+2 days')) . "' AND (lembrete_enviado IS NULL OR lembrete_enviado = 0)"),
+             'marcacoes' => $c('SELECT COUNT(*) FROM ' . T('marcacoes') . " WHERE data = '$t' AND estado IN ('Pendente','Confirmada')")]);
+
+    case 'wipe':
+        need_admin();
+        $keep = ['servicos', 'mensagens', 'equipa', 'fornecedores', 'inventario', 'equipamentos'];
+        if (!empty(body()['tudo'])) $keep = ['servicos', 'mensagens'];
+        $pdo = db(); $pdo->beginTransaction();
+        foreach (array_keys(app_schema()) as $e) if (!in_array($e, $keep, true)) $pdo->exec('DELETE FROM ' . T($e));
+        $pdo->commit();
+        setting_set('lembretes_ok', '{}');
+        out(['ok' => true, 'mantidos' => $keep]);
 
     case 'client_link':
         $id = (int)(body()['id'] ?? 0);

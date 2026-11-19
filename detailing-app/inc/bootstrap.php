@@ -83,7 +83,7 @@ function default_settings(): array {
     return [
         'app_nome' => cfg('app_name', 'DetailPro'), 'empresa_nome' => 'A Minha Empresa de Detailing',
         'empresa_nif' => '', 'empresa_morada' => '', 'empresa_telefone' => '', 'empresa_email' => '', 'empresa_web' => '',
-        'empresa_iban' => '', 'link_avaliacao' => '', 'link_facebook' => '', 'logo' => '', 'logo_inverter' => '0', 'slogan' => '', 'cor' => cfg('brand_color', '#ef4444'), 'tema' => 'escuro',
+        'empresa_responsavel' => '', 'listas' => '{}', 'campos_extra' => '[]', 'empresa_iban' => '', 'link_avaliacao' => '', 'link_facebook' => '', 'logo' => '', 'logo_inverter' => '0', 'slogan' => '', 'cor' => cfg('brand_color', '#ef4444'), 'tema' => 'escuro',
         'iva' => '23', 'iva_isento' => '0', 'reserva_impostos' => '25', 'custo_km' => '0.40', 'custo_hora' => '12',
         'custos_fixos' => '800', 'horas_mes' => '140', 'objetivo_mensal' => '6000', 'margem_alvo' => '40',
         'validade_dias' => '15', 'prefixo_orc' => 'ORC', 'prefixo_fat' => 'REC', 'prefixo_trab' => 'OT', 'prefixo_gar' => 'CER', 'lembretes_ok' => '{}',

@@ -41,6 +41,26 @@ function warranty_info(array $r): array {
     elseif ($c['proxima'] && $c['proxima'] <= date('Y-m-d', strtotime('+30 days'))) $c['alerta'] = 'Manutenção em breve';
     return $c;
 }
+function goal_progress(array $r): array {
+    static $cache = [];
+    $ym = substr((string)($r['mes'] ?: date('Y-m-d')), 0, 7); [$from, $to] = month_bounds($ym);
+    $p = $cache[$ym] ??= period_totals($from, $to);
+    $cnt = fn($e, $col = 'data', $w = '') => (int)db()->query('SELECT COUNT(*) FROM ' . T($e) . " WHERE $col BETWEEN '$from' AND '$to 23:59:59'$w")->fetchColumn();
+    switch ($r['metrica']) {
+        case 'Lucro bruto': $v = $p['lucro_bruto']; $m = 1; break;
+        case 'Lucro operacional': $v = $p['lucro_operacional']; $m = 1; break;
+        case 'Trabalhos concluídos': $v = $p['trabalhos']; $m = 0; break;
+        case 'Ticket médio': $v = $p['ticket_medio']; $m = 1; break;
+        case 'Novos clientes': $v = $cnt('clientes', 'created_at'); $m = 0; break;
+        case 'Novas leads': $v = $cnt('leads'); $m = 0; break;
+        case 'Avaliações recebidas': $v = $cnt('avaliacoes', 'data', " AND estado = 'Recebida'"); $m = 0; break;
+        case 'Receita recorrente (MRR)':
+            $v = 0; foreach (all_rows('subscricoes') as $s) if ($s['estado'] === 'Ativa') $v += num($s['valor']) * (FREQ_MES[$s['frequencia']] ?? 1); $m = 1; break;
+        default: $v = $p['receita']; $m = 1;
+    }
+    $alvo = num($r['alvo']);
+    return ['valor' => round($v, 2), 'atual' => $m ? number_format($v, 2, ',', '.') . ' €' : (string)$v, 'pct' => $alvo > 0 ? round($v / $alvo * 100, 1) : null, 'dinheiro' => $m];
+}
 const FREQ_MES = ['Semanal' => 4.33, 'Quinzenal' => 2.17, 'Mensal' => 1, 'Bimestral' => 0.5, 'Trimestral' => 0.3333];
 
 function calc_ctx(): array {
@@ -116,6 +136,10 @@ function calc_row(string $e, array $r): array {
             break;
         case 'garantias':
             $c = warranty_info($r); break;
+        case 'receitas': $c['margem'] = round(num($r['valor']) - num($r['custo']), 2); break;
+        case 'fornecedores':
+            $c['compras'] = round((float)db()->query('SELECT COALESCE(SUM(valor),0) FROM ' . T('compras') . " WHERE estado <> 'Cancelada' AND fornecedor_id = " . (int)$r['id'])->fetchColumn(), 2); break;
+        case 'objetivos': $c = goal_progress($r); break;
         case 'marketing':
             $cu = num($r['custo']);
             $c['roi'] = $cu > 0 ? round((num($r['receita']) - $cu) / $cu * 100, 1) : null;
@@ -140,7 +164,7 @@ function period_totals(string $from, string $to, ?array $jobs = null, ?array $de
     $S = settings();
     $t = ['receita' => 0, 'custos_diretos' => 0, 'produtos' => 0, 'mao_obra' => 0, 'desloc_trab' => 0, 'outros' => 0,
           'gorjetas' => 0, 'trabalhos' => 0, 'horas' => 0, 'despesas_op' => 0, 'compras_stock' => 0, 'km' => 0, 'desloc_custo' => 0,
-          'desloc_sem_trab' => 0, 'por_cat' => []];
+          'desloc_sem_trab' => 0, 'outras_receitas' => 0, 'outras_custo' => 0, 'por_cat' => []];
     foreach ($jobs as $j) {
         if (($j['estado'] ?? '') !== 'Concluído' || !in_range($j['data'], $from, $to)) continue;
         $t['receita'] += num($j['valor']); $t['custos_diretos'] += $j['_c']['custos'];
@@ -160,8 +184,9 @@ function period_totals(string $from, string $to, ?array $jobs = null, ?array $de
         $t['km'] += num($d['km']); $t['desloc_custo'] += $cost;
         if (!$d['trabalho_id']) $t['desloc_sem_trab'] += $cost;
     }
+    foreach (all_rows('receitas') as $x) if (in_range($x['data'], $from, $to)) { $t['outras_receitas'] += num($x['valor']); $t['outras_custo'] += num($x['custo']); }
     $t['lucro_bruto'] = $t['receita'] - $t['custos_diretos'];
-    $t['lucro_operacional'] = $t['lucro_bruto'] - $t['despesas_op'] - $t['desloc_sem_trab'];
+    $t['lucro_operacional'] = $t['lucro_bruto'] + $t['outras_receitas'] - $t['outras_custo'] - $t['despesas_op'] - $t['desloc_sem_trab'];
     $t['reserva_impostos'] = max(0, $t['lucro_operacional']) * num($S['reserva_impostos']) / 100;
     $t['ticket_medio'] = $t['trabalhos'] ? $t['receita'] / $t['trabalhos'] : 0;
     $t['lucro_trabalho'] = $t['trabalhos'] ? $t['lucro_bruto'] / $t['trabalhos'] : 0;
@@ -304,6 +329,7 @@ function report(string $from, string $to): array {
     for ($d = $from; $d <= $to && count($cx) < 400; $d = date('Y-m-d', strtotime($d . ' +1 day'))) $cx[$d] = ['d' => $d, 'entradas' => 0, 'saidas' => 0];
     foreach (all_rows('faturas') as $f) if ($f['estado'] !== 'Anulada') foreach (payment_list($f) as $p) if (isset($cx[$p['d']])) { $cx[$p['d']]['entradas'] += $p['v']; $ent += $p['v']; $nPag++; }
     foreach (all_rows('despesas') as $x) if (isset($cx[$x['data']])) { $cx[$x['data']]['saidas'] += num($x['valor']); $sai += num($x['valor']); }
+    foreach (all_rows('receitas') as $x) if (isset($cx[$x['data']])) { $cx[$x['data']]['entradas'] += num($x['valor']); $ent += num($x['valor']); }
     $sinais = 0; $nSin = 0;
     foreach (all_rows('marcacoes') as $m) if ($m['sinal_pago'] && num($m['sinal']) > 0 && in_array($m['estado'], ['Pendente', 'Confirmada'], true)) { $sinais += num($m['sinal']); $nSin++; }
     $caixa = ['dias' => array_values($cx), 'entradas' => round($ent, 2), 'n_pag' => $nPag, 'saidas' => round($sai, 2), 'sinais' => round($sinais, 2), 'n_sinais' => $nSin];

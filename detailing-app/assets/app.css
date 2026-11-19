@@ -279,3 +279,10 @@ h3>svg,h4>svg,.row>svg,a.row>svg,.ic{width:18px;height:18px;flex:none}
 .doc.inv-logo .doc-logo{filter:invert(1)}
 :root[data-theme="light"] .brand .logo img{filter:var(--logo-filter,none)}
 .stars-big{display:flex;gap:6px}.stars-big button{background:none;border:0;font-size:38px;line-height:1;cursor:pointer;color:#3f3f46;padding:0;transition:transform .15s}.stars-big button.on{color:#fbbf24}.stars-big button:hover{transform:scale(1.12)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{background:none;border:0;color:var(--tx2);padding:10px 14px;cursor:pointer;font-weight:600;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--tx);border-bottom-color:var(--ac)}.tab:hover{color:var(--tx)}
+.full-span{grid-column:1/-1}
+.ba{overflow:hidden;padding:0}.ba-img{display:grid;grid-template-columns:1fr 1fr;gap:2px}.ba-img .ph{border-radius:0;border:0}.ba-img .ph:only-child{grid-column:1/-1}
+.nav a .cnt{background:var(--ac);color:#fff}
+@media (max-width:900px){#cxList .line{grid-template-columns:1fr 1fr!important}}
