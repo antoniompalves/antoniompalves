@@ -45,7 +45,7 @@ function col_sql(string $type): string {
         case 'int': case 'ref': case 'bool': case 'rating': return $lite ? 'INTEGER' : 'INT';
         case 'date': return $lite ? 'TEXT' : 'DATE';
         case 'time': return $lite ? 'TEXT' : 'VARCHAR(5)';
-        case 'textarea': case 'lines': case 'checklist': case 'photos': case 'timeline': case 'payments': case 'damagemap': case 'jsonmap': return $lite ? 'TEXT' : 'MEDIUMTEXT';
+        case 'svcpick': case 'textarea': case 'lines': case 'checklist': case 'photos': case 'timeline': case 'payments': case 'damagemap': case 'jsonmap': return $lite ? 'TEXT' : 'MEDIUMTEXT';
         case 'signature': return $lite ? 'TEXT' : 'LONGTEXT';
         default: return $lite ? 'TEXT' : 'VARCHAR(255)';
     }
@@ -86,11 +86,11 @@ function default_settings(): array {
         'empresa_responsavel' => '', 'listas' => '{}', 'campos_extra' => '[]', 'empresa_iban' => '', 'link_avaliacao' => '', 'link_facebook' => '', 'logo' => '', 'logo_inverter' => '0', 'slogan' => '', 'cor' => cfg('brand_color', '#ef4444'), 'tema' => 'escuro',
         'iva' => '23', 'iva_isento' => '0', 'reserva_impostos' => '25', 'custo_km' => '0.40', 'custo_hora' => '12',
         'custos_fixos' => '800', 'horas_mes' => '140', 'objetivo_mensal' => '6000', 'margem_alvo' => '40',
-        'validade_dias' => '15', 'prefixo_orc' => 'ORC', 'prefixo_fat' => 'REC', 'prefixo_trab' => 'OT', 'prefixo_gar' => 'CER', 'lembretes_ok' => '{}',
+        'validade_dias' => '15', 'prefixo_orc' => 'ORC', 'prefixo_fat' => 'REC', 'prefixo_trab' => 'OT', 'prefixo_gar' => 'CER', 'lembretes_ok' => '{}', 'sinal_pct' => '25',
         'termos_garantia' => "A cobertura aplica-se às superfícies indicadas, desde que as manutenções recomendadas sejam realizadas nas datas previstas e as instruções de cuidados sejam seguidas. Não inclui danos por acidente, abrasão, lavagens inadequadas (rolos/escovas), derrames químicos, contaminação ambiental não tratada ou negligência. Apresente este certificado em caso de pedido de inspeção de garantia.",
         'rodape_orc' => "Orçamento válido pelo prazo indicado. Valores sujeitos a confirmação após inspeção do veículo.\nPagamento: MB Way, Multibanco, Transferência ou Numerário.",
         'mult_tamanho' => '{"Pequeno":0.9,"Médio":1,"Grande":1.15,"SUV":1.25,"Carrinha / Monovolume":1.4,"Desportivo / Luxo":1.3,"Mota":0.6}',
-        'modulos_off' => '[]', 'portal_ativo' => '1', 'portal_precos' => '1',
+        'modulos_off' => '["#/rota"]', 'portal_ativo' => '1', 'portal_precos' => '1',
         'portal_titulo' => 'Cuidamos do seu automóvel como se fosse nosso.',
         'portal_texto' => 'Lavagem, detalhe interior e exterior, correção de pintura, proteção cerâmica e PPF. Consulte os nossos serviços e peça uma marcação — entramos em contacto consigo.',
         'portal_horario' => 'Seg–Sex 9h–19h · Sáb 9h–13h', 'portal_instagram' => '', 'portal_whatsapp' => '', 'chk_ext' => "Riscos\nMossas\nLascas na pintura\nJantes danificadas\nVidros / para-brisas\nÓticas\nEspelhos\nPara-choques\nSujidade extrema / alcatrão",

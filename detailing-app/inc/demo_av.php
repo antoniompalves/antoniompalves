@@ -185,8 +185,8 @@ function seed_av(string $ownerName): void {
 
     // ---------- Marcações ----------
     foreach ([[3, '+0', '09:00', 'Classic', 'Confirmada', 30, 0, 'Box 2', 'Oficina'], [5, '+0', '14:30', 'Prestige', 'Confirmada', 70, 0, 'Box 1', 'Oficina'],
-              [9, '+1', '10:00', 'Detalhe Interior em Tecido', 'Pendente', 170, 50, 'Box 2', 'Oficina'], [11, '+2', '09:30', 'Prestige', 'Confirmada', 70, 0, 'Domicílio', 'Empresa do cliente'],
-              [0, '+3', '09:00', 'Revestimentos Cerâmicos', 'Pendente', 650, 150, 'Box 1', 'Oficina'], [7, '+5', '11:00', 'Classic', 'Pendente', 30, 0, 'Zona de lavagem', 'Domicílio do cliente'],
+              [9, '+1', '10:00', 'Detalhe Interior em Tecido', 'Pendente', 170, 50, 'Box 2', 'Oficina'], [11, '+2', '09:30', 'Prestige', 'Confirmada', 70, 0, 'Box 3', 'Oficina'],
+              [0, '+3', '09:00', 'Revestimentos Cerâmicos', 'Pendente', 650, 150, 'Box 1', 'Oficina'], [7, '+5', '11:00', 'Classic', 'Pendente', 30, 0, 'Zona de lavagem', 'Oficina'],
               [6, '+8', '09:00', 'Supreme', 'Confirmada', 160, 40, 'Box 2', 'Oficina'], [4, '-5', '10:00', 'Prestige', 'Faltou', 70, 0, 'Box 1', 'Oficina']] as $m)
         seed_insert('marcacoes', ['cliente_id' => $cl[$m[0]], 'veiculo_id' => $vh[$m[0]][0], 'data' => $d($m[1] . ' days'), 'hora' => $m[2], 'servico_id' => $sid[$m[3]], 'tecnico_id' => $m[3] === 'Classic' ? $tiago : $andre,
             'estado' => $m[4], 'valor_previsto' => $m[5], 'sinal' => $m[6] ?: null, 'sinal_pago' => $m[6] >= 150 ? 1 : 0, 'box' => $m[7], 'local' => $m[8], 'duracao_h' => 3,

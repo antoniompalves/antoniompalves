@@ -286,3 +286,14 @@ h3>svg,h4>svg,.row>svg,a.row>svg,.ic{width:18px;height:18px;flex:none}
 .ba{overflow:hidden;padding:0}.ba-img{display:grid;grid-template-columns:1fr 1fr;gap:2px}.ba-img .ph{border-radius:0;border:0}.ba-img .ph:only-child{grid-column:1/-1}
 .nav a .cnt{background:var(--ac);color:#fff}
 @media (max-width:900px){#cxList .line{grid-template-columns:1fr 1fr!important}}
+.avatar.sm{width:34px;height:34px;font-size:12px}
+.thumb{width:52px;height:40px;border-radius:8px;object-fit:cover;display:inline-grid;place-items:center;border:1px solid var(--line);background:rgba(0,0,0,.3);vertical-align:middle}.thumb svg{width:20px;opacity:.5}
+.avatar.xs{width:28px;height:28px;font-size:10.5px;color:#fff;flex:none}
+.drop-here{border:1px dashed var(--line2);border-radius:12px;padding:22px;text-align:center;color:var(--tx2);font-size:12px}
+.kcard.dragging{opacity:.35}.kcol.over .drop-here{border-color:var(--ac);color:var(--ac)}
+.cnt-b{background:rgba(255,255,255,.08);border-radius:99px;padding:0 8px;font-size:11px}
+.kcard{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.chip.svc{padding:8px 12px}.chip.svc.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 22%,transparent);color:#fff}
+.stages{margin-bottom:14px}.stages .tab{flex:1;text-align:center}
+.jfoot{position:sticky;bottom:10px;display:flex;gap:8px;flex-wrap:wrap;padding:10px;margin-top:14px;z-index:5}
+@media (max-width:900px){.jfoot{bottom:calc(84px + env(safe-area-inset-bottom,0px))}.stages .tab{flex:none}}

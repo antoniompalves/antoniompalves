@@ -239,11 +239,15 @@ function cellValue(e, f, r) {
     case 'textarea': return esc(String(v || '').slice(0, 70)) + (String(v || '').length > 70 ? '…' : '');
     case 'color': return `<span class="dot" style="background:${esc(v)};color:${esc(v)};display:inline-block"></span>`;
     case 'tel': return v ? `<a href="tel:${esc(v)}" onclick="event.stopPropagation()">${esc(v)}</a>` : '—';
+    case 'photos': { const F = jparse(v); return F.length ? `<img src="${imgURL(F[0].f)}" class="thumb" loading="lazy">` : `<span class="thumb ph0">${icon('car')}</span>`; }
     default: return esc(v ?? '') || '<span class="muted">—</span>';
   }
 }
+const initials = n => String(n || '?').split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase();
 function calcValue(c, r) {
   const v = r._c?.[c.k];
+  if (c.t === 'tags') return (v || []).map(t => `<span class="badge ${/Garantia|Cerâmico|PPF|VIP|Subscritor/.test(t) ? 't-ok' : /Frota|Stand/.test(t) ? 't-vio' : /Sem/.test(t) ? 't-mut' : 't-info'}" style="margin:1px">${esc(t)}</span>`).join('');
+  if (c.t === 'title') return `<b>${esc(v)}</b><span class="sub2">${esc(r._c?.sub || '')}</span>`;
   if (c.t === 'money') return money(v);
   if (c.t === 'pct') return v === null || v === undefined ? '—' : `<span class="${v >= 0 ? 'up' : 'down'}">${n2(v)}%</span>`;
   if (c.t === 'date') return fdate(v);
@@ -274,16 +278,19 @@ route(/^#\/e\/(\w+)$/, async (view, e) => {
     <div class="row" style="margin-bottom:12px">
       <div class="search">${icon('search')}<input class="inp" id="q" placeholder="Pesquisar ${esc(E.label.toLowerCase())}…" value="${esc(st.q)}"></div>
     </div>
-    ${statusF ? `<div class="chips" id="chips" style="margin-bottom:12px"></div>` : ''}
+    ${statusF || E.segs ? `<div class="chips" id="chips" style="margin-bottom:12px"></div>` : ''}
     <div id="sum" class="grid kpis" style="margin-bottom:12px"></div>
     <div class="glass tbl-wrap has-cards"><table class="tbl"><thead><tr>
-      ${listF.map(f => `<th data-s="${f.k}" class="${['money', 'number', 'int'].includes(f.t) ? 'num' : ''}">${esc(f.l)}</th>`).join('')}
-      ${calcs.map(c => `<th data-s="_c.${c.k}" class="${['money', 'pct'].includes(c.t) ? 'num' : ''}">${esc(c.l)}</th>`).join('')}
+      ${listF.filter(f => f.t === 'photos').map(() => '<th></th>').join('')}${(E.calc_first ? calcs.filter(c => ['titulo', 'dono'].includes(c.k)) : []).map(c => `<th data-s="_c.${c.k}">${esc(c.l)}</th>`).join('')}
+      ${listF.filter(f => f.t !== 'photos').map(f => `<th data-s="${f.k}" class="${['money', 'number', 'int'].includes(f.t) ? 'num' : ''}">${esc(f.l)}</th>`).join('')}
+      ${calcs.filter(c => !(E.calc_first && ['titulo', 'dono'].includes(c.k))).map(c => `<th data-s="_c.${c.k}" class="${['money', 'pct'].includes(c.t) ? 'num' : ''}">${esc(c.l)}</th>`).join('')}
     </tr></thead><tbody id="tb"></tbody></table></div>
     <div class="cards-m" id="cm"></div>`;
   const get = (r, k) => k.startsWith('_c.') ? r._c?.[k.slice(3)] : r[k];
   function draw() {
-    let list = rows.filter(r => (!st.st || r[E.status] === st.st) && (!st.q || rowText(e, r).includes(st.q.toLowerCase())));
+    let list = rows.filter(r => (!st.st || r[E.status] === st.st) && (!st.seg || r._c?.[st.seg]) && (!st.q || rowText(e, r).includes(st.q.toLowerCase())));
+    if (E.segs) { $('#chips').innerHTML = [['Todos', ''], ...E.segs].map(([l, k]) => `<button class="chip ${(st.seg || '') === k ? 'on' : ''}" data-seg="${k}">${esc(l)}<span class="n">${k ? rows.filter(r => r._c?.[k]).length : rows.length}</span></button>`).join('');
+      $$('#chips [data-seg]').forEach(b => b.onclick = () => { st.seg = b.dataset.seg; draw(); }); }
     if (st.sort) list = [...list].sort((a, b) => { const x = get(a, st.sort), y = get(b, st.sort); return (x > y ? 1 : x < y ? -1 : 0) * st.dir; });
     if (statusF) $('#chips').innerHTML = ['', ...statusF.opts].map(o => `<button class="chip ${st.st === o ? 'on' : ''}" data-o="${esc(o)}">${o ? (E.tabs?.[o] || o) : 'Todos'}<span class="n">${o ? rows.filter(r => r[E.status] === o).length : rows.length}</span></button>`).join('')
       + (e === 'servicos' ? `<a class="chip" href="#/e/checklists">Checklists ↗</a>` : '');
@@ -293,18 +300,23 @@ route(/^#\/e\/(\w+)$/, async (view, e) => {
       ...calcs.filter(c => c.t === 'money').map(c => [c.l, list.reduce((s, r) => s + (+r._c?.[c.k] || 0), 0)])].slice(0, 3);
     $('#sum').innerHTML = list.length && sums.length ? `<div class="glass kpi"><div class="l">Registos</div><div class="v">${list.length}</div></div>` +
       sums.map(([l, v]) => `<div class="glass kpi"><div class="l">${esc(l)} (total)</div><div class="v">${money(v)}</div></div>`).join('') : '';
-    $('#tb').innerHTML = list.map(r => `<tr data-id="${r.id}">${listF.map(f => `<td class="${['money', 'number', 'int'].includes(f.t) ? 'num' : ''}">${cellValue(e, f, r)}</td>`).join('')}
-      ${calcs.map(c => `<td class="${['money', 'pct'].includes(c.t) ? 'num' : ''}">${calcValue(c, r)}</td>`).join('')}</tr>`).join('')
+    const cell = (f, r) => (E.avatar && f === listF[0]) ? `<div class="row" style="flex-wrap:nowrap;gap:10px"><span class="avatar sm">${esc(initials(r[f.k]))}</span><div><b>${esc(r[f.k])}</b><span class="sub2">${esc([r.telefone, r.localidade].filter(Boolean).join(' · '))}</span></div></div>` : cellValue(e, f, r);
+    const cFirst = E.calc_first ? calcs.filter(c => ['title', 'text'].includes(c.t) && ['titulo', 'dono'].includes(c.k)) : [];
+    const cRest = calcs.filter(c => !cFirst.includes(c));
+    $('#tb').innerHTML = list.map(r => `<tr data-id="${r.id}">${listF.filter(f => f.t === 'photos').map(f => `<td style="width:64px">${cellValue(e, f, r)}</td>`).join('')}${cFirst.map(c => `<td>${calcValue(c, r)}</td>`).join('')}${listF.filter(f => f.t !== 'photos').map(f => `<td class="${['money', 'number', 'int'].includes(f.t) ? 'num' : ''}">${cell(f, r)}</td>`).join('')}
+      ${cRest.map(c => `<td class="${['money', 'pct'].includes(c.t) ? 'num' : ''}">${calcValue(c, r)}</td>`).join('')}</tr>`).join('')
       || `<tr><td colspan="99"><div class="empty">Sem registos. ${rows.length ? 'Ajuste a pesquisa.' : 'Clique em “+ ' + esc(E.one) + '” para começar.'}</div></td></tr>`;
     const [f1, f2, f3] = listF;
     $('#cm').innerHTML = list.map(r => {
       const sv = statusF ? badge(r[E.status]) : '';
       const mon = calcs.find(c => c.t === 'money') ? calcValue(calcs.find(c => c.t === 'money'), r) : (listF.find(f => f.t === 'money') ? money(r[listF.find(f => f.t === 'money').k]) : '');
       const others = listF.filter(f => f !== f1 && f.k !== E.status && f.t !== 'money').slice(0, 3).map(f => plain(cellValue(e, f, r))).filter(x => x && x !== '—').join(' · ');
+      if (e === 'veiculos') return `<div class="glass mcard" data-id="${r.id}">${cellValue(e, f1, r)}<div class="grow" style="min-width:0"><div class="t1">${esc(r._c.titulo)}</div><div class="t2">${esc([r.matricula, r._c.dono, r._c.sub].filter(Boolean).join(' · '))}</div><div style="margin-top:4px">${calcValue({ k: 'protecao', t: 'tags' }, r)}</div></div><div class="small muted">${r._c.trabalhos} trab.</div></div>`;
+      if (e === 'clientes') return `<div class="glass mcard" data-id="${r.id}"><span class="avatar sm">${esc(initials(r.nome))}</span><div class="grow" style="min-width:0"><div class="t1">${esc(r.nome)}</div><div class="t2">${esc([r.telefone, r._c.visitas + ' visitas', r._c.ultima && 'última ' + fdate(r._c.ultima)].filter(Boolean).join(' · '))}</div><div style="margin-top:4px">${calcValue({ k: 'perfil', t: 'tags' }, r)}</div></div><b class="mono">${money(r._c.total)}</b></div>`;
       return `<div class="glass mcard" data-id="${r.id}"><div class="grow" style="min-width:0"><div class="t1">${plain(cellValue(e, f1, r))}</div><div class="t2">${esc(others)}</div></div>
         <div style="text-align:right">${sv}<div class="mono" style="margin-top:4px;font-weight:650">${mon}</div></div></div>`;
     }).join('') || '<div class="empty">Sem registos.</div>';
-    $$('#tb tr[data-id], #cm [data-id]').forEach(tr => tr.onclick = () => e === 'clientes' ? (location.hash = '#/cliente/' + tr.dataset.id) : openForm(e, byId(e, tr.dataset.id)));
+    $$('#tb tr[data-id], #cm [data-id]').forEach(tr => tr.onclick = () => e === 'clientes' ? (location.hash = '#/cliente/' + tr.dataset.id) : e === 'trabalhos' ? (location.hash = '#/trabalho/' + tr.dataset.id) : openForm(e, byId(e, tr.dataset.id)));
   }
   $$('th[data-s]').forEach(th => th.onclick = () => { st.dir = st.sort === th.dataset.s ? -st.dir : 1; st.sort = th.dataset.s; draw(); });
   $('#q').oninput = ev => { st.q = ev.target.value; draw(); };
@@ -388,17 +400,24 @@ async function openForm(e, row = null, preset = {}) {
     if (f.t === 'jsonmap') { try { v = typeof v === 'object' && v ? v : JSON.parse(v || '{}') || {}; } catch { v = {}; } if (Array.isArray(v)) v = {}; }
     val[f.k] = v ?? '';
   });
+  if ((e === 'marcacoes' || e === 'trabalhos') && Array.isArray(val.servicos) === false) val.servicos = jparse(val.servicos);
+  if ((e === 'marcacoes' || e === 'trabalhos') && !val.servicos.length && +val.servico_id) val.servicos = [+val.servico_id];
+  const rotaOff = settingsJSON('modulos_off', []).includes('#/rota');
   if (e === 'faturas' && !val.pagamentos.length && +row?.valor_pago > 0) val.pagamentos = [{ d: row.data_pagamento || row.data, v: +row.valor_pago, m: row.metodo || '' }];
   const locked = e === 'inspecoes' && !!row?.assinado_em;
   const fieldHTML = f => {
     if (f.hide) return '';
+    if (e === 'marcacoes' && rotaOff && ['local', 'morada', 'km'].includes(f.k)) return '';
+    if (e === 'trabalhos' && f.k.startsWith('walkin_') && row?.cliente_id) return '';
     const v = val[f.k]; const id = 'f_' + f.k; const cls = f.half ? '' : 'full';
     const help = f.help ? `<small>${esc(f.help)}</small>` : '';
     let inp;
     switch (f.t) {
       case 'textarea': inp = `<textarea class="inp" id="${id}" data-k="${f.k}" placeholder="${esc(f.ph || '')}">${esc(v)}</textarea>`; break;
       case 'select': inp = `<select class="inp" id="${id}" data-k="${f.k}"><option value="">—</option>${f.opts.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`; break;
-      case 'ref': inp = `<select class="inp" id="${id}" data-k="${f.k}" data-ref="${f.ref}"></select>`; break;
+      case 'ref': inp = `<select class="inp" id="${id}" data-k="${f.k}" data-ref="${f.ref}"></select>`;
+        if (['clientes', 'veiculos'].includes(f.ref) && f.ref !== e) inp = `<div class="row" style="flex-wrap:nowrap;gap:6px">${inp}<button type="button" class="btn icon" data-newref="${f.k}" title="Criar novo">${icon('plus')}</button></div>`; break;
+      case 'svcpick': inp = `<div data-ed="${f.k}"></div>`; break;
       case 'bool': return `<label class="switch ${cls}"><input type="checkbox" data-k="${f.k}" ${+v ? 'checked' : ''}><span>${esc(f.l)}</span></label>`;
       case 'money': case 'number': case 'int': inp = `<input class="inp" type="number" inputmode="decimal" step="${f.step || (f.t === 'int' ? '1' : '0.01')}" id="${id}" data-k="${f.k}" value="${esc(v)}" placeholder="${f.t === 'money' ? '0,00 €' : ''}">`; break;
       case 'date': inp = `<input class="inp" type="date" id="${id}" data-k="${f.k}" value="${esc(v)}">`; break;
@@ -431,12 +450,22 @@ async function openForm(e, row = null, preset = {}) {
     sel.innerHTML = `<option value="">—</option>` + opts.map(o => `<option value="${o.id}" ${+o.id === +val[f.k] ? 'selected' : ''}>${esc(tplLabel(f.ref, o))}</option>`).join('');
   };
   $$('select[data-ref]', el).forEach(fillRef);
+  $$('[data-newref]', el).forEach(b => b.onclick = () => {
+    const f = E.fields.find(x => x.k === b.dataset.newref);
+    openForm(f.ref, null, { ...(f.ref === 'veiculos' ? { cliente_id: val.cliente_id || '' } : {}), _after: async nr => {
+      await load(f.ref, true); val[f.k] = nr.id;
+      if (f.ref === 'clientes') { const vf = E.fields.find(x => x.ref === 'veiculos'); if (vf) val[vf.k] = ''; }
+      $$('select[data-ref]', el).forEach(fillRef); onVehicle(); renderCalc();
+      if (f.ref === 'clientes' && E.fields.some(x => x.ref === 'veiculos')) toast('Cliente criado. Adicione agora a viatura com o “+”.');
+    } });
+  });
   el.addEventListener('change', ev => {
     const k = ev.target.dataset.k; if (!k) return;
     val[k] = ev.target.type === 'checkbox' ? (ev.target.checked ? 1 : 0) : ev.target.value;
     if (k === 'cliente_id') $$('select[data-ref]', el).forEach(s => { const f = E.fields.find(x => x.k === s.dataset.k); if (f.filter === 'cliente_id') { val[f.k] = ''; fillRef(s); } });
-    if (k === 'servico_id') onService();
-    if (['veiculo_id'].includes(k) && e === 'trabalhos' && !+val.valor) onService();
+    if (k === 'servico_id' && !E.fields.some(x => x.t === 'svcpick')) onService();
+    if (k === 'veiculo_id') onVehicle();
+    if (['preco_manual', 'exige_sinal'].includes(k)) applySvc(false);
     renderCalc();
   });
   el.addEventListener('input', ev => { const k = ev.target.dataset.k; if (k) { val[k] = ev.target.value; renderCalc(); } });
@@ -445,6 +474,32 @@ async function openForm(e, row = null, preset = {}) {
     if (k === 'vin') { val.vin = ev.target.value = String(val.vin || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); } });
   $$('[data-rt]', el).forEach(box => box.onclick = ev => { const b = ev.target.closest('button'); if (!b) return; val[box.dataset.rt] = +b.dataset.v; $$('button', box).forEach(x => x.classList.toggle('on', +x.dataset.v <= +b.dataset.v)); });
 
+  function onVehicle() { if (editors.servicos) { editors.servicos(); applySvc(false); } }
+  function applySvc(changed = true) {
+    if (!E.fields.some(x => x.t === 'svcpick')) return;
+    const size = byId('veiculos', val.veiculo_id)?.tamanho;
+    const S = (val.servicos || []).map(id => byId('servicos', id)).filter(Boolean);
+    const total = S.reduce((t, s2) => t + sizePrice(s2, size), 0), dur = S.reduce((t, s2) => t + (+s2.duracao_h || 0), 0);
+    const set = (k2, v2) => { val[k2] = v2; const i = $(`[data-k="${k2}"]`, el); if (i) i.value = v2; };
+    const main = S.find(s2 => s2.tipo !== 'Extra') || S[0];
+    val.servico_id = main ? main.id : '';
+    if (e === 'marcacoes') {
+      if (changed) set('duracao_h', dur ? Math.round(dur * 4) / 4 : '');
+      val.valor_previsto = +val.preco_manual > 0 ? +val.preco_manual : total;
+      if (+val.exige_sinal && !+val.sinal_pago) set('sinal', Math.round(val.valor_previsto * (+A.S.sinal_pct || 25) / 100));
+      if (!+val.exige_sinal && changed === false && !+val.sinal_pago) set('sinal', '');
+    }
+    if (e === 'trabalhos' && changed) {
+      set('valor', total || '');
+      if (!jparse(row?.produtos_usados).length) set('custo_produtos', S.reduce((t, s2) => t + (+s2.custo_produtos || 0), 0) || '');
+      const have = new Set(val.tarefas.map(x => x.s));
+      S.forEach(s2 => { if (!have.has(s2.nome) && svcTaskText(s2)) val.tarefas = [...val.tarefas, ...svcTasks(s2)]; });
+      val.tarefas = val.tarefas.filter(x => !x.s || S.some(s2 => s2.nome === x.s) || !(A.cache.servicos || []).some(s2 => s2.nome === x.s) || x.d);
+      set('extras', S.filter(s2 => s2 !== main).map(s2 => s2.nome).join(', '));
+      editors.tarefas?.();
+    }
+    renderCalc();
+  }
   function onService() {
     const s = byId('servicos', val.servico_id); if (!s) return;
     const size = byId('veiculos', val.veiculo_id)?.tamanho;
@@ -459,9 +514,10 @@ async function openForm(e, row = null, preset = {}) {
 
   // Editores especiais
   const editors = {};
-  E.fields.filter(f => ['lines', 'checklist', 'photos', 'signature', 'payments', 'damagemap'].includes(f.t)).forEach(f => {
+  E.fields.filter(f => ['lines', 'checklist', 'photos', 'signature', 'payments', 'damagemap', 'svcpick'].includes(f.t)).forEach(f => {
     const box = $(`[data-ed="${f.k}"]`, el); if (!box) return;
     if (f.t === 'payments') editors[f.k] = () => paymentsEditor(box, val, f.k, renderCalc);
+    if (f.t === 'svcpick') editors[f.k] = () => svcPickEditor(box, val, f.k, () => applySvc(true));
     if (f.t === 'damagemap') editors[f.k] = () => damageEditor(box, val, f.k, locked);
     if (f.t === 'lines') editors[f.k] = () => linesEditor(box, val, f.k, renderCalc);
     if (f.t === 'checklist') editors[f.k] = () => checklistEditor(box, val, f.k, f.grupos ? { notes: 'notas_servicos', size: () => byId('veiculos', val.veiculo_id)?.tamanho } : null);
@@ -494,8 +550,9 @@ async function openForm(e, row = null, preset = {}) {
     } else if (e === 'veiculos') {
       const vl = $('[data-k="vin"]', el)?.closest('label'); if (vl && box.previousElementSibling !== vl) { box.style.marginTop = '-4px'; vl.after(box); }
       const pi = plateInfo(val.matricula);
+      if (row?.id) histVeh(row.id).then(h => { const hb = $('#vehHist', el); if (hb) hb.innerHTML = h; });
       box.innerHTML = `<div class="row" style="gap:10px"><button type="button" class="btn sm" id="vinGo">${icon('search')} Preencher dados pelo VIN</button>
-        <span class="small muted grow">${pi ? '🇵🇹 ' + esc(pi) : 'Introduza o VIN (17 caracteres, no livrete/DUA ou no para-brisas) para preencher marca, modelo, ano e motor gratuitamente.'}</span></div><div id="vinRes"></div>`;
+        <span class="small muted grow">${pi ? '🇵🇹 ' + esc(pi) : 'Introduza o VIN (17 caracteres, no livrete/DUA ou no para-brisas) para preencher marca, modelo, ano e motor gratuitamente.'}</span></div><div id="vinRes"></div>${row?.id ? '<div id="vehHist" style="margin-top:14px"></div>' : ''}`;
       $('#vinGo', box).onclick = async () => {
         const b = $('#vinGo', box); b.disabled = true; b.textContent = 'A consultar…';
         try {
@@ -511,7 +568,13 @@ async function openForm(e, row = null, preset = {}) {
         b.disabled = false; b.innerHTML = `${icon('search')} Preencher dados pelo VIN`;
       };
     } else if (e === 'marcacoes') {
-      box.innerHTML = clashHTML(val, row?.id);
+      const size = byId('veiculos', val.veiculo_id)?.tamanho, S = (val.servicos || []).map(id => byId('servicos', id)).filter(Boolean);
+      const total = S.reduce((t, s2) => t + sizePrice(s2, size), 0), dur = S.reduce((t, s2) => t + (+s2.duracao_h || 0), 0);
+      box.innerHTML = `<div class="grid cols-2e" style="gap:12px;align-items:start"><div class="glass" style="padding:14px"><h3 style="font-size:14px;margin-bottom:8px" class="row">${icon('file')} Orçamento</h3>
+        ${S.map(s2 => `<div class="list-i small"><span class="grow">${esc(s2.nome)}${size ? ' — ' + esc(size) : ''}</span><b class="mono">${sizePrice(s2, size) ? money(sizePrice(s2, size)) : 'p/ orçamento'}</b></div>`).join('') || '<div class="small muted">Escolha serviços para gerar o orçamento.</div>'}
+        <div class="totals" style="min-width:0;margin-top:6px"><div class="g"><span>Total${+val.preco_manual ? ' (manual)' : ''}</span><span>${money(+val.preco_manual || total)}</span></div></div>
+        <div class="small muted">≈ ${n2(dur)} h de trabalho · ${size ? 'preço para ' + esc(size) : 'escolha a viatura para o preço por tamanho'}${A.S.iva_isento === '1' ? ' · isento de IVA' : ' · s/ IVA'}${+val.sinal ? ` · sinal ${money(val.sinal)}${+val.sinal_pago ? ' ✓ pago' : ' (por pagar)'}` : ''}</div></div>
+        <div>${clashHTML(val, row?.id)}</div></div>`;
     } else if (e === 'deslocacoes') {
       box.innerHTML = `<div class="note">Custo: <b>${money((+val.km || 0) * +A.S.custo_km + (+val.portagens || 0))}</b> (${n2(A.S.custo_km)} €/km — altere em Definições)</div>`;
     } else if (e === 'inventario' && +val.volume_ml && +val.ml_por_uso) {
@@ -549,6 +612,16 @@ async function openForm(e, row = null, preset = {}) {
 }
 
 /* Matrículas portuguesas: normaliza e indica a época de registo pelo formato (sem custos, sem internet). */
+async function histVeh(id) {
+  await Promise.all(['trabalhos', 'inspecoes', 'garantias', 'servicos', 'equipa'].map(e => load(e)));
+  const J = (A.cache.trabalhos || []).filter(j => +j.veiculo_id === +id).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  const I = (A.cache.inspecoes || []).filter(j => +j.veiculo_id === +id), G = (A.cache.garantias || []).filter(j => +j.veiculo_id === +id);
+  const tot = J.filter(j => j.estado === 'Concluído').reduce((s, j) => s + (+j.valor || 0), 0);
+  return `<div class="glass" style="padding:14px"><h3 style="font-size:14px;margin-bottom:8px" class="row">${icon('clipboard')} Histórico de serviços <span class="muted small right">${J.length} trabalhos · ${money(tot)}</span></h3>
+    ${J.map(j => `<div class="list-i small"><span class="t mono" style="min-width:84px">${fdate(j.data)}</span><div class="grow"><b>${esc(refLabel('servicos', j.servico_id) || j.extras || j.numero)}</b><div class="muted">${esc(j.numero || '')}${j._c?.progresso ? ' · tarefas ' + j._c.progresso : ''}${j.tecnico_id ? ' · ' + esc(refLabel('equipa', j.tecnico_id)) : ''}</div></div>${badge(j.estado)}<b class="mono" style="min-width:70px;text-align:right">${money(j.valor)}</b></div>`).join('') || '<div class="small muted">Ainda sem trabalhos.</div>'}
+    ${G.map(g => `<div class="list-i small"><span class="t" style="min-width:84px">🛡️</span><div class="grow">Garantia ${esc(g.numero)} · ${esc(g.produto)} · válida até ${fdate(g._c?.validade)}</div>${g._c?.alerta ? badge(g._c.alerta) : ''}</div>`).join('')}
+    ${I.map(x => `<div class="list-i small"><span class="t" style="min-width:84px">${fdate(x.data)}</span><div class="grow">Ficha de inspeção · ${esc(x.momento || '')}${x.assinado_em ? ' · 🔒 assinada' : ''}</div></div>`).join('')}</div>`;
+}
 function plateInfo(m) {
   const p = String(m || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (p.length !== 6) return '';
@@ -556,6 +629,16 @@ function plateInfo(m) {
   const f = g.map(x => L(x) ? 'AA' : N(x) ? '00' : '?').join('-');
   const era = { 'AA-00-00': 'entre 1937 e 1992', '00-00-AA': 'entre 1992 e 2005', '00-AA-00': 'entre 2005 e 2020', 'AA-00-AA': 'a partir de 2020' }[f];
   return era ? `Matrícula ${g.join('-')} (formato ${f}): 1.ª matrícula em Portugal ${era}. Viaturas importadas recebem matrícula da época da legalização.` : '';
+}
+function svcPickEditor(box, val, k, onChange) {
+  const size = byId('veiculos', val.veiculo_id)?.tamanho;
+  const sv = (A.cache.servicos || []).filter(s => +s.ativo || (val[k] || []).includes(+s.id));
+  const chip = s => { const on = (val[k] || []).map(Number).includes(+s.id), p = sizePrice(s, size);
+    return `<button type="button" class="chip svc ${on ? 'on' : ''}" data-sid="${s.id}">${esc(s.nome)} <span class="n">${p ? (s.tipo === 'Extra' ? '+' : '') + money(p) : 'orç.'}</span></button>`; };
+  box.innerHTML = `<div class="small muted" style="margin:0 0 6px">Serviços</div><div class="row" style="gap:6px">${sv.filter(s => s.tipo !== 'Extra').map(chip).join('')}</div>
+    <div class="small muted" style="margin:10px 0 6px">Extras</div><div class="row" style="gap:6px">${sv.filter(s => s.tipo === 'Extra').map(chip).join('') || '<span class="small muted">—</span>'}</div>`;
+  $$('[data-sid]', box).forEach(b => b.onclick = () => { const id = +b.dataset.sid; const L = (val[k] || []).map(Number);
+    val[k] = L.includes(id) ? L.filter(x => x !== id) : [...L, id]; b.classList.toggle('on'); onChange(); });
 }
 function clashHTML(v, selfId) {
   const all = (A.cache.marcacoes || []).filter(r => +r.id !== +selfId && r.data === v.data && !['Cancelada', 'Faltou'].includes(r.estado));
@@ -572,9 +655,8 @@ function clashHTML(v, selfId) {
   const c = byId('clientes', v.cliente_id), faltas = +c?._c?.faltas || 0;
   let h = '';
   if (out.length) h += `<div class="alert" style="border-color:rgba(248,113,113,.45);color:var(--bad)">${icon('alert')}<div><b>Conflito de horário</b><br>${out.join('<br>')}<div class="small muted">Pode guardar na mesma — apenas confirme.</div></div></div>`;
+  else if (v.data && v.hora) h += `<div class="alert" style="border-color:rgba(52,211,153,.35)">${icon('check')}<span>Sem conflitos às ${esc(v.hora)} de ${fdate(v.data)}${v.tecnico_id ? ' para ' + esc(refLabel('equipa', v.tecnico_id)) : ''}${v.box ? ' · ' + esc(v.box) : ''}.</span></div>`;
   if (faltas) h += `<div class="alert" style="border-color:rgba(251,191,36,.45)">${icon('alert')}<div><b>${faltas} falta${faltas > 1 ? 's' : ''}</b> registada${faltas > 1 ? 's' : ''} para este cliente — considere pedir sinal.</div></div>`;
-  const s = byId('servicos', v.servico_id);
-  if (s) { const size = byId('veiculos', v.veiculo_id)?.tamanho; h += `<div class="note">${esc(s.nome)} — ${esc(size || 'tamanho n/d')}: <b>${money(sizePrice(s, size))}</b> s/ IVA · ≈ ${n2(s.duracao_h)} h de trabalho${+v.sinal ? ` · sinal ${money(v.sinal)} ${+v.sinal_pago ? '✓ pago' : '(por pagar)'}` : ''}</div>`; }
   return h;
 }
 function paymentsEditor(box, val, k, onChange) {
@@ -651,6 +733,7 @@ const svcTaskText = s => String(s.tarefas_padrao || '').trim() || String(byId('c
 const svcTasks = s => svcTaskText(s).split('\n').map(t => t.trim()).filter(Boolean).map(t => ({ t, d: false, s: s.nome }));
 /* Checklist. Com opts (trabalhos): tarefas agrupadas por serviço, carregamento a partir do catálogo e notas por serviço/tarefa. */
 function checklistEditor(box, val, k, opts = null) {
+  if (opts?.onChange && !box._chg) { box._chg = 1; const fire = () => setTimeout(opts.onChange, 30); ['change', 'click'].forEach(t => box.addEventListener(t, ev => { if (ev.type === 'change' || ev.target.closest('button')) fire(); })); box.addEventListener('input', () => { clearTimeout(box._t); box._t = setTimeout(opts.onChange, 700); }); }
   const notes = () => (opts && (val[opts.notes] = val[opts.notes] && typeof val[opts.notes] === 'object' && !Array.isArray(val[opts.notes]) ? val[opts.notes] : {}));
   const open = new Set(), extra = new Set();
   const draw = () => {
@@ -797,7 +880,8 @@ function bindExtras(e, r, m) {
     if (e === 'marcacoes') p.valor = r.valor_previsto;
     openForm('trabalhos', null, p);
   });
-  on('fat', async () => {
+  on('fat', async () => { m.close(); jobInvoice(r); });
+  on('fat_old', async () => {
     m.close(); await load('marcacoes', true);
     const dep = (A.cache.marcacoes || []).filter(x => +x.cliente_id === +r.cliente_id && +x.sinal_pago && +x.sinal > 0 && x.data <= (r.data || today()) && x.data >= addDays(r.data || today(), -60));
     openForm('faturas', null, { cliente_id: r.cliente_id, trabalho_id: r.id, gorjeta: r.gorjeta || '', linhas: [{ d: [refLabel('servicos', r.servico_id), r.extras].filter(Boolean).join(' — ') || 'Serviço de detailing', q: 1, p: r.valor || 0 }],
@@ -899,7 +983,7 @@ route(/^#\/cliente\/(\d+)$/, async (view, id) => {
   $('#cPortal').onclick = () => portalLink(c.id);
   $('#addV').onclick = () => openForm('veiculos', null, { cliente_id: c.id, _after: re });
   $$('[data-v]').forEach(b => b.onclick = () => openForm('veiculos', byId('veiculos', b.dataset.v), { _after: re }));
-  $$('[data-job]').forEach(b => b.onclick = () => openForm('trabalhos', byId('trabalhos', b.dataset.job)));
+  $$('[data-job]').forEach(b => b.onclick = () => { location.hash = '#/trabalho/' + b.dataset.job; });
   $$('[data-open]').forEach(b => b.onclick = () => { const [e, i] = b.dataset.open.split(':'); openForm(e, byId(e, i)); });
   $('#nMarc').onclick = () => openForm('marcacoes', null, { cliente_id: c.id, veiculo_id: vs[0]?.id || '' });
   $('#nJob').onclick = () => openForm('trabalhos', null, { cliente_id: c.id, veiculo_id: vs[0]?.id || '' });
@@ -1162,45 +1246,251 @@ function fmtTimer(r) {
   return `${h}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
 }
 route(/^#\/quadro$/, async view => {
-  await Promise.all(['clientes', 'veiculos', 'servicos', 'equipa'].map(e => load(e)));
+  await Promise.all(['clientes', 'veiculos', 'servicos', 'equipa', 'checklists'].map(e => load(e)));
   const rows = await load('trabalhos', true);
-  const ST = A.schema.trabalhos.fields.find(f => f.k === 'estado').opts.filter(s => s !== 'Cancelado');
-  const st = A.ui.q = A.ui.q || { tec: '' };
-  setPage('Quadro de trabalhos', 'Arraste os cartões entre colunas · no telemóvel use “→”',
+  const ALL = A.schema.trabalhos.fields.find(f => f.k === 'estado').opts.filter(s => s !== 'Cancelado');
+  const st = A.ui.q = A.ui.q || { tec: '', done: false };
+  const ST = st.done ? ALL : ALL.filter(x => x !== 'Concluído');
+  setPage('Quadro de trabalhos', innerWidth < 900 ? 'Toque longo e arraste' : 'Arraste entre etapas · o cronómetro arranca sozinho',
     `<select class="inp" id="tf" style="width:auto;min-height:38px"><option value="">Todos os técnicos</option>${(A.cache.equipa || []).map(t => `<option value="${t.id}" ${+st.tec === +t.id ? 'selected' : ''}>${esc(t.nome)}</option>`).join('')}</select>
-     <button class="btn pri" id="nw">${icon('plus')}<span class="btn-txt-m">Trabalho</span></button>`);
+     <label class="switch small hide-m"><input type="checkbox" id="sd" ${st.done ? 'checked' : ''}><span>Concluídos</span></label>
+     <button class="btn" id="wk">${icon('plus')}<span class="btn-txt-m">Walk-in</span></button><button class="btn pri" id="nw">${icon('plus')}<span class="btn-txt-m">Trabalho</span></button>`);
   const list = rows.filter(r => !st.tec || +r.tecnico_id === +st.tec);
-  view.innerHTML = `<div class="kanban">${ST.map((s, i) => {
-    let items = list.filter(r => r.estado === s);
-    if (s === 'Concluído') items = items.slice(0, 12);
-    return `<div class="glass kcol" data-st="${esc(s)}"><h4>${badge(s)}<span class="muted right">${list.filter(r => r.estado === s).length}</span></h4>
-      ${items.map(r => `<div class="kcard" draggable="true" data-id="${r.id}">
-        <div class="row" style="gap:6px"><b class="grow">${esc(refLabel('veiculos', r.veiculo_id) || refLabel('clientes', r.cliente_id))}</b>${s !== 'Concluído' ? `<button class="btn sm ghost" data-next="${r.id}" title="Avançar para ${esc(ST[i + 1] || '')}">${icon('arrow')}</button>` : ''}</div>
-        <div class="m">${esc(refLabel('clientes', r.cliente_id))} · ${esc(r.numero || '')}</div>
-        <div class="m">${esc(refLabel('servicos', r.servico_id) || r.extras || '')}</div>
-        <div class="row small" style="margin-top:8px"><button class="btn sm ghost tmr ${r.timer_inicio ? 'run' : ''}" data-tmr="${r.id}" data-start="${esc(r.timer_inicio || '')}" data-h="${+r.horas || 0}">⏱ <span class="mono">${fmtTimer(r)}</span></button></div>
-        ${r._c?.pct !== null && r._c?.pct !== undefined ? `<div class="row small" style="margin-top:8px"><div class="bar grow"><i style="width:${r._c.pct}%"></i></div><span class="muted">${r._c.progresso}</span></div>` : ''}
-        <div class="row small muted" style="margin-top:6px">${r.tecnico_id ? `<span class="dot" style="color:${esc(byId('equipa', r.tecnico_id)?.cor || '#22d3ee')};background:currentColor"></span>${esc(refLabel('equipa', r.tecnico_id))}` : 'Sem técnico'}${r.box ? `<span class="badge t-mut" style="padding:1px 7px">${esc(r.box)}</span>` : ''}<span class="right">${r.data_entrega ? 'Entrega ' + fdate(r.data_entrega).slice(0, 5) : fdate(r.data).slice(0, 5)}</span></div>
-      </div>`).join('')}</div>`;
+  view.innerHTML = `<div class="kanban" id="kb">${ST.map(s => {
+    let items = list.filter(r => r.estado === s); if (s === 'Concluído') items = items.slice(0, 15);
+    const color = STAGE_COLORS[ALL.indexOf(s)] || 'var(--ac)';
+    return `<div class="glass kcol" data-st="${esc(s)}"><h4><span class="dot" style="color:${color};background:${color}"></span>${esc(s)}<span class="cnt-b right">${list.filter(r => r.estado === s).length}</span></h4>
+      ${items.map(r => jobCard(r, color, ALL)).join('') || '<div class="drop-here">Largar aqui</div>'}</div>`;
   }).join('')}</div>`;
   const move = async (id, estado) => {
-    try { const r = await api('save', { e: 'trabalhos' }, { id, estado }); const i = rows.findIndex(x => +x.id === +id); rows[i] = r.row; toast(`Movido para “${estado}”.`); router(); } catch (er) { fail(er); }
+    try { const r = await api('save', { e: 'trabalhos' }, { id, estado }); const i = rows.findIndex(x => +x.id === +id); rows[i] = r.row; toast(`Movido para “${estado}”.`); loadBadges(); router(); } catch (er) { fail(er); }
   };
-  $$('.kcard').forEach(c => {
-    c.onclick = ev => { if (ev.target.closest('[data-next]')) return; openForm('trabalhos', byId('trabalhos', c.dataset.id)); };
-    c.ondragstart = ev => ev.dataTransfer.setData('text/plain', c.dataset.id);
+  $$('.kcard', view).forEach(c => {
+    c.onclick = ev => { if (c._noClick || ev.target.closest('[data-next],[data-tmr]')) return; location.hash = '#/trabalho/' + c.dataset.id; };
+    c.ondragstart = ev => { ev.dataTransfer.setData('text/plain', c.dataset.id); c.classList.add('dragging'); };
+    c.ondragend = () => c.classList.remove('dragging');
   });
-  $$('[data-tmr]').forEach(b => b.onclick = async ev => { ev.stopPropagation();
+  $$('[data-next]', view).forEach(b => b.onclick = ev => { ev.stopPropagation(); const r = byId('trabalhos', b.dataset.next); move(r.id, ALL[ALL.indexOf(r.estado) + 1]); });
+  $$('[data-tmr]', view).forEach(b => b.onclick = async ev => { ev.stopPropagation();
     try { const r = await api('timer', {}, { id: b.dataset.tmr }); const i = rows.findIndex(x => +x.id === +r.row.id); rows[i] = r.row; toast(r.row.timer_inicio ? 'Cronómetro iniciado.' : 'Cronómetro parado — horas atualizadas.'); router(); } catch (er) { fail(er); } });
   clearInterval(A.tick); A.tick = setInterval(() => { if (!$('[data-tmr]')) return clearInterval(A.tick); $$('[data-tmr].run').forEach(b => { $('span', b).textContent = fmtTimer({ timer_inicio: b.dataset.start, horas: b.dataset.h }); }); }, 1000);
-  $$('[data-next]').forEach(b => b.onclick = () => { const r = byId('trabalhos', b.dataset.next); move(r.id, ST[ST.indexOf(r.estado) + 1]); });
-  $$('.kcol').forEach(col => {
+  $$('.kcol', view).forEach(col => {
     col.ondragover = ev => { ev.preventDefault(); col.classList.add('over'); };
     col.ondragleave = () => col.classList.remove('over');
     col.ondrop = ev => { ev.preventDefault(); col.classList.remove('over'); const id = ev.dataTransfer.getData('text/plain'); if (byId('trabalhos', id)?.estado !== col.dataset.st) move(id, col.dataset.st); };
   });
+  touchDrag($('#kb'), (id, estado) => { if (byId('trabalhos', id)?.estado !== estado) move(id, estado); });
   $('#tf').onchange = ev => { st.tec = ev.target.value; router(); };
-  $('#nw').onclick = () => openForm('trabalhos');
+  $('#sd').onchange = ev => { st.done = ev.target.checked; router(); };
+  $('#nw').onclick = () => openForm('trabalhos', null, { estado: 'Check-in', _after: r => { location.hash = '#/trabalho/' + r.id; } });
+  $('#wk').onclick = () => walkIn();
+});
+const STAGE_COLORS = ['#60a5fa', '#a78bfa', '#fbbf24', '#22d3ee', '#34d399', '#f472b6', '#fb7185', '#4ade80', '#94a3b8'];
+function jobTitle(r) { return refLabel('veiculos', r.veiculo_id) || [r.walkin_veiculo, r.walkin_matricula].filter(Boolean).join(' · ') || 'Viatura não indicada'; }
+function jobClient(r) { return refLabel('clientes', r.cliente_id) || r.walkin_nome || 'Walk-in sem ficha'; }
+function jobServices(r) { const L = jparse(r.servicos).map(id => refLabel('servicos', id)).filter(Boolean); return L.length ? L.join(', ') : [refLabel('servicos', r.servico_id), r.extras].filter(Boolean).join(', '); }
+function jobCard(r, color, ALL) {
+  const tec = byId('equipa', r.tecnico_id), nxt = ALL[ALL.indexOf(r.estado) + 1];
+  return `<div class="kcard" draggable="true" data-id="${r.id}" style="border-left:3px solid ${color}">
+    <div class="row" style="gap:8px;flex-wrap:nowrap;align-items:flex-start"><div class="grow" style="min-width:0"><b>${esc(jobTitle(r))}</b><div class="m">${esc(jobClient(r))}${r.cliente_id ? '' : ' <span class="badge t-warn" style="padding:0 6px">Walk-in</span>'}</div></div>
+      ${tec ? `<span class="avatar xs" style="background:${esc(tec.cor || '#ef4444')}" title="${esc(tec.nome)}">${esc(initials(tec.nome))}</span>` : ''}</div>
+    <div class="m" style="margin-top:6px;color:var(--tx)">${esc(jobServices(r))}</div>
+    ${r._c?.pct !== null && r._c?.pct !== undefined ? `<div class="row small" style="margin-top:8px;flex-wrap:nowrap"><div class="bar grow"><i style="width:${r._c.pct}%"></i></div><span class="muted">${r._c.pct}%</span></div>` : ''}
+    <div class="row small" style="margin-top:8px;flex-wrap:nowrap"><button class="btn sm ghost tmr ${r.timer_inicio ? 'run' : ''}" data-tmr="${r.id}" data-start="${esc(r.timer_inicio || '')}" data-h="${+r.horas || 0}">⏱ <span class="mono">${fmtTimer(r)}</span></button>
+      ${r.box ? `<span class="badge t-mut" style="padding:1px 7px">${esc(r.box)}</span>` : ''}
+      ${nxt ? `<button class="btn sm ghost right" data-next="${r.id}">${esc(nxt.split(' ')[0])} ${icon('right')}</button>` : ''}</div></div>`;
+}
+/* Arrastar com toque (toque longo) — o arrastar nativo HTML5 não funciona em ecrãs táteis */
+function touchDrag(board, onDrop) {
+  if (!board) return;
+  $$('.kcard', board).forEach(card => {
+    let timer = null, drag = null, sx = 0, sy = 0;
+    card.addEventListener('touchstart', ev => {
+      const t = ev.touches[0]; sx = t.clientX; sy = t.clientY;
+      timer = setTimeout(() => {
+        const r = card.getBoundingClientRect(), g = card.cloneNode(true);
+        Object.assign(g.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', zIndex: 999, pointerEvents: 'none', opacity: '.92', transform: 'rotate(2deg) scale(1.03)', boxShadow: '0 20px 50px #000' });
+        document.body.appendChild(g); drag = { g, dx: sx - r.left, dy: sy - r.top }; card.classList.add('dragging'); navigator.vibrate?.(15);
+      }, 320);
+    }, { passive: true });
+    card.addEventListener('touchmove', ev => {
+      const t = ev.touches[0];
+      if (!drag) { if (Math.hypot(t.clientX - sx, t.clientY - sy) > 8) clearTimeout(timer); return; }
+      ev.preventDefault();
+      drag.g.style.left = (t.clientX - drag.dx) + 'px'; drag.g.style.top = (t.clientY - drag.dy) + 'px';
+      const col = document.elementFromPoint(t.clientX, t.clientY)?.closest('.kcol');
+      $$('.kcol', board).forEach(c => c.classList.toggle('over', c === col));
+      const br = board.getBoundingClientRect(); if (t.clientX > br.right - 40) board.scrollLeft += 14; if (t.clientX < br.left + 40) board.scrollLeft -= 14;
+    }, { passive: false });
+    const end = ev => {
+      clearTimeout(timer); if (!drag) return;
+      const t = ev.changedTouches[0]; drag.g.parentNode?.removeChild(drag.g); card.classList.remove('dragging'); drag = null;
+      $$('.kcol', board).forEach(c => c.classList.remove('over'));
+      const col = document.elementFromPoint(t.clientX, t.clientY)?.closest('.kcol');
+      card._noClick = true; setTimeout(() => { card._noClick = false; }, 450);
+      if (col?.dataset.st) onDrop(card.dataset.id, col.dataset.st);
+    };
+    card.addEventListener('touchend', end); card.addEventListener('touchcancel', end);
+  });
+}
+/* Walk-in: trabalho rápido sem criar ficha de cliente */
+async function walkIn() {
+  await Promise.all(['clientes', 'veiculos', 'servicos', 'equipa', 'checklists'].map(e => load(e)));
+  const val = { servicos: [], veiculo_id: '' };
+  const TAM = A.schema.veiculos.fields.find(f => f.k === 'tamanho').opts;
+  const m = modal('Novo trabalho walk-in', `<p class="small muted" style="margin-top:0">Para viaturas que aparecem sem marcação. Não é preciso criar ficha — no fim pode criá-la se o cliente quiser.</p>
+    <div class="form"><label class="f"><span>Matrícula</span><input class="inp" id="wMat" placeholder="AA-00-AA"></label><label class="f"><span>Viatura</span><input class="inp" id="wVei" placeholder="Ex.: Renault Clio cinzento"></label>
+    <label class="f"><span>Tamanho (para o preço)</span><select class="inp" id="wTam">${TAM.map(t => `<option ${t === 'Médio' ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+    <label class="f"><span>Cliente existente (opcional)</span><select class="inp" id="wCli"><option value="">— Sem ficha —</option>${(A.cache.clientes || []).map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('')}</select></label>
+    <label class="f"><span>Nome (opcional)</span><input class="inp" id="wNom"></label><label class="f"><span>Telemóvel (opcional)</span><input class="inp" id="wTel" type="tel"></label>
+    <div class="full" id="wSvc"></div>
+    <label class="f"><span>Técnico</span><select class="inp" id="wTec"><option value="">Sem técnico</option>${(A.cache.equipa || []).filter(t => +t.ativo).map(t => `<option value="${t.id}">${esc(t.nome)}</option>`).join('')}</select></label>
+    <label class="f"><span>Nota (opcional)</span><input class="inp" id="wNot"></label><div class="full" id="wTot"></div></div>`,
+    `<button class="btn ghost right" data-c>Cancelar</button><button class="btn pri" id="wGo">${icon('plus')} Adicionar ao quadro</button>`);
+  const fakeSize = () => $('#wTam', m.el).value;
+  const total = () => val.servicos.map(id => byId('servicos', id)).filter(Boolean).reduce((t, s) => t + sizePrice(s, fakeSize()), 0);
+  const redraw = () => { const cur = A.cache.veiculos; A.cache._tmpv = { id: -1, tamanho: fakeSize() }; val.veiculo_id = -1; A.cache.veiculos = [...cur.filter(x => x.id !== -1), A.cache._tmpv];
+    svcPickEditor($('#wSvc', m.el), val, 'servicos', () => { $('#wTot', m.el).innerHTML = `<div class="note">Total: <b>${money(total())}</b> · ${fakeSize()}</div>`; });
+    A.cache.veiculos = cur; $('#wTot', m.el).innerHTML = `<div class="note">Total: <b>${money(total())}</b> · ${fakeSize()}</div>`; };
+  $('#wTam', m.el).onchange = redraw; redraw();
+  $('#wCli', m.el).onchange = ev => { const c = byId('clientes', ev.target.value); if (c) { $('#wNom', m.el).value = c.nome; $('#wTel', m.el).value = c.telefone || ''; } };
+  $('[data-c]', m.el).onclick = m.close;
+  $('#wGo', m.el).onclick = async () => {
+    const S = val.servicos.map(id => byId('servicos', id)).filter(Boolean);
+    if (!S.length && !$('#wNot', m.el).value) return toast('Escolha pelo menos um serviço.', true);
+    const mat = $('#wMat', m.el).value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const cid = $('#wCli', m.el).value;
+    const veh = cid ? (A.cache.veiculos || []).find(v => +v.cliente_id === +cid && String(v.matricula || '').replace(/-/g, '') === mat) : null;
+    const main = S.find(s => s.tipo !== 'Extra') || S[0];
+    try {
+      const r = await api('save', { e: 'trabalhos' }, { data: today(), estado: 'Check-in', cliente_id: cid || '', veiculo_id: veh?.id || '', tecnico_id: $('#wTec', m.el).value,
+        walkin_nome: $('#wNom', m.el).value, walkin_tel: $('#wTel', m.el).value, walkin_veiculo: $('#wVei', m.el).value, walkin_matricula: mat.length === 6 ? mat.match(/.{2}/g).join('-') : mat,
+        servicos: val.servicos, servico_id: main?.id || '', valor: total() || '', custo_produtos: S.reduce((t, s) => t + (+s.custo_produtos || 0), 0) || '',
+        extras: [S.filter(s => s !== main).map(s => s.nome).join(', '), $('#wNot', m.el).value].filter(Boolean).join(' — '), tarefas: S.flatMap(svcTasks), portal_visivel: 1 });
+      m.close(); toast('Walk-in adicionado ao quadro.'); location.hash = '#/trabalho/' + r.row.id;
+    } catch (er) { fail(er); }
+  };
+}
+/* Faturação a partir do trabalho (inclui walk-in: usa o cliente genérico “Cliente ocasional”) */
+async function jobInvoice(r) {
+  await load('marcacoes', true); await load('clientes', true);
+  let cid = r.cliente_id;
+  if (!cid) {
+    let g = (A.cache.clientes || []).find(c => c.nome === 'Cliente ocasional (walk-in)');
+    if (!g) g = (await api('save', { e: 'clientes' }, { nome: 'Cliente ocasional (walk-in)', tipo: 'Particular', notas: 'Cliente genérico para trabalhos walk-in sem ficha.' })).row;
+    cid = g.id; await load('clientes', true);
+  }
+  const dep = (A.cache.marcacoes || []).filter(x => r.cliente_id && +x.cliente_id === +r.cliente_id && +x.sinal_pago && +x.sinal > 0 && x.data <= (r.data || today()) && x.data >= addDays(r.data || today(), -60));
+  const S = jparse(r.servicos).map(id => byId('servicos', id)).filter(Boolean);
+  const size = byId('veiculos', r.veiculo_id)?.tamanho;
+  const linhas = S.length > 1 ? S.map(s => ({ d: s.nome, q: 1, p: sizePrice(s, size) })) : [{ d: [refLabel('servicos', r.servico_id), r.extras].filter(Boolean).join(' — ') || 'Serviço de detailing', q: 1, p: r.valor || 0 }];
+  if (S.length > 1) { const sum = linhas.reduce((t, l) => t + l.p, 0); if (+r.valor && Math.abs(sum - r.valor) > .01) linhas.push({ d: 'Ajuste', q: 1, p: Math.round((r.valor - sum) * 100) / 100 }); }
+  openForm('faturas', null, { cliente_id: cid, trabalho_id: r.id, gorjeta: r.gorjeta || '', linhas, notas: r.cliente_id ? '' : `Walk-in: ${[r.walkin_nome, r.walkin_veiculo, r.walkin_matricula].filter(Boolean).join(' · ')}`,
+    pagamentos: dep.map(x => ({ d: x.data, v: +x.sinal, m: '', n: 'Sinal da marcação de ' + fdate(x.data) })) });
+  if (dep.length) toast('Sinal da marcação creditado automaticamente.');
+}
+/* Walk-in → criar ficha de cliente + viatura */
+function walkinToClient(r, after) {
+  const [mk, ...md] = String(r.walkin_veiculo || '').split(' ');
+  const TAM = A.schema.veiculos.fields.find(f => f.k === 'tamanho').opts;
+  const m = modal('Criar ficha de cliente', `<div class="form"><label class="f"><span>Nome *</span><input class="inp" id="cNom" value="${esc(r.walkin_nome || '')}"></label><label class="f"><span>Telemóvel</span><input class="inp" id="cTel" type="tel" value="${esc(r.walkin_tel || '')}"></label>
+    <label class="f full"><span>Email</span><input class="inp" id="cEm" type="email"></label>
+    <label class="f"><span>Marca</span><input class="inp" id="cMk" value="${esc(mk || '')}"></label><label class="f"><span>Modelo</span><input class="inp" id="cMd" value="${esc(md.join(' '))}"></label>
+    <label class="f"><span>Matrícula</span><input class="inp" id="cMat" value="${esc(r.walkin_matricula || '')}"></label><label class="f"><span>Tamanho</span><select class="inp" id="cTam">${TAM.map(t => `<option ${t === 'Médio' ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+    <label class="switch full"><input type="checkbox" id="cRg"><span class="small">O cliente autoriza o contacto e o envio de comunicações (RGPD)</span></label></div>`,
+    `<button class="btn ghost right" data-c>Cancelar</button><button class="btn pri" id="cGo">${icon('users')} Criar ficha</button>`, 'sm');
+  $('[data-c]', m.el).onclick = m.close;
+  $('#cGo', m.el).onclick = async () => {
+    const nome = $('#cNom', m.el).value.trim(); if (!nome) return toast('Indique o nome.', true);
+    try {
+      const c = (await api('save', { e: 'clientes' }, { nome, telefone: $('#cTel', m.el).value, email: $('#cEm', m.el).value, origem: 'Passagem', rgpd: $('#cRg', m.el).checked ? 1 : 0, tipo: 'Particular' })).row;
+      let vid = '';
+      if ($('#cMk', m.el).value.trim()) vid = (await api('save', { e: 'veiculos' }, { cliente_id: c.id, marca: $('#cMk', m.el).value.trim(), modelo: $('#cMd', m.el).value.trim(), matricula: $('#cMat', m.el).value.trim(), tamanho: $('#cTam', m.el).value })).row.id;
+      await api('save', { e: 'trabalhos' }, { id: r.id, cliente_id: c.id, veiculo_id: vid });
+      A.cache.clientes = null; A.cache.veiculos = null; m.close(); toast('Ficha criada e trabalho associado ao cliente.'); after?.();
+    } catch (er) { fail(er); }
+  };
+}
+
+/* ---------- Ecrã do trabalho (etapas, cronómetro, checklist, produtos, rentabilidade) ---------- */
+route(/^#\/trabalho\/(\d+)$/, async (view, id) => {
+  await Promise.all(['clientes', 'veiculos', 'servicos', 'equipa', 'inventario', 'checklists'].map(e => load(e, e === 'inventario')));
+  await load('trabalhos', true);
+  let r = byId('trabalhos', id); if (!r) throw new Error('Trabalho não encontrado.');
+  const ALL = A.schema.trabalhos.fields.find(f => f.k === 'estado').opts;
+  const val = { tarefas: jparse(r.tarefas), notas_servicos: (() => { try { return JSON.parse(r.notas_servicos || '{}') || {}; } catch { return {}; } })(), fotos: jparse(r.fotos) };
+  setPage(jobTitle(r), `${esc(jobClient(r))} · ${esc(r.numero || '')}${r.cliente_id ? '' : ' · <span class="badge t-warn" style="padding:0 6px">Walk-in</span>'}`, `<a class="btn ghost" href="#/quadro">${icon('left')}<span class="btn-txt-m">Quadro</span></a><button class="btn" id="jEdit">Editar tudo</button>`);
+  const save = async (data, quiet) => { try { const x = await api('save', { e: 'trabalhos' }, { id: r.id, ...data }); r = x.row; const i = A.cache.trabalhos.findIndex(j => +j.id === +r.id); A.cache.trabalhos[i] = r; drawProfit(); drawTimer(); if (!quiet) toast('Guardado.'); } catch (er) { fail(er); } };
+  view.innerHTML = `<div class="tabs stages">${ALL.map(s => `<button class="tab ${s === r.estado ? 'on' : ''}" data-stage="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+    <div class="grid cols-2e" style="align-items:start">
+      <div class="grid" style="align-content:start">
+        <div class="glass card"><div class="row"><div class="grow"><div class="tiny">Tempo no trabalho</div><div class="mono" id="jClock" style="font-size:40px;font-weight:700;letter-spacing:.02em">0:00:00</div><div class="small muted" id="jSess"></div></div>
+          <button class="btn pri" id="jTmr"></button><button class="btn" id="jDone">${icon('check')} Concluir</button></div></div>
+        <div class="glass card"><h3>${icon('clipboard')} Ficha de intervenção <span class="right muted small" id="jPct"></span></h3><div id="jChk"></div></div>
+        <div class="glass card"><h3>${icon('image')} Fotos antes / depois</h3><div id="jPh"></div></div>
+      </div>
+      <div class="grid" style="align-content:start">
+        <div class="glass card"><h3>${icon('flask')} Produtos usados</h3><p class="small muted" style="margin-top:-6px">Registe o que usou — o stock é descontado e o custo entra no lucro do trabalho. Use frações para embalagens parciais (ex.: 0,25).</p>
+          <div class="row" style="flex-wrap:nowrap"><select class="inp" id="pSel"><option value="">Escolher produto…</option>${(A.cache.inventario || []).map(i => `<option value="${i.id}">${esc(i.nome)} · stock ${n2(i.quantidade)} ${esc(i.unidade || '')} · ${money(i.custo_unitario)}</option>`).join('')}</select>
+          <input class="inp" id="pQ" type="number" step="0.05" value="1" style="width:90px"><button class="btn icon" id="pAdd">${icon('plus')}</button></div><div id="pList" style="margin-top:8px"></div></div>
+        <div class="glass card"><h3>${icon('chart')} Rentabilidade do trabalho</h3>
+          <div class="form"><label class="f"><span>Valor do trabalho (s/ IVA)</span><input class="inp" type="number" step="0.01" data-j="valor" value="${esc(r.valor ?? '')}"></label>
+            <label class="f"><span>Técnico</span><select class="inp" data-j="tecnico_id"><option value="">—</option>${(A.cache.equipa || []).map(t => `<option value="${t.id}" ${+t.id === +r.tecnico_id ? 'selected' : ''}>${esc(t.nome)}</option>`).join('')}</select></label>
+            <label class="f"><span>Horas de trabalho</span><input class="inp" type="number" step="0.25" data-j="horas" value="${esc(r.horas ?? '')}"></label>
+            <label class="f"><span>Outros custos (água, deslocação, taxas…)</span><input class="inp" type="number" step="0.01" data-j="outros_custos" value="${esc(r.outros_custos ?? '')}"></label>
+            <label class="f"><span>Box</span><select class="inp" data-j="box"><option value="">—</option>${A.schema.trabalhos.fields.find(f => f.k === 'box').opts.map(b => `<option ${b === r.box ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select></label>
+            <label class="f"><span>Entrega prevista</span><input class="inp" type="date" data-j="data_entrega" value="${esc(r.data_entrega || '')}"></label></div>
+          <div id="jProfit" style="margin-top:12px"></div></div>
+        <div class="glass card"><h3>${icon('chat')} Notas</h3><label class="f"><span>Trabalho realizado</span><textarea class="inp" data-j="notas_trabalho">${esc(r.notas_trabalho || '')}</textarea></label>
+          <label class="f" style="margin-top:10px"><span>Cuidados pós-serviço (para o cliente)</span><textarea class="inp" data-j="notas_aftercare">${esc(r.notas_aftercare || '')}</textarea></label></div>
+      </div></div>
+    <div class="glass jfoot"><a class="btn" href="#/doc/trabalhos/${r.id}">${icon('print')} Ordem de trabalho</a><button class="btn" id="jIns">${icon('clipboard')} Check-in</button>
+      <button class="btn" id="jSoc">${icon('image')} Antes/depois</button>${r.cliente_id ? `<button class="btn" id="jMsg">${icon('chat')} Mensagem</button>` : `<button class="btn" id="jCli">${icon('users')} Criar ficha de cliente</button>`}
+      <span class="right"></span><button class="btn pri" id="jFat">${icon('receipt')} Faturação</button></div>`;
+  // etapas
+  $$('[data-stage]', view).forEach(b => b.onclick = async () => { await save({ estado: b.dataset.stage }, true); toast(`Etapa: ${b.dataset.stage}`); $$('[data-stage]', view).forEach(x => x.classList.toggle('on', x === b)); loadBadges(); });
+  // cronómetro
+  function drawTimer() {
+    $('#jTmr').innerHTML = r.timer_inicio ? `⏸ Pausa` : `▶ Iniciar`; $('#jTmr').classList.toggle('pri', !r.timer_inicio);
+    $('#jSess').textContent = `${+r.timer_sessoes || 0} sessão(ões) registada(s)${r.timer_inicio ? ' · a contar' : ''}`; $('#jClock').textContent = fmtTimer(r);
+    $('#jClock').style.color = r.timer_inicio ? 'var(--ok)' : '';
+  }
+  clearInterval(A.tick); A.tick = setInterval(() => { if (!$('#jClock')) return clearInterval(A.tick); $('#jClock').textContent = fmtTimer(r); }, 1000);
+  $('#jTmr').onclick = async () => { try { r = (await api('timer', {}, { id: r.id })).row; drawTimer(); drawProfit(); const h = $('[data-j="horas"]'); if (h) h.value = r.horas ?? ''; } catch (er) { fail(er); } };
+  $('#jDone').onclick = async () => { await save({ estado: 'Concluído' }, true); toast('Trabalho concluído.'); router(); };
+  // checklist com gravação automática
+  const chk = $('#jChk');
+  const savedChk = () => { save({ tarefas: val.tarefas, notas_servicos: val.notas_servicos }, true); $('#jPct').textContent = val.tarefas.length ? Math.round(val.tarefas.filter(x => x.d).length / val.tarefas.length * 100) + '%' : ''; };
+  checklistEditor(chk, val, 'tarefas', { notes: 'notas_servicos', onChange: savedChk });
+  $('#jPct').textContent = val.tarefas.length ? Math.round(val.tarefas.filter(x => x.d).length / val.tarefas.length * 100) + '%' : '';
+  // fotos com gravação automática
+  const ph = $('#jPh'); photosEditor(ph, val, 'fotos');
+  new MutationObserver(() => { clearTimeout(ph._t); ph._t = setTimeout(() => save({ fotos: val.fotos }, true), 400); }).observe(ph, { childList: true });
+  ph.addEventListener('change', ev => { if (ev.target.tagName === 'SELECT') save({ fotos: val.fotos }, true); });
+  // produtos
+  function drawProducts() {
+    const L = jparse(r.produtos_usados);
+    $('#pList').innerHTML = L.map((p, i) => `<div class="list-i small"><span class="grow">${esc(p.d)} <span class="muted">× ${n2(p.q)} ${esc(p.u || '')}</span></span><b class="mono">${money(p.c)}</b><button class="btn icon ghost sm" data-rmp="${i}">${icon('x')}</button></div>`).join('') || '<div class="small muted">Nenhum produto registado.</div>';
+    $$('[data-rmp]').forEach(b => b.onclick = async () => { try { r = (await api('job_product', {}, { id: r.id, remove: +b.dataset.rmp })).row; drawProducts(); drawProfit(); } catch (er) { fail(er); } });
+  }
+  $('#pAdd').onclick = async () => { const a2 = $('#pSel').value; if (!a2) return toast('Escolha um produto.', true);
+    try { r = (await api('job_product', {}, { id: r.id, artigo_id: a2, q: $('#pQ').value })).row; drawProducts(); drawProfit(); A.cache.inventario = null; toast('Produto registado e descontado do stock.'); } catch (er) { fail(er); } };
+  // rentabilidade
+  function drawProfit() {
+    const c = r._c || {}, tec = byId('equipa', r.tecnico_id);
+    $('#jProfit').innerHTML = [['Receita', money(r.valor)], ['Produtos / químicos', '−' + money(r.custo_produtos || 0)], [`Mão de obra (${n2(r.horas)} h × ${money(+tec?.custo_hora || +A.S.custo_hora)}/h${+tec?.comissao_pct ? ' + comissão' : ''})`, '−' + money(c.mao_obra)],
+      ['Deslocação', '−' + money(c.deslocacao)], ['Outros custos', '−' + money(r.outros_custos || 0)]].map(([a2, b2]) => `<div class="list-i small"><span class="grow muted">${a2}</span><span class="mono">${b2}</span></div>`).join('')
+      + `<div class="list-i"><b class="grow">Lucro</b><b class="mono ${c.lucro >= 0 ? 'up' : 'down'}">${money(c.lucro)}</b></div><div class="row small muted"><span>Margem ${n2(c.margem)}%</span><span class="right">Lucro/hora ${c.lucro_hora !== null && c.lucro_hora !== undefined ? money(c.lucro_hora) : '—'}</span></div>`;
+  }
+  $$('[data-j]', view).forEach(x => x.onchange = () => save({ [x.dataset.j]: x.value }, true));
+  drawTimer(); drawProducts(); drawProfit();
+  // ações
+  $('#jEdit').onclick = () => openForm('trabalhos', r, { _after: () => router() });
+  $('#jIns').onclick = () => openForm('inspecoes', null, { cliente_id: r.cliente_id || '', veiculo_id: r.veiculo_id || '', trabalho_id: r.id });
+  $('#jSoc').onclick = () => jparse(r.fotos).length ? socialExport(r) : toast('Carregue primeiro fotos “Antes” e “Depois”.', true);
+  $('#jFat').onclick = () => jobInvoice(r);
+  $('#jMsg')?.addEventListener('click', () => openMessage(msgCtx('trabalhos', r)));
+  $('#jCli')?.addEventListener('click', () => walkinToClient(r, () => router()));
 });
 
 /* ---------- Calculadora de preços ---------- */
@@ -1358,7 +1648,7 @@ route(/^#\/definicoes$/, async view => {
   const I = (k, l, t = 'text', help = '') => `<label class="f ${t === 'textarea' ? 'full' : ''}"><span>${l}</span>${t === 'textarea' ? `<textarea class="inp" data-s="${k}">${esc(S[k])}</textarea>` : `<input class="inp" type="${t}" step="0.01" data-s="${k}" value="${esc(S[k])}">`}${help ? `<small>${help}</small>` : ''}</label>`;
   const B = (k, l) => `<label class="switch"><input type="checkbox" data-s="${k}" ${S[k] === '1' ? 'checked' : ''}><span>${l}</span></label>`;
   const off = settingsJSON('modulos_off', []);
-  const mods = [...Object.entries(A.schema).map(([k, E]) => [k, E.label]), ['#/calc-precos', 'Calculadora de preços'], ['#/calc-quimicos', 'Custo de químicos'], ['#/relatorios', 'Relatórios'], ['portal.php', 'Portal do cliente (menu)']];
+  const mods = [...Object.entries(A.schema).map(([k, E]) => [k, E.label]), ['#/rota', 'Rota do dia (serviços ao domicílio)'], ['#/calc-precos', 'Calculadora de preços'], ['#/calc-quimicos', 'Custo de químicos'], ['#/relatorios', 'Relatórios'], ['portal.php', 'Portal do cliente (menu)']];
   const mult = settingsJSON('mult_tamanho', {});
   const TABS = [['emp', 'Empresa'], ['apa', 'Aparência'], ['fin', 'Finanças & operação'], ['lst', 'Categorias & listas'], ['cmp', 'Campos personalizados'], ['msg', 'Mensagens & termos'], ['dat', 'Dados & cópias'], ['sob', 'Sobre']];
   const tab = A.ui.setTab || 'emp';
@@ -1379,7 +1669,7 @@ route(/^#\/definicoes$/, async view => {
       ${I('reserva_impostos', 'Reserva para impostos (% do lucro)', 'number', 'IRS/IRC + Seg. Social estimados.')}${I('custo_km', 'Custo por km (€)', 'number', 'Ex.: 0,40 €/km.')}
       ${I('custo_hora', 'Custo/hora padrão de mão de obra (€)', 'number')}${I('margem_alvo', 'Margem alvo (%)', 'number')}
       ${I('custos_fixos', 'Custos fixos mensais (€)', 'number', 'Renda, seguros, software, contabilidade…')}${I('horas_mes', 'Horas faturáveis por mês', 'number')}
-      ${I('objetivo_mensal', 'Objetivo de receita mensal (€)', 'number')}
+      ${I('objetivo_mensal', 'Objetivo de receita mensal (€)', 'number')}${I('sinal_pct', 'Sinal por defeito (% do valor da marcação)', 'number')}
       <div class="full"><span class="small muted">Multiplicadores por tamanho (calculadora)</span><div class="row" style="margin-top:6px">${TAMANHOS_JS().map(t => `<label class="f" style="width:110px"><span>${t}</span><input class="inp" type="number" step="0.05" data-mult="${esc(t)}" value="${mult[t] ?? 1}"></label>`).join('')}</div></div></div></div>
     <div class="glass card" data-p="msg"><h3>${icon('file')} Documentos & termos</h3><div class="form">
       ${I('prefixo_orc', 'Prefixo orçamentos')}${I('prefixo_trab', 'Prefixo ordens de trabalho')}${I('prefixo_fat', 'Prefixo docs. faturação')}${I('prefixo_gar', 'Prefixo certificados')}${I('validade_dias', 'Validade dos orçamentos (dias)', 'number')}
@@ -1637,22 +1927,39 @@ function bindSearch() {
 route(/^#\/rota$/, async view => {
   const st = A.ui.rota = A.ui.rota || { d: today() };
   await Promise.all(['clientes', 'veiculos', 'servicos', 'equipa'].map(e => load(e)));
-  const ev = (await load('marcacoes', true)).filter(r => r.data === st.d && !['Cancelada', 'Faltou'].includes(r.estado)).sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+  const all = await load('marcacoes', true);
   const addr = r => { const c = byId('clientes', r.cliente_id) || {}; return r.morada || [c.morada, c.codigo_postal, c.localidade].filter(Boolean).join(', '); };
-  const stops = ev.filter(r => r.local !== 'Oficina' && addr(r));
+  const cp = r => (String(addr(r)).match(/\b\d{4}(-\d{3})?\b/) || [byId('clientes', r.cliente_id)?.localidade || ''])[0];
+  let stops = all.filter(r => r.data === st.d && !['Cancelada', 'Faltou', 'Reagendada'].includes(r.estado) && r.local !== 'Oficina' && addr(r))
+    .sort((a2, b2) => ((+a2.rota_ordem || 99) - (+b2.rota_ordem || 99)) || (a2.hora || '').localeCompare(b2.hora || ''));
   const base = A.S.empresa_morada;
+  const km = stops.reduce((t, r) => t + (+r.km || 0), 0), valor = stops.reduce((t, r) => t + (+r.valor_previsto || 0), 0);
   const maps = stops.length ? 'https://www.google.com/maps/dir/' + [base, ...stops.map(addr), base].filter(Boolean).map(encodeURIComponent).join('/') : '';
-  const km = stops.reduce((s, r) => s + (+r.km || 0), 0);
-  setPage('Rota do dia', `${fdate(st.d)} · ${stops.length} paragens ao domicílio`, `<input type="date" class="inp" id="rd" value="${st.d}" style="width:auto;min-height:38px">${maps ? `<a class="btn pri" href="${maps}" target="_blank" rel="noopener">${icon('route')} Abrir no Google Maps</a>` : ''}`);
-  view.innerHTML = `<div class="grid kpis" style="margin-bottom:14px"><div class="glass kpi"><div class="l">Paragens</div><div class="v">${stops.length}</div><div class="s">${ev.length - stops.length} na oficina</div></div>
-    <div class="glass kpi k-warn"><div class="l">Km previstos</div><div class="v">${n2(km)}</div><div class="s">${money(km * +A.S.custo_km)} de deslocação</div></div>
-    <div class="glass kpi k-ok"><div class="l">Valor previsto</div><div class="v">${money(stops.reduce((s, r) => s + (+r.valor_previsto || 0), 0))}</div></div></div>
-    ${base ? `<div class="alert">${icon('route')}<span>Partida e regresso: <b>${esc(base)}</b></span></div>` : '<div class="note" style="margin-bottom:10px">Indique a morada da empresa em Definições para calcular a rota a partir da base.</div>'}
-    ${stops.map((r, i) => { const c = byId('clientes', r.cliente_id) || {}; return `<div class="glass card" style="margin-bottom:10px"><div class="row"><span class="avatar">${i + 1}</span>
-      <div class="grow" style="min-width:200px"><b>${esc(r.hora || '')} · ${esc(c.nome || '')}</b><div class="small muted">${esc(refLabel('veiculos', r.veiculo_id))} · ${esc(refLabel('servicos', r.servico_id))}</div><div class="small">📍 ${esc(addr(r))}</div></div>
-      <div class="row">${badge(r.estado)}${c.telefone ? `<a class="btn sm" href="tel:${esc(c.telefone)}">${icon('phone')}</a>` : ''}<a class="btn sm" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr(r))}">${icon('route')} Navegar</a><button class="btn sm" data-id="${r.id}">Abrir</button></div></div></div>`; }).join('') || '<div class="empty">Sem serviços ao domicílio neste dia. Marque “Local: Domicílio do cliente” e a morada na marcação.</div>'}`;
-  $('#rd').onchange = ev2 => { st.d = ev2.target.value; router(); };
-  $$('[data-id]', view).forEach(b => b.onclick = () => openForm('marcacoes', byId('marcacoes', b.dataset.id)));
+  setPage('Rota do dia', 'Ordene as paragens, registe os km de cada troço e lance a quilometragem num toque.',
+    `<input type="date" class="inp" id="rd" value="${st.d}" style="width:auto;min-height:38px"><button class="btn" id="smart">${icon('sparkle')}<span class="btn-txt-m">Ordem inteligente</span></button><button class="btn ghost" onclick="print()">${icon('print')}</button>`);
+  const svcTxt = r => { const L = jparse(r.servicos).map(id => refLabel('servicos', id)).filter(Boolean); return L.length ? L.join(', ') : refLabel('servicos', r.servico_id); };
+  view.innerHTML = `<div class="grid kpis" style="margin-bottom:14px"><div class="glass kpi"><div class="l">Paragens</div><div class="v">${stops.length}</div></div>
+    <div class="glass kpi k-warn"><div class="l">Distância da rota</div><div class="v">${n2(km)} km</div><div class="s">${money(km * +A.S.custo_km)} de custo</div></div>
+    <div class="glass kpi k-ok"><div class="l">Valor marcado</div><div class="v">${money(valor)}</div></div><div class="glass kpi k-vio"><div class="l">Primeira paragem</div><div class="v">${esc(stops[0]?.hora || '—')}</div></div></div>
+    <div class="glass card" style="margin-bottom:10px;padding:12px 16px"><div class="row">${icon('route')}<div><b>Partida: base</b><div class="small muted">${esc(base || 'Indique a morada da empresa em Definições')}</div></div></div></div>
+    ${stops.map((r, i) => { const c = byId('clientes', r.cliente_id) || {}; return `<div class="glass card" style="margin-bottom:8px;padding:12px 16px" data-sid="${r.id}"><div class="row"><span class="avatar">${i + 1}</span>
+      <div class="grow" style="min-width:200px"><b>${esc(r.hora || '')} · ${esc(c.nome || '')}</b> <span class="small muted">${esc(refLabel('veiculos', r.veiculo_id))}</span><div class="small">${esc(addr(r))} ${cp(r) ? `<span class="badge t-mut" style="padding:0 6px">${esc(cp(r))}</span>` : ''}</div><div class="small muted">${esc(svcTxt(r))}</div></div>
+      <div class="row" style="flex-wrap:nowrap;gap:6px"><input class="inp" type="number" step="0.1" placeholder="km" data-km="${r.id}" value="${esc(r.km ?? '')}" style="width:80px;min-height:38px" title="km deste troço">
+        ${c.telefone ? `<a class="btn icon" href="tel:${esc(c.telefone)}">${icon('phone')}</a>` : ''}<a class="btn icon" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr(r))}">${icon('route')}</a>
+        <button class="btn icon" data-up="${i}" ${i ? '' : 'disabled'}>▲</button><button class="btn icon" data-dn="${i}" ${i < stops.length - 1 ? '' : 'disabled'}>▼</button><button class="btn icon ghost" data-ed="${r.id}">${icon('cog')}</button></div></div></div>`; }).join('')
+      || '<div class="empty">Sem serviços ao domicílio neste dia. Na marcação escolha “Local: Domicílio do cliente” e indique a morada.</div>'}
+    ${stops.length ? `<div class="row" style="margin-top:12px"><button class="btn pri" id="logKm">${icon('route')} Registar ${n2(km)} km nas deslocações</button><button class="btn" id="cpy">Copiar texto da rota</button>${maps ? `<a class="btn" target="_blank" rel="noopener" href="${maps}">Abrir no Google Maps</a>` : ''}</div>` : ''}
+    <p class="small muted" style="margin-top:12px">A ordem inteligente ordena por hora e, dentro de cada meio-dia, agrupa paragens do mesmo código postal / localidade. Não usa GPS nem trânsito em tempo real; os botões de mapa abrem a app de mapas.</p>`;
+  const persist = async L => { for (const [i, r] of L.entries()) if (+r.rota_ordem !== i + 1) await api('save', { e: 'marcacoes' }, { id: r.id, rota_ordem: i + 1 }); router(); };
+  $('#rd').onchange = ev => { st.d = ev.target.value; router(); };
+  $('#smart').onclick = () => { const half = r => (r.hora || '12:00') < '13:00' ? 0 : 1; const L = [...stops].sort((a2, b2) => half(a2) - half(b2) || String(cp(a2)).localeCompare(String(cp(b2))) || (a2.hora || '').localeCompare(b2.hora || '')); persist(L); toast('Rota ordenada.'); };
+  $$('[data-up]', view).forEach(b => b.onclick = () => { const i = +b.dataset.up, L = [...stops]; [L[i - 1], L[i]] = [L[i], L[i - 1]]; persist(L); });
+  $$('[data-dn]', view).forEach(b => b.onclick = () => { const i = +b.dataset.dn, L = [...stops]; [L[i + 1], L[i]] = [L[i], L[i + 1]]; persist(L); });
+  $$('[data-km]', view).forEach(x => x.onchange = async () => { await api('save', { e: 'marcacoes' }, { id: x.dataset.km, km: x.value }); router(); });
+  $$('[data-ed]', view).forEach(b => b.onclick = () => openForm('marcacoes', byId('marcacoes', b.dataset.ed)));
+  $('#logKm')?.addEventListener('click', async () => { if (!km) return toast('Indique os km de cada troço.', true);
+    try { await api('save', { e: 'deslocacoes' }, { data: st.d, origem: base || 'Base', destino: `Rota do dia (${stops.length} paragens)`, km, finalidade: 'Serviços ao domicílio' }); toast(`${n2(km)} km registados nas deslocações.`); } catch (er) { fail(er); } });
+  $('#cpy')?.addEventListener('click', () => { const txt = `Rota ${fdate(st.d)} — ${A.S.empresa_nome}\n` + stops.map((r, i) => `${i + 1}. ${r.hora || ''} ${refLabel('clientes', r.cliente_id)} — ${addr(r)} (${svcTxt(r)})`).join('\n') + `\nTotal: ${n2(km)} km · ${money(valor)}`; navigator.clipboard?.writeText(txt); toast('Texto da rota copiado.'); });
 });
 
 

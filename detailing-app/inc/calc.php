@@ -68,9 +68,17 @@ function calc_ctx(): array {
     if ($ctx !== null) return $ctx;
     $S = settings();
     $ctx = ['S' => $S, 'tec' => [], 'kmjob' => [], 'cli' => []];
-    foreach (db()->query('SELECT cliente_id, estado, valor, data FROM ' . T('trabalhos'))->fetchAll() as $j) if ($j['estado'] === 'Concluído') {
-        $c = &$ctx['cli'][$j['cliente_id']]; $c['n'] = ($c['n'] ?? 0) + 1; $c['t'] = ($c['t'] ?? 0) + num($j['valor']); unset($c);
+    $ctx['veic'] = [];
+    foreach (db()->query('SELECT cliente_id, veiculo_id, estado, valor, data FROM ' . T('trabalhos'))->fetchAll() as $j) {
+        if ($j['estado'] !== 'Cancelado' && $j['veiculo_id']) $ctx['veic'][$j['veiculo_id']]['n'] = ($ctx['veic'][$j['veiculo_id']]['n'] ?? 0) + 1;
+        if ($j['estado'] !== 'Concluído') continue;
+        $c = &$ctx['cli'][$j['cliente_id']]; $c['n'] = ($c['n'] ?? 0) + 1; $c['t'] = ($c['t'] ?? 0) + num($j['valor']); $c['u'] = max($c['u'] ?? '', (string)$j['data']); unset($c);
     }
+    foreach (db()->query('SELECT cliente_id FROM ' . T('veiculos'))->fetchAll() as $v) $ctx['cli'][$v['cliente_id']]['v'] = ($ctx['cli'][$v['cliente_id']]['v'] ?? 0) + 1;
+    foreach (db()->query('SELECT cliente_id FROM ' . T('subscricoes') . " WHERE estado = 'Ativa'")->fetchAll() as $x) $ctx['cli'][$x['cliente_id']]['s'] = 1;
+    $ctx['nomes'] = []; foreach (db()->query('SELECT id, nome FROM ' . T('clientes'))->fetchAll() as $x) $ctx['nomes'][$x['id']] = $x['nome'];
+    foreach (db()->query('SELECT veiculo_id, data, anos FROM ' . T('garantias'))->fetchAll() as $g)
+        if ($g['veiculo_id'] && $g['data'] && date('Y-m-d', strtotime($g['data'] . ' +' . max(1, (int)$g['anos']) . ' years')) >= date('Y-m-d')) $ctx['veic'][$g['veiculo_id']]['g'] = 1;
     foreach (db()->query('SELECT * FROM ' . T('faturas') . " WHERE estado <> 'Anulada'")->fetchAll() as $f) {
         $d = max(0, lines_totals($f)['total'] - paid_amount($f));
         if ($d > 0) { $ctx['cli'][$f['cliente_id']]['d'] = ($ctx['cli'][$f['cliente_id']]['d'] ?? 0) + $d; }
@@ -107,6 +115,15 @@ function calc_row(string $e, array $r): array {
                   'lucro_hora' => $h > 0 ? round($lucro / $h, 2) : null, 'progresso' => $t ? "$done/" . count($t) : '',
                   'pct' => $t ? round($done / count($t) * 100) : null];
             break;
+        case 'veiculos':
+            $x = $ctx['veic'][$r['id'] ?? 0] ?? [];
+            $pr = (string)($r['protecao'] ?? ''); $tags = [];
+            if (!empty($x['g'])) $tags[] = 'Garantia ativa';
+            if ($pr && $pr !== 'Nenhuma') $tags[] = $pr;
+            $c = ['titulo' => trim(($r['ano'] ? $r['ano'] . ' ' : '') . $r['marca'] . ' ' . $r['modelo']), 'sub' => trim(implode(' · ', array_filter([$r['cor'], $r['tamanho']]))),
+                  'dono' => $ctx['nomes'][$r['cliente_id']] ?? '', 'trabalhos' => (string)($x['n'] ?? 0), 'protecao' => $tags,
+                  'seg_prot' => (bool)$tags, 'seg_gar' => !empty($x['g']), 'seg_breve' => !empty($r['proximo_servico']) && $r['proximo_servico'] <= date('Y-m-d', strtotime('+30 days')), 'seg_zero' => empty($x['n'])];
+            break;
         case 'subscricoes':
             $c['mensal'] = round(num($r['valor']) * (FREQ_MES[$r['frequencia'] ?? 'Mensal'] ?? 1), 2);
             $c['utilizacao'] = (int)$r['visitas_incluidas'] > 0 ? (int)$r['visitas_usadas'] . '/' . (int)$r['visitas_incluidas'] : ((int)$r['visitas_usadas'] ? (int)$r['visitas_usadas'] . ' visitas' : '');
@@ -114,7 +131,12 @@ function calc_row(string $e, array $r): array {
             break;
         case 'clientes':
             $x = $ctx['cli'][$r['id'] ?? 0] ?? [];
-            $c = ['visitas' => (string)($x['n'] ?? 0), 'total' => round($x['t'] ?? 0, 2), 'em_divida' => round($x['d'] ?? 0, 2), 'faltas' => ($x['f'] ?? 0) ? (string)$x['f'] : ''];
+            $n = (int)($x['n'] ?? 0); $frota = in_array($r['tipo'] ?? '', ['Frota', 'Empresa', 'Stand'], true);
+            $perfil = array_values(array_filter([$frota ? ($r['tipo'] === 'Stand' ? 'Stand' : 'Frota') : null, !empty($x['s']) ? 'Subscritor' : null, $n >= 2 ? 'Recorrente' : ($n === 1 ? 'Novo' : null), ($x['t'] ?? 0) >= 1000 ? 'VIP' : null]));
+            $c = ['viaturas' => (string)($x['v'] ?? 0), 'visitas' => (string)$n, 'total' => round($x['t'] ?? 0, 2), 'em_divida' => round($x['d'] ?? 0, 2), 'faltas' => ($x['f'] ?? 0) ? (string)$x['f'] : '',
+                  'ultima' => $x['u'] ?? null, 'perfil' => $perfil ?: ['Sem visitas'],
+                  'seg_rep' => $n >= 2, 'seg_sub' => !empty($x['s']), 'seg_frota' => $frota, 'seg_falta' => !empty($x['f']), 'seg_div' => ($x['d'] ?? 0) > 0,
+                  'seg_perdido' => $n > 0 && ($x['u'] ?? '') < date('Y-m-d', strtotime('-90 days'))];
             break;
         case 'deslocacoes': $c['custo'] = round(num($r['km']) * num($S['custo_km']) + num($r['portagens']), 2); break;
         case 'inventario':
@@ -243,7 +265,7 @@ function dashboard(string $ym): array {
     }
     // Clientes recorrentes
     $per = [];
-    foreach ($jobs as $j) if ($j['estado'] === 'Concluído') $per[$j['cliente_id']] = ($per[$j['cliente_id']] ?? 0) + 1;
+    foreach ($jobs as $j) if ($j['estado'] === 'Concluído' && $j['cliente_id']) $per[$j['cliente_id']] = ($per[$j['cliente_id']] ?? 0) + 1;
     $rep = count(array_filter($per, fn($n) => $n >= 2));
     // Subscrições
     $mrr = 0; $subs_ativas = 0; $visitas = [];

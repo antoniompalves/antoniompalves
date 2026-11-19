@@ -187,7 +187,7 @@ try {
         }
         if (!$id && !empty($E['num']) && empty($vals['numero'])) $vals['numero'] = next_number($e, $E['num']);
         $pdo = db();
-        unset($vals['historico'], $vals['timer_inicio'], $vals['assinado_em'], $vals['lancado']);
+        unset($vals['historico'], $vals['timer_inicio'], $vals['assinado_em'], $vals['lancado'], $vals['produtos_usados'], $vals['timer_sessoes']);
         if ($e === 'trabalhos' && isset($vals['estado'])) {
             $old = $id ? $pdo->query('SELECT estado, historico, timer_inicio, horas FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch() : null;
             if (!$old || $old['estado'] !== $vals['estado']) {
@@ -264,11 +264,32 @@ try {
 
     case 'timer':
         $id = (int)(body()['id'] ?? 0);
-        $r = db()->query('SELECT timer_inicio, horas FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
+        $r = db()->query('SELECT timer_inicio, horas, estado FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
         if (!$r) fail('Trabalho não encontrado.');
-        if ($r['timer_inicio']) db()->prepare('UPDATE ' . T('trabalhos') . ' SET timer_inicio = NULL, horas = ? WHERE id = ?')->execute([round(num($r['horas']) + max(0, time() - strtotime($r['timer_inicio'])) / 3600, 2), $id]);
+        if ($r['timer_inicio']) db()->prepare('UPDATE ' . T('trabalhos') . ' SET timer_inicio = NULL, horas = ?, timer_sessoes = COALESCE(timer_sessoes,0) + 1 WHERE id = ?')->execute([round(num($r['horas']) + max(0, time() - strtotime($r['timer_inicio'])) / 3600, 2), $id]);
         else db()->prepare('UPDATE ' . T('trabalhos') . ' SET timer_inicio = ? WHERE id = ?')->execute([now(), $id]);
         $row = db()->query('SELECT * FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
+        out(['row' => with_calc('trabalhos', [$row])[0]]);
+
+    case 'job_product':
+        $b = body(); $id = (int)($b['id'] ?? 0); $pdo = db();
+        $j = $pdo->query('SELECT produtos_usados FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
+        if (!$j) fail('Trabalho não encontrado.');
+        $L = jdec($j['produtos_usados']);
+        if (isset($b['remove'])) {
+            $i = (int)$b['remove']; if (!isset($L[$i])) fail('Linha inexistente.');
+            if (!empty($L[$i]['i'])) $pdo->prepare('UPDATE ' . T('inventario') . ' SET quantidade = COALESCE(quantidade,0) + ? WHERE id = ?')->execute([num($L[$i]['q']), (int)$L[$i]['i']]);
+            array_splice($L, $i, 1);
+        } else {
+            $q = num($b['q'] ?? 1); if ($q <= 0) fail('Quantidade inválida.');
+            $art = $pdo->query('SELECT * FROM ' . T('inventario') . ' WHERE id = ' . (int)($b['artigo_id'] ?? 0))->fetch();
+            if (!$art) fail('Escolha um produto do inventário.');
+            $pdo->prepare('UPDATE ' . T('inventario') . ' SET quantidade = COALESCE(quantidade,0) - ? WHERE id = ?')->execute([$q, $art['id']]);
+            $L[] = ['i' => (int)$art['id'], 'd' => $art['nome'], 'q' => $q, 'u' => $art['unidade'], 'p' => round(num($art['custo_unitario']), 4), 'c' => round($q * num($art['custo_unitario']), 2)];
+        }
+        $custo = round(array_sum(array_map(fn($x) => num($x['c'] ?? 0), $L)), 2);
+        $pdo->prepare('UPDATE ' . T('trabalhos') . ' SET produtos_usados = ?, custo_produtos = ?, updated_at = ? WHERE id = ?')->execute([json_encode($L, JSON_UNESCAPED_UNICODE), $custo, now(), $id]);
+        $row = $pdo->query('SELECT * FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
         out(['row' => with_calc('trabalhos', [$row])[0]]);
 
     case 'remind_done':
@@ -480,6 +501,7 @@ function clean_value(array $f, $v) {
         case 'date': return valid_date($v);
         case 'time': return preg_match('/^\d{2}:\d{2}$/', (string)$v) ? $v : null;
         case 'select': return in_array($v, $f['opts'], true) ? $v : null;
+        case 'svcpick': return is_array($v) ? json_encode(array_values(array_map('intval', $v))) : null;
         case 'jsonmap': return is_array($v) ? json_encode((object)array_map(fn($x) => mb_substr((string)$x, 0, 5000), $v), JSON_UNESCAPED_UNICODE) : null;
         case 'lines': case 'checklist': case 'photos': case 'timeline': case 'payments': case 'damagemap': return is_array($v) ? json_encode(array_values($v), JSON_UNESCAPED_UNICODE) : null;
         case 'signature': return (is_string($v) && str_starts_with($v, 'data:image/png;base64,') && strlen($v) < 600000) ? $v : null;
