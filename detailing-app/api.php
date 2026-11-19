@@ -384,7 +384,7 @@ try {
         $blob = json_encode(settings());
         foreach (array_keys(app_schema()) as $e) foreach (db()->query('SELECT * FROM ' . T($e))->fetchAll() as $r) $blob .= json_encode($r, JSON_UNESCAPED_SLASHES);
         $n = 0; $bytes = 0;
-        foreach (glob(__DIR__ . '/uploads/*') ?: [] as $f) { $b = basename($f); if (!is_file($f) || $b[0] === '.' || str_contains($blob, $b)) continue; $bytes += filesize($f); if (@unlink($f)) $n++; }
+        foreach (glob(__DIR__ . '/uploads/*') ?: [] as $f) { $b = basename($f); if (!is_file($f) || $b[0] === '.' || in_array(strtolower($b), ['index.php', 'index.html'], true) || !preg_match('/\.(jpe?g|png|webp|gif|heic)$/i', $b) || str_contains($blob, $b)) continue; $bytes += filesize($f); if (@unlink($f)) $n++; }
         out(['apagados' => $n, 'mb' => round($bytes / 1048576, 2)]);
 
     case 'reset':
