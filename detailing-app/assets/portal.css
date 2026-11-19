@@ -235,7 +235,7 @@ body.portal{background:#0b0b0c;background-image:radial-gradient(900px 500px at 9
 .car3d-host canvas{display:block}
 .hero3.has3d .h3-car,.ppf.has3d .ppf-car{display:none}
 .hero3.has3d .h3-floor{opacity:.25}.hero3.has3d .h3-wall{opacity:.55}
-.hero3.booking .car3d-host.hero{transform:translateX(-14%)}
+.hero3.booking .car3d-host.c3-hero{transform:translateX(-14%)}
 .h3-jet3d{position:absolute;top:22%;bottom:10%;left:var(--jetx,-20px);width:0;z-index:2;opacity:0;transition:opacity .3s;pointer-events:none}
 .hero3.has3d.washing .h3-jet3d{opacity:1}
 .h3-jet3d i{position:absolute;left:-3px;top:0;bottom:0;width:6px;border-radius:6px;background:linear-gradient(#fff0,#e8f6ff 15%,#fff 50%,#e8f6ff 85%,#fff0);box-shadow:0 0 18px 6px rgba(200,230,255,.55),0 0 60px 22px rgba(200,230,255,.18)}
@@ -246,4 +246,4 @@ body.portal{background:#0b0b0c;background-image:radial-gradient(900px 500px at 9
 .ppf-scr{position:absolute;left:50%;top:56%;width:min(520px,70vw);transform:translate(-50%,-50%) rotate(-8deg);z-index:2;display:none;pointer-events:none}
 .ppf.has3d .ppf-scr{display:block}.ppf-scr .scratch3{fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;opacity:0;filter:drop-shadow(0 0 4px rgba(255,255,255,.9))}
 .ppf.has3d .ppf-labels{z-index:3}
-@media (max-width:900px){.hero3.booking .car3d-host.hero{transform:translateY(-16%)}}
+@media (max-width:900px){.hero3.booking .car3d-host.c3-hero{transform:translateY(-16%)}}

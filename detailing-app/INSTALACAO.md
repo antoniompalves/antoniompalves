@@ -32,10 +32,12 @@ cPanel → **Bases de dados MySQL** (ou *Assistente de bases de dados MySQL*):
 ## 3. Carregar os ficheiros
 
 cPanel → **Gestor de ficheiros** → abrir a pasta raiz do subdomínio (passo 1) →
-**Carregar** o ficheiro `detailpro-avcardetail-*.zip` → clicar com o botão direito → **Extrair**.
+**Carregar** o ficheiro `detailpro-v1.4-avcardetail.zip` → clicar com o botão direito → **Extrair**.
 
-O zip cria uma pasta `detailing-app/`. Mova o **conteúdo** dessa pasta para a raiz do subdomínio
-(selecionar tudo dentro de `detailing-app` → *Mover* → `/gestao.avcardetail.pt/`) e apague a pasta vazia e o zip.
+> Há dois pacotes: **`detailpro-v1.4-avcardetail.zip`** (instalação da AV Car Detail — inclui o carro 3D Audi RS7 da demonstração) e **`detailpro-v1.4-revenda.zip`** (versão white-label para outros clientes, sem modelo 3D — cada cliente carrega o seu em Definições).
+
+O zip cria uma pasta `detailpro/`. Mova o **conteúdo** dessa pasta para a raiz do subdomínio
+(selecionar tudo dentro de `detailpro` → *Mover* → `/gestao.avcardetail.pt/`) e apague a pasta vazia e o zip.
 
 > Os ficheiros que começam por ponto (`.htaccess`) podem estar ocultos: *Definições* (canto superior direito) → **Mostrar ficheiros ocultos**. Têm de existir na raiz e nas pastas `inc/`, `data/`, `uploads/` e `demo/` — são eles que protegem os dados.
 

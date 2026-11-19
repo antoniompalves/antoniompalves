@@ -252,7 +252,7 @@ function bindPPF(v) {
     }
   }
   let car = null; const scr3 = $('.scratch3', el);
-  mount3D($('.ppf-bg', el), 'ppf').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d'); frame(); });
+  mount3D($('.ppf-bg', el), 'c3-ppf').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d'); frame(); });
   const onS = () => requestAnimationFrame(frame);
   // arrastar a divisória brilho/satin
   const zone = $('.ppf-stick', el);
@@ -370,7 +370,7 @@ function bindHero(v) {
     }
   }
   let car = null;
-  mount3D($('.h3-room', el), 'hero').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d'); frame(); });
+  mount3D($('.h3-room', el), 'c3-hero').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d'); frame(); });
   const onS = () => requestAnimationFrame(frame);
   addEventListener('scroll', onS, { passive: true }); addEventListener('resize', onS); frame();
   // mini-formulário de marcação
