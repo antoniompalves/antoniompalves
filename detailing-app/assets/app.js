@@ -412,6 +412,7 @@ function defVal(f) {
   const d = f.def;
   if (d === undefined) return f.t === 'bool' ? 0 : '';
   if (d === '@today') return today();
+  if (d === '@venc') return addDays(today(), +A.S.venc_dias || 0);
   if (d === '@iva') return A.S.iva_isento === '1' ? 0 : +A.S.iva;
   if (d === '@validade') return addDays(today(), +A.S.validade_dias || 15);
   if (d === '@chk_ext' || d === '@chk_int') return (A.S[d.slice(1)] || '').split('\n').filter(Boolean).map(t => ({ t: t.trim(), d: false }));
@@ -497,6 +498,8 @@ async function openForm(e, row = null, preset = {}) {
     const k = ev.target.dataset.k; if (!k) return;
     val[k] = ev.target.type === 'checkbox' ? (ev.target.checked ? 1 : 0) : ev.target.value;
     if (k === 'cliente_id') $$('select[data-ref]', el).forEach(s => { const f = E.fields.find(x => x.k === s.dataset.k); if (f.filter === 'cliente_id') { val[f.k] = ''; fillRef(s); } });
+    if (k === 'cliente_id' && e === 'marcacoes' && !row) { const fc = +byId('clientes', val.cliente_id)?._c?.faltas || 0, lim = +A.S.faltas_sinal || 0;
+      if (lim > 0 && fc >= lim && !+val.exige_sinal) { val.exige_sinal = 1; const cb = $('[data-k="exige_sinal"]', el); if (cb) cb.checked = true; toast(`Cliente com ${fc} falta(s) — sinal obrigatório ativado.`); } }
     if (k === 'cliente_id') { applySvc(false);
       if (['orcamentos', 'faturas'].includes(e) && !+val.desconto_pct) { const d = clientDiscount(val.cliente_id); if (d.pct) { val.desconto_pct = d.pct; const i = $('[data-k="desconto_pct"]', el); if (i) i.value = d.pct; toast(`Aplicado ${n2(d.pct)}% — ${d.motivo}.`); } } }
     if (k === 'plano_id' && e === 'subscricoes') { const p = byId('planos', val.plano_id); if (p) { const set = (k2, v2) => { val[k2] = v2; const i = $(`[data-k="${k2}"]`, el); if (i) i.value = v2; };
@@ -1081,7 +1084,7 @@ route(/^#\/doc\/(\w+)\/(\d+)$/, async (view, e, id) => {
       ${e === 'faturas' ? `<div><span>Recebido</span><span>${money(r.valor_pago)}</span></div><div><b>Em dívida</b><b>${money(t.em_divida)}</b></div>` : ''}</div>
       ${A.S.iva_isento === '1' ? '<p class="muted">IVA — regime de isenção (art.º 53.º do CIVA).</p>' : ''}
       ${r.notas ? `<p style="white-space:pre-line;margin-top:20px">${esc(r.notas)}</p>` : ''}
-      ${e === 'orcamentos' ? `<p class="muted" style="white-space:pre-line;margin-top:24px;font-size:12px">${esc(S.rodape_orc)}</p>${S.empresa_iban ? `<p class="muted" style="font-size:12px">IBAN: ${esc(S.empresa_iban)}</p>` : ''}
+      ${e === 'faturas' && S.rodape_fat ? `<p class="muted" style="white-space:pre-line;margin-top:24px;font-size:12px">${esc(S.rodape_fat)}</p>` : ''}${e === 'orcamentos' ? `<p class="muted" style="white-space:pre-line;margin-top:24px;font-size:12px">${esc(S.rodape_orc)}</p>${S.empresa_iban ? `<p class="muted" style="font-size:12px">IBAN: ${esc(S.empresa_iban)}</p>` : ''}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:50px"><div class="sigimg"></div><div class="sigimg"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:40px" class="muted"><span>Aceite pelo cliente</span><span>Data</span></div>` : ''}
       ${e === 'faturas' ? `<p class="muted" style="font-size:11px;margin-top:24px">Documento interno sem validade fiscal.${r.ref_externa ? ' Fatura certificada nº ' + esc(r.ref_externa) + '.' : ''}</p>` : ''}`;
   } else if (e === 'garantias') {
@@ -1767,27 +1770,40 @@ route(/^#\/relatorio\/(\w+)$/, async (view, k) => {
 
 /* ---------- Guia de início ---------- */
 route(/^#\/guia$/, async view => {
-  setPage('Guia de início rápido', 'Configure a aplicação em 15 minutos');
-  const steps = [
-    ['cog', 'Definições da empresa', 'Em <a href="#/definicoes">Definições</a> preencha nome, NIF, contactos, logótipo e cor da marca. Defina IVA (ou isenção art.º 53.º), custo/hora, custo por km, custos fixos mensais, horas faturáveis e objetivo de receita.'],
-    ['sparkle', 'Serviços & extras', 'Reveja os <a href="#/e/servicos">pacotes pré-carregados</a>: preços por tamanho, duração, custo de produtos e a lista “O que inclui” — que preenche a checklist dos trabalhos e aparece no portal do cliente. Use a <a href="#/calc-precos">calculadora de preços</a> para validar margens.'],
-    ['team', 'Equipa e utilizadores', 'Registe os técnicos em <a href="#/e/equipa">Equipa</a> (custo/hora e comissão entram no lucro). Crie acessos em <a href="#/utilizadores">Utilizadores</a>: Administrador, Gestor ou Técnico (sem acesso a finanças).'],
-    ['users', 'Clientes & veículos', 'Adicione clientes e as respetivas viaturas (ou importe um CSV). Na ficha do cliente vê todo o histórico e pode enviar o <b>link do portal</b> por WhatsApp.'],
-    ['target', 'Leads → orçamentos', 'Pedidos do portal e contactos entram em <a href="#/e/leads">Leads</a>. Converta em cliente, crie um orçamento com o construtor (linhas do catálogo, deslocação, desconto, IVA) e imprima/guarde em PDF.'],
-    ['calendar', 'Marcações & agenda', 'Crie marcações na <a href="#/agenda">agenda</a>. Envie confirmação e lembrete com os modelos de mensagem (WhatsApp/SMS/Email).'],
-    ['wrench', 'Trabalhos & quadro', 'Converta orçamento/marcação em trabalho. Acompanhe no <a href="#/quadro">quadro</a> (Agendado → Check-in → Lavagem → Interior → Correção/Proteção → Controlo de qualidade → Pronto → Concluído), marque tarefas da checklist, carregue fotos antes/depois e registe horas e custos — o lucro é calculado automaticamente.'],
-    ['clipboard', 'Ficha de inspeção', 'No check-in registe danos, objetos pessoais, fotos e a assinatura do cliente no telemóvel/tablet. Imprima ou guarde em PDF.'],
-    ['receipt', 'Faturação & recebimentos', 'Emita a fatura legal no seu software certificado AT e registe aqui o número, valor recebido e método — o painel mostra o que está por receber.'],
-    ['wallet', 'Custos', 'Registe despesas, quilómetros, inventário (com alertas de stock mínimo) e manutenção de equipamentos. Use a categoria “Produtos / stock” para compras de químicos — o consumo já é imputado aos trabalhos.'],
-    ['chart', 'Painel & relatórios', 'O <a href="#/">painel</a> calcula receita, lucro bruto e operacional, lucro por trabalho/hora, ticket médio, valores por receber, conversão de leads, clientes recorrentes, MRR, reserva para impostos e alertas.'],
-    ['globe', 'Portal do cliente', 'Partilhe o endereço <a href="portal.php" target="_blank">portal.php</a> no Instagram/Google: mostra os serviços e recebe pedidos de contacto. Cada cliente tem um link pessoal para ver o histórico e progresso.'],
-    ['db', 'Cópias de segurança', 'Descarregue regularmente uma <a href="#/backup">cópia de segurança</a>. No telemóvel, use “Adicionar ao ecrã principal” para usar como app.'],
-  ];
-  view.innerHTML = `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">${steps.map(([i, t, d], n) =>
-    `<div class="glass card"><h3><span class="badge t-info" style="padding:2px 9px">${n + 1}</span>${icon(i)} ${t}</h3><p class="muted" style="margin:0">${d}</p></div>`).join('')}</div>`;
+  setPage('Guia', 'Tudo em 5 minutos — botões grandes e linguagem simples, feito para a oficina e para o balcão',
+    `<button class="btn ghost" onclick="print()">${icon('print')}<span class="btn-txt-m">Imprimir</span></button>`);
+  const setup = [['cog', 'Empresa & marca', 'Nome, NIF, contactos, logótipo, cor e links de avaliação Google/Facebook.', '#/definicoes'],
+    ['sparkle', 'Serviços & preços', 'Reveja preços por tamanho, duração, custo de produtos e o que cada serviço inclui.', '#/e/servicos'],
+    ['team', 'Equipa & acessos', 'Técnicos com custo/hora e comissão; utilizadores Administrador, Gestor ou Técnico.', '#/e/equipa'],
+    ['wallet', 'Regras de dinheiro', 'IVA ou isenção, custos fixos, sinal por defeito, prazo de pagamento e regra de faltas.', '#/definicoes'],
+    ['target', 'Objetivos', 'Metas por trabalhos: 40 lavagens Classic por mês, 10 polimentos por trimestre…', '#/e/objetivos'],
+    ['globe', 'Portal do cliente', 'Partilhe o link público; cada cliente recebe o seu link pessoal com histórico.', 'portal.php']];
+  const flow = [
+    ['Lead → cliente + viatura', 'Registe pedidos em <a href="#/e/leads">Leads</a> (os do portal entram sozinhos) e toque em <b>Converter</b> para criar o cliente. Adicione a viatura com matrícula, VIN (descodificação gratuita) e tamanho.'],
+    ['Marcação + sinal', 'Agenda → <b>+ Marcação</b>. Escolha os serviços — o preço ajusta ao tamanho, aplicam-se descontos de frota/membro e os conflitos (mesmo técnico, mesma viatura ou box ocupada) aparecem logo. Ligue <b>Exigir sinal</b> para proteger a vaga.'],
+    ['Check-in assinado', 'Na entrega abra o <a href="#/e/inspecoes">Check-in</a>: toque nos danos no mapa do carro, junte fotos, combustível, km e objetos; o cliente assina no ecrã e o registo fica bloqueado e pronto a imprimir.'],
+    ['Quadro de trabalhos', 'A viatura entra no <a href="#/quadro">quadro</a>. Arraste entre etapas (no telemóvel, toque longo). A etapa de trabalho liga o cronómetro; riscar tarefas da ficha atualiza a %. Registe os produtos usados (descontam no stock).'],
+    ['Fatura & pagamento', 'Do trabalho ou da marcação: <b>Criar fatura</b>. Serviços, descontos e o sinal já pago entram sozinhos. Registe pagamentos totais ou parciais e gorjetas — saldo e estado atualizam-se.'],
+    ['Antes/depois → redes sociais', 'Junte duas fotos, arraste o comparador e <b>Exporte</b> uma imagem com a sua marca para posts ou stories.'],
+    ['Follow-up', '<a href="#/lembretes">Lembretes & follow-ups</a> prepara lembretes, pedidos de sinal, pedidos de avaliação, remarcações e manutenção de cerâmicos. Abre o SMS/WhatsApp já com o texto e o número.']];
+  const sec = [
+    ['alert', 'Faltas & sinais', `Marque a marcação como <b>Faltou</b>: conta no perfil do cliente, o sinal pago passa a receita (“Sinais retidos”) e pode enviar logo uma mensagem de remarcação. Depois de ${+A.S.faltas_sinal || 2} faltas, as novas marcações desse cliente ficam com sinal obrigatório (Definições → Finanças).`],
+    ['shield', 'Garantias cerâmicas', 'Emita a garantia depois de um cerâmico: produto, camadas, superfícies, anos e intervalo de manutenção. O calendário de visitas é gerado sozinho; as visitas devidas aparecem no painel, no menu e nos follow-ups. Imprima o certificado com a sua marca.'],
+    ['route', 'Rota do dia', 'Desligada por defeito (serviço em oficina). Se fizer serviço ao domicílio, ligue-a em Definições → Aparência → Módulos: ordena as visitas por hora e zona e regista os km.'],
+    ['menu', 'À sua medida', 'Definições → <b>Categorias & listas</b>: categorias de despesa e receita, origens, métodos de pagamento, tamanhos, tipos de equipamento, canais de marketing… adicione, renomeie ou retire. <b>Campos personalizados</b> acrescentam os seus próprios campos a qualquer módulo.'],
+    ['chart', 'Dinheiro & lucro', '<a href="#/resultados">Resultados (P&L)</a> é em base de caixa: pagamentos + sinais + outras receitas − despesas, em qualquer período. Lucro por trabalho = receita − produtos − mão de obra (horas × custo/hora) − outros custos. Há 41 <a href="#/relatorios">relatórios</a> de vendas, lucro, operação, clientes, stock e cerâmicos.'],
+    ['db', 'Cópias de segurança (importante)', 'Os dados ficam na base de dados do seu alojamento. Descarregue uma cópia JSON todas as semanas (Definições → Dados) e inclua a pasta <code>uploads/</code> (fotos e assinaturas) no backup do cPanel.']];
+  view.innerHTML = `
+    <div class="glass card" style="margin-bottom:14px"><h3>${icon('sparkle')} Configuração inicial</h3><div class="grid repgrid">${setup.map(([i, t, d, h]) => `<a class="glass repc" href="${h}"${h.endsWith('.php') ? ' target="_blank"' : ''}>${icon(i)}<div class="grow"><b>${t}</b><span class="sub2">${d}</span></div><span class="muted">›</span></a>`).join('')}</div></div>
+    <div class="glass card" style="margin-bottom:14px"><h3>${icon('kanban')} O fluxo do dia a dia</h3><ol class="guide-ol">${flow.map(([t, d]) => `<li><b>${t}.</b> ${d}</li>`).join('')}</ol></div>
+    <div class="grid cols-2e" style="align-items:start">${sec.map(([i, t, d]) => `<div class="glass card"><h3>${icon(i)} ${t}</h3><p class="muted" style="margin:0;line-height:1.6">${d}</p></div>`).join('')}
+      <div class="glass card"><h3>${icon('phone')} Instalar no telemóvel / tablet</h3><ul class="muted guide-ul"><li><b>iPhone/iPad (Safari):</b> Partilhar → Adicionar ao ecrã principal.</li><li><b>Android (Chrome):</b> menu ⋮ → Instalar aplicação / Adicionar ao ecrã principal.</li><li><b>Computador:</b> guarde o endereço nos favoritos. Os dados estão no servidor — entra de qualquer aparelho com o seu utilizador.</li></ul></div>
+      <div class="glass card"><h3>${icon('grid')} Atalhos de teclado</h3><ul class="muted guide-ul"><li><kbd>/</kbd> pesquisar tudo (nomes, matrículas, VIN, nº de documentos)</li><li><kbd>N</kbd> nova marcação</li><li><kbd>Esc</kbd> fechar janela</li></ul></div>
+      <div class="glass card full-span"><h3>${icon('info')} Limites honestos</h3><p class="muted" style="margin:0;line-height:1.6">Regista pagamentos mas não os processa. Não emite faturas certificadas pela AT nem envia mensagens sozinha (prepara-as para enviar). Pedidos do portal entram como leads a confirmar. Check-ins assinados e certificados de garantia são registos, não garantias jurídicas. Não é aconselhamento fiscal, contabilístico, jurídico, ambiental ou de segurança química — siga as regras locais de atividade, resíduos e águas residuais.</p></div></div>`;
 });
 
 /* ---------- Definições ---------- */
+const ACCENTS = [['Vermelho corrida', '#e3242b'], ['Cobre', '#c87533'], ['Azul elétrico', '#2f7cf6'], ['Verde corrida', '#138a52'], ['Dourado', '#c9a227'], ['Cinza metálico', '#7b8794'], ['Violeta noturno', '#7c3aed'], ['Ciano', '#22d3ee']];
 route(/^#\/definicoes$/, async view => {
   if (!isAdmin()) throw new Error('Apenas administradores.');
   const S = { ...A.S };
@@ -1806,8 +1822,10 @@ route(/^#\/definicoes$/, async view => {
       <div class="full">${I('link_avaliacao', 'Link para avaliações no Google Maps', 'url', 'Google Business Profile → “Pedir avaliações” → copiar link. Usado no portal e em {link_avaliacao}.')}</div>
       <div class="full">${I('link_facebook', 'Link para avaliações no Facebook', 'url', 'Página do Facebook → separador Avaliações / Recomendações. Usado no portal e em {link_facebook}.')}</div></div></div>
     <div class="glass card" data-p="apa"><h3>${icon('sparkle')} Marca & aplicação (white-label)</h3><div class="form">
-      ${I('app_nome', 'Nome da aplicação')}<label class="f"><span>Tema por defeito</span><select class="inp" data-s="tema"><option value="escuro" ${S.tema !== 'claro' ? 'selected' : ''}>Escuro</option><option value="claro" ${S.tema === 'claro' ? 'selected' : ''}>Claro</option></select></label>
-      <label class="f"><span>Cor principal</span><input class="inp" type="color" data-s="cor" value="${esc(S.cor)}" style="height:42px;padding:4px"></label>
+      ${I('app_nome', 'Nome da aplicação')}<label class="f"><span>Modo</span><select class="inp" data-s="tema">${[['escuro', 'Escuro'], ['claro', 'Claro'], ['auto', 'Igual ao dispositivo']].map(([v, l]) => `<option value="${v}" ${(S.tema || 'escuro') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <div class="full"><span class="small muted">Cor de destaque</span><div class="row" style="gap:6px;margin-top:6px" id="acc">${ACCENTS.map(([n, c]) => `<button type="button" class="chip ${String(S.cor).toLowerCase() === c ? 'on' : ''}" data-acc="${c}"><i class="dot" style="background:${c};color:${c};display:inline-block;margin-right:6px"></i>${n}</button>`).join('')}</div></div>
+      <label class="f"><span>Cor personalizada</span><input class="inp" type="color" data-s="cor" id="accC" value="${esc(S.cor)}" style="height:42px;padding:4px"></label>
+      ${B('animacoes', 'Animações e transições')}
       <div class="full"><span class="small muted">Logótipo</span><div class="row" style="margin-top:6px"><div class="brand"><div class="logo" id="lgPrev">${S.logo ? `<img src="api.php?a=logo&t=${Date.now()}">` : icon('car')}</div></div>
         <label class="btn sm">${icon('upload')} Carregar logótipo<input type="file" accept="image/*" hidden id="lgF"></label>${S.logo ? '<button class="btn sm ghost danger" id="lgX">Remover</button>' : ''}</div>
         <small class="muted">Use PNG com fundo transparente.</small></div>${B('logo_inverter', 'Logótipo branco — inverter para preto nos documentos impressos')}</div></div>
@@ -1818,11 +1836,13 @@ route(/^#\/definicoes$/, async view => {
       ${I('custos_fixos', 'Custos fixos mensais (€)', 'number', 'Renda, seguros, software, contabilidade…')}${I('horas_mes', 'Horas faturáveis por mês', 'number')}
       ${I('objetivo_mensal', 'Objetivo de receita mensal (€)', 'number')}${I('sinal_pct', 'Sinal por defeito (% do valor da marcação)', 'number')}
       ${I('desc_multi_pct', 'Desconto multi-viatura (%) — 0 = desligado', 'number')}${I('desc_multi_n', 'Nº mínimo de viaturas para o desconto', 'number')}
+      ${I('faltas_sinal', 'Exigir sinal após este nº de faltas (0 = nunca)', 'number', 'Novas marcações desse cliente ficam com “Exigir sinal” ligado.')}${I('venc_dias', 'Prazo de pagamento das faturas (dias)', 'number', '0 = pronto pagamento.')}
+      ${I('gar_aviso_dias', 'Avisar manutenção de cerâmicos (dias antes)', 'number')}<label class="f"><span>Tamanho do papel (impressão)</span><select class="inp" data-s="papel">${['A4', 'Letter'].map(v => `<option ${(S.papel || 'A4') === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       <div class="full"><span class="small muted">Multiplicadores por tamanho (calculadora)</span><div class="row" style="margin-top:6px">${TAMANHOS_JS().map(t => `<label class="f" style="width:110px"><span>${t}</span><input class="inp" type="number" step="0.05" data-mult="${esc(t)}" value="${mult[t] ?? 1}"></label>`).join('')}</div></div></div></div>
     <div class="glass card" data-p="msg"><h3>${icon('file')} Documentos & termos</h3><div class="form">
       ${I('prefixo_orc', 'Prefixo orçamentos')}${I('prefixo_trab', 'Prefixo ordens de trabalho')}${I('prefixo_fat', 'Prefixo docs. faturação')}${I('prefixo_gar', 'Prefixo certificados')}${I('validade_dias', 'Validade dos orçamentos (dias)', 'number')}
       ${I('termos_garantia', 'Condições da garantia cerâmica (certificado)', 'textarea')}${I('termo_checkin', 'Texto do acordo no check-in assinado', 'textarea')}
-      ${I('rodape_orc', 'Rodapé / condições do orçamento', 'textarea')}${I('chk_ext', 'Checklist padrão de inspeção — exterior (uma por linha)', 'textarea')}${I('chk_int', 'Checklist padrão de inspeção — interior', 'textarea')}</div></div>
+      ${I('rodape_orc', 'Rodapé / condições do orçamento', 'textarea')}${I('rodape_fat', 'Rodapé dos documentos de faturação / recibos', 'textarea')}${I('chk_ext', 'Checklist padrão de inspeção — exterior (uma por linha)', 'textarea')}${I('chk_int', 'Checklist padrão de inspeção — interior', 'textarea')}</div></div>
     <div class="glass card" data-p="msg"><h3>${icon('globe')} Portal do cliente</h3><div class="form">
       ${B('portal_ativo', 'Portal ativo')}${B('portal_precos', 'Mostrar preços “a partir de”')}
       <div class="full">${I('portal_titulo', 'Título principal')}</div>${I('portal_texto', 'Texto de apresentação', 'textarea')}
@@ -1835,16 +1855,34 @@ route(/^#\/definicoes$/, async view => {
       <textarea class="inp" id="lstTxt" style="min-height:220px"></textarea><input type="hidden" data-s="listas" id="lstJson"></div>
     <div class="glass card full-span" data-p="cmp"><h3>${icon('plus')} Campos personalizados</h3><p class="small muted">Acrescente campos próprios a qualquer módulo (ex.: “Código da chave” nos veículos, “Instagram” nos clientes). Aparecem nos formulários, na exportação CSV e, se quiser, na lista.</p>
       <div id="cxList"></div><button class="btn sm" id="cxAdd" style="margin-top:8px">${icon('plus')} Novo campo</button><input type="hidden" data-s="campos_extra" id="cxJson"></div>
-    <div class="glass card" data-p="msg"><h3>${icon('chat')} Modelos de mensagem</h3><p class="muted small">Textos de WhatsApp/SMS/Email (confirmações, lembretes, avaliações…) com variáveis como {primeiro_nome}, {veiculo}, {data}.</p><a class="btn" href="#/e/mensagens">Gerir modelos de mensagem →</a></div>
+    <div class="glass card" data-p="msg"><h3>${icon('chat')} Modelos de mensagem</h3><p class="muted small">Textos de WhatsApp/SMS/Email (confirmações, lembretes, sinais, avaliações, manutenção de cerâmicos…). Variáveis: {primeiro_nome} {nome} {empresa} {veiculo} {servico} {data} {hora} {sinal} {valor} {link_avaliacao} {link_facebook} {telefone}. As mensagens são preenchidas para abrir no WhatsApp/SMS/Email — nada é enviado automaticamente.</p><a class="btn" href="#/e/mensagens">Gerir modelos de mensagem →</a></div>
     <div class="glass card" data-p="dat"><h3>${icon('download')} Cópia de segurança</h3><p class="muted small">Descarrega todos os registos e definições num ficheiro JSON. As fotos ficam na pasta <code>uploads/</code> — inclua-a no backup do cPanel.</p><a class="btn pri" href="api.php?a=backup">${icon('download')} Descarregar cópia</a>
       <h3 style="margin-top:18px">${icon('upload')} Restaurar</h3><p class="muted small">⚠️ Substitui todos os dados atuais.</p><input type="file" accept=".json" class="inp" id="rstF"><button class="btn danger" id="rstGo" style="margin-top:8px">Restaurar</button></div>
+    <div class="glass card" data-p="dat"><h3>${icon('download')} Exportações CSV</h3><p class="muted small">Abre no Excel / Google Sheets (separador “;”, acentos preservados). Útil para o contabilista.</p>
+      <div class="row" style="gap:6px">${['leads', 'clientes', 'veiculos', 'servicos', 'marcacoes', 'trabalhos', 'orcamentos', 'faturas', 'despesas', 'receitas', 'inventario', 'equipamentos', 'compras', 'fornecedores', 'equipa', 'deslocacoes', 'marketing', 'subscricoes', 'avaliacoes', 'garantias', 'inspecoes'].filter(k => A.schema[k]).map(k => `<button class="chip" data-csv="${k}">${esc(A.schema[k].label)}</button>`).join('')}</div>
+      <h3 style="margin-top:18px">${icon('image')} Fotos não usadas</h3><p class="muted small">Apaga do servidor as fotos que já não pertencem a nenhum registo (ex.: trabalhos apagados).</p><button class="btn" id="clUp">Limpar fotos não usadas</button></div>
+    <div class="glass card" data-p="dat"><h3>${icon('sparkle')} Dados de demonstração</h3><p class="muted small">Carregue uma oficina de exemplo para explorar ou para apresentar a um cliente. <b>Substitui todos os registos</b> (as definições e os utilizadores mantêm-se).</p>
+      <div class="row"><button class="btn" data-reset="demo">Carregar demo genérica</button><button class="btn" data-reset="av">Carregar demo AV Car Detail</button></div>
+      <h3 style="margin-top:18px">${icon('alert')} Reposição de fábrica</h3><p class="muted small">Apaga todos os registos e fotos ligadas. Faça antes uma cópia de segurança.</p>
+      <div class="row"><button class="btn danger" data-reset="base">Apagar tudo (manter serviços e modelos base)</button><button class="btn danger" data-reset="vazio">Apagar mesmo tudo…</button></div></div>
     <div class="glass card" data-p="dat"><h3>${icon('trash')} Remover dados de demonstração</h3><p class="muted small">Apaga clientes, viaturas, trabalhos, marcações, documentos, despesas e restantes movimentos para começar a usar com dados reais. Mantém as definições, serviços, modelos de mensagem, equipa, fornecedores, inventário e equipamentos.</p>
       <label class="switch"><input type="checkbox" id="wipeAll"><span class="small">Apagar também equipa, fornecedores, inventário e equipamentos</span></label>
       <button class="btn danger" id="wipe" style="margin-top:10px">Remover dados</button></div>
     <div class="glass card" data-p="sob"><h3>${icon('info')} Sobre</h3>
       ${[['Aplicação', esc(A.S.app_nome)], ['Versão', esc(A.version)], ['Empresa', esc(A.S.empresa_nome)], ['Base de dados', esc(A.db || '')], ['PHP', esc(A.php || '')], ['Módulos', Object.keys(A.schema).length + ' + ferramentas'], ['Idioma', 'Português (Portugal)']].map(([a, b]) => `<div class="list-i"><span class="muted grow">${a}</span><b>${b}</b></div>`).join('')}
       <p class="small muted" style="margin-top:12px">Faturação: controlo interno de recebimentos — as faturas legais devem ser emitidas em software certificado pela AT. Dados guardados no seu próprio servidor (RGPD).</p></div>
+    <div class="glass card" data-p="sob"><h3>${icon('alert')} Limites honestos</h3><ul class="small muted" style="margin:0;padding-left:18px;line-height:1.6">
+      <li><b>Regista pagamentos, não os processa.</b> Sem terminais, links de pagamento ou checkout online.</li>
+      <li><b>Não emite faturas certificadas.</b> Use o seu programa certificado pela AT e registe aqui o nº do documento.</li>
+      <li><b>Não envia mensagens sozinha.</b> Lembretes, pedidos de sinal, avaliações e manutenção são preparados para abrir no WhatsApp/SMS/Email do seu telemóvel.</li>
+      <li><b>Pedidos do portal não são marcações automáticas</b> — entram como leads para confirmar.</li>
+      <li><b>Check-ins assinados e certificados de garantia</b> são registos do que foi acordado com o cliente, não garantias jurídicas.</li>
+      <li><b>Matrícula:</b> não existe base de dados gratuita em Portugal; o VIN é descodificado pela base pública NHTSA (mais completa para modelos vendidos nos EUA).</li>
+      <li><b>Não é aconselhamento profissional</b> — fiscal, contabilístico, jurídico, ambiental ou de segurança química.</li></ul></div>
+    <div class="glass card" data-p="sob"><h3>${icon('shield')} Privacidade</h3><p class="small muted" style="margin:0">Sem rastreio, sem publicidade e sem serviços de terceiros. Os dados ficam na base de dados do seu alojamento (cPanel). A única ligação externa é a descodificação opcional do VIN (só o VIN é enviado). Faça cópias de segurança semanais (JSON + pasta <code>uploads/</code>).</p></div>
   </div>`;
+  $$('[data-acc]', view).forEach(b => b.onclick = () => { $('#accC').value = b.dataset.acc; $$('[data-acc]', view).forEach(x => x.classList.toggle('on', x === b)); document.documentElement.style.setProperty('--ac', b.dataset.acc); });
+  $('#accC').oninput = ev => { $$('[data-acc]', view).forEach(x => x.classList.remove('on')); document.documentElement.style.setProperty('--ac', ev.target.value); };
   const showTab = k => { A.ui.setTab = k; $$('.tab', view).forEach(b => b.classList.toggle('on', b.dataset.tab === k)); $$('[data-p]', view).forEach(p => p.classList.toggle('hide', p.dataset.p !== k)); };
   $$('.tab', view).forEach(b => b.onclick = () => showTab(b.dataset.tab)); showTab(tab);
   // listas editáveis
@@ -1876,6 +1914,12 @@ route(/^#\/definicoes$/, async view => {
   $('#rstGo').onclick = async () => { const f = $('#rstF').files[0]; if (!f) return toast('Escolha um ficheiro.', true);
     if (!await confirmBox('Todos os dados atuais serão substituídos. Continuar?', 'Restaurar')) return;
     try { await api('restore', {}, JSON.parse(await f.text())); A.cache = {}; toast('Dados restaurados.'); location.hash = '#/'; } catch (er) { fail(er); } };
+  $$('[data-csv]', view).forEach(b => b.onclick = async () => { const k = b.dataset.csv; await ensureRefs(k); exportCSV(k, await load(k, true)); });
+  $('#clUp').onclick = async () => { try { const r = await api('clean_uploads', {}, {}); toast(`${r.apagados} foto(s) apagada(s) · ${n2(r.mb)} MB libertados.`); } catch (er) { fail(er); } };
+  $$('[data-reset]', view).forEach(b => b.onclick = async () => { const m = b.dataset.reset;
+    const msg = { demo: 'Substituir TODOS os registos pela demonstração genérica?', av: 'Substituir TODOS os registos pela demonstração AV Car Detail?', base: 'Apagar todos os registos? Ficam apenas os serviços, checklists e modelos de mensagem base.', vazio: 'Apagar MESMO TUDO (incluindo serviços e modelos)? Esta ação não pode ser anulada.' }[m];
+    if (!await confirmBox(msg + ' Faça antes uma cópia de segurança.', 'Confirmar')) return;
+    try { await api('reset', {}, { modo: m }); A.cache = {}; toast('Feito.'); await boot(); location.hash = '#/'; } catch (er) { fail(er); } });
   $('#wipe').onclick = async () => { if (!await confirmBox('Apagar os dados de demonstração? Faça antes uma cópia de segurança. Esta ação não pode ser anulada.', 'Apagar dados')) return;
     try { await api('wipe', {}, { tudo: $('#wipeAll').checked ? 1 : 0 }); A.cache = {}; toast('Dados removidos. Pode começar a usar com dados reais.'); location.hash = '#/'; } catch (er) { fail(er); } };
   $('#lgF').onchange = async ev => { try { const f = await uploadImage(ev.target.files[0]); await api('settings', {}, { logo: f }); A.S.logo = f; toast('Logótipo atualizado.'); renderShell(); router(); } catch (er) { fail(er); } };
@@ -2098,7 +2142,9 @@ function bindSearch() {
   };
   q.onblur = () => setTimeout(() => { box.classList.add('hide'); gs.classList.remove('open'); }, 150);
   $('#gsBtn').onclick = () => { gs.classList.add('open'); q.focus(); };
-  if (!window._slashBound) { window._slashBound = true; addEventListener('keydown', ev => { if (ev.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { ev.preventDefault(); $('#gs')?.classList.add('open'); $('#gq')?.focus(); } }); }
+  if (!window._slashBound) { window._slashBound = true; addEventListener('keydown', ev => { if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || ev.ctrlKey || ev.metaKey || ev.altKey || $('.modal-bg')) return;
+    if (ev.key === '/') { ev.preventDefault(); $('#gs')?.classList.add('open'); $('#gq')?.focus(); }
+    if (ev.key === 'n' || ev.key === 'N') { ev.preventDefault(); load('clientes').then(() => load('veiculos')).then(() => load('servicos')).then(() => openForm('marcacoes')); } }); }
 }
 
 /* ---------- Rota do dia (serviços ao domicílio) ---------- */
@@ -2315,7 +2361,11 @@ function signCheckin(r) {
 }
 
 /* ---------- Tema claro / escuro ---------- */
-function applyTheme() { let t; try { t = localStorage.getItem('dp_theme'); } catch { } t = t || (A.S.tema === 'claro' ? 'light' : 'dark'); document.documentElement.dataset.theme = t; }
+function applyTheme() { let t; try { t = localStorage.getItem('dp_theme'); } catch { }
+  t = t || (A.S.tema === 'claro' ? 'light' : A.S.tema === 'auto' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : 'dark');
+  const H = document.documentElement; H.dataset.theme = t; H.classList.toggle('no-anim', A.S.animacoes === '0');
+  let ps = document.getElementById('pageSize'); if (!ps) { ps = document.createElement('style'); ps.id = 'pageSize'; document.head.appendChild(ps); }
+  ps.textContent = `@page{size:${A.S.papel === 'Letter' ? 'letter' : 'A4'};margin:14mm}`; }
 function toggleTheme() { const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; try { localStorage.setItem('dp_theme', t); } catch { } applyTheme(); }
 
 /* ---------- Login & arranque ---------- */

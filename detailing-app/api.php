@@ -363,6 +363,26 @@ try {
              '#/lembretes' => $c('SELECT COUNT(*) FROM ' . T('marcacoes') . " WHERE estado IN ('Pendente','Confirmada') AND data BETWEEN '$t' AND '" . date('Y-m-d', strtotime('+2 days')) . "' AND (lembrete_enviado IS NULL OR lembrete_enviado = 0)"),
              'marcacoes' => $c('SELECT COUNT(*) FROM ' . T('marcacoes') . " WHERE data = '$t' AND estado IN ('Pendente','Confirmada')"), '#/garantias' => $gar]);
 
+    case 'clean_uploads':
+        need_admin();
+        $blob = json_encode(settings());
+        foreach (array_keys(app_schema()) as $e) foreach (db()->query('SELECT * FROM ' . T($e))->fetchAll() as $r) $blob .= json_encode($r, JSON_UNESCAPED_SLASHES);
+        $n = 0; $bytes = 0;
+        foreach (glob(__DIR__ . '/uploads/*') ?: [] as $f) { $b = basename($f); if (!is_file($f) || $b[0] === '.' || str_contains($blob, $b)) continue; $bytes += filesize($f); if (@unlink($f)) $n++; }
+        out(['apagados' => $n, 'mb' => round($bytes / 1048576, 2)]);
+
+    case 'reset':
+        need_admin();
+        $modo = body()['modo'] ?? '';
+        if (!in_array($modo, ['vazio', 'base', 'demo', 'av'], true)) fail('Opção inválida.');
+        $pdo = db(); foreach (array_keys(app_schema()) as $e) $pdo->exec('DELETE FROM ' . T($e));
+        setting_set('lembretes_ok', '{}');
+        require_once __DIR__ . '/inc/seed.php';
+        $nome = $user['nome'] ?? 'Proprietário';
+        if ($modo === 'av') { require_once __DIR__ . '/inc/demo_av.php'; seed_av($nome); }
+        elseif ($modo !== 'vazio') { seed_base($nome); if ($modo === 'demo') seed_demo(); }
+        out(['ok' => true]);
+
     case 'wipe':
         need_admin();
         $keep = ['servicos', 'mensagens', 'equipa', 'fornecedores', 'inventario', 'equipamentos'];

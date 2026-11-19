@@ -38,7 +38,7 @@ function warranty_info(array $r): array {
     $today = date('Y-m-d');
     if ($c['validade'] < $today) $c['alerta'] = 'Expirada';
     elseif ($c['proxima'] && $c['proxima'] < $today) $c['alerta'] = 'Manutenção em atraso';
-    elseif ($c['proxima'] && $c['proxima'] <= date('Y-m-d', strtotime('+30 days'))) $c['alerta'] = 'Manutenção em breve';
+    elseif ($c['proxima'] && $c['proxima'] <= date('Y-m-d', strtotime('+' . max(1, (int)(settings()['gar_aviso_dias'] ?? 30)) . ' days'))) $c['alerta'] = 'Manutenção em breve';
     return $c;
 }
 function goal_progress(array $r): array {
@@ -52,11 +52,24 @@ function goal_progress(array $r): array {
     }
     $p = $cache["$from|$to"] ??= period_totals($from, $to);
     $cnt = fn($e, $col = 'data', $w = '') => (int)db()->query('SELECT COUNT(*) FROM ' . T($e) . " WHERE $col BETWEEN '$from' AND '$to 23:59:59'$w")->fetchColumn();
+    // trabalhos concluídos no período que correspondem aos serviços / categoria escolhidos
+    static $JB = null, $SC = null;
+    if ($JB === null) { $JB = with_calc('trabalhos', all_rows('trabalhos')); $SC = array_column(db()->query('SELECT id, categoria FROM ' . T('servicos'))->fetchAll(), 'categoria', 'id'); }
+    $alvoS = array_map('intval', jdec($r['servicos_alvo'] ?? '')); $cat = (string)($r['categoria_alvo'] ?? '');
+    $match = function ($j) use ($alvoS, $cat, $SC) { $ids = array_map('intval', jdec($j['servicos'] ?? '')); if (!empty($j['servico_id'])) $ids[] = (int)$j['servico_id'];
+        if ($alvoS && !array_intersect($ids, $alvoS)) return false; if ($cat !== '' && !array_filter($ids, fn($i) => ($SC[$i] ?? '') === $cat)) return false; return true; };
+    $MJ = array_values(array_filter($JB, fn($j) => $j['estado'] === 'Concluído' && $j['data'] >= $from && $j['data'] <= $to && $match($j)));
+    $filt = $alvoS || $cat !== '';
     switch ($r['metrica']) {
+        case 'Trabalhos concluídos': $v = count($MJ); $m = 0; break;
+        case 'Receita dos trabalhos': $v = array_sum(array_map(fn($j) => num($j['valor']), $MJ)); $m = 1; break;
+        case 'Lucro dos trabalhos': $v = array_sum(array_map(fn($j) => $j['_c']['lucro'], $MJ)); $m = 1; break;
+        case 'Horas de trabalho': $v = round(array_sum(array_map(fn($j) => num($j['horas']), $MJ)), 1); $m = 0; break;
+        case 'Ticket médio': $v = $filt ? (count($MJ) ? array_sum(array_map(fn($j) => num($j['valor']), $MJ)) / count($MJ) : 0) : $p['ticket_medio']; $m = 1; break;
+        case 'Receita (total do período)': case 'Receita': $v = $p['receita']; $m = 1; break;
         case 'Lucro bruto': $v = $p['lucro_bruto']; $m = 1; break;
         case 'Lucro operacional': $v = $p['lucro_operacional']; $m = 1; break;
-        case 'Trabalhos concluídos': $v = $p['trabalhos']; $m = 0; break;
-        case 'Ticket médio': $v = $p['ticket_medio']; $m = 1; break;
+
         case 'Novos clientes': $v = $cnt('clientes', 'created_at'); $m = 0; break;
         case 'Novas leads': $v = $cnt('leads'); $m = 0; break;
         case 'Avaliações recebidas': $v = $cnt('avaliacoes', 'data', " AND estado = 'Recebida'"); $m = 0; break;
@@ -66,14 +79,15 @@ function goal_progress(array $r): array {
             foreach (all_rows('receitas') as $x) if ($x['data'] >= $from && $x['data'] <= $to) $v += num($x['valor']); $m = 1; break;
         case 'Receita recorrente (MRR)':
             $v = 0; foreach (all_rows('subscricoes') as $s) if ($s['estado'] === 'Ativa') $v += num($s['valor']) * (FREQ_MES[$s['frequencia']] ?? 1); $m = 1; break;
-        default: $v = $p['receita']; $m = 1;
+        default: $v = count($MJ); $m = 0;
     }
     $alvo = num($r['alvo']);
     $fmt = fn($x) => $m ? number_format($x, 0, ',', '.') . ' €' : rtrim(rtrim(number_format($x, 1, ',', '.'), '0'), ',');
     $pct = $alvo > 0 ? round($v / $alvo * 100, 1) : null;
     return ['valor' => round($v, 2), 'atual' => $m ? number_format($v, 2, ',', '.') . ' €' : (string)$v, 'pct' => $pct, 'dinheiro' => $m, 'from' => $from, 'to' => $to,
-            'sub' => pt_d($from) . ' – ' . pt_d($to) . ' · ' . $r['metrica'], 'prog' => ['a' => $fmt($v) . ' / ' . $fmt($alvo), 'p' => $pct ?? 0]];
+            'sub' => pt_d($from) . ' – ' . pt_d($to) . ' · ' . $r['metrica'] . ($alvoS ? ' · ' . implode(', ', array_filter(array_map(fn($i) => goal_svc_name($i), $alvoS))) : '') . ($cat !== '' ? ' · categoria ' . $cat : ''), 'prog' => ['a' => $fmt($v) . ' / ' . $fmt($alvo), 'p' => $pct ?? 0]];
 }
+function goal_svc_name(int $id): string { static $N = null; $N ??= array_column(db()->query('SELECT id, nome FROM ' . T('servicos'))->fetchAll(), 'nome', 'id'); return $N[$id] ?? ''; }
 function pt_d($d): string { static $M = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']; return $d ? (int)substr((string)$d, 8, 2) . ' ' . $M[(int)substr((string)$d, 5, 2) - 1] : ''; }
 const FREQ_MES = ['Semanal' => 4.33, 'Quinzenal' => 2.17, 'Mensal' => 1, 'Bimestral' => 0.5, 'Trimestral' => 0.3333];
 

@@ -255,10 +255,13 @@ function seed_av(string $ownerName): void {
     seed_insert('compras', ['data' => $d('-2 days'), 'estado' => 'Encomendada', 'fornecedor_id' => $f2, 'documento' => 'ENC 118', 'artigo_id' => $inv('Microfibras 40x40'), 'quantidade' => 30, 'valor' => 48, 'criar_despesa' => 1]);
     seed_insert('receitas', ['data' => $d('-10 days'), 'categoria' => 'Venda de produtos', 'descricao' => 'Kit de manutenção (champô + quick detailer)', 'cliente_id' => $cl[0], 'valor' => 35, 'custo' => 18, 'metodo' => 'MB Way']);
     seed_insert('receitas', ['data' => $d('-4 days'), 'categoria' => 'Vales / vouchers', 'descricao' => 'Vale-oferta Prestige', 'valor' => 70, 'metodo' => 'Transferência']);
-    foreach ([['Faturar 4.500 € este mês', 'Receita', 4500], ['20 trabalhos concluídos', 'Trabalhos concluídos', 20], ['5 novas avaliações no Google', 'Avaliações recebidas', 5]] as $o)
-        seed_insert('objetivos', ['titulo' => $o[0], 'metrica' => $o[1], 'alvo' => $o[2], 'mes' => date('Y-m-d'), 'periodo' => 'Mês', 'notas' => $o[1] === 'Avaliações recebidas' ? 'Enviar pedido de avaliação no dia seguinte a cada entrega (Lembretes).' : null]);
-    seed_insert('objetivos', ['titulo' => 'Cobrar 4.000 € este mês', 'metrica' => 'Recebido (pagamentos)', 'alvo' => 4000, 'mes' => date('Y-m-d'), 'periodo' => 'Mês']);
-    seed_insert('objetivos', ['titulo' => '6 proteções cerâmicas este trimestre', 'metrica' => 'Proteções cerâmicas aplicadas', 'alvo' => 6, 'mes' => date('Y-m-d'), 'periodo' => 'Trimestre', 'notas' => 'Propor upgrade cerâmico em todos os polimentos.']);
+    foreach ([['40 lavagens Classic este mês', 'Trabalhos concluídos', 40, 'Mês', [$sid['Classic']], null, 'Oferecer o Classic Club a quem repete.'],
+              ['15 lavagens Prestige este mês', 'Trabalhos concluídos', 15, 'Mês', [$sid['Prestige']], null, null],
+              ['10 polimentos por trimestre', 'Trabalhos concluídos', 10, 'Trimestre', [], 'Correção de pintura', 'Inclui Polimento e Correção de Pintura.'],
+              ['6 proteções cerâmicas este trimestre', 'Trabalhos concluídos', 6, 'Trimestre', [], 'Proteção cerâmica', 'Propor upgrade cerâmico em todos os polimentos.'],
+              ['2.000 € em lavagens este mês', 'Receita dos trabalhos', 2000, 'Mês', [], 'Lavagem', null],
+              ['3 restauros completos este ano', 'Trabalhos concluídos', 3, 'Ano', [], 'Restauro', null]] as $o)
+        seed_insert('objetivos', ['titulo' => $o[0], 'metrica' => $o[1], 'alvo' => $o[2], 'periodo' => $o[3], 'mes' => date('Y-m-d'), 'servicos_alvo' => $o[4], 'categoria_alvo' => $o[5], 'notas' => $o[6]]);
     seed_insert('deslocacoes', ['data' => $d('-9 days'), 'origem' => 'Oficina', 'destino' => 'Stand Auto Prime', 'km' => 24, 'finalidade' => 'Serviço de frota', 'tecnico_id' => $tiago]);
     seed_insert('marketing', ['campanha' => 'Pacotes de lavagem — campanha de lançamento', 'canal' => 'Instagram', 'data_inicio' => $d('-45 days'), 'data_fim' => $d('-15 days'), 'custo' => 80, 'leads' => 14, 'clientes' => 5, 'receita' => 610, 'codigo' => 'AVSTART']);
     seed_insert('marketing', ['campanha' => 'Parceria com stand automóvel', 'canal' => 'Parceria', 'data_inicio' => $d('-45 days'), 'custo' => 0, 'leads' => 2, 'clientes' => 1, 'receita' => 240]);

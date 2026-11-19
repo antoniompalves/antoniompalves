@@ -315,3 +315,6 @@ h3>svg,h4>svg,.row>svg,a.row>svg,.ic{width:18px;height:18px;flex:none}
 .repc .sub2{display:block;font-size:11.5px;color:var(--tx2);font-weight:500}
 .prog{min-width:200px}.prog .bar{margin-top:6px}
 .t-mut{color:var(--tx2)}
+.no-anim *,.no-anim *::before,.no-anim *::after{animation:none!important;transition:none!important}
+.guide-ol{margin:0;padding-left:22px;line-height:1.65;color:var(--tx2)}.guide-ol li{margin-bottom:8px}.guide-ol b{color:var(--tx)}
+.guide-ul{margin:0;padding-left:18px;line-height:1.7}kbd{background:var(--glass2,rgba(255,255,255,.08));border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-family:inherit;font-size:12px;color:var(--tx)}
