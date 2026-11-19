@@ -3,3 +3,5 @@ data/*.sqlite*
 uploads/*
 !uploads/.htaccess
 !uploads/index.php
+demo/av-car-detail/*.glb
+*.glb

@@ -103,6 +103,20 @@ Abra o CRM no telemóvel → Safari: *Partilhar → Adicionar ao ecrã principal
 - Endereço público: `https://gestao.avcardetail.pt/portal.php` → colocar na **bio do Instagram**, no Google e no Facebook.
 - Para cada cliente: ficha do cliente → **Portal** → *Enviar por WhatsApp* (link pessoal com histórico, ficha de intervenção, fotos, orçamentos e área “Avalie-nos”).
 
+## 10.1 Carro 3D no site (opcional)
+
+O banner (lavagem + cerâmico) e a animação PPF podem usar um **modelo 3D real** do carro em vez da ilustração.
+
+1. Em **Definições → Mensagens & termos → Portal do cliente → Modelo 3D**, carregue um ficheiro **.glb**.
+2. Use **apenas modelos com licença para uso comercial** — o crédito do autor é lido do ficheiro e aparece no rodapé do site.
+3. Otimize o ficheiro antes (ideal ≤ 5 MB). Com Node.js instalado:
+   `npx @gltf-transform/cli optimize original.glb otimizado.glb --compress meshopt --texture-compress webp --texture-size 1024 --palette false`
+   (o `--palette false` mantém a pintura como material próprio, necessário para a sujidade, o cerâmico e o brilho/satin).
+4. Se o PHP recusar o envio, aumente `upload_max_filesize` e `post_max_size` em **cPanel → Select PHP Version → Options**.
+5. Sem modelo, em telemóveis com “poupança de dados” ou com animações reduzidas, o site mostra a ilustração vetorial.
+
+O modelo de demonstração da AV Car Detail (Audi RS7) **não faz parte do pacote de revenda** — cada cliente carrega o seu.
+
 ## 11. Cópias de segurança
 
 - **Automática do alojamento**: confirmar no cPanel que existem backups (*Backup* / *JetBackup*).

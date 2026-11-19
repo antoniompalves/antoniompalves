@@ -29,6 +29,9 @@ function seed_av(string $ownerName): void {
     ] as $k => $v) setting_set($k, $v);
 
     seed_base($owner, false, '#e11d2a'); // modelos de mensagem + André Valente na equipa
+    $glb = APP_ROOT . '/demo/av-car-detail/rs7.glb'; // modelo 3D licenciado pelo cliente — distribuído à parte
+    if (is_file($glb) && function_exists('model_store')) model_store($glb);
+    elseif (is_file($glb)) { $n = 'model_rs7.glb'; if (@copy($glb, APP_ROOT . '/uploads/' . $n)) { setting_set('modelo_3d', $n); setting_set('modelo_3d_credito', 'Modelo 3D: 2020 Audi RS7 Sportback — Ddiaz Design'); } }
 
     // ---------- Serviços (tabela AV Car Detail) ----------
     // [nome, tipo, categoria, preço (null = por orçamento), duração h, custo produtos, slogan, resultado, duração texto, descrição, tarefas, destaque, ordem]

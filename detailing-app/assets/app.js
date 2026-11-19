@@ -1851,6 +1851,10 @@ route(/^#\/definicoes$/, async view => {
       ${I('empresa_desde', 'Ano de abertura (para “anos de experiência”)', 'number')}${I('portal_vagas_dia', 'Marcações por dia (para “próxima vaga”)', 'number')}
       <label class="f full"><span>Antes / depois na página inicial</span><select class="inp" data-s="portal_ad"><option value="">— Ilustração (sem fotos de clientes) —</option>${(A.cache.trabalhos || []).filter(j => { const F = jparse(j.fotos); return F.some(x => x.tipo === 'Antes') && F.some(x => x.tipo === 'Depois'); }).map(j => `<option value="${j.id}" ${+S.portal_ad === +j.id ? 'selected' : ''}>${esc((j.numero || '') + ' · ' + fdate(j.data) + ' · ' + refLabel('veiculos', j.veiculo_id))}</option>`).join('')}</select><small>Só aparecem trabalhos com foto “Antes” e “Depois”. Confirme que o cliente autoriza a publicação.</small></label>
       ${B('portal_ppf', 'Animação PPF (parallax com deslize) na página do serviço de PPF')}
+      <div class="full"><span class="small muted">Modelo 3D do carro (.glb) — usado no banner e na animação PPF</span><div class="row" style="margin-top:6px"><span class="badge ${S.modelo_3d ? 't-ok' : 't-mut'}">${S.modelo_3d ? 'Modelo carregado' : 'Sem modelo — usa a ilustração'}</span>
+        <label class="btn sm">${icon('upload')} Carregar .glb<input type="file" accept=".glb,model/gltf-binary" hidden id="m3F"></label>${S.modelo_3d ? '<button class="btn sm ghost danger" id="m3X">Remover</button>' : ''}</div>
+        <small class="muted">Use apenas modelos com licença para uso comercial. Recomendado: ficheiro otimizado até ~5 MB.</small></div>
+      ${I('modelo_3d_credito', 'Crédito do modelo 3D (aparece no rodapé do site)')}<label class="f"><span>Cor da pintura no 3D</span><input class="inp" type="color" data-s="modelo_3d_cor" value="${esc(S.modelo_3d_cor || '#0c0d10')}" style="height:42px;padding:4px"></label>
       ${I('portal_faq', 'Perguntas frequentes — uma por linha: Pergunta | Resposta', 'textarea')}
       <div class="full note">Endereço público: <a href="portal.php" target="_blank">${esc(new URL('portal.php', location.href).href)}</a></div></div></div>
     <div class="glass card" data-p="apa"><h3>${icon('grid')} Módulos ativos</h3><p class="small muted">Desative módulos que o cliente não usa (os dados são mantidos).</p>
@@ -1927,6 +1931,9 @@ route(/^#\/definicoes$/, async view => {
     try { await api('reset', {}, { modo: m }); A.cache = {}; toast('Feito.'); await boot(); location.hash = '#/'; } catch (er) { fail(er); } });
   $('#wipe').onclick = async () => { if (!await confirmBox('Apagar os dados de demonstração? Faça antes uma cópia de segurança. Esta ação não pode ser anulada.', 'Apagar dados')) return;
     try { await api('wipe', {}, { tudo: $('#wipeAll').checked ? 1 : 0 }); A.cache = {}; toast('Dados removidos. Pode começar a usar com dados reais.'); location.hash = '#/'; } catch (er) { fail(er); } };
+  $('#m3F')?.addEventListener('change', async ev => { const f = ev.target.files[0]; if (!f) return; const fd = new FormData(); fd.append('f', f);
+    toast('A carregar o modelo 3D…'); try { const r = await api('model_upload', {}, fd); toast(`Modelo carregado (${n2(r.mb)} MB).`); await boot(); router(); } catch (er) { fail(er); } });
+  $('#m3X')?.addEventListener('click', async () => { if (!await confirmBox('Remover o modelo 3D? O site volta a usar a ilustração.', 'Remover')) return; await api('model_upload', {}, { remover: 1 }); await boot(); router(); });
   $('#lgF').onchange = async ev => { try { const f = await uploadImage(ev.target.files[0]); await api('settings', {}, { logo: f }); A.S.logo = f; toast('Logótipo atualizado.'); renderShell(); router(); } catch (er) { fail(er); } };
   $('#lgX')?.addEventListener('click', async () => { await api('settings', {}, { logo: '' }); A.S.logo = ''; renderShell(); router(); });
   $('#sv').onclick = async () => {

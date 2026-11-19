@@ -83,10 +83,15 @@ try {
                 if ($j) { $F = jdec($j['fotos']); $a1 = array_values(array_filter($F, fn($x) => ($x['tipo'] ?? '') === 'Antes'))[0]['f'] ?? null; $d1 = array_values(array_filter($F, fn($x) => ($x['tipo'] ?? '') === 'Depois'))[0]['f'] ?? null;
                     if ($a1 && $d1) $ad = ['antes' => $a1, 'depois' => $d1, 'titulo' => trim(($j['sn'] ?: $j['extras']) . ' · ' . trim($j['marca'] . ' ' . $j['modelo']), ' ·')]; } }
             $stats = ['trabalhos' => $nTrab, 'rating' => $rt && $rt['n'] ? round((float)$rt['a'], 1) : null, 'n_rating' => (int)($rt['n'] ?? 0), 'garantia_anos' => $gar ?: null, 'proxima_vaga' => $prox, 'ad' => $ad];
-            $keys = ['app_nome', 'slogan', 'iva_isento', 'logo_inverter', 'link_facebook', 'empresa_nome', 'empresa_telefone', 'empresa_email', 'empresa_morada', 'empresa_web', 'cor', 'portal_titulo', 'portal_texto', 'portal_horario', 'portal_instagram', 'portal_whatsapp', 'link_avaliacao', 'portal_faq', 'empresa_desde', 'portal_ppf'];
+            $keys = ['app_nome', 'slogan', 'iva_isento', 'logo_inverter', 'link_facebook', 'empresa_nome', 'empresa_telefone', 'empresa_email', 'empresa_morada', 'empresa_web', 'cor', 'portal_titulo', 'portal_texto', 'portal_horario', 'portal_instagram', 'portal_whatsapp', 'link_avaliacao', 'portal_faq', 'empresa_desde', 'portal_ppf', 'modelo_3d_credito', 'modelo_3d_cor'];
             $reviews = array_values(array_map(fn($r) => ['texto' => $r['texto'], 'pontuacao' => (int)$r['pontuacao'], 'plataforma' => $r['plataforma']],
                 array_filter(all_rows('avaliacoes'), fn($r) => $r['testemunho_ok'] && $r['texto'])));
-            out(['info' => array_intersect_key($S, array_flip($keys)) + ['logo' => $S['logo'] ? 'api.php?a=logo' : ''], 'servicos' => $sv, 'avaliacoes' => array_slice($reviews, 0, 6), 'stats' => $stats]);
+            out(['info' => array_intersect_key($S, array_flip($keys)) + ['logo' => $S['logo'] ? 'api.php?a=logo' : '', 'modelo_3d' => !empty($S['modelo_3d']) && is_file(APP_ROOT . '/uploads/' . basename($S['modelo_3d'])) ? 'api.php?a=pub_model&v=' . substr(md5($S['modelo_3d']), 0, 8) : ''], 'servicos' => $sv, 'avaliacoes' => array_slice($reviews, 0, 6), 'stats' => $stats]);
+        }
+        if ($a === 'pub_model') { // modelo 3D do portal (.glb)
+            $p = APP_ROOT . '/uploads/' . basename((string)($S['modelo_3d'] ?? ''));
+            if (empty($S['modelo_3d']) || !preg_match('/^model_[\w-]+\.glb$/', basename($p)) || !is_file($p)) { http_response_code(404); exit; }
+            header('Content-Type: model/gltf-binary'); header('Content-Length: ' . filesize($p)); header('Cache-Control: public, max-age=2592000'); readfile($p); exit;
         }
         if ($a === 'pub_file') { // fotos de serviços públicos
             $f = basename((string)($_GET['f'] ?? ''));
@@ -432,6 +437,14 @@ try {
         foreach (body() as $k => $v) if (in_array($k, $allowed, true)) setting_set($k, is_array($v) ? json_encode($v, JSON_UNESCAPED_UNICODE) : mb_substr((string)$v, 0, 5000));
         out(['ok' => true]);
 
+    case 'model_upload':
+        need_admin();
+        if (!empty(body()['remover'])) { if (!empty(settings()['modelo_3d'])) @unlink(APP_ROOT . '/uploads/' . basename(settings()['modelo_3d'])); setting_set('modelo_3d', ''); setting_set('modelo_3d_credito', ''); out(['ok' => true]); }
+        if (empty($_FILES['f']) || $_FILES['f']['error'] !== UPLOAD_ERR_OK) fail('Falha no envio do ficheiro (verifique o limite upload_max_filesize do PHP).');
+        if ($_FILES['f']['size'] > 40 * 1024 * 1024) fail('Modelo demasiado grande (máx. 40 MB). Otimize-o antes (ex.: gltf-transform optimize).');
+        $res = model_store($_FILES['f']['tmp_name'], true);
+        out($res);
+
     case 'upload':
         if (empty($_FILES['f']) || $_FILES['f']['error'] !== UPLOAD_ERR_OK) fail('Falha no envio do ficheiro.');
         if ($_FILES['f']['size'] > 8 * 1024 * 1024) fail('Ficheiro demasiado grande (máx. 8 MB).');
@@ -574,6 +587,19 @@ function portal_client(string $t): ?array {
     if (!preg_match('/^[a-f0-9]{32}$/', $t)) return null;
     $st = db()->prepare('SELECT * FROM ' . T('clientes') . ' WHERE portal_token = ?'); $st->execute([$t]);
     return $st->fetch() ?: null;
+}
+/** Guarda um modelo .glb em uploads/ e define-o como modelo 3D do portal. Lê o crédito do autor dos metadados. */
+function model_store(string $src, bool $uploaded = false): array {
+    $h = file_get_contents($src, false, null, 0, 20);
+    if (strlen($h) < 20 || substr($h, 0, 4) !== 'glTF') fail('O ficheiro não é um modelo glTF binário (.glb).');
+    $len = unpack('V', substr($h, 12, 4))[1]; $js = json_decode((string)file_get_contents($src, false, null, 20, min($len, 4 * 1024 * 1024)), true) ?: [];
+    $ex = $js['asset']['extras'] ?? []; $cred = trim(implode(' — ', array_filter([$ex['title'] ?? '', $ex['author'] ?? '', isset($ex['license']) ? preg_replace('/\s*\(.*$/', '', $ex['license']) : ''])));
+    $old = settings()['modelo_3d'] ?? '';
+    $name = 'model_' . bin2hex(random_bytes(8)) . '.glb'; $dst = APP_ROOT . '/uploads/' . $name;
+    if (!($uploaded ? move_uploaded_file($src, $dst) : copy($src, $dst))) fail('Não foi possível guardar o modelo. Verifique permissões da pasta uploads/.');
+    if ($old && $old !== $name) @unlink(APP_ROOT . '/uploads/' . basename($old));
+    setting_set('modelo_3d', $name); if ($cred) setting_set('modelo_3d_credito', 'Modelo 3D: ' . $cred);
+    return ['f' => $name, 'credito' => $cred ? 'Modelo 3D: ' . $cred : '', 'mb' => round(filesize($dst) / 1048576, 2)];
 }
 function send_file(string $f): void {
     $p = APP_ROOT . '/uploads/' . basename($f);

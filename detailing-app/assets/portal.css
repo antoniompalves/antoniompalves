@@ -229,3 +229,21 @@ body.portal{background:#0b0b0c;background-image:radial-gradient(900px 500px at 9
 
 .pill svg{width:15px;height:15px;flex:none}.h3-h h1{line-height:.92}
 @media (max-width:900px){.h3-txt{top:13vh}.hx{height:11%}}
+
+/* ===== 3D ===== */
+.car3d-host{position:absolute;inset:0;z-index:1;opacity:0;transition:opacity .8s,transform .7s cubic-bezier(.2,.8,.2,1);pointer-events:none}.car3d-host.on{opacity:1}
+.car3d-host canvas{display:block}
+.hero3.has3d .h3-car,.ppf.has3d .ppf-car{display:none}
+.hero3.has3d .h3-floor{opacity:.25}.hero3.has3d .h3-wall{opacity:.55}
+.hero3.booking .car3d-host.hero{transform:translateX(-14%)}
+.h3-jet3d{position:absolute;top:22%;bottom:10%;left:var(--jetx,-20px);width:0;z-index:2;opacity:0;transition:opacity .3s;pointer-events:none}
+.hero3.has3d.washing .h3-jet3d{opacity:1}
+.h3-jet3d i{position:absolute;left:-3px;top:0;bottom:0;width:6px;border-radius:6px;background:linear-gradient(#fff0,#e8f6ff 15%,#fff 50%,#e8f6ff 85%,#fff0);box-shadow:0 0 18px 6px rgba(200,230,255,.55),0 0 60px 22px rgba(200,230,255,.18)}
+.h3-jet3d i::after{content:"";position:absolute;left:-60px;right:-60px;bottom:-10px;height:80px;background:radial-gradient(closest-side,rgba(220,240,255,.6),transparent);filter:blur(5px)}
+.ppf-split3{position:absolute;top:0;bottom:0;left:var(--split,100%);width:2px;background:rgba(255,255,255,.95);box-shadow:0 0 10px rgba(0,0,0,.15);z-index:2;opacity:0;transition:opacity .3s;pointer-events:none}
+.ppf-split3 i{position:absolute;top:58%;left:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.25)}.ppf-split3 i::before{content:"⟷";position:absolute;inset:0;display:grid;place-items:center;color:#111}
+.ppf.has3d.is-split .ppf-split3{opacity:1}.ppf.has3d.is-split .ppf-stick{cursor:ew-resize}
+.ppf-scr{position:absolute;left:50%;top:56%;width:min(520px,70vw);transform:translate(-50%,-50%) rotate(-8deg);z-index:2;display:none;pointer-events:none}
+.ppf.has3d .ppf-scr{display:block}.ppf-scr .scratch3{fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;opacity:0;filter:drop-shadow(0 0 4px rgba(255,255,255,.9))}
+.ppf.has3d .ppf-labels{z-index:3}
+@media (max-width:900px){.hero3.booking .car3d-host.hero{transform:translateY(-16%)}}

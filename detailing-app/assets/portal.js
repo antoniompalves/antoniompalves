@@ -67,6 +67,20 @@ function carSVG(mode = 'gloss', extra = '') {
     ${wheel(290)}${wheel(950)}</svg>`;
 }
 
+/* ---------- Carro 3D (Three.js, carregado só quando há modelo e WebGL) ---------- */
+let C3D = null;
+function can3D() { if (!P.info.modelo_3d || reduced() || navigator.connection?.saveData) return false; try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } }
+async function mount3D(after, cls) {
+  if (!can3D()) return null;
+  try {
+    C3D = C3D || await import('./car3d.js');
+    const host = document.createElement('div'); host.className = 'car3d-host ' + cls; after.after(host);
+    const ctl = await C3D.create(host, P.info.modelo_3d, { color: P.info.modelo_3d_cor || '#0c0d10', maxDpr: innerWidth < 700 ? 1.3 : 1.6 });
+    host.classList.add('on'); return ctl;
+  } catch (e) { console.warn('3D indisponível:', e); return null; }
+}
+const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+
 /* ---------- Componentes ---------- */
 function svcCard(s, i) {
   return `<a class="svc" href="#/servico/${s.id}"><div class="img">${art(s, i)}<span class="price">${priceTxt(s)}</span><span class="go">↗</span></div>
@@ -191,6 +205,7 @@ function ppfStory(s) {
       <div class="ppf-layer gloss">${carSVG('gloss', `<rect class="sheen" x="-400" y="80" width="260" height="300" fill="url(#ppfSheen)" transform="skewX(-18)"/><path class="scratch" d="M520 250 Q600 236 720 244" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" pathLength="1"/>`)}</div>
       <div class="ppf-layer satin">${carSVG('satin')}</div><div class="ppf-split"><i></i></div></div></div>
     <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="ppfSheen" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs></svg>
+    <div class="ppf-split3"><i></i></div><svg class="ppf-scr" viewBox="0 0 400 120" aria-hidden="true"><path class="scratch3" d="M30 80 Q190 34 370 58" pathLength="1"/></svg>
     <div class="ppf-prog">${PPF_CH.map((_, i) => `<i data-i="${i}"></i>`).join('')}</div>
     <div class="ppf-cta"><a class="pill solid" href="#/marcar/${s.id}">${icon('sparkle')} Marcar PPF</a><span class="lbl">${priceTxt(s)} · ${esc(dur(s))}</span></div>
     <div class="ppf-hint lbl">Deslize ↓</div></div></section>`;
@@ -220,14 +235,29 @@ function bindPPF(v) {
     el.style.setProperty('--zoom', zoom.toFixed(3)); el.style.setProperty('--rot', rot.toFixed(2) + 'deg'); el.style.setProperty('--ty', ty.toFixed(1) + 'px');
     // 4 · risco desenha-se e depois regenera
     const draw = ci === 4 ? clamp(lp * 2.4) : ci > 4 ? 1 : 0, heal = ci === 4 ? clamp((lp - .55) * 2.6) : ci > 4 ? 1 : 0;
-    scr.style.strokeDashoffset = (1 - draw).toFixed(3); scr.style.opacity = (draw > 0 ? 1 - heal : 0).toFixed(3); scr.style.stroke = heal > 0 ? 'var(--ac)' : '#fff';
+    const sc = car ? scr3 : scr;
+    sc.style.strokeDashoffset = (1 - draw).toFixed(3); sc.style.opacity = (draw > 0 ? 1 - heal : 0).toFixed(3); sc.style.stroke = heal > 0 ? 'var(--ac)' : '#fff';
     el.classList.toggle('night', ci === 5 && lp > .15); el.classList.toggle('end', p > .93);
+    if (car) {
+      const side = [9.6, 1.25, 0], close = [2.5, 1.35, 3.5], rear = [-5.6, 1.35, -7.2];
+      let cam = side, tg = [0, .62, 0], yaw = 0;
+      if (ci === 0) yaw = -.32 + ease(lp) * .64;                                    // reflexos a deslizar na película
+      if (ci === 2) { const a = ease(lp) * Math.PI * 2; cam = [9.6 * Math.cos(a), 1.6 + Math.sin(lp * Math.PI) * .8, 9.6 * Math.sin(a)]; }
+      if (ci === 3) { cam = lerp(side, close, ease(lp)); tg = lerp([0, .62, 0], [0, .8, 1.7], ease(lp)); }
+      if (ci === 4) { cam = close; tg = [0, .8, 1.7]; }
+      if (ci === 5) { const t = ease(clamp(lp * 1.4)); cam = lerp(close, rear, t); tg = lerp([0, .8, 1.7], [0, .62, 0], t); }
+      const sp = ci === 1 ? split / 100 : null;
+      car.set({ cam, target: tg, yaw, fov: ci >= 3 && ci < 5 ? 28 : 30, dirt: 0, wash: 99, rough: .24, cc: 1, ccr: .02, envI: 1.5,
+        split: sp, satin: { rough: .62, cc: .12, ccr: .7, envI: .85 }, env: ci === 5 ? 'night' : 'studio', exposure: ci === 5 ? .9 : 1.05, tail: ci === 5 ? ease(clamp(lp * 1.6)) : 0 });
+    }
   }
+  let car = null; const scr3 = $('.scratch3', el);
+  mount3D($('.ppf-bg', el), 'ppf').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d'); frame(); });
   const onS = () => requestAnimationFrame(frame);
   // arrastar a divisória brilho/satin
-  const car = $('.ppf-car', el);
-  car.addEventListener('pointermove', e => { if (!el.classList.contains('is-split') || !(e.buttons || e.pointerType === 'mouse')) return; const b = car.getBoundingClientRect(); manual = clamp((e.clientX - b.left) / b.width * 100, 4, 96); frame(); });
-  car.addEventListener('pointerleave', () => { manual = null; });
+  const zone = $('.ppf-stick', el);
+  zone.addEventListener('pointermove', e => { if (!el.classList.contains('is-split') || !(e.buttons || e.pointerType === 'mouse')) return; const b = (car ? zone : $('.ppf-car', el)).getBoundingClientRect(); manual = clamp((e.clientX - b.left) / b.width * 100, 4, 96); frame(); });
+  zone.addEventListener('pointerleave', () => { manual = null; });
   addEventListener('scroll', onS, { passive: true }); addEventListener('resize', onS); frame();
 }
 
@@ -292,7 +322,7 @@ function heroStory(svcIds) {
   const svcs = svcIds.map(id => P.svcs.find(s => s.id === id)).filter(Boolean);
   return `<section class="hero3" id="hero3"><div class="h3-stick">
     <div class="h3-room"><div class="h3-wall"></div>${hexCeiling()}<div class="h3-floor"></div><div class="h3-sun"></div></div>
-    <div class="h3-car"><div class="h3-zoom">${carSVG('gloss', extra)}<div class="h3-jet"><i></i></div></div></div>
+    <div class="h3-car"><div class="h3-zoom">${carSVG('gloss', extra)}<div class="h3-jet"><i></i></div></div></div><div class="h3-jet3d"><i></i></div>
     <div class="h3-txt">${HERO_CH.map(([a, b, c], i) => `<div class="h3-h" data-i="${i}"><h1 class="disp">${esc(a)} <em>${esc(b)}</em></h1><p>${esc(c)}</p></div>`).join('')}</div>
     <div class="h3-brand lbl">/ ${esc(P.info.empresa_nome || '')} — ${esc(P.info.slogan || 'detailing automóvel')}</div>
     <div class="h3-prog">${HERO_CH.map(() => '<i></i>').join('')}</div><div class="h3-hint lbl">Deslize para lavar ↓</div>
@@ -327,7 +357,20 @@ function bindHero(v) {
     refl.setAttribute('opacity', (gloss * .32).toFixed(3)); beads.style.opacity = ci === 3 ? clamp((lp - .3) * 3) * (1 - clamp((lp - .8) * 5)) : 0;
     swirls.forEach(c => c.setAttribute('stroke-opacity', ci < 3 ? .09 : (.09 * (1 - gloss)).toFixed(3)));
     el.classList.toggle('sunset', ci === 4); el.classList.toggle('booking', ci === 4 && lp > .35);
+    if (car) {
+      const K = [[8.8, 1.3, .5], [3.6, 1.45, 4.3], [1.7, 1.18, 3.7], [6.4, 1.75, 6.6]], T = [[0, .65, 0], [0, .78, 1.4], [0, .86, 1.0], [0, .62, 0]];
+      const g = ci < 3 ? 0 : ci === 3 ? ease(lp) : 1, washZ = 2.75 - wash * 5.5;
+      let cam = K[0], tg = T[0];
+      if (ci === 2) { cam = lerp(K[0], K[1], ease(lp)); tg = lerp(T[0], T[1], ease(lp)); }
+      if (ci === 3) { cam = lerp(K[1], K[2], ease(lp)); tg = lerp(T[1], T[2], ease(lp)); }
+      if (ci === 4) { const t = ease(clamp(lp * 1.5)); cam = lerp(K[2], K[3], t); tg = lerp(T[2], T[3], t); }
+      car.set({ cam, target: tg, fov: ci === 3 ? 27 : 30, dirt: ci < 2 ? 1 : 0, wash: ci === 1 ? washZ : 99,
+        rough: .5 - g * .28, cc: .3 + g * .7, ccr: .42 - g * .4, envI: 1 + g * .6, env: ci === 4 ? 'sunset' : 'studio', exposure: ci === 4 ? 1.12 : 1.05, yaw: 0 });
+      if (ci === 1) el.style.setProperty('--jetx', car.project([0, .7, washZ])[0].toFixed(0) + 'px');
+    }
   }
+  let car = null;
+  mount3D($('.h3-room', el), 'hero').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d'); frame(); });
   const onS = () => requestAnimationFrame(frame);
   addEventListener('scroll', onS, { passive: true }); addEventListener('resize', onS); frame();
   // mini-formulário de marcação
@@ -472,7 +515,7 @@ function shell() {
       <div><div class="lbl">Ajuda</div><a href="#/marcar">Pedir marcação</a><a href="#/area">Área de cliente</a>${I.link_avaliacao ? `<a href="${esc(I.link_avaliacao)}" target="_blank" rel="noopener">Avaliações Google</a>` : ''}</div>
       <div><div class="lbl">Visite</div>${I.empresa_morada ? `<a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(I.empresa_morada)}">${esc(I.empresa_morada)}</a>` : ''}${I.empresa_telefone ? `<a href="tel:${esc(I.empresa_telefone)}">${esc(I.empresa_telefone)}</a>` : ''}${I.empresa_email ? `<a href="mailto:${esc(I.empresa_email)}">${esc(I.empresa_email)}</a>` : ''}</div>
       <div class="soc">${I.portal_instagram ? `<a href="${esc(I.portal_instagram)}" target="_blank" rel="noopener" aria-label="Instagram">${icon('insta')}</a>` : ''}${wa ? `<a href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${icon('wa')}</a>` : ''}${I.link_facebook ? `<a href="${esc(I.link_facebook)}" target="_blank" rel="noopener" aria-label="Facebook"><b>f</b></a>` : ''}</div></div>
-      <div class="foot-b lbl"><span>© ${new Date().getFullYear()} ${esc(I.empresa_nome)}</span><span>${I.iva_isento === '1' ? 'Isento de IVA — art.º 53.º CIVA' : ''}</span><span>Dados tratados segundo o RGPD</span></div></div></footer>
+      <div class="foot-b lbl"><span>© ${new Date().getFullYear()} ${esc(I.empresa_nome)}</span><span>${I.iva_isento === '1' ? 'Isento de IVA — art.º 53.º CIVA' : ''}</span><span>Dados tratados segundo o RGPD</span>${I.modelo_3d && I.modelo_3d_credito ? `<span>${esc(I.modelo_3d_credito)}</span>` : ''}</div></div></footer>
     <nav class="p-mnav glass"><a href="#/" data-h="#/">${icon('home')}<span>Início</span></a><a href="#/servicos" data-h="#/servicos">${icon('sparkle')}<span>Serviços</span></a>
       <a href="#/marcar" data-h="#/marcar">${icon('calendar')}<span>Marcar</span></a><a href="#/area" data-h="#/area">${icon('user')}<span>${P.t ? 'Área' : 'Cliente'}</span></a></nav>`;
 }
