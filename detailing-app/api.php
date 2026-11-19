@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/inc/bootstrap.php';
 require __DIR__ . '/inc/calc.php';
+require __DIR__ . '/inc/reports.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -164,7 +165,7 @@ try {
 
     if (($user['role'] ?? '') === 'tecnico') {
         $blocked = ['faturas', 'despesas', 'marketing', 'subscricoes', 'orcamentos', 'leads', 'receitas', 'objetivos'];
-        if (in_array($a, ['dashboard', 'report', 'backup', 'restore'], true) || in_array($_GET['e'] ?? '', $blocked, true)) fail('Sem permissão para esta área.', 403);
+        if (in_array($a, ['dashboard', 'report', 'rep', 'backup', 'restore'], true) || in_array($_GET['e'] ?? '', $blocked, true)) fail('Sem permissão para esta área.', 403);
     }
 
     switch ($a) {
@@ -187,6 +188,7 @@ try {
         }
         if (!$id && !empty($E['num']) && empty($vals['numero'])) $vals['numero'] = next_number($e, $E['num']);
         $pdo = db();
+        $old = null; $prevM = ($e === 'marcacoes' && $id) ? $pdo->query('SELECT estado FROM ' . T('marcacoes') . ' WHERE id = ' . $id)->fetch() : null;
         unset($vals['historico'], $vals['timer_inicio'], $vals['assinado_em'], $vals['lancado'], $vals['produtos_usados'], $vals['timer_sessoes']);
         if ($e === 'trabalhos' && isset($vals['estado'])) {
             $old = $id ? $pdo->query('SELECT estado, historico, timer_inicio, horas FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch() : null;
@@ -227,6 +229,12 @@ try {
             $q = implode(', ', array_fill(0, count($vals), '?'));
             $pdo->prepare('INSERT INTO ' . T($e) . " ($cols) VALUES ($q)")->execute(array_values($vals));
             $id = (int)$pdo->lastInsertId();
+        }
+        if ($e === 'trabalhos' && ($vals['estado'] ?? '') === 'Concluído' && ($old['estado'] ?? '') !== 'Concluído') sub_use_visit($id);
+        if ($e === 'marcacoes' && ($vals['estado'] ?? '') === 'Faltou' && ($prevM['estado'] ?? '') !== 'Faltou') {
+            $mm = $pdo->query('SELECT * FROM ' . T('marcacoes') . ' WHERE id = ' . $id)->fetch();
+            if ($mm && $mm['sinal_pago'] && num($mm['sinal']) > 0)
+                seed_like_insert('receitas', ['data' => date('Y-m-d'), 'categoria' => 'Sinais retidos (faltas)', 'descricao' => 'Sinal retido — falta à marcação de ' . date('d/m/Y', strtotime($mm['data'])), 'cliente_id' => $mm['cliente_id'], 'valor' => num($mm['sinal'])]);
         }
         // Atualiza último serviço do veículo quando o trabalho é concluído
         if ($e === 'trabalhos' && ($vals['estado'] ?? '') === 'Concluído') {
@@ -271,6 +279,40 @@ try {
         $row = db()->query('SELECT * FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
         out(['row' => with_calc('trabalhos', [$row])[0]]);
 
+    case 'stock_adj':
+        $b = body(); $id = (int)($b['id'] ?? 0); $d = num($b['d'] ?? 0);
+        $r = db()->query('SELECT quantidade FROM ' . T('inventario') . ' WHERE id = ' . $id)->fetch(); if (!$r) fail('Artigo não encontrado.');
+        db()->prepare('UPDATE ' . T('inventario') . ' SET quantidade = ?, updated_at = ? WHERE id = ?')->execute([max(0, round(num($r['quantidade']) + $d, 3)), now(), $id]);
+        out(['row' => with_calc('inventario', [db()->query('SELECT * FROM ' . T('inventario') . ' WHERE id = ' . $id)->fetch()])[0]]);
+
+    case 'serviced':
+        $id = (int)(body()['id'] ?? 0);
+        $r = db()->query('SELECT * FROM ' . T('equipamentos') . ' WHERE id = ' . $id)->fetch(); if (!$r) fail('Equipamento não encontrado.');
+        $est = in_array($r['estado'], ['Em manutenção', 'Avariado'], true) ? 'Operacional' : $r['estado'];
+        $notas = trim(date('d/m/Y') . ' — revisão registada (' . ($user['nome'] ?? '') . ")\n" . (string)$r['notas']);
+        db()->prepare('UPDATE ' . T('equipamentos') . ' SET ultima_manutencao = ?, estado = ?, notas = ?, updated_at = ? WHERE id = ?')->execute([date('Y-m-d'), $est, $notas, now(), $id]);
+        out(['row' => with_calc('equipamentos', [db()->query('SELECT * FROM ' . T('equipamentos') . ' WHERE id = ' . $id)->fetch()])[0]]);
+
+    case 'rep':
+        if (empty($_GET['k'])) out(['groups' => rep_catalog()]);
+        $f = valid_date($_GET['from'] ?? '') ?? date('Y-m-01'); $t = valid_date($_GET['to'] ?? '') ?? date('Y-m-t');
+        out(rep_run((string)$_GET['k'], $f, $t));
+
+    case 'renew_sub':
+        $id = (int)(body()['id'] ?? 0); $pdo = db();
+        $s = $pdo->query('SELECT * FROM ' . T('subscricoes') . ' WHERE id = ' . $id)->fetch(); if (!$s) fail('Subscrição não encontrada.');
+        $step = ['Semanal' => '+7 days', 'Quinzenal' => '+14 days', 'Mensal' => '+1 month', 'Bimestral' => '+2 months', 'Trimestral' => '+3 months'][$s['frequencia']] ?? '+1 month';
+        $from = max(date('Y-m-d'), (string)($s['validade'] ?: date('Y-m-d')));
+        $nova = date('Y-m-d', strtotime($from . ' ' . $step));
+        $pdo->prepare('UPDATE ' . T('subscricoes') . " SET validade = ?, visitas_usadas = 0, estado = 'Ativa', updated_at = ? WHERE id = ?")->execute([$nova, now(), $id]);
+        $S = settings(); $num = next_number('faturas', 'fat');
+        seed_like_insert('faturas', ['numero' => $num, 'data' => date('Y-m-d'), 'vencimento' => date('Y-m-d', strtotime('+8 days')), 'cliente_id' => $s['cliente_id'], 'estado' => 'Por pagar',
+            'iva_pct' => $S['iva_isento'] === '1' ? 0 : num($S['iva']), 'valor_pago' => 0,
+            'linhas' => json_encode([['d' => 'Subscrição ' . $s['plano'] . ' — ' . date('d/m/Y', strtotime($from)) . ' a ' . date('d/m/Y', strtotime($nova)), 'q' => 1, 'p' => num($s['valor'])]], JSON_UNESCAPED_UNICODE),
+            'pagamentos' => '[]', 'notas' => 'Renovação de subscrição']);
+        $row = $pdo->query('SELECT * FROM ' . T('subscricoes') . ' WHERE id = ' . $id)->fetch();
+        out(['row' => with_calc('subscricoes', [$row])[0], 'fatura' => $num, 'validade' => $nova]);
+
     case 'job_product':
         $b = body(); $id = (int)($b['id'] ?? 0); $pdo = db();
         $j = $pdo->query('SELECT produtos_usados FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
@@ -292,9 +334,14 @@ try {
         $row = $pdo->query('SELECT * FROM ' . T('trabalhos') . ' WHERE id = ' . $id)->fetch();
         out(['row' => with_calc('trabalhos', [$row])[0]]);
 
-    case 'remind_done':
+    case 'remind_undo':
         $k = mb_substr((string)(body()['k'] ?? ''), 0, 80);
-        $m = jdec(settings()['lembretes_ok']); $m[$k] = date('Y-m-d');
+        $m = jdec(settings()['lembretes_ok']); unset($m[$k]); setting_set('lembretes_ok', json_encode((object)$m, JSON_UNESCAPED_UNICODE)); out(['ok' => true]);
+
+    case 'remind_done':
+        $k = mb_substr((string)(body()['k'] ?? ''), 0, 80); $b = body();
+        $m = jdec(settings()['lembretes_ok']);
+        $m[$k] = ['d' => date('Y-m-d H:i'), 'n' => mb_substr((string)($b['n'] ?? ''), 0, 80), 't' => mb_substr((string)($b['t'] ?? ''), 0, 60), 'x' => mb_substr((string)($b['x'] ?? ''), 0, 400), 'c' => mb_substr((string)($b['c'] ?? ''), 0, 20), 'p' => $user['nome'] ?? ''];
         if (count($m) > 800) $m = array_slice($m, -600, null, true);
         setting_set('lembretes_ok', json_encode($m, JSON_UNESCAPED_UNICODE));
         out(['ok' => true]);
@@ -311,9 +358,10 @@ try {
         $stock = 0; foreach (with_calc('inventario', all_rows('inventario')) as $i) if ($i['_c']['alerta']) $stock++;
         out(['#/quadro' => $c('SELECT COUNT(*) FROM ' . T('trabalhos') . " WHERE estado NOT IN ('Concluído','Cancelado','Agendado')"),
              'faturas' => $fat, 'garantias' => $gar, 'inventario' => $stock,
+             'equipamentos' => count(array_filter(with_calc('equipamentos', all_rows('equipamentos')), fn($q) => $q['_c']['seg_due'] || $q['_c']['seg_rep'])),
              'leads' => $c('SELECT COUNT(*) FROM ' . T('leads') . " WHERE estado NOT IN ('Ganho','Perdido') AND data_followup <= '$t'"),
              '#/lembretes' => $c('SELECT COUNT(*) FROM ' . T('marcacoes') . " WHERE estado IN ('Pendente','Confirmada') AND data BETWEEN '$t' AND '" . date('Y-m-d', strtotime('+2 days')) . "' AND (lembrete_enviado IS NULL OR lembrete_enviado = 0)"),
-             'marcacoes' => $c('SELECT COUNT(*) FROM ' . T('marcacoes') . " WHERE data = '$t' AND estado IN ('Pendente','Confirmada')")]);
+             'marcacoes' => $c('SELECT COUNT(*) FROM ' . T('marcacoes') . " WHERE data = '$t' AND estado IN ('Pendente','Confirmada')"), '#/garantias' => $gar]);
 
     case 'wipe':
         need_admin();
@@ -431,6 +479,19 @@ try {
 }
 
 /* ---------- Auxiliares ---------- */
+/** Ao concluir um trabalho, regista uma visita na subscrição ativa do cliente (se o serviço estiver incluído no plano). */
+function sub_use_visit(int $jobId): void {
+    $pdo = db(); $j = $pdo->query('SELECT cliente_id, servico_id, servicos FROM ' . T('trabalhos') . ' WHERE id = ' . $jobId)->fetch();
+    if (!$j || !$j['cliente_id']) return;
+    $svc = array_map('intval', array_merge(jdec($j['servicos']), [$j['servico_id']]));
+    foreach ($pdo->query('SELECT s.*, p.servicos AS plano_svc FROM ' . T('subscricoes') . ' s LEFT JOIN ' . T('planos') . ' p ON p.id = s.plano_id WHERE s.estado = \'Ativa\' AND s.cliente_id = ' . (int)$j['cliente_id'])->fetchAll() as $s) {
+        $inc = array_map('intval', jdec($s['plano_svc'] ?? ''));
+        if ($inc && !array_intersect($inc, $svc)) continue;
+        if ((int)$s['visitas_incluidas'] > 0 && (int)$s['visitas_usadas'] >= (int)$s['visitas_incluidas']) continue;
+        $pdo->prepare('UPDATE ' . T('subscricoes') . ' SET visitas_usadas = COALESCE(visitas_usadas,0) + 1 WHERE id = ?')->execute([$s['id']]);
+        return;
+    }
+}
 function img_mime(string $p): string {
     $m = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'][strtolower(pathinfo($p, PATHINFO_EXTENSION))] ?? null;
     return $m ?: (function_exists('mime_content_type') ? (mime_content_type($p) ?: 'application/octet-stream') : 'application/octet-stream');

@@ -297,3 +297,21 @@ h3>svg,h4>svg,.row>svg,a.row>svg,.ic{width:18px;height:18px;flex:none}
 .stages{margin-bottom:14px}.stages .tab{flex:1;text-align:center}
 .jfoot{position:sticky;bottom:10px;display:flex;gap:8px;flex-wrap:wrap;padding:10px;margin-top:14px;z-index:5}
 @media (max-width:900px){.jfoot{bottom:calc(84px + env(safe-area-inset-bottom,0px))}.stages .tab{flex:none}}
+.tbl .acts .btn{white-space:nowrap}
+.toast{display:flex;align-items:center}
+.tbl tr.tfoot td{background:rgba(255,255,255,.03);cursor:default}
+.cmp{position:relative;aspect-ratio:4/3;overflow:hidden;background:#000;border-radius:14px 14px 0 0}
+.cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cmp .cmp-b{clip-path:inset(0 0 0 var(--x))}
+.cmp .tag{position:absolute;z-index:2;font-size:11px;padding:3px 10px;border-radius:99px;background:rgba(0,0,0,.65);font-weight:700;letter-spacing:.08em}.cmp .tag.depois{background:var(--ac);color:#fff}
+.cmp-line{position:absolute;top:0;bottom:0;left:var(--x);width:3px;margin-left:-1.5px;background:#fff;z-index:2;pointer-events:none}
+.cmp-line span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;font-weight:700}
+.cmp-r{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;z-index:3;margin:0}
+.gcard{cursor:pointer}.gcard:hover{border-color:var(--line2)}
+.warnc{color:var(--warn)}
+.repgrid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.repc{display:flex;align-items:center;gap:12px;padding:14px 16px;color:var(--tx);text-decoration:none;min-height:66px}.repc:hover{border-color:var(--ac)}.repc>svg{width:20px;height:20px;color:var(--ac);flex:none}
+.stepper{display:flex;align-items:center;justify-content:center;gap:6px}.stepper b{min-width:34px;text-align:center}.stepper .btn{padding:2px 9px;min-height:28px}td.stp{text-align:center}
+.repc .sub2{display:block;font-size:11.5px;color:var(--tx2);font-weight:500}
+.prog{min-width:200px}.prog .bar{margin-top:6px}
+.t-mut{color:var(--tx2)}

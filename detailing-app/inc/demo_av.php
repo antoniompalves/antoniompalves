@@ -23,6 +23,7 @@ function seed_av(string $ownerName): void {
         'portal_horario' => 'Seg–Sex 9h–19h · Sáb 9h–13h · por marcação',
         'link_avaliacao' => 'https://www.google.com/maps/search/?api=1&query=AV+Car+Detail',
         'link_facebook' => 'https://www.facebook.com/search/top?q=AV%20Car%20Detail',
+        'desc_multi_n' => '3', 'desc_multi_pct' => '5', 'sinal_pct' => '25',
         'prefixo_orc' => 'AVO', 'prefixo_trab' => 'AVT', 'prefixo_fat' => 'AVR', 'prefixo_gar' => 'AVC',
         'rodape_orc' => "Valores sem IVA — regime de isenção de IVA (art.º 53.º do CIVA).\nO valor depende do tamanho e do estado do veículo. Carros com excesso de pelo de animais, areias ou sujidade: acréscimo de 12 €.\nPagamento: MB Way, Transferência ou Numerário.",
     ] as $k => $v) setting_set($k, $v);
@@ -120,6 +121,15 @@ function seed_av(string $ownerName): void {
             'proximo_servico' => $i % 3 === 0 ? $d('+' . (6 + $i) . ' days') : null]);
     }
 
+    // Conta de frota com desconto profissional
+    db()->prepare('UPDATE ' . T('clientes') . ' SET contacto = ?, email_faturacao = ?, condicoes = ?, desconto_pct = ?, nif = ? WHERE id = ?')
+        ->execute(['Gestor de frota (exemplo)', 'faturacao@stand-exemplo.pt', '30 dias', 10, '500000000', $cl[11]]);
+    // Planos de subscrição (o seed_base já criou 2 genéricos; substituímos pelos da AV)
+    db()->exec('DELETE FROM ' . T('planos'));
+    $pl1 = seed_insert('planos', ['nome' => 'Classic Club', 'valor' => 55, 'frequencia' => 'Mensal', 'visitas' => 2, 'desconto_pct' => 10, 'servicos' => [$sid['Classic']], 'ativo' => 1, 'descricao' => '2 lavagens Classic por mês + 10% de desconto em todos os outros serviços.']);
+    $pl2 = seed_insert('planos', ['nome' => 'Prestige Frota', 'valor' => 120, 'frequencia' => 'Mensal', 'visitas' => 2, 'desconto_pct' => 10, 'servicos' => [$sid['Prestige']], 'ativo' => 1, 'descricao' => 'Plano para frotas e stands: 2 lavagens Prestige por mês.']);
+    $pl3 = seed_insert('planos', ['nome' => 'Manutenção Cerâmica', 'valor' => 45, 'frequencia' => 'Mensal', 'visitas' => 1, 'desconto_pct' => 10, 'servicos' => [$sid['Prestige']], 'ativo' => 1, 'descricao' => 'Manutenção mensal para viaturas com revestimento cerâmico — mantém a garantia válida.']);
+
     // ---------- Trabalho-montra: restauro do Porsche 911 (996) ----------
     $G = [
         'Mecânica & travões' => ['Pintar 2 pinças / desmontar e montar', 'Estufador', 'Lavagem + proteção do chassis e cavas de rodas', 'Restaurar pinças', 'Mudança de óleo / sangrar travões'],
@@ -205,8 +215,9 @@ function seed_av(string $ownerName): void {
     foreach ([['Bruno Fonseca', '911 300 101', 'Instagram', 'Correção de Pintura', 450, 'Contactado', '-1'], ['Diana Moreira', '911 300 102', 'Google', 'Detalhe Interior com Pele', 220, 'Novo', '+0'],
               ['Filipe Gaspar', '911 300 103', 'Portal do cliente', 'Restauro Completo — Mercedes 190E', 0, 'Orçamento enviado', '+2'], ['Rita Correia', '911 300 104', 'Facebook', 'Classic', 30, 'Ganho', null]] as $l)
         seed_insert('leads', ['data' => $d('-' . mt_rand(1, 9) . ' days'), 'nome' => $l[0], 'telefone' => $l[1], 'origem' => $l[2], 'servico_interesse' => $l[3], 'valor_estimado' => $l[4] ?: null, 'estado' => $l[5], 'data_followup' => $l[6] !== null ? $d($l[6] . ' days') : null]);
-    seed_insert('subscricoes', ['cliente_id' => $cl[10], 'veiculo_id' => $vh[10][0], 'plano' => 'Classic quinzenal', 'valor' => 28, 'frequencia' => 'Quinzenal', 'estado' => 'Ativa', 'data_inicio' => $d('-60 days'), 'proxima_visita' => $d('+4 days'), 'visitas_incluidas' => 24, 'visitas_usadas' => 4, 'validade' => $d('+300 days'), 'pagamento' => 'MB Way']);
-    seed_insert('subscricoes', ['cliente_id' => $cl[11], 'veiculo_id' => $vh[11][0], 'plano' => 'Frota stand — Prestige mensal (2 viaturas)', 'valor' => 120, 'frequencia' => 'Mensal', 'estado' => 'Ativa', 'data_inicio' => $d('-45 days'), 'proxima_visita' => $d('+2 days'), 'pagamento' => 'Transferência']);
+    seed_insert('subscricoes', ['cliente_id' => $cl[10], 'veiculo_id' => $vh[10][0], 'plano_id' => $pl1, 'plano' => 'Classic Club', 'valor' => 55, 'frequencia' => 'Mensal', 'estado' => 'Ativa', 'data_inicio' => $d('-60 days'), 'proxima_visita' => $d('+4 days'), 'visitas_incluidas' => 2, 'visitas_usadas' => 1, 'validade' => $d('+5 days'), 'desconto_pct' => 10, 'pagamento' => 'MB Way']);
+    seed_insert('subscricoes', ['cliente_id' => $cl[11], 'veiculo_id' => $vh[11][0], 'plano_id' => $pl2, 'plano' => 'Prestige Frota', 'valor' => 120, 'frequencia' => 'Mensal', 'estado' => 'Ativa', 'data_inicio' => $d('-45 days'), 'proxima_visita' => $d('+2 days'), 'visitas_incluidas' => 2, 'visitas_usadas' => 1, 'validade' => $d('+15 days'), 'desconto_pct' => 10, 'pagamento' => 'Transferência']);
+    seed_insert('subscricoes', ['cliente_id' => $cl[6], 'veiculo_id' => $vh[6][0], 'plano_id' => $pl3, 'plano' => 'Manutenção Cerâmica', 'valor' => 45, 'frequencia' => 'Mensal', 'estado' => 'Ativa', 'data_inicio' => $d('-120 days'), 'proxima_visita' => $d('+9 days'), 'visitas_incluidas' => 1, 'visitas_usadas' => 0, 'validade' => $d('-2 days'), 'desconto_pct' => 10, 'pagamento' => 'MB Way']);
     foreach ([[0, 'Google', 5, 'Trabalho impecável no meu BMW, a correção de pintura ficou espetacular. Recomendo o André!', 'Recebida', 1], [6, 'Google', 5, 'Defender como novo por dentro e por fora. Muito profissional.', 'Recebida', 1],
               [1, 'Facebook', 5, 'Interior em pele limpo e hidratado, atenção ao detalhe incrível.', 'Recebida', 1], [9, 'Google', null, null, 'Pedido enviado', 0], [7, 'Google', null, null, 'Pedido por enviar', 0]] as $a)
         seed_insert('avaliacoes', ['data' => $d('-' . mt_rand(2, 30) . ' days'), 'tipo' => 'Avaliação', 'cliente_id' => $cl[$a[0]], 'plataforma' => $a[1], 'pontuacao' => $a[2], 'texto' => $a[3], 'estado' => $a[4], 'testemunho_ok' => $a[5]]);
@@ -245,7 +256,9 @@ function seed_av(string $ownerName): void {
     seed_insert('receitas', ['data' => $d('-10 days'), 'categoria' => 'Venda de produtos', 'descricao' => 'Kit de manutenção (champô + quick detailer)', 'cliente_id' => $cl[0], 'valor' => 35, 'custo' => 18, 'metodo' => 'MB Way']);
     seed_insert('receitas', ['data' => $d('-4 days'), 'categoria' => 'Vales / vouchers', 'descricao' => 'Vale-oferta Prestige', 'valor' => 70, 'metodo' => 'Transferência']);
     foreach ([['Faturar 4.500 € este mês', 'Receita', 4500], ['20 trabalhos concluídos', 'Trabalhos concluídos', 20], ['5 novas avaliações no Google', 'Avaliações recebidas', 5]] as $o)
-        seed_insert('objetivos', ['titulo' => $o[0], 'metrica' => $o[1], 'alvo' => $o[2], 'mes' => date('Y-m-d'), 'notas' => $o[1] === 'Avaliações recebidas' ? 'Enviar pedido de avaliação no dia seguinte a cada entrega (Lembretes).' : null]);
+        seed_insert('objetivos', ['titulo' => $o[0], 'metrica' => $o[1], 'alvo' => $o[2], 'mes' => date('Y-m-d'), 'periodo' => 'Mês', 'notas' => $o[1] === 'Avaliações recebidas' ? 'Enviar pedido de avaliação no dia seguinte a cada entrega (Lembretes).' : null]);
+    seed_insert('objetivos', ['titulo' => 'Cobrar 4.000 € este mês', 'metrica' => 'Recebido (pagamentos)', 'alvo' => 4000, 'mes' => date('Y-m-d'), 'periodo' => 'Mês']);
+    seed_insert('objetivos', ['titulo' => '6 proteções cerâmicas este trimestre', 'metrica' => 'Proteções cerâmicas aplicadas', 'alvo' => 6, 'mes' => date('Y-m-d'), 'periodo' => 'Trimestre', 'notas' => 'Propor upgrade cerâmico em todos os polimentos.']);
     seed_insert('deslocacoes', ['data' => $d('-9 days'), 'origem' => 'Oficina', 'destino' => 'Stand Auto Prime', 'km' => 24, 'finalidade' => 'Serviço de frota', 'tecnico_id' => $tiago]);
     seed_insert('marketing', ['campanha' => 'Pacotes de lavagem — campanha de lançamento', 'canal' => 'Instagram', 'data_inicio' => $d('-45 days'), 'data_fim' => $d('-15 days'), 'custo' => 80, 'leads' => 14, 'clientes' => 5, 'receita' => 610, 'codigo' => 'AVSTART']);
     seed_insert('marketing', ['campanha' => 'Parceria com stand automóvel', 'canal' => 'Parceria', 'data_inicio' => $d('-45 days'), 'custo' => 0, 'leads' => 2, 'clientes' => 1, 'receita' => 240]);

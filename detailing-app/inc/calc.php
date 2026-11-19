@@ -43,8 +43,14 @@ function warranty_info(array $r): array {
 }
 function goal_progress(array $r): array {
     static $cache = [];
-    $ym = substr((string)($r['mes'] ?: date('Y-m-d')), 0, 7); [$from, $to] = month_bounds($ym);
-    $p = $cache[$ym] ??= period_totals($from, $to);
+    $base = (string)($r['mes'] ?: date('Y-m-d')); $ym = substr($base, 0, 7); $Y = (int)substr($base, 0, 4);
+    switch ($r['periodo'] ?? 'Mês') {
+        case 'Trimestre': $q = intdiv((int)substr($base, 5, 2) - 1, 3); $from = sprintf('%04d-%02d-01', $Y, $q * 3 + 1); $to = month_bounds(sprintf('%04d-%02d', $Y, $q * 3 + 3))[1]; break;
+        case 'Ano': $from = "$Y-01-01"; $to = "$Y-12-31"; break;
+        case 'Personalizado': $from = $base; $to = max($base, (string)($r['data_fim'] ?: $base)); break;
+        default: [$from, $to] = month_bounds($ym);
+    }
+    $p = $cache["$from|$to"] ??= period_totals($from, $to);
     $cnt = fn($e, $col = 'data', $w = '') => (int)db()->query('SELECT COUNT(*) FROM ' . T($e) . " WHERE $col BETWEEN '$from' AND '$to 23:59:59'$w")->fetchColumn();
     switch ($r['metrica']) {
         case 'Lucro bruto': $v = $p['lucro_bruto']; $m = 1; break;
@@ -54,13 +60,21 @@ function goal_progress(array $r): array {
         case 'Novos clientes': $v = $cnt('clientes', 'created_at'); $m = 0; break;
         case 'Novas leads': $v = $cnt('leads'); $m = 0; break;
         case 'Avaliações recebidas': $v = $cnt('avaliacoes', 'data', " AND estado = 'Recebida'"); $m = 0; break;
+        case 'Proteções cerâmicas aplicadas': $v = $cnt('garantias'); $m = 0; break;
+        case 'Recebido (pagamentos)':
+            $v = 0; foreach (all_rows('faturas') as $f) if ($f['estado'] !== 'Anulada') foreach (payment_list($f) as $pp) if ($pp['d'] >= $from && $pp['d'] <= $to) $v += $pp['v'];
+            foreach (all_rows('receitas') as $x) if ($x['data'] >= $from && $x['data'] <= $to) $v += num($x['valor']); $m = 1; break;
         case 'Receita recorrente (MRR)':
             $v = 0; foreach (all_rows('subscricoes') as $s) if ($s['estado'] === 'Ativa') $v += num($s['valor']) * (FREQ_MES[$s['frequencia']] ?? 1); $m = 1; break;
         default: $v = $p['receita']; $m = 1;
     }
     $alvo = num($r['alvo']);
-    return ['valor' => round($v, 2), 'atual' => $m ? number_format($v, 2, ',', '.') . ' €' : (string)$v, 'pct' => $alvo > 0 ? round($v / $alvo * 100, 1) : null, 'dinheiro' => $m];
+    $fmt = fn($x) => $m ? number_format($x, 0, ',', '.') . ' €' : rtrim(rtrim(number_format($x, 1, ',', '.'), '0'), ',');
+    $pct = $alvo > 0 ? round($v / $alvo * 100, 1) : null;
+    return ['valor' => round($v, 2), 'atual' => $m ? number_format($v, 2, ',', '.') . ' €' : (string)$v, 'pct' => $pct, 'dinheiro' => $m, 'from' => $from, 'to' => $to,
+            'sub' => pt_d($from) . ' – ' . pt_d($to) . ' · ' . $r['metrica'], 'prog' => ['a' => $fmt($v) . ' / ' . $fmt($alvo), 'p' => $pct ?? 0]];
 }
+function pt_d($d): string { static $M = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']; return $d ? (int)substr((string)$d, 8, 2) . ' ' . $M[(int)substr((string)$d, 5, 2) - 1] : ''; }
 const FREQ_MES = ['Semanal' => 4.33, 'Quinzenal' => 2.17, 'Mensal' => 1, 'Bimestral' => 0.5, 'Trimestral' => 0.3333];
 
 function calc_ctx(): array {
@@ -99,6 +113,10 @@ function calc_row(string $e, array $r): array {
             $c['pago'] = paid_amount($r);
             $c['em_divida'] = ($r['estado'] ?? '') === 'Anulada' ? 0 : max(0, round($c['total'] - $c['pago'], 2));
             $c['vencida'] = $c['em_divida'] > 0 && !empty($r['vencimento']) && $r['vencimento'] < $today;
+            $an = ($r['estado'] ?? '') === 'Anulada';
+            $c += ['seg_aberto' => !$an && $c['em_divida'] > 0, 'seg_venc' => $c['vencida'], 'seg_paga' => !$an && $c['em_divida'] <= 0, 'seg_anul' => $an];
+            static $jv = null; if ($jv === null) { $jv = []; foreach (db()->query('SELECT t.id, v.marca, v.modelo, v.matricula, t.walkin_veiculo, t.walkin_matricula FROM ' . T('trabalhos') . ' t LEFT JOIN ' . T('veiculos') . ' v ON v.id = t.veiculo_id')->fetchAll() as $x) $jv[$x['id']] = trim(($x['marca'] ? $x['marca'] . ' ' . $x['modelo'] . ' · ' . $x['matricula'] : ($x['walkin_veiculo'] . ' ' . $x['walkin_matricula'])), ' ·'); }
+            $c['viatura'] = $jv[$r['trabalho_id'] ?? 0] ?? '';
             break;
         case 'trabalhos':
             $h = num($r['horas']);
@@ -124,8 +142,26 @@ function calc_row(string $e, array $r): array {
                   'dono' => $ctx['nomes'][$r['cliente_id']] ?? '', 'trabalhos' => (string)($x['n'] ?? 0), 'protecao' => $tags,
                   'seg_prot' => (bool)$tags, 'seg_gar' => !empty($x['g']), 'seg_breve' => !empty($r['proximo_servico']) && $r['proximo_servico'] <= date('Y-m-d', strtotime('+30 days')), 'seg_zero' => empty($x['n'])];
             break;
+        case 'inspecoes':
+            $nd = count(jdec($r['mapa'] ?? '')) + count(array_filter(array_merge(jdec($r['exterior'] ?? ''), jdec($r['interior'] ?? '')), fn($x) => !empty($x['d'])));
+            $c = ['danos' => (string)$nd, 'nfotos' => (string)count(jdec($r['fotos'] ?? '')), 'assinatura' => [!empty($r['assinado_em']) ? '🔒 Assinado' : 'Por assinar'],
+                  'seg_ass' => !empty($r['assinado_em']), 'seg_nass' => empty($r['assinado_em']), 'seg_dano' => $nd > 0, 'act' => empty($r['assinado_em'])];
+            break;
+        case 'avaliacoes':
+            $c = ['seg_resp' => ($r['estado'] ?? '') === 'Recebida' && empty($r['respondida']) && ($r['tipo'] ?? '') !== 'Referência', 'seg_rec' => ($r['estado'] ?? '') === 'Recebida',
+                  'seg_ped' => in_array($r['estado'] ?? '', ['Pedido enviado', 'Pedido por enviar'], true), 'seg_ref' => ($r['tipo'] ?? '') === 'Referência'];
+            break;
+        case 'leads':
+            $c = ['seg_aberta' => !in_array($r['estado'], ['Ganho', 'Perdido'], true), 'seg_ganha' => $r['estado'] === 'Ganho', 'seg_perdida' => $r['estado'] === 'Perdido',
+                  'seg_atraso' => !in_array($r['estado'], ['Ganho', 'Perdido'], true) && !empty($r['data_followup']) && $r['data_followup'] < $today, 'act' => !$r['cliente_id']];
+            break;
+        case 'planos':
+            $n = 0; $m = 0; foreach (db()->query('SELECT valor, frequencia FROM ' . T('subscricoes') . " WHERE estado = 'Ativa' AND plano_id = " . (int)($r['id'] ?? 0))->fetchAll() as $x) { $n++; $m += num($x['valor']) * (FREQ_MES[$x['frequencia']] ?? 1); }
+            $c = ['membros' => (string)$n, 'mrr' => round($m, 2)]; break;
         case 'subscricoes':
             $c['mensal'] = round(num($r['valor']) * (FREQ_MES[$r['frequencia'] ?? 'Mensal'] ?? 1), 2);
+            $ren = $r['validade'] ?? null; $at = ($r['estado'] ?? '') === 'Ativa';
+            $c += ['seg_ativa' => $at && (!$ren || $ren >= $today), 'seg_renovar' => $at && $ren && $ren >= $today && $ren <= date('Y-m-d', strtotime('+7 days')), 'seg_exp' => $at && $ren && $ren < $today, 'seg_pausa' => !$at, 'act' => true];
             $c['utilizacao'] = (int)$r['visitas_incluidas'] > 0 ? (int)$r['visitas_usadas'] . '/' . (int)$r['visitas_incluidas'] : ((int)$r['visitas_usadas'] ? (int)$r['visitas_usadas'] . ' visitas' : '');
             if (!empty($r['validade']) && $r['validade'] < $today && ($r['estado'] ?? '') === 'Ativa') $c['utilizacao'] .= ' · expirada';
             break;
@@ -143,7 +179,11 @@ function calc_row(string $e, array $r): array {
             $c['valor_stock'] = round(num($r['quantidade']) * num($r['custo_unitario']), 2);
             $vol = num($r['volume_ml']); $uso = num($r['ml_por_uso']);
             $c['custo_uso'] = ($vol > 0 && $uso > 0) ? round(num($r['custo_unitario']) / $vol * ($uso / (1 + num($r['diluicao']))), 3) : null;
-            $c['alerta'] = (num($r['nivel_minimo']) > 0 && num($r['quantidade']) <= num($r['nivel_minimo'])) ? 'Stock baixo' : '';
+            $q = num($r['quantidade']); $mn = num($r['nivel_minimo']); $out = $q <= 0; $low = !$out && $mn > 0 && $q <= $mn;
+            $c['alerta'] = $out ? 'Esgotado' : ($low ? 'Stock baixo' : '');
+            $c['chip'] = $out ? ['Esgotado', 'bad'] : ($low ? ['Stock baixo', 'warn'] : ['Em stock', 'ok']);
+            $cons = $r['tipo'] ? !str_starts_with($r['tipo'], 'Produto') : in_array($r['categoria'], ['Microfibras', 'Boinas / pads', 'Consumível', 'Acessório'], true);
+            $c += ['seg_low' => $low, 'seg_out' => $out, 'seg_ok' => !$out && !$low, 'seg_prod' => !$cons, 'seg_cons' => $cons, 'sub' => implode(' · ', array_filter([$r['fornecedor'], $r['categoria']]))];
             break;
         case 'equipamentos':
             $c['proxima'] = null; $c['alerta'] = '';
@@ -155,6 +195,21 @@ function calc_row(string $e, array $r): array {
                 }
             }
             if (($r['estado'] ?? '') === 'Avariado') $c['alerta'] = 'Avariado';
+            $es = $r['estado'] ?? '';
+            $c['chip'] = $es === 'Avariado' ? ['Precisa reparação', 'bad'] : ($es === 'Em manutenção' ? ['Em manutenção', 'warn'] : ($es === 'Abatido' ? ['Abatido', 'mut'] : ($c['alerta'] === 'Em atraso' ? ['Em atraso', 'bad'] : ($c['alerta'] === 'Em breve' ? ['Revisão devida', 'warn'] : ['OK', 'ok']))));
+            $c['garantia'] = !empty($r['garantia_ate']) ? pt_d($r['garantia_ate']) . ($r['garantia_ate'] < $today ? ' (expirada)' : '') : '—';
+            $c += ['seg_due' => in_array($c['alerta'], ['Em atraso', 'Em breve'], true), 'seg_rep' => in_array($es, ['Avariado', 'Em manutenção'], true), 'act' => $es !== 'Abatido',
+                   'sub' => implode(' · ', array_filter([$r['tipo'], $r['marca_modelo']]))];
+            break;
+        case 'compras':
+            static $art = null; if ($art === null) $art = array_column(db()->query('SELECT id, categoria FROM ' . T('inventario'))->fetchAll(), 'categoria', 'id');
+            $c['cat'] = $art[$r['artigo_id'] ?? 0] ?? '';
+            $c['ligado'] = array_values(array_filter([!empty($r['lancado']) ? 'Stock' : null, !empty($r['lancado']) && !empty($r['criar_despesa']) ? 'Despesa' : null, ($r['estado'] ?? '') === 'Encomendada' ? 'Por receber' : null]));
+            break;
+        case 'equipa':
+            static $eq = null; if ($eq === null) { $eq = []; foreach (db()->query('SELECT tecnico_id, COUNT(*) n, SUM(COALESCE(horas,0)) h, SUM(COALESCE(valor,0)) v FROM ' . T('trabalhos') . " WHERE estado = 'Concluído' GROUP BY tecnico_id")->fetchAll() as $x) $eq[$x['tecnico_id']] = $x; }
+            $x = $eq[$r['id']] ?? ['n' => 0, 'h' => 0, 'v' => 0];
+            $c = ['chip' => !empty($r['ativo']) ? ['Ativo', 'ok'] : ['Inativo', 'mut'], 'trabalhos' => (string)(int)$x['n'], 'horas' => number_format((float)$x['h'], 1, ',', '.') . ' h', 'receita' => round((float)$x['v'], 2)];
             break;
         case 'garantias':
             $c = warranty_info($r); break;
@@ -183,6 +238,7 @@ function calc_row(string $e, array $r): array {
             $cu = num($r['custo']);
             $c['roi'] = $cu > 0 ? round((num($r['receita']) - $cu) / $cu * 100, 1) : null;
             $c['cac'] = (int)$r['clientes'] > 0 ? round($cu / (int)$r['clientes'], 2) : null;
+            $c['sub'] = implode(' · ', array_filter([$r['canal'], trim(pt_d($r['data_inicio']) . ($r['data_fim'] ? ' – ' . pt_d($r['data_fim']) : ''))]));
             break;
     }
     return $c;
@@ -364,14 +420,18 @@ function report(string $from, string $to): array {
         $o = $l['origem'] ?: 'Não indicado'; $leads['origem'][$o] = ($leads['origem'][$o] ?? 0) + 1;
     }
     // Fluxo de caixa diário (dinheiro recebido vs despesas pagas)
-    $cx = []; $ent = 0; $nPag = 0; $sai = 0;
-    for ($d = $from; $d <= $to && count($cx) < 400; $d = date('Y-m-d', strtotime($d . ' +1 day'))) $cx[$d] = ['d' => $d, 'entradas' => 0, 'saidas' => 0];
-    foreach (all_rows('faturas') as $f) if ($f['estado'] !== 'Anulada') foreach (payment_list($f) as $p) if (isset($cx[$p['d']])) { $cx[$p['d']]['entradas'] += $p['v']; $ent += $p['v']; $nPag++; }
-    foreach (all_rows('despesas') as $x) if (isset($cx[$x['data']])) { $cx[$x['data']]['saidas'] += num($x['valor']); $sai += num($x['valor']); }
-    foreach (all_rows('receitas') as $x) if (isset($cx[$x['data']])) { $cx[$x['data']]['entradas'] += num($x['valor']); $ent += num($x['valor']); }
+    $cx = []; $ent = 0; $nPag = 0; $sai = 0; $pag = 0; $rec = 0; $recCat = []; $desCat = []; $nRec = 0; $nDes = 0;
+    for ($d = max($from, date('Y-m-d', strtotime($to . ' -800 days'))); $d <= $to && count($cx) < 800; $d = date('Y-m-d', strtotime($d . ' +1 day'))) $cx[$d] = ['d' => $d, 'entradas' => 0, 'saidas' => 0];
+    $inR = fn($d) => $d >= $from && $d <= $to;
+    foreach (all_rows('faturas') as $f) if ($f['estado'] !== 'Anulada') foreach (payment_list($f) as $p) if ($inR($p['d'])) { if (isset($cx[$p['d']])) $cx[$p['d']]['entradas'] += $p['v']; $ent += $p['v']; $pag += $p['v']; $nPag++; }
+    foreach (all_rows('despesas') as $x) if ($inR((string)$x['data'])) { if (isset($cx[$x['data']])) $cx[$x['data']]['saidas'] += num($x['valor']); $sai += num($x['valor']); $nDes++; $k = $x['categoria'] ?: 'Outros'; $desCat[$k] = ($desCat[$k] ?? 0) + num($x['valor']); }
+    foreach (all_rows('receitas') as $x) if ($inR((string)$x['data'])) { if (isset($cx[$x['data']])) $cx[$x['data']]['entradas'] += num($x['valor']); $ent += num($x['valor']); $rec += num($x['valor']); $nRec++; $k = $x['categoria'] ?: 'Outros'; $recCat[$k] = ($recCat[$k] ?? 0) + num($x['valor']); }
+    arsort($desCat); arsort($recCat);
+    $fatP = 0; $nFat = 0; $gorj = 0; foreach (with_calc('faturas', all_rows('faturas')) as $f) if ($f['estado'] !== 'Anulada' && $inR((string)$f['data'])) { $fatP += $f['_c']['total']; $nFat++; if ($f['_c']['em_divida'] <= 0) $gorj += num($f['gorjeta']); }
     $sinais = 0; $nSin = 0;
     foreach (all_rows('marcacoes') as $m) if ($m['sinal_pago'] && num($m['sinal']) > 0 && in_array($m['estado'], ['Pendente', 'Confirmada'], true)) { $sinais += num($m['sinal']); $nSin++; }
-    $caixa = ['dias' => array_values($cx), 'entradas' => round($ent, 2), 'n_pag' => $nPag, 'saidas' => round($sai, 2), 'sinais' => round($sinais, 2), 'n_sinais' => $nSin];
+    $caixa = ['dias' => array_values($cx), 'entradas' => round($ent, 2), 'n_pag' => $nPag, 'saidas' => round($sai, 2), 'sinais' => round($sinais, 2), 'n_sinais' => $nSin,
+              'pagamentos' => round($pag, 2), 'receitas' => round($rec, 2), 'n_rec' => $nRec, 'n_des' => $nDes, 'receitas_cat' => $recCat, 'despesas_cat' => $desCat, 'faturado' => round($fatP, 2), 'n_fat' => $nFat, 'gorjetas' => round($gorj, 2)];
     arsort($tot['por_cat']); arsort($metodos); arsort($leads['origem']);
     return ['caixa' => $caixa, 'from' => $from, 'to' => $to, 'tot' => $tot, 'by' => $by, 'metodos' => $metodos, 'marketing' => $mk, 'leads' => $leads];
 }

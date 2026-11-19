@@ -55,6 +55,8 @@ function seed_base(string $ownerName, bool $services = true, string $cor = '#ef4
         ['Proteção cerâmica', 'Aplicação de revestimentos', "Lavagem e descontaminação\nCorreção / preparação da pintura\nPainel limpo com IPA\nAplicação na pintura\nJantes e pinças\nVidros\nCura e inspeção final\nEmitir certificado de garantia"],
         ['Entrega ao cliente', 'Controlo de qualidade final', "Inspeção sob luz em todos os painéis\nVidros sem marcas\nInterior aspirado e perfumado\nFotos “depois”\nExplicar cuidados pós-serviço\nPedir avaliação"],
     ] as $c) seed_insert('checklists', ['nome' => $c[0], 'descricao' => $c[1], 'tarefas' => $c[2]]);
+    seed_insert('planos', ['nome' => 'Manutenção Mensal', 'valor' => 40, 'frequencia' => 'Mensal', 'visitas' => 1, 'desconto_pct' => 10, 'ativo' => 1, 'descricao' => '1 lavagem de manutenção por mês + 10% de desconto noutros serviços.']);
+    seed_insert('planos', ['nome' => 'Lavagem Quinzenal', 'valor' => 25, 'frequencia' => 'Quinzenal', 'visitas' => 1, 'desconto_pct' => 5, 'ativo' => 1, 'descricao' => 'Lavagem exterior a cada 15 dias.']);
     $msg = [
         ['Confirmação de marcação', 'WhatsApp', 'Confirmação da sua marcação', "Olá {primeiro_nome}! 👋\nConfirmamos a sua marcação de *{servico}* para o {veiculo} no dia {data} às {hora}.\nQualquer alteração, responda a esta mensagem.\n{empresa}"],
         ['Lembrete (véspera)', 'WhatsApp', 'Lembrete da sua marcação', "Olá {primeiro_nome}, lembramos que amanhã ({data}) às {hora} temos a marcação de {servico} para o seu {veiculo}. Até amanhã! 🚗✨\n{empresa}"],
