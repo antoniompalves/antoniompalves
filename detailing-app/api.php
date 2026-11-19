@@ -69,14 +69,30 @@ try {
                     'precos' => $p ? ['Pequeno' => $r['preco_pequeno'], 'Médio' => $r['preco_medio'], 'Grande / SUV' => $r['preco_grande'], 'Desportivo / Luxo' => $r['preco_luxo'], 'Mota' => $r['preco_moto']] : null,
                     'fotos' => array_map(fn($f) => $f['f'] ?? '', jdec($r['fotos']))];
             }
-            $keys = ['app_nome', 'slogan', 'iva_isento', 'logo_inverter', 'link_facebook', 'empresa_nome', 'empresa_telefone', 'empresa_email', 'empresa_morada', 'empresa_web', 'cor', 'portal_titulo', 'portal_texto', 'portal_horario', 'portal_instagram', 'portal_whatsapp', 'link_avaliacao'];
+            // números reais para o portal: trabalhos, avaliações, garantia, próxima vaga, antes/depois
+            $pdo = db(); $nTrab = (int)$pdo->query('SELECT COUNT(*) FROM ' . T('trabalhos') . " WHERE estado = 'Concluído'")->fetchColumn();
+            $rt = $pdo->query('SELECT AVG(pontuacao) a, COUNT(*) n FROM ' . T('avaliacoes') . " WHERE pontuacao > 0 AND estado IN ('Recebida','Recompensa entregue')")->fetch();
+            $gar = (int)$pdo->query('SELECT MAX(anos) FROM ' . T('garantias'))->fetchColumn();
+            $vag = max(1, (int)($S['portal_vagas_dia'] ?? 2)); $prox = null;
+            $DS = ['', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo'];
+            for ($i = 1; $i <= 45 && !$prox; $i++) { $d = date('Y-m-d', strtotime("+$i days")); $w = (int)date('N', strtotime($d)); if ($w === 7) continue;
+                $n = (int)$pdo->query('SELECT COUNT(*) FROM ' . T('marcacoes') . " WHERE data = '$d' AND estado NOT IN ('Cancelada','Faltou')")->fetchColumn();
+                if ($n < $vag) $prox = ['d' => $d, 'l' => $i === 1 ? 'amanhã' : ($i <= 6 ? $DS[$w] : date('d/m', strtotime($d)))]; }
+            $ad = null;
+            if (!empty($S['portal_ad'])) { $j = $pdo->query('SELECT t.fotos, t.extras, s.nome sn, v.marca, v.modelo FROM ' . T('trabalhos') . ' t LEFT JOIN ' . T('servicos') . ' s ON s.id = t.servico_id LEFT JOIN ' . T('veiculos') . ' v ON v.id = t.veiculo_id WHERE t.id = ' . (int)$S['portal_ad'])->fetch();
+                if ($j) { $F = jdec($j['fotos']); $a1 = array_values(array_filter($F, fn($x) => ($x['tipo'] ?? '') === 'Antes'))[0]['f'] ?? null; $d1 = array_values(array_filter($F, fn($x) => ($x['tipo'] ?? '') === 'Depois'))[0]['f'] ?? null;
+                    if ($a1 && $d1) $ad = ['antes' => $a1, 'depois' => $d1, 'titulo' => trim(($j['sn'] ?: $j['extras']) . ' · ' . trim($j['marca'] . ' ' . $j['modelo']), ' ·')]; } }
+            $stats = ['trabalhos' => $nTrab, 'rating' => $rt && $rt['n'] ? round((float)$rt['a'], 1) : null, 'n_rating' => (int)($rt['n'] ?? 0), 'garantia_anos' => $gar ?: null, 'proxima_vaga' => $prox, 'ad' => $ad];
+            $keys = ['app_nome', 'slogan', 'iva_isento', 'logo_inverter', 'link_facebook', 'empresa_nome', 'empresa_telefone', 'empresa_email', 'empresa_morada', 'empresa_web', 'cor', 'portal_titulo', 'portal_texto', 'portal_horario', 'portal_instagram', 'portal_whatsapp', 'link_avaliacao', 'portal_faq', 'empresa_desde', 'portal_ppf'];
             $reviews = array_values(array_map(fn($r) => ['texto' => $r['texto'], 'pontuacao' => (int)$r['pontuacao'], 'plataforma' => $r['plataforma']],
                 array_filter(all_rows('avaliacoes'), fn($r) => $r['testemunho_ok'] && $r['texto'])));
-            out(['info' => array_intersect_key($S, array_flip($keys)) + ['logo' => $S['logo'] ? 'api.php?a=logo' : ''], 'servicos' => $sv, 'avaliacoes' => array_slice($reviews, 0, 6)]);
+            out(['info' => array_intersect_key($S, array_flip($keys)) + ['logo' => $S['logo'] ? 'api.php?a=logo' : ''], 'servicos' => $sv, 'avaliacoes' => array_slice($reviews, 0, 6), 'stats' => $stats]);
         }
         if ($a === 'pub_file') { // fotos de serviços públicos
             $f = basename((string)($_GET['f'] ?? ''));
             foreach (all_rows('servicos') as $r) if ($r['publico'] && in_array($f, array_column(jdec($r['fotos']), 'f'), true)) send_file($f);
+            if (!empty($S['portal_ad'])) { $j = db()->query('SELECT fotos FROM ' . T('trabalhos') . ' WHERE id = ' . (int)$S['portal_ad'])->fetch(); // só a foto antes e a depois escolhidas
+                if ($j) { $F = jdec($j['fotos']); foreach (['Antes', 'Depois'] as $tp) { $x = array_values(array_filter($F, fn($y) => ($y['tipo'] ?? '') === $tp))[0]['f'] ?? null; if ($x === $f) send_file($f); } } }
             http_response_code(404); exit;
         }
         if ($a === 'pub_request') {

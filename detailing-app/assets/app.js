@@ -1806,6 +1806,7 @@ route(/^#\/guia$/, async view => {
 const ACCENTS = [['Vermelho corrida', '#e3242b'], ['Cobre', '#c87533'], ['Azul elétrico', '#2f7cf6'], ['Verde corrida', '#138a52'], ['Dourado', '#c9a227'], ['Cinza metálico', '#7b8794'], ['Violeta noturno', '#7c3aed'], ['Ciano', '#22d3ee']];
 route(/^#\/definicoes$/, async view => {
   if (!isAdmin()) throw new Error('Apenas administradores.');
+  await Promise.all([load('trabalhos'), load('veiculos')]);
   const S = { ...A.S };
   setPage('Definições & dados', 'Personalize a aplicação: empresa, aparência, finanças, listas, campos, mensagens e dados', `<button class="btn pri" id="sv">${icon('check')} Guardar</button>`);
   const I = (k, l, t = 'text', help = '') => `<label class="f ${t === 'textarea' ? 'full' : ''}"><span>${l}</span>${t === 'textarea' ? `<textarea class="inp" data-s="${k}">${esc(S[k])}</textarea>` : `<input class="inp" type="${t}" step="0.01" data-s="${k}" value="${esc(S[k])}">`}${help ? `<small>${help}</small>` : ''}</label>`;
@@ -1847,6 +1848,10 @@ route(/^#\/definicoes$/, async view => {
       ${B('portal_ativo', 'Portal ativo')}${B('portal_precos', 'Mostrar preços “a partir de”')}
       <div class="full">${I('portal_titulo', 'Título principal')}</div>${I('portal_texto', 'Texto de apresentação', 'textarea')}
       ${I('portal_horario', 'Horário')}${I('portal_whatsapp', 'WhatsApp (nº)', 'tel')}<div class="full">${I('portal_instagram', 'Instagram (URL)', 'url')}</div>
+      ${I('empresa_desde', 'Ano de abertura (para “anos de experiência”)', 'number')}${I('portal_vagas_dia', 'Marcações por dia (para “próxima vaga”)', 'number')}
+      <label class="f full"><span>Antes / depois na página inicial</span><select class="inp" data-s="portal_ad"><option value="">— Ilustração (sem fotos de clientes) —</option>${(A.cache.trabalhos || []).filter(j => { const F = jparse(j.fotos); return F.some(x => x.tipo === 'Antes') && F.some(x => x.tipo === 'Depois'); }).map(j => `<option value="${j.id}" ${+S.portal_ad === +j.id ? 'selected' : ''}>${esc((j.numero || '') + ' · ' + fdate(j.data) + ' · ' + refLabel('veiculos', j.veiculo_id))}</option>`).join('')}</select><small>Só aparecem trabalhos com foto “Antes” e “Depois”. Confirme que o cliente autoriza a publicação.</small></label>
+      ${B('portal_ppf', 'Animação PPF (parallax com deslize) na página do serviço de PPF')}
+      ${I('portal_faq', 'Perguntas frequentes — uma por linha: Pergunta | Resposta', 'textarea')}
       <div class="full note">Endereço público: <a href="portal.php" target="_blank">${esc(new URL('portal.php', location.href).href)}</a></div></div></div>
     <div class="glass card" data-p="apa"><h3>${icon('grid')} Módulos ativos</h3><p class="small muted">Desative módulos que o cliente não usa (os dados são mantidos).</p>
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:4px">${mods.map(([k, l]) => `<label class="switch"><input type="checkbox" data-mod="${esc(k)}" ${off.includes(k) ? '' : 'checked'}><span class="small">${esc(l)}</span></label>`).join('')}</div></div>
