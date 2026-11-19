@@ -48,6 +48,13 @@ function seed_base(string $ownerName, bool $services = true, string $cor = '#ef4
         'tarefas_padrao' => "Pintura das pinças de travão (desmontar e montar)\nEstofador — restauro de bancos\nLavagem e proteção do chassis e cavas de rodas\nRestauro de pinças\nMudança de óleo e sangria de travões\nCorreção de pintura\nProteção cerâmica em vidros, plásticos, pintura, jantes e pinças\nRestauro de plásticos interiores, mala e escovas\nDesmontagem de bancos e quartelas\nLimpeza de material antigo\nRestauro de bancos, quartelas, manete, cinzeiro e travão de mão\nLimpeza completa do interior\nHidratação de plásticos e pele\nTratamento do compartimento do motor\nMicro-retoque na pintura\nPPF nas óticas\nProteção das embaladeiras\nLimpeza dos botões do rádio\nLimpeza do sistema de AC\nPintura das calhas\nPintura dos emblemas\nVidros\nPolimento das ponteiras de escape"]);
 
     }
+    foreach ([
+        ['Lavagem exterior', 'Lavagens de manutenção', "Pré-lavagem\nLavagem manual (dois baldes)\nJantes e pneus\nSecagem com soprador e toalhas\nVidros exteriores\nCondicionador de pneus\nInspeção final"],
+        ['Limpeza interior profunda', 'Interiores em tecido ou pele', "Aspiração pormenorizada\nTablier, consola e painéis de porta\nEstofos (injeção-extração ou pele)\nTapetes e alcatifas\nTeto\nVidros interiores\nHidratação de plásticos\nAmbientador"],
+        ['Correção de pintura', 'Polimentos de 1 ou mais fases', "Lavagem ácida e alcalina\nDescontaminação química e mecânica\nMedição da espessura do verniz\nProteção de borrachas e plásticos (fita)\nPolimento de corte\nPolimento de acabamento\nLimpeza com IPA\nInspeção sob luz"],
+        ['Proteção cerâmica', 'Aplicação de revestimentos', "Lavagem e descontaminação\nCorreção / preparação da pintura\nPainel limpo com IPA\nAplicação na pintura\nJantes e pinças\nVidros\nCura e inspeção final\nEmitir certificado de garantia"],
+        ['Entrega ao cliente', 'Controlo de qualidade final', "Inspeção sob luz em todos os painéis\nVidros sem marcas\nInterior aspirado e perfumado\nFotos “depois”\nExplicar cuidados pós-serviço\nPedir avaliação"],
+    ] as $c) seed_insert('checklists', ['nome' => $c[0], 'descricao' => $c[1], 'tarefas' => $c[2]]);
     $msg = [
         ['Confirmação de marcação', 'WhatsApp', 'Confirmação da sua marcação', "Olá {primeiro_nome}! 👋\nConfirmamos a sua marcação de *{servico}* para o {veiculo} no dia {data} às {hora}.\nQualquer alteração, responda a esta mensagem.\n{empresa}"],
         ['Lembrete (véspera)', 'WhatsApp', 'Lembrete da sua marcação', "Olá {primeiro_nome}, lembramos que amanhã ({data}) às {hora} temos a marcação de {servico} para o seu {veiculo}. Até amanhã! 🚗✨\n{empresa}"],

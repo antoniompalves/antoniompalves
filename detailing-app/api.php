@@ -56,8 +56,9 @@ try {
         $S = settings();
         if ($S['portal_ativo'] !== '1') fail('O portal está desativado.', 403);
         if ($a === 'pub_info') {
-            $sv = [];
+            $sv = []; $ck = []; foreach (all_rows('checklists') as $x) $ck[$x['id']] = $x['tarefas'];
             foreach (all_rows('servicos', 'tipo DESC, ordem ASC, id ASC') as $r) {
+                if (!trim((string)$r['tarefas_padrao']) && !empty($r['checklist_id'])) $r['tarefas_padrao'] = $ck[$r['checklist_id']] ?? '';
                 if (!$r['ativo'] || (isset($r['publico']) && $r['publico'] !== null && !$r['publico'])) continue;
                 $p = $S['portal_precos'] === '1';
                 $sv[] = ['id' => (int)$r['id'], 'nome' => $r['nome'], 'tipo' => $r['tipo'], 'categoria' => $r['categoria'], 'descricao' => $r['descricao'],

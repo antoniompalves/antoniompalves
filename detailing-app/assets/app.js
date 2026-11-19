@@ -118,7 +118,7 @@ const imgURL = f => 'api.php?a=file&f=' + encodeURIComponent(f);
 const NAV = [
   ['Painel', [['#/', 'Centro de comando', 'grid'], ['#/agenda', 'Agenda', 'calendar'], 'marcacoes', ['#/quadro', 'Quadro de trabalhos', 'kanban'], ['#/rota', 'Rota do dia', 'route']]],
   ['Clientes', ['leads', 'clientes', 'veiculos', ['#/frotas', 'Frotas & empresas', 'truck'], 'subscricoes', ['#/lembretes', 'Lembretes & follow-ups', 'chat'], 'avaliacoes']],
-  ['Trabalho', ['trabalhos', 'inspecoes', ['#/antes-depois', 'Antes / depois', 'image'], 'garantias', 'servicos']],
+  ['Trabalho', ['trabalhos', 'inspecoes', ['#/antes-depois', 'Antes / depois', 'image'], 'garantias', 'servicos', 'checklists']],
   ['Dinheiro', ['orcamentos', 'faturas', ['#/pagamentos', 'Pagamentos', 'card'], 'despesas', 'receitas', ['#/relatorios', 'Resultados & relatórios', 'chart'], 'deslocacoes']],
   ['Oficina', ['inventario', 'equipamentos', 'fornecedores', 'compras', 'equipa', 'marketing', 'objetivos']],
   ['Ferramentas', [['#/calc-precos', 'Calculadora de preços', 'calc'], ['#/calc-quimicos', 'Custo de químicos', 'flask'], 'mensagens', ['portal.php', 'Portal do cliente ↗', 'globe'], ['#/guia', 'Guia de início', 'book']]],
@@ -285,7 +285,8 @@ route(/^#\/e\/(\w+)$/, async (view, e) => {
   function draw() {
     let list = rows.filter(r => (!st.st || r[E.status] === st.st) && (!st.q || rowText(e, r).includes(st.q.toLowerCase())));
     if (st.sort) list = [...list].sort((a, b) => { const x = get(a, st.sort), y = get(b, st.sort); return (x > y ? 1 : x < y ? -1 : 0) * st.dir; });
-    if (statusF) $('#chips').innerHTML = ['', ...statusF.opts].map(o => `<button class="chip ${st.st === o ? 'on' : ''}" data-o="${esc(o)}">${o || 'Todos'}<span class="n">${o ? rows.filter(r => r[E.status] === o).length : rows.length}</span></button>`).join('');
+    if (statusF) $('#chips').innerHTML = ['', ...statusF.opts].map(o => `<button class="chip ${st.st === o ? 'on' : ''}" data-o="${esc(o)}">${o ? (E.tabs?.[o] || o) : 'Todos'}<span class="n">${o ? rows.filter(r => r[E.status] === o).length : rows.length}</span></button>`).join('')
+      + (e === 'servicos' ? `<a class="chip" href="#/e/checklists">Checklists ↗</a>` : '');
     $$('#chips .chip').forEach(b => b.onclick = () => { st.st = b.dataset.o; draw(); });
     // resumo
     const sums = [...listF.filter(f => f.t === 'money').map(f => [f.l, list.reduce((s, r) => s + (+r[f.k] || 0), 0)]),
@@ -377,7 +378,7 @@ const sizePrice = (s, size) => +((/Pequeno/.test(size || '') ? s.preco_pequeno :
 async function openForm(e, row = null, preset = {}) {
   const E = A.schema[e];
   await ensureRefs(e);
-  if (['orcamentos', 'faturas', 'trabalhos', 'marcacoes'].includes(e)) await load('servicos');
+  if (['orcamentos', 'faturas', 'trabalhos', 'marcacoes'].includes(e)) { await load('servicos'); await load('checklists'); }
   const isNew = !row?.id;
   const val = {};
   E.fields.forEach(f => {
@@ -451,7 +452,7 @@ async function openForm(e, row = null, preset = {}) {
     if (e === 'trabalhos') {
       if (!+val.valor) set('valor', sizePrice(s, size));
       if (!+val.custo_produtos && s.custo_produtos) set('custo_produtos', s.custo_produtos);
-      if (!val.tarefas.some(x => x.s === s.nome) && s.tarefas_padrao) { val.tarefas = [...val.tarefas, ...svcTasks(s)]; editors.tarefas?.(); }
+      if (!val.tarefas.some(x => x.s === s.nome) && svcTaskText(s)) { val.tarefas = [...val.tarefas, ...svcTasks(s)]; editors.tarefas?.(); }
     }
     if (e === 'marcacoes') { if (!+val.valor_previsto) set('valor_previsto', sizePrice(s, size)); if (!+val.duracao_h && s.duracao_h) set('duracao_h', s.duracao_h); }
   }
@@ -646,7 +647,8 @@ function linesEditor(box, val, k, onChange) {
   };
   draw();
 }
-const svcTasks = s => String(s.tarefas_padrao || '').split('\n').map(t => t.trim()).filter(Boolean).map(t => ({ t, d: false, s: s.nome }));
+const svcTaskText = s => String(s.tarefas_padrao || '').trim() || String(byId('checklists', s.checklist_id)?.tarefas || '');
+const svcTasks = s => svcTaskText(s).split('\n').map(t => t.trim()).filter(Boolean).map(t => ({ t, d: false, s: s.nome }));
 /* Checklist. Com opts (trabalhos): tarefas agrupadas por serviço, carregamento a partir do catálogo e notas por serviço/tarefa. */
 function checklistEditor(box, val, k, opts = null) {
   const notes = () => (opts && (val[opts.notes] = val[opts.notes] && typeof val[opts.notes] === 'object' && !Array.isArray(val[opts.notes]) ? val[opts.notes] : {}));
@@ -667,9 +669,9 @@ function checklistEditor(box, val, k, opts = null) {
         <div class="row" style="margin-top:6px"><input class="inp grow" placeholder="Nova tarefa${opts && g ? ' em ' + esc(g) : ''}… (Enter)" data-new="${esc(g)}"><button type="button" class="btn sm" data-add="${esc(g)}">${icon('plus')}</button></div>
         ${opts ? `<label class="f" style="margin-top:8px"><span>Notas do serviço${g ? ' · ' + esc(g) : ''}</span><textarea class="inp" style="min-height:60px" data-gn="${esc(g)}" placeholder="Produtos usados, medições, observações para o cliente…">${esc(notes()[g || ''] || '')}</textarea></label>` : ''}</div>`;
     };
-    const svcs = opts ? (A.cache.servicos || []).filter(s => +s.ativo && s.tarefas_padrao) : [];
+    const svcs = opts ? (A.cache.servicos || []).filter(s => +s.ativo && svcTaskText(s)) : [];
     box.innerHTML = `<div class="row small muted" style="margin-bottom:8px"><span>${done}/${L.length} concluídas</span><div class="bar grow" style="max-width:260px"><i style="width:${L.length ? done / L.length * 100 : 0}%"></i></div></div>
-      ${opts ? `<div class="row" style="margin-bottom:10px"><select class="inp" data-load style="max-width:360px"><option value="">+ Carregar tarefas de um serviço contratado…</option>${svcs.map(s => `<option value="${s.id}">${s.tipo === 'Extra' ? '➕ ' : ''}${esc(s.nome)} (${s.tarefas_padrao.split('\n').filter(x => x.trim()).length} tarefas)</option>`).join('')}</select>
+      ${opts ? `<div class="row" style="margin-bottom:10px"><select class="inp" data-load style="max-width:360px"><option value="">+ Carregar tarefas de um serviço contratado…</option>${svcs.map(s => `<option value="${s.id}">${s.tipo === 'Extra' ? '➕ ' : ''}${esc(s.nome)} (${svcTasks(s).length} tarefas)</option>`).join('')}</select>
         <input class="inp" data-newg placeholder="ou criar grupo/serviço livre…" style="max-width:240px"><button type="button" class="btn sm" data-addg>${icon('plus')} Grupo</button></div>` : ''}
       ${groups.map(groupHTML).join('')}`;
     $$('.chk-i', box).forEach(r => {

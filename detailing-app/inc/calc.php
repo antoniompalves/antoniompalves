@@ -136,6 +136,23 @@ function calc_row(string $e, array $r): array {
             break;
         case 'garantias':
             $c = warranty_info($r); break;
+        case 'servicos':
+            static $svcUse = null, $ckN = null;
+            if ($svcUse === null) { $svcUse = []; foreach (db()->query('SELECT servico_id, COUNT(*) n FROM ' . T('trabalhos') . " WHERE estado <> 'Cancelado' GROUP BY servico_id")->fetchAll() as $x) $svcUse[$x['servico_id']] = (int)$x['n'];
+                $ckN = []; foreach (all_rows('checklists') as $x) $ckN[$x['id']] = count(array_filter(array_map('trim', explode("\n", (string)$x['tarefas'])))); }
+            $pr = array_values(array_filter(array_map('num', [$r['preco_pequeno'], $r['preco_medio'], $r['preco_grande'], $r['preco_luxo'], $r['preco_moto']]), fn($x) => $x > 0));
+            $fmt = fn($v) => number_format($v, $v == floor($v) ? 0 : 2, ',', '.') . ' €';
+            $c['desde'] = !$pr ? 'Por orçamento' : (min($pr) == max($pr) ? $fmt(min($pr)) : $fmt(min($pr)) . ' – ' . $fmt(max($pr)));
+            $nt = count(array_filter(array_map('trim', explode("\n", (string)$r['tarefas_padrao']))));
+            $c['tarefas'] = $nt ? "$nt" : (($r['checklist_id'] ?? null) && isset($ckN[$r['checklist_id']]) ? $ckN[$r['checklist_id']] . ' (modelo)' : '—');
+            $c['marcado'] = (string)($svcUse[$r['id'] ?? 0] ?? 0);
+            $pm = num($r['preco_medio']) ?: ($pr[0] ?? 0);
+            $c['margem'] = $pm > 0 ? round(($pm - num($r['custo_produtos']) - num($r['duracao_h']) * num(settings()['custo_hora'])) / $pm * 100, 1) : null;
+            break;
+        case 'checklists':
+            $c['n'] = (string)count(array_filter(array_map('trim', explode("\n", (string)$r['tarefas']))));
+            $c['servicos'] = (string)(int)db()->query('SELECT COUNT(*) FROM ' . T('servicos') . ' WHERE checklist_id = ' . (int)$r['id'])->fetchColumn() . ' serviço(s)';
+            break;
         case 'receitas': $c['margem'] = round(num($r['valor']) - num($r['custo']), 2); break;
         case 'fornecedores':
             $c['compras'] = round((float)db()->query('SELECT COALESCE(SUM(valor),0) FROM ' . T('compras') . " WHERE estado <> 'Cancelada' AND fornecedor_id = " . (int)$r['id'])->fetchColumn(), 2); break;
