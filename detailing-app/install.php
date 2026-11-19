@@ -6,11 +6,18 @@ $err = ''; $ok = false;
 $checks = [
     'PHP 8.0 ou superior' => version_compare(PHP_VERSION, '8.0', '>='),
     'Extensão PDO' => extension_loaded('pdo'),
+    'Extensão mbstring' => extension_loaded('mbstring'),
+    'Extensão json' => extension_loaded('json'),
     'PDO MySQL ou SQLite' => extension_loaded('pdo_mysql') || extension_loaded('pdo_sqlite'),
     'Pasta raiz gravável (config.php)' => is_writable(__DIR__),
     'Pasta uploads/ gravável' => is_writable(__DIR__ . '/uploads'),
     'Pasta data/ gravável (SQLite)' => is_writable(__DIR__ . '/data'),
 ];
+$optional = [
+    'cURL ou allow_url_fopen (preencher dados pelo VIN)' => function_exists('curl_init') || ini_get('allow_url_fopen'),
+    'HTTPS ativo (recomendado)' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+];
+$blocking = in_array(false, array_intersect_key($checks, array_flip(['PHP 8.0 ou superior', 'Extensão PDO', 'PDO MySQL ou SQLite', 'Extensão mbstring', 'Pasta raiz gravável (config.php)'])), true);
 $P = fn($k, $d = '') => htmlspecialchars((string)($_POST[$k] ?? $d), ENT_QUOTES);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -54,7 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="row"><a class="btn pri" href="index.php">Entrar no CRM</a><a class="btn" href="portal.php" target="_blank">Ver portal do cliente</a></div>
 <?php else: ?>
   <h1>Instalar</h1><p class="muted small">Crie primeiro uma base de dados MySQL no cPanel (Bases de dados MySQL) e atribua-lhe um utilizador com todos os privilégios — ou use SQLite (sem configuração).</p>
-  <div class="note" style="margin:12px 0"><?php foreach ($checks as $l => $c): ?><div><?= $c ? '✅' : '❌' ?> <?= htmlspecialchars($l) ?></div><?php endforeach; ?></div>
+  <div class="note" style="margin:12px 0"><?php foreach ($checks as $l => $c): ?><div><?= $c ? '✅' : '❌' ?> <?= htmlspecialchars($l) ?></div><?php endforeach; ?>
+    <?php foreach ($optional as $l => $c): ?><div><?= $c ? '✅' : '⚠️' ?> <?= htmlspecialchars($l) ?> <span class="muted">(opcional)</span></div><?php endforeach; ?>
+    <?php if ($blocking): ?><div style="color:var(--bad);margin-top:8px"><b>Corrija os itens ❌ antes de instalar</b> (cPanel → Selecionar versão do PHP → Extensões; permissões 755 nas pastas).</div><?php endif; ?></div>
   <?php if ($err): ?><div class="alert" style="border-color:var(--bad);color:var(--bad)"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <form method="post" class="form" autocomplete="off">
     <div class="full tiny">Base de dados</div>

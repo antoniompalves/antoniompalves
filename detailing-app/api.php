@@ -34,7 +34,7 @@ try {
         $f = settings()['logo'];
         $p = APP_ROOT . '/uploads/' . basename((string)$f);
         if (!$f || !is_file($p)) { http_response_code(404); exit; }
-        header('Content-Type: ' . (mime_content_type($p) ?: 'image/png')); header('Cache-Control: max-age=3600'); readfile($p); exit;
+        header('Content-Type: ' . img_mime($p)); header('Cache-Control: max-age=3600'); readfile($p); exit;
     }
     if ($a === 'login') {
         $b = body();
@@ -409,6 +409,10 @@ try {
 }
 
 /* ---------- Auxiliares ---------- */
+function img_mime(string $p): string {
+    $m = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'][strtolower(pathinfo($p, PATHINFO_EXTENSION))] ?? null;
+    return $m ?: (function_exists('mime_content_type') ? (mime_content_type($p) ?: 'application/octet-stream') : 'application/octet-stream');
+}
 /** Descodifica um VIN: base gratuita da NHTSA (vPIC) e, sem rede, tabela local de fabricantes (WMI). */
 function vin_decode(string $vin): array {
     $out = ['vin' => $vin, 'fonte' => 'local', 'marca' => null, 'modelo' => null, 'ano' => null, 'carrocaria' => null, 'combustivel' => null, 'motor' => null, 'pais' => null, 'tamanho' => null];
@@ -455,7 +459,7 @@ function portal_client(string $t): ?array {
 function send_file(string $f): void {
     $p = APP_ROOT . '/uploads/' . basename($f);
     if (!preg_match('/^[\w.-]+\.(jpg|png|webp|gif)$/', basename($p)) || !is_file($p)) { http_response_code(404); exit; }
-    header('Content-Type: ' . (mime_content_type($p) ?: 'image/jpeg')); header('Cache-Control: private, max-age=86400'); readfile($p); exit;
+    header('Content-Type: ' . img_mime($p)); header('Cache-Control: private, max-age=86400'); readfile($p); exit;
 }
 function seed_like_insert(string $e, array $r): int {
     $r = array_filter($r, fn($v) => $v !== null);
