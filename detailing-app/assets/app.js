@@ -439,6 +439,9 @@ async function openForm(e, row = null, preset = {}) {
     renderCalc();
   });
   el.addEventListener('input', ev => { const k = ev.target.dataset.k; if (k) { val[k] = ev.target.value; renderCalc(); } });
+  el.addEventListener('focusout', ev => { const k = ev.target.dataset.k;
+    if (k === 'matricula') { const p = String(val.matricula || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (p.length === 6) { val.matricula = ev.target.value = p.match(/.{2}/g).join('-'); renderCalc(); } }
+    if (k === 'vin') { val.vin = ev.target.value = String(val.vin || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); } });
   $$('[data-rt]', el).forEach(box => box.onclick = ev => { const b = ev.target.closest('button'); if (!b) return; val[box.dataset.rt] = +b.dataset.v; $$('button', box).forEach(x => x.classList.toggle('on', +x.dataset.v <= +b.dataset.v)); });
 
   function onService() {
@@ -487,6 +490,25 @@ async function openForm(e, row = null, preset = {}) {
         <div class="glass kpi k-ok"><div class="l">Lucro do trabalho</div><div class="v ${lucro >= 0 ? 'up' : 'down'}">${money(lucro)}</div><div class="s">Margem ${val.valor ? n2(lucro / val.valor * 100) : 0}%</div></div>
         <div class="glass kpi k-vio"><div class="l">Lucro por hora</div><div class="v">${+val.horas ? money(lucro / val.horas) : '—'}</div><div class="s">${n2(val.horas)} h</div></div>
         <div class="glass kpi k-warn"><div class="l">Valor c/ IVA</div><div class="v">${money((+val.valor || 0) * (1 + (A.S.iva_isento === '1' ? 0 : +A.S.iva) / 100))}</div></div></div>`;
+    } else if (e === 'veiculos') {
+      const vl = $('[data-k="vin"]', el)?.closest('label'); if (vl && box.previousElementSibling !== vl) { box.style.marginTop = '-4px'; vl.after(box); }
+      const pi = plateInfo(val.matricula);
+      box.innerHTML = `<div class="row" style="gap:10px"><button type="button" class="btn sm" id="vinGo">${icon('search')} Preencher dados pelo VIN</button>
+        <span class="small muted grow">${pi ? '🇵🇹 ' + esc(pi) : 'Introduza o VIN (17 caracteres, no livrete/DUA ou no para-brisas) para preencher marca, modelo, ano e motor gratuitamente.'}</span></div><div id="vinRes"></div>`;
+      $('#vinGo', box).onclick = async () => {
+        const b = $('#vinGo', box); b.disabled = true; b.textContent = 'A consultar…';
+        try {
+          const r = await api('vin', { v: val.vin || '' });
+          const set = (k, v, force) => { if (v === null || v === undefined || v === '') return; if (!force && val[k] && String(val[k]).trim()) return; val[k] = v; const i = $(`[data-k="${k}"]`, el); if (i) i.value = v; };
+          set('marca', r.marca); set('modelo', r.modelo); set('ano', r.ano);
+          if (r.tamanho && (!row || !row.tamanho || val.tamanho === 'Médio')) set('tamanho', r.tamanho, true);
+          const det = [r.marca, r.modelo, r.ano && (r.ano + (r.ano_aprox ? ' (aprox.)' : '')), r.carrocaria, r.motor, r.combustivel, r.pais && 'fabricado em ' + r.pais].filter(Boolean).join(' · ');
+          const line = `VIN ${r.vin}: ${det} (fonte: ${r.fonte})`;
+          if (!String(val.notas || '').includes(r.vin)) set('notas', (val.notas ? val.notas + '\n' : '') + line, true);
+          $('#vinRes', box).innerHTML = `<div class="note" style="margin-top:8px">✅ ${esc(det)}<br><span class="small">Fonte: ${esc(r.fonte)}${r.fonte === 'local' ? ' — sem ligação à base NHTSA; apenas fabricante e ano estimado.' : !r.modelo ? ' — modelo não disponível para este VIN (comum em viaturas europeias); preencha manualmente.' : ''}. Só são preenchidos os campos vazios.</span></div>`;
+        } catch (er) { fail(er); }
+        b.disabled = false; b.innerHTML = `${icon('search')} Preencher dados pelo VIN`;
+      };
     } else if (e === 'marcacoes') {
       box.innerHTML = clashHTML(val, row?.id);
     } else if (e === 'deslocacoes') {
@@ -525,6 +547,15 @@ async function openForm(e, row = null, preset = {}) {
   return m;
 }
 
+/* Matrículas portuguesas: normaliza e indica a época de registo pelo formato (sem custos, sem internet). */
+function plateInfo(m) {
+  const p = String(m || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (p.length !== 6) return '';
+  const g = [p.slice(0, 2), p.slice(2, 4), p.slice(4)], L = x => /^[A-Z]{2}$/.test(x), N = x => /^\d{2}$/.test(x);
+  const f = g.map(x => L(x) ? 'AA' : N(x) ? '00' : '?').join('-');
+  const era = { 'AA-00-00': 'entre 1937 e 1992', '00-00-AA': 'entre 1992 e 2005', '00-AA-00': 'entre 2005 e 2020', 'AA-00-AA': 'a partir de 2020' }[f];
+  return era ? `Matrícula ${g.join('-')} (formato ${f}): 1.ª matrícula em Portugal ${era}. Viaturas importadas recebem matrícula da época da legalização.` : '';
+}
 function clashHTML(v, selfId) {
   const all = (A.cache.marcacoes || []).filter(r => +r.id !== +selfId && r.data === v.data && !['Cancelada', 'Faltou'].includes(r.estado));
   const t2m = t => t ? (+t.slice(0, 2)) * 60 + (+t.slice(3, 5)) : null;

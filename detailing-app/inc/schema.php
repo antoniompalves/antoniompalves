@@ -51,7 +51,7 @@ function app_schema() {
             fd('matricula', 'Matrícula', 'text', ['list' => 1, 'half' => 1, 'ph' => 'AA-00-AA']),
             fd('cor', 'Cor', 'text', ['list' => 1, 'half' => 1]),
             fd('tamanho', 'Tamanho', 'select', ['opts' => TAMANHOS, 'def' => 'Médio', 'list' => 1, 'half' => 1]),
-            fd('vin', 'VIN / Nº chassis', 'text'),
+            fd('vin', 'VIN / Nº chassis (17 caracteres)', 'text', ['ph' => 'Ex.: WP0AA29981S620312 — livrete/DUA ou base do para-brisas']),
             fd('estado_pintura', 'Estado da pintura', 'select', ['opts' => ['Excelente', 'Bom', 'Razoável', 'Mau', 'Requer correção'], 'half' => 1]),
             fd('protecao', 'Proteção aplicada', 'select', ['opts' => ['Nenhuma', 'Cera', 'Selante', 'Cerâmico', 'PPF', 'Cerâmico + PPF'], 'half' => 1]),
             fd('ultimo_servico', 'Último serviço', 'date', ['list' => 1, 'half' => 1]),

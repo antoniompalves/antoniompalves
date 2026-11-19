@@ -277,6 +277,11 @@ try {
         setting_set('lembretes_ok', json_encode($m, JSON_UNESCAPED_UNICODE));
         out(['ok' => true]);
 
+    case 'vin':
+        $vin = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($_GET['v'] ?? '')));
+        if (strlen($vin) !== 17 || preg_match('/[IOQ]/', $vin)) fail('O VIN deve ter 17 caracteres (sem as letras I, O ou Q).');
+        out(vin_decode($vin));
+
     case 'badges':
         $t = date('Y-m-d'); $c = fn($sql) => (int)db()->query($sql)->fetchColumn();
         $fat = 0; foreach (with_calc('faturas', all_rows('faturas')) as $f) if ($f['_c']['vencida']) $fat++;
@@ -404,6 +409,44 @@ try {
 }
 
 /* ---------- Auxiliares ---------- */
+/** Descodifica um VIN: base gratuita da NHTSA (vPIC) e, sem rede, tabela local de fabricantes (WMI). */
+function vin_decode(string $vin): array {
+    $out = ['vin' => $vin, 'fonte' => 'local', 'marca' => null, 'modelo' => null, 'ano' => null, 'carrocaria' => null, 'combustivel' => null, 'motor' => null, 'pais' => null, 'tamanho' => null];
+    $url = 'https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/' . rawurlencode($vin) . '?format=json';
+    $raw = null;
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url); curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_USERAGENT => 'DetailPro/1.0']);
+        $raw = curl_exec($ch) ?: null; curl_close($ch);
+    } elseif (ini_get('allow_url_fopen')) {
+        $raw = @file_get_contents($url, false, stream_context_create(['http' => ['timeout' => 8]])) ?: null;
+    }
+    $r = $raw ? (json_decode($raw, true)['Results'][0] ?? null) : null;
+    if ($r && !empty($r['Make'])) {
+        $tc = fn($s) => $s ? mb_convert_case(mb_strtolower(trim($s)), MB_CASE_TITLE) : null;
+        $make = $tc($r['Make']); if (in_array(strtoupper($r['Make']), ['BMW', 'MINI', 'GMC', 'KTM', 'MG', 'DS'], true)) $make = strtoupper($r['Make']);
+        $fuel = ['Gasoline' => 'Gasolina', 'Diesel' => 'Gasóleo', 'Electric' => 'Elétrico', 'Flexible Fuel Vehicle (FFV)' => 'Flex'][$r['FuelTypePrimary'] ?? ''] ?? ($r['FuelTypePrimary'] ?: null);
+        $motor = trim(($r['DisplacementL'] ? round((float)$r['DisplacementL'], 1) . ' L' : '') . ($r['EngineCylinders'] ? ' · ' . $r['EngineCylinders'] . ' cil.' : '') . ($r['EngineHP'] ?? '' ? ' · ' . round((float)$r['EngineHP']) . ' cv' : ''), ' ·');
+        $out = array_merge($out, ['fonte' => 'NHTSA vPIC', 'marca' => $make, 'modelo' => trim(($r['Model'] ?? '') . ' ' . ($r['Trim'] ?? '')) ?: null,
+            'ano' => (int)$r['ModelYear'] ?: null, 'carrocaria' => $r['BodyClass'] ?: null, 'combustivel' => $fuel, 'motor' => $motor ?: null, 'pais' => str_replace(['United States (Usa)', 'Germany', 'Japan', 'France', 'Italy', 'Spain', 'United Kingdom (Uk)', 'Sweden', 'South Africa', 'Mexico', 'China', 'South Korea', 'Hungary', 'Slovakia', 'Czech Republic', 'Belgium', 'Portugal'],
+            ['EUA', 'Alemanha', 'Japão', 'França', 'Itália', 'Espanha', 'Reino Unido', 'Suécia', 'África do Sul', 'México', 'China', 'Coreia do Sul', 'Hungria', 'Eslováquia', 'Rep. Checa', 'Bélgica', 'Portugal'], (string)$tc($r['PlantCountry'] ?? '')) ?: null]);
+    }
+    if (!$out['marca']) {
+        $W = ['WVW' => 'Volkswagen', 'WV1' => 'Volkswagen', 'WV2' => 'Volkswagen', 'WBA' => 'BMW', 'WBS' => 'BMW', 'WBY' => 'BMW', 'WMW' => 'MINI', 'WDB' => 'Mercedes-Benz', 'WDD' => 'Mercedes-Benz', 'W1K' => 'Mercedes-Benz', 'W1N' => 'Mercedes-Benz', 'WDC' => 'Mercedes-Benz',
+            'WAU' => 'Audi', 'WUA' => 'Audi', 'WP0' => 'Porsche', 'WP1' => 'Porsche', 'VF1' => 'Renault', 'VF3' => 'Peugeot', 'VR3' => 'Peugeot', 'VF7' => 'Citroën', 'VR7' => 'Citroën', 'VR1' => 'DS', 'ZFA' => 'Fiat', 'ZAR' => 'Alfa Romeo', 'ZFF' => 'Ferrari', 'ZHW' => 'Lamborghini',
+            'VSS' => 'Seat', 'VSE' => 'Seat', 'TMB' => 'Škoda', 'SAL' => 'Land Rover', 'SAJ' => 'Jaguar', 'SCC' => 'Lotus', 'SCF' => 'Aston Martin', 'YV1' => 'Volvo', 'YV4' => 'Volvo', '5YJ' => 'Tesla', '7SA' => 'Tesla', 'XP7' => 'Tesla', 'LRW' => 'Tesla',
+            'JMZ' => 'Mazda', 'JMB' => 'Mitsubishi', 'JT' => 'Toyota', 'SB1' => 'Toyota', 'NMT' => 'Toyota', 'VNK' => 'Toyota', 'JHM' => 'Honda', 'SHH' => 'Honda', 'JN1' => 'Nissan', 'SJN' => 'Nissan', 'VSK' => 'Nissan', 'KMH' => 'Hyundai', 'TMA' => 'Hyundai', 'KNA' => 'Kia', 'U5Y' => 'Kia',
+            'WF0' => 'Ford', 'W0L' => 'Opel', 'W0V' => 'Opel', 'JS' => 'Suzuki', 'TSM' => 'Suzuki', 'UU1' => 'Dacia', 'VNV' => 'Renault', 'LSJ' => 'MG', 'LB3' => 'Geely', 'LGX' => 'BYD', 'ZDM' => 'Ducati', 'JYA' => 'Yamaha', 'VBK' => 'KTM'];
+        $out['marca'] = $W[substr($vin, 0, 3)] ?? $W[substr($vin, 0, 2)] ?? null;
+        // Fabricantes europeus nem sempre codificam o ano no VIN — por isso não o estimamos aqui.
+        $C = ['W' => 'Alemanha', 'VF' => 'França', 'VR' => 'França', 'VS' => 'Espanha', 'VN' => 'França', 'Z' => 'Itália', 'TM' => 'Rep. Checa', 'TS' => 'Hungria', 'S' => 'Reino Unido', 'Y' => 'Suécia', 'J' => 'Japão', 'K' => 'Coreia do Sul', 'L' => 'China', 'U' => 'Roménia', '1' => 'EUA', '4' => 'EUA', '5' => 'EUA', '7' => 'EUA', 'X' => 'Rússia / UE'];
+        $out['pais'] = $C[substr($vin, 0, 2)] ?? $C[$vin[0]] ?? null;
+    }
+    $b = strtolower((string)$out['carrocaria']);
+    $out['tamanho'] = str_contains($b, 'motorcycle') ? 'Mota' : (preg_match('/sport utility|suv|crossover/', $b) ? 'SUV' : (preg_match('/pickup|van|minivan|bus/', $b) ? 'Carrinha / Monovolume' : (preg_match('/hatchback/', $b) ? 'Pequeno' : null)));
+    if (!$out['marca']) fail('Não foi possível identificar este VIN. Verifique os 17 caracteres.');
+    return $out;
+}
+
 function portal_client(string $t): ?array {
     if (!preg_match('/^[a-f0-9]{32}$/', $t)) return null;
     $st = db()->prepare('SELECT * FROM ' . T('clientes') . ' WHERE portal_token = ?'); $st->execute([$t]);
