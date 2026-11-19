@@ -50,16 +50,20 @@ function buildRoom() {
   }
   grp.add(tube, halo);
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshStandardMaterial({ color: 0x0a0a0b, roughness: .9 })); ceil.rotation.x = Math.PI / 2; ceil.position.y = H + .02; grp.add(ceil);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshPhysicalMaterial({ color: 0x2a2a2c, roughness: .22, metalness: 0, clearcoat: .6, clearcoatRoughness: .15 }));
+  const fc = document.createElement('canvas'); fc.width = fc.height = 256; const fg = fc.getContext('2d'); const fr = fg.createRadialGradient(128, 128, 6, 128, 128, 128);
+  fr.addColorStop(0, '#3a3b40'); fr.addColorStop(.35, '#1b1c1f'); fr.addColorStop(1, '#0a0a0b'); fg.fillStyle = fr; fg.fillRect(0, 0, 256, 256);
+  const ftex = new THREE.CanvasTexture(fc); ftex.colorSpace = THREE.SRGBColorSpace;
+  const floorMat = new THREE.MeshBasicMaterial({ map: ftex });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 20), floorMat);
   floor.rotation.x = -Math.PI / 2; grp.add(floor);
   const wood = new THREE.Mesh(new THREE.PlaneGeometry(40, H), new THREE.MeshStandardMaterial({ map: woodTex(), roughness: .7 })); wood.rotation.y = Math.PI / 2; wood.position.set(-9, H / 2, 0); grp.add(wood);
   // janela / portão envidraçado (acende ao pôr do sol)
-  const win = new THREE.MeshBasicMaterial({ color: new THREE.Color(.05, .06, .07) });
+  const win = new THREE.MeshBasicMaterial({ color: new THREE.Color(.02, .022, .026) });
   const pane = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.5), win); pane.rotation.y = Math.PI / 2; pane.position.set(-8.98, 1.35, -1.5); grp.add(pane);
   const bar = new THREE.MeshBasicMaterial({ color: 0x050505 });
   for (let k = 0; k < 6; k++) { const b = new THREE.Mesh(new THREE.PlaneGeometry(9, .05), bar); b.rotation.y = Math.PI / 2; b.position.set(-8.97, .2 + k * .46, -1.5); grp.add(b); }
   for (const z of [-11, 11]) { const w = new THREE.Mesh(new THREE.PlaneGeometry(30, H), new THREE.MeshStandardMaterial({ color: 0x141416, roughness: .8 })); w.position.set(0, H / 2, z); w.rotation.y = z > 0 ? Math.PI : 0; grp.add(w); }
-  return { grp, win };
+  return { grp, win, floorMat };
 }
 
 /* Sujidade + lavagem injetadas no material da pintura */
@@ -146,7 +150,7 @@ export async function create(host, url, opts = {}) {
   function render() {
     const kd = cam.aspect < 1.15 ? Math.min(2.3, 1.2 / cam.aspect) : 1;                       // telemóvel: afastar a câmara
     cam.position.set(...S.cam.map((v, i) => S.target[i] + (v - S.target[i]) * kd)); cam.fov = S.fov; cam.updateProjectionMatrix(); cam.lookAt(...S.target);
-    if (room) { const sun = S.env === 'sunset'; room.win.color.setRGB(sun ? 6 : .05, sun ? 2.6 : .06, sun ? .8 : .07); scene.background.setRGB(sun ? .09 : .043, sun ? .05 : .043, sun ? .03 : .047); }
+    if (room) { const sun = S.env === 'sunset'; room.win.color.setRGB(sun ? 3.6 : .02, sun ? 1.5 : .022, sun ? .45 : .026); scene.background.setRGB(sun ? .09 : .043, sun ? .05 : .043, sun ? .03 : .047); room.floorMat.color.setRGB(sun ? 1.5 : 1, sun ? 1.05 : 1, sun ? .7 : 1); }
     pivot.rotation.y = S.yaw;
     scene.environment = ENV[S.env] || ENV.studio; renderer.toneMappingExposure = S.exposure;
     tailLight.intensity = S.tail * 6; lights.forEach(m => { m.emissive?.setRGB(S.tail * .9, S.tail * .05, S.tail * .05); });

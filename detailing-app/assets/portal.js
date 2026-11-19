@@ -124,7 +124,7 @@ function bindBA(v) {
   new MutationObserver(push).observe(el, { attributes: true, attributeFilter: ['style'] });
   const io = new IntersectionObserver(es => { if (!es[0].isIntersecting) return; io.disconnect();
     mount3D($('.ba-r', el), 'c3-ba').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d');
-      car.set({ cam: [8.4, 1.15, .4], target: [0, .7, 0], fov: 30, wash: 99, env: 'studio', exposure: 1.05,
+      car.set({ cam: [6.3, 1.0, .3], target: [0, .62, 0], fov: 30, wash: 99, env: 'studio', exposure: 1.05,
         left: { dirt: 1, rough: .55, cc: .2, ccr: .5, envI: .9 }, right: { dirt: 0, rough: .22, cc: 1, ccr: .02, envI: 1.6 } }); push(); }); }, { rootMargin: '300px' });
   io.observe(el);
 }
