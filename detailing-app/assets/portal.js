@@ -73,7 +73,7 @@ function can3D() { if (!P.info.modelo_3d || reduced() || navigator.connection?.s
 async function mount3D(after, cls) {
   if (!can3D()) return null;
   try {
-    C3D = C3D || await import('./car3d.js');
+    C3D = C3D || await import('./car3d.js?v=' + (window.APP_V || ''));
     const host = document.createElement('div'); host.className = 'car3d-host ' + cls; after.after(host);
     const ctl = await C3D.create(host, P.info.modelo_3d, { color: P.info.modelo_3d_cor || '#0c0d10', maxDpr: innerWidth < 700 ? 1.3 : 1.6, room: cls === 'c3-hero' });
     host.classList.add('on'); return ctl;
@@ -125,7 +125,7 @@ function bindBA(v) {
   const io = new IntersectionObserver(es => { if (!es[0].isIntersecting) return; io.disconnect();
     mount3D($('.ba-r', el), 'c3-ba').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d');
       car.set({ cam: [6.3, 1.0, .3], target: [0, .62, 0], fov: 30, wash: 99, env: 'studio', exposure: 1.05,
-        left: { dirt: 1, rough: .55, cc: .2, ccr: .5, envI: .9 }, right: { dirt: 0, rough: .22, cc: 1, ccr: .02, envI: 1.6 } }); push(); }); }, { rootMargin: '300px' });
+        left: { dirt: 1, swirl: 1, rough: .55, cc: .2, ccr: .5, envI: .9 }, right: { dirt: 0, rough: .22, cc: 1, ccr: .02, envI: 1.6 } }); push(); }); }, { rootMargin: '300px' });
   io.observe(el);
 }
 function faqHTML() {
@@ -171,7 +171,7 @@ function pgHome(v) {
     <div class="p-wrap">
     </div>${ppf && I.portal_ppf !== '0' ? `<div class="p-wrap"><div class="p-sec-h" style="margin:60px 0 0"><div><div class="lbl">/ Proteção de pintura · PPF</div><h2 class="disp" style="margin-top:8px">${esc(ppf.nome)}</h2></div><a class="pill" href="#/servico/${ppf.id}">Saber mais ↗</a></div></div>${ppfStory(ppf)}` : ''}<div class="p-wrap">
     <section class="p-sec"><div class="p-sec-h"><div><div class="lbl">/ Antes & depois</div><h2 class="disp" style="margin-top:8px">A transformação</h2></div><span class="lbl">Arraste para comparar</span></div>${baSlider()}</section>
-    <section class="p-sec about"><h2 class="disp big">Sobre nós</h2><div class="about-row"><p>( ${esc(I.portal_texto || 'Trabalho feito à mão, com tempo e cuidado.')} )</p>
+    <section class="p-sec about" id="sobre"><h2 class="disp big">Sobre nós</h2><div class="about-row"><p>( ${esc(I.portal_texto || 'Trabalho feito à mão, com tempo e cuidado.')} )</p>
       <div class="stats">${yrs ? `<div class="stat glass"><b class="disp">${String(yrs).padStart(2, '0')}</b><span class="lbl">Anos de oficina</span></div>` : ''}${ST.rating ? `<div class="stat glass on"><b class="disp">${String(ST.rating).replace('.', ',')}★</b><span class="lbl">${ST.n_rating} avaliações</span></div>` : ''}<div class="stat glass"><b class="disp">100%</b><span class="lbl">Acabado à mão</span></div></div></div></section>
     ${P.reviews.length ? `<section class="p-sec"><div class="p-sec-h"><h2 class="disp">Clientes</h2></div><div class="svc-grid">${P.reviews.map(r => `<div class="glass rev"><div style="color:#fbbf24">${'★'.repeat(r.pontuacao || 5)}</div><q>“${esc(r.texto)}”</q><div class="lbl" style="margin-top:12px">${esc(r.plataforma || '')}</div></div>`).join('')}</div></section>` : ''}
     ${ex.length ? `<section class="p-sec"><div class="p-sec-h"><h2 class="disp">Outros serviços</h2><span class="lbl">Soluções por orçamento e complementos</span></div>${extrasList(ex)}</section>` : ''}
@@ -333,7 +333,8 @@ function heroStory(svcIds) {
     <div class="h3-room"><div class="h3-wall"></div>${hexCeiling()}<div class="h3-floor"></div><div class="h3-sun"></div></div>
     <div class="h3-car"><div class="h3-zoom">${carSVG('gloss', extra)}<div class="h3-jet"><i></i></div></div></div><canvas class="h3-water" aria-hidden="true"></canvas>
     <div class="h3-txt">${HERO_CH.map(([a, b, c], i) => `<div class="h3-h" data-i="${i}"><h1 class="disp">${esc(a)} <em>${esc(b)}</em></h1><p>${esc(c)}</p></div>`).join('')}</div>
-    <div class="h3-brand lbl">/ ${esc(P.info.empresa_nome || '')} — ${esc(P.info.slogan || 'detailing automóvel')}</div>
+    <div class="h3-mark"><div class="h3-mark-l lbl"><span>/ ${esc(P.info.slogan || 'Detailing automóvel')}${+P.info.empresa_desde ? ' — desde ' + esc(P.info.empresa_desde) : ''}</span><span class="hide-m">${esc((P.info.empresa_morada || '').split(',').slice(-1)[0].trim())}</span></div>
+      <div class="h3-mark-t disp" style="--len:${Math.max(6, (P.info.empresa_nome || '').length)}">${esc((P.info.empresa_nome || '').toUpperCase())}</div></div>
     <div class="h3-prog">${HERO_CH.map(() => '<i></i>').join('')}</div><div class="h3-hint lbl">Deslize para lavar ↓</div>
     <form class="h3-book glass" id="h3b"><div class="lbl">/ Marque o seu detalhe</div><h3 class="disp">Reservar vaga</h3>
       <div class="h3-l">Serviço</div><div class="h3-opts" data-g="servicos">${svcs.map((s, i) => `<button type="button" class="${i ? '' : 'on'}" data-v="${s.id}"><b>${esc(s.nome)}</b><small>${priceTxt(s)}</small></button>`).join('')}</div>
@@ -393,6 +394,7 @@ function bindHero(v) {
     const r = el.getBoundingClientRect(), p = clamp(-r.top / Math.max(1, r.height - innerHeight)), f = p * N, ci = Math.min(N - 1, Math.floor(f)), lp = f - ci;
     H.forEach((h, i) => { const d = f - i - .5; h.style.opacity = (i === N - 1 && f > N - 1 ? 1 : clamp(1 - Math.abs(d) * 2.2)).toFixed(3); h.style.transform = `translateY(${(i === N - 1 && f > N - .5 ? 0 : -d * 50).toFixed(1)}px)`; });
     D.forEach((d, i) => d.classList.toggle('on', i <= ci));
+    const mk = $('.h3-mark', el); if (mk) { mk.style.opacity = clamp(1 - (f - .55) * 2.2).toFixed(3); mk.style.transform = `translateY(${(-Math.max(0, f - .3) * 90).toFixed(1)}px)`; }
     const wash = ci === 0 ? 0 : ci === 1 ? ease(lp) : 1;                       // 0 → 1 enquanto lava
     cut.setAttribute('x', (wash * 1200).toFixed(0)); el.style.setProperty('--jet', (wash * 100).toFixed(2) + '%'); el.classList.toggle('washing', ci === 1 && lp > .02 && lp < .98);
     const zoom = ci === 2 ? 1 + ease(lp) * .9 : ci === 3 ? 1.9 + ease(clamp(lp * 1.4)) * .5 : ci === 4 ? 2.4 - ease(clamp(lp * 1.8)) * 1.4 : 1;
@@ -402,14 +404,18 @@ function bindHero(v) {
     swirls.forEach(c => c.setAttribute('stroke-opacity', ci < 3 ? .09 : (.09 * (1 - gloss)).toFixed(3)));
     el.classList.toggle('sunset', ci === 4); el.classList.toggle('booking', ci === 4 && lp > .35);
     if (car) {
-      const K = [[8.6, 1.05, 1.2], [3.6, 1.35, 4.3], [1.7, 1.18, 3.7], [6.6, 1.25, 6.4]], T = [[0, 1.05, 0], [0, .9, 1.4], [0, .86, 1.0], [-.6, 1.0, 0]];
-      const g = ci < 3 ? 0 : ci === 3 ? ease(lp) : 1, washZ = 2.75 - wash * 5.5;
+      const K = [[8.6, 1.05, 1.2], [3.1, 1.6, 4.1], [1.25, 1.82, 3.35], [6.6, 1.25, 6.4]], T = [[0, 1.05, 0], [0, .95, 1.5], [-.05, .98, 1.45], [-.6, 1.0, 0]];
+      const g = ci < 3 ? 0 : ci === 3 ? 0 : 1, washZ = 2.75 - wash * 5.5;
+      // capítulo 3: 0–.2 swirls · .2–.53 cerâmico líquido · .53–.72 linha de luz · .72–1 gota
+      const cph = ci === 3 ? clamp((lp - .2) / .33) : ci > 3 ? 1 : 0, sph = ci === 3 ? clamp((lp - .53) / .19) : 0, dph = ci === 3 ? clamp((lp - .72) / .28) : 0;
       let cam = K[0], tg = T[0];
       if (ci === 2) { cam = lerp(K[0], K[1], ease(lp)); tg = lerp(T[0], T[1], ease(lp)); }
-      if (ci === 3) { cam = lerp(K[1], K[2], ease(lp)); tg = lerp(T[1], T[2], ease(lp)); }
+      if (ci === 3) { const t = ease(clamp(lp / .2)); cam = lerp(K[1], K[2], t); tg = lerp(T[1], T[2], t); }
       if (ci === 4) { const t = ease(clamp(lp * 1.5)); cam = lerp(K[2], K[3], t); tg = lerp(T[2], T[3], t); }
-      car.set({ cam, target: tg, fov: ci === 3 ? 27 : 30, dirt: ci < 2 ? 1 : 0, wash: ci === 1 ? washZ : 99,
-        rough: .5 - g * .28, cc: .3 + g * .7, ccr: .42 - g * .4, envI: 1 + g * .6, env: ci === 4 ? 'sunset' : 'studio', exposure: ci === 4 ? 1.12 : 1.05, yaw: 0 });
+      car.set({ cam, target: tg, fov: ci === 3 ? 34 : 30, dirt: ci < 2 ? 1 : 0, wash: ci === 1 ? washZ : 99,
+        swirl: ci === 2 ? ease(lp) : ci === 3 ? 1 : 0, coatOn: ci === 3 ? 1 : 0, coat: 2.6 - ease(cph) * 2.45,
+        sweep: ci === 3 && sph > 0 && sph < 1 ? 2.5 - ease(sph) * 2.3 : -99, drop: dph,
+        rough: .5 - g * .28, cc: .3 + g * .7, ccr: .42 - g * .4, envI: 1.1 + g * .5, env: ci === 4 ? 'sunset' : 'studio', exposure: ci === 4 ? 1.12 : 1.05, yaw: 0 });
       if (ci === 1) { const a = car.project([0, 1.45, washZ]), b = car.project([0, 0, washZ]); water.at(a[0], b[0], a[1], b[1]); }
       water.on(ci === 1 && lp > .02 && lp < .98);
     }
@@ -550,9 +556,9 @@ function shell() {
   document.documentElement.style.setProperty('--ac', I.cor || '#ef4444');
   document.title = I.empresa_nome + ' · Detailing automóvel';
   $('#root').innerHTML = `
-    <header class="p-top"><div class="p-wrap"><a href="#/" class="brand" style="padding:0">${I.logo ? `<div class="logo"><img src="${I.logo}" alt=""></div>` : ''}<div><b style="color:var(--paper)">${esc(I.empresa_nome)}</b><span>${esc(I.slogan || '')}</span></div></a>
-      <nav><a href="#/" data-h="#/">Início</a><a href="#/servicos" data-h="#/servicos">Serviços</a><a href="#/#faq" data-h="#faq">FAQ</a><a href="#/marcar" data-h="#/marcar">Contacto</a><a href="#/area" data-h="#/area">${P.t ? 'A minha área' : 'Área de cliente'}</a></nav>
-      ${I.portal_horario ? `<span class="lbl hide-m" style="margin-left:10px">${esc(I.portal_horario)}</span>` : ''}<a class="pill solid" href="#/marcar" style="margin-left:8px">${icon('sparkle')} Marcar</a></div></header>
+    <header class="p-top2"><a href="#/" class="p-logo">${I.logo ? `<span class="p-logo-i"><img src="${I.logo}" alt=""></span>` : ''}<b>${esc((I.empresa_nome || '').toUpperCase())}</b></a>
+      <nav class="p-nav"><a href="#/" data-h="#/">Início</a><a href="#/servicos" data-h="#/servicos">Serviços</a><a href="#/#sobre" data-h="#sobre">Sobre</a><a href="#/#faq" data-h="#faq">FAQ</a><a href="#/marcar" data-h="#/marcar">Contacto</a></nav>
+      <div class="p-right">${I.portal_horario ? `<span class="p-hours">${esc(I.portal_horario.split('·')[0].trim())}</span>` : ''}<a class="p-acc" href="#/area" title="${P.t ? 'A minha área' : 'Área de cliente'}">${icon('user')}</a><a class="pill solid" href="#/marcar">${icon('sparkle')} Marcar detalhe</a></div></header>
     <main id="pv"></main>
     <footer class="p-foot"><div class="p-wrap"><div class="foot-g">
       <div><a href="#/" class="brand" style="padding:0">${I.logo ? `<div class="logo"><img src="${I.logo}" alt=""></div>` : ''}<b style="color:var(--paper)">${esc(I.empresa_nome)}</b></a><p style="max-width:300px">${esc(I.slogan || I.portal_titulo || '')}</p></div>
