@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 define('APP_ROOT', dirname(__DIR__));
-define('APP_VERSION', '1.4.4');
+define('APP_VERSION', '1.4.5');
 const WORK_STAGES = ['Lavagem', 'Interior', 'Correção / Proteção', 'Controlo de qualidade'];
 require_once __DIR__ . '/schema.php';
 

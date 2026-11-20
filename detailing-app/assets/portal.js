@@ -256,12 +256,12 @@ function bindPPF(v) {
       if (ci === 5) { const t = ease(clamp(lp * 1.4)); cam = lerp(close, rear, t); tg = lerp([0, .8, 1.7], [0, .62, 0], t); }
       const sp = ci === 1 ? split / 100 : null;
       car.set({ cam, target: tg, yaw, fov: ci >= 3 && ci < 5 ? 28 : 30, dirt: 0, wash: 99, rough: .24, cc: 1, ccr: .02, envI: ci === 5 ? 1.7 : 1.5,
-        scratch: ci === 4 ? clamp(lp / .4) : 0, heal: ci === 4 ? clamp((lp - .5) / .45) : 0,
+        scratch: ci === 4 ? clamp(lp / .18) : 0, heal: ci === 4 ? clamp((lp - .38) / .5) : 0,
         split: sp, satin: { rough: .62, cc: .12, ccr: .7, envI: .85 }, env: ci === 5 ? 'night' : 'studio', exposure: ci === 5 ? 1.05 : 1.05, tail: ci === 5 ? ease(clamp(lp * 1.6)) : 0 });
     }
   }
   let car = null; const scr3 = $('.scratch3', el);
-  mount3D($('.ppf-bg', el), 'c3-ppf').then(c => { if (!c || !el.isConnected) return; car = c; el.classList.add('has3d'); frame(); });
+  mount3D($('.ppf-bg', el), 'c3-ppf').then(c => { if (!c || !el.isConnected) return; car = c; el._car = c; el.classList.add('has3d'); frame(); });
   const onS = () => requestAnimationFrame(frame);
   // arrastar a divisória brilho/satin
   const zone = $('.ppf-stick', el);

@@ -108,16 +108,16 @@ function patchDirt(mat, U, isPaint = false) {
         float sweep = up * exp(-pow((vWP.z - uSweep) / .085, 2.)) * (1. - dm);
         // riscos na película: desenham-se (uScratch) e depois regeneram (uHeal)
         float scr = 0., glowH = 0.;
-        vec4 SG[5]; SG[0] = vec4(-.38, 1.12, .22, 1.88); SG[1] = vec4(-.12, 1.02, .44, 1.52); SG[2] = vec4(.02, 1.62, .5, 2.08); SG[3] = vec4(-.46, 1.62, -.06, 2.04); SG[4] = vec4(.12, 1.18, .36, 1.9);
+        vec4 SG[5]; SG[0] = vec4(.10, 2.31, .52, 1.92); SG[1] = vec4(.19, 2.34, .43, 2.10); SG[2] = vec4(.29, 2.13, .60, 1.99); SG[3] = vec4(.04, 2.22, .25, 2.05); SG[4] = vec4(.36, 2.06, .55, 1.86);
         for (int i = 0; i < 5; i++) { vec2 A = SG[i].xy, B = SG[i].zw, pa = vWP.xz - A, ba = B - A; float t = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
           float dd = length(pa - ba * t) + (n3(vWP * 90. + float(i)) - .5) * .0016;
           float drawn = step(t, uScratch * 1.25 - float(i) * .06);
           float healT = clamp(uHeal * 1.6 - t * .6, 0., 1.);
-          scr += smoothstep(.0032, .0006, dd) * drawn * (1. - healT);
+          scr += smoothstep(.0036, .0005, dd) * drawn * (1. - healT) * (.55 + .45 * h3(vec3(float(i), 3., 1.)));
           glowH += smoothstep(.02, .0, dd) * drawn * healT * (1. - healT) * 4.; }
         scr = clamp(scr, 0., 1.) * up; glowH = clamp(glowH, 0., 1.) * up;`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vec3(.55, .57, .6) * swirl * .1 + vec3(.8, .92, 1.) * rim * 1.1 + vec3(1.) * sweep * (.35 + .45 * coated) + vec3(.85) * scr * .55 + vec3(1., .55, .25) * glowH * .45;`)
+        totalEmissiveRadiance += vec3(.55, .57, .6) * swirl * .1 + vec3(.8, .92, 1.) * rim * 1.1 + vec3(1.) * sweep * (.35 + .45 * coated) + vec3(.85) * scr * .6 + vec3(1., .6, .3) * glowH * .3;`)
       .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
         material.roughness = mix(material.roughness, .1, coated);
         material.roughness = max(material.roughness, swirl * .7 + scr * .8);
@@ -228,6 +228,9 @@ export async function create(host, url, opts = {}) {
     set(p) { Object.assign(S, p); req(); },
     /** posição no ecrã (px, relativo ao host) de um ponto da cena */
     project(v) { const kd = cam.aspect < 1.15 ? Math.min(2.3, 1.2 / cam.aspect) : 1; cam.position.set(...S.cam.map((q, i) => S.target[i] + (q - S.target[i]) * kd)); cam.lookAt(...S.target); cam.updateMatrixWorld(); const p = new THREE.Vector3(...v).project(cam); return [(p.x + 1) / 2 * W, (1 - p.y) / 2 * H]; },
+    /** ponto da pintura sob um pixel do ecrã (para posicionar efeitos) */
+    pick(x, y) { const kd = cam.aspect < 1.15 ? Math.min(2.3, 1.2 / cam.aspect) : 1; cam.position.set(...S.cam.map((q, i) => S.target[i] + (q - S.target[i]) * kd)); cam.fov = S.fov; cam.updateProjectionMatrix(); cam.lookAt(...S.target); cam.updateMatrixWorld(); scene.updateMatrixWorld(true);
+      ray.setFromCamera(new THREE.Vector2(x / W * 2 - 1, -(y / H) * 2 + 1), cam); const h = ray.intersectObjects(paintMeshes, false)[0]; return h ? [h.point.x, h.point.y, h.point.z].map(v => +v.toFixed(3)) : null; },
     dispose() { ro.disconnect(); renderer.dispose(); cv.remove(); },
   };
 }
