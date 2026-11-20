@@ -281,3 +281,8 @@ body.portal{background:#0b0b0c;background-image:radial-gradient(900px 500px at 9
 .about-img{margin:24px 0 10px;border-radius:22px;overflow:hidden;aspect-ratio:21/9;border:1px solid var(--line)}.about-img img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
 .faq-img{border-radius:16px;overflow:hidden;aspect-ratio:4/3;order:-1}.faq-img img{width:100%;height:100%;object-fit:cover}
 @media (max-width:900px){.about-img{aspect-ratio:4/3}.studio-img img{min-height:260px}}
+
+/* logótipo inteiro no cabeçalho (sem recorte) */
+.p-logo-i{width:auto!important;height:46px!important;border-radius:0!important;background:none!important;border:0!important;overflow:visible!important}.p-logo-i img{height:100%;width:auto;object-fit:contain}
+.ppf.has3d .ppf-scr{display:none}
+.ppf.night .ppf-stick{background:radial-gradient(70% 60% at 50% 70%,#1a1013,#06070a 70%)}

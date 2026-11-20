@@ -10,22 +10,22 @@ const GLB = {};
 /* Ambiente de oficina com painéis hexagonais (refletem na pintura) */
 function hexStudio(warm = 0, night = 0) {
   const s = new THREE.Scene();
-  const base = new THREE.Color().setRGB(.05 + warm * .25, .05 + warm * .12, .055).multiplyScalar(1 - night * .8);
+  const base = new THREE.Color().setRGB(.05 + warm * .05, .05 + warm * .025, .055).multiplyScalar(1 - night * .55);
   s.background = base;
   const room = new THREE.Mesh(new THREE.BoxGeometry(40, 14, 40), new THREE.MeshBasicMaterial({ color: base, side: THREE.BackSide }));
   room.position.y = 6; s.add(room);
-  const hexMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(night ? .35 : 6) });
+  const hexMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(night ? 1.6 : 6) });
   const geo = new THREE.RingGeometry(.78, .92, 6); geo.rotateX(Math.PI / 2);
   const R = .92, W = R * Math.sqrt(3);
   for (let r = -6; r <= 6; r++) for (let c = -6; c <= 6; c++) {
     const m = new THREE.Mesh(geo, hexMat); m.position.set(c * W + (r % 2 ? W / 2 : 0), 7.9, r * R * 1.5); m.rotation.y = Math.PI / 6; s.add(m);
   }
   // janela/porta (luz quente ao pôr do sol)
-  if (warm) { const p = new THREE.Mesh(new THREE.PlaneGeometry(22, 7), new THREE.MeshBasicMaterial({ color: new THREE.Color(8, 3.6, 1.2).multiplyScalar(warm) })); p.position.set(0, 3.5, -19.5); s.add(p); }
+  if (warm) { const p = new THREE.Mesh(new THREE.PlaneGeometry(22, 7), new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 2.6, 1.1).multiplyScalar(warm) })); p.position.set(0, 3.5, -19.5); s.add(p); }
   // faixas laterais suaves (dão o “contorno” da carroçaria)
-  const strip = new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(night ? .05 : 1.4) });
+  const strip = new THREE.MeshBasicMaterial({ color: new THREE.Color(night ? .7 : 1, night ? .8 : 1, 1).multiplyScalar(night ? 1.1 : 1.4) });
   for (const x of [-19.5, 19.5]) { const p = new THREE.Mesh(new THREE.PlaneGeometry(30, 1.2), strip); p.position.set(x, 4, 0); p.rotation.y = x > 0 ? -Math.PI / 2 : Math.PI / 2; s.add(p); }
-  if (night) { const red = new THREE.Mesh(new THREE.PlaneGeometry(30, 3), new THREE.MeshBasicMaterial({ color: new THREE.Color(3, .1, .1).multiplyScalar(night) })); red.position.set(0, .5, 19.5); red.rotation.y = Math.PI; s.add(red); }
+  if (night) { const red = new THREE.Mesh(new THREE.PlaneGeometry(30, 3), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, .06, .06).multiplyScalar(night) })); red.position.set(0, .5, 19.5); red.rotation.y = Math.PI; s.add(red); }
   return s;
 }
 
@@ -79,7 +79,7 @@ function patchDirt(mat, U, isPaint = false) {
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN;')
       .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nvWN = normalize(mat3(modelMatrix) * objectNormal);')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN;\nuniform float uDirt; uniform float uWash; uniform float uSwirl; uniform float uCoat; uniform float uCoatOn; uniform float uSweep; uniform float uIsPaint;\n' + NOISE)
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN;\nuniform float uDirt; uniform float uWash; uniform float uSwirl; uniform float uCoat; uniform float uCoatOn; uniform float uSweep; uniform float uIsPaint; uniform float uScratch; uniform float uHeal;\n' + NOISE)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         float nz = fbm(vWP * 2.4), sp = n3(vWP * 38.);
         float low = smoothstep(1.15, .2, vWP.y);                          // mais sujidade em baixo
@@ -100,21 +100,34 @@ function patchDirt(mat, U, isPaint = false) {
         float sw = 0.;
         for (int i = 0; i < 6; i++) { float fi = float(i); vec2 c = vec2(fi * .3 - .75, .75 + mod(fi * .61, 1.6));
           vec2 d = vWP.xz - c; float r = length(d), a = atan(d.y, d.x);
-          float ring = pow(max(0., sin(r * 210. + h3(vec3(floor(r * 30.), fi, 1.)) * 6.283)), 30.);
-          float arc = smoothstep(.38, .72, n3(vec3(a * 2.6 + fi * 3.1, r * 7., fi)));
-          sw += ring * arc * smoothstep(.8, .08, r); }
+          float band = floor(r * 46.);
+          float ring = pow(max(0., sin(r * 290. + h3(vec3(band, fi, 1.)) * 6.283)), 60.) * (.35 + .65 * h3(vec3(band, fi, 7.)));
+          float arc = smoothstep(.5, .8, n3(vec3(a * 3.4 + fi * 3.1, r * 9., fi)));
+          sw += ring * arc * smoothstep(.7, .06, r); }
         float swirl = uSwirl * up * clamp(sw, 0., 1.) * (1. - coated);
-        float sweep = up * exp(-pow((vWP.z - uSweep) / .085, 2.)) * (1. - dm);`)
+        float sweep = up * exp(-pow((vWP.z - uSweep) / .085, 2.)) * (1. - dm);
+        // riscos na película: desenham-se (uScratch) e depois regeneram (uHeal)
+        float scr = 0., glowH = 0.;
+        vec4 SG[5]; SG[0] = vec4(-.38, 1.12, .22, 1.88); SG[1] = vec4(-.12, 1.02, .44, 1.52); SG[2] = vec4(.02, 1.62, .5, 2.08); SG[3] = vec4(-.46, 1.62, -.06, 2.04); SG[4] = vec4(.12, 1.18, .36, 1.9);
+        for (int i = 0; i < 5; i++) { vec2 A = SG[i].xy, B = SG[i].zw, pa = vWP.xz - A, ba = B - A; float t = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
+          float dd = length(pa - ba * t) + (n3(vWP * 90. + float(i)) - .5) * .0016;
+          float drawn = step(t, uScratch * 1.25 - float(i) * .06);
+          float healT = clamp(uHeal * 1.6 - t * .6, 0., 1.);
+          scr += smoothstep(.0032, .0006, dd) * drawn * (1. - healT);
+          glowH += smoothstep(.02, .0, dd) * drawn * healT * (1. - healT) * 4.; }
+        scr = clamp(scr, 0., 1.) * up; glowH = clamp(glowH, 0., 1.) * up;`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vec3(.62, .64, .68) * swirl * .32 + vec3(.8, .92, 1.) * rim * 1.1 + vec3(1.) * sweep * (.35 + .45 * coated);`)
+        totalEmissiveRadiance += vec3(.55, .57, .6) * swirl * .1 + vec3(.8, .92, 1.) * rim * 1.1 + vec3(1.) * sweep * (.35 + .45 * coated) + vec3(.85) * scr * .55 + vec3(1., .55, .25) * glowH * .45;`)
       .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
         material.roughness = mix(material.roughness, .1, coated);
+        material.roughness = max(material.roughness, swirl * .7 + scr * .8);
         #ifdef USE_CLEARCOAT
         material.clearcoat = mix(material.clearcoat * (1.0 - dm), 1., coated);
         material.clearcoatRoughness = mix(material.clearcoatRoughness, .012, coated);
+        material.clearcoatRoughness = max(material.clearcoatRoughness, swirl * .9 + scr);   // os riscos dispersam o reflexo
         #endif`);
   };
-  mat.customProgramCacheKey = () => 'dirt3' + (isPaint ? 'p' : 'w');
+  mat.customProgramCacheKey = () => 'dirt4' + (isPaint ? 'p' : 'w');
 }
 
 export async function create(host, url, opts = {}) {
@@ -142,7 +155,7 @@ export async function create(host, url, opts = {}) {
   const pivot = new THREE.Group(); pivot.add(car); scene.add(pivot);
 
   // materiais: pintura, rodas, luzes
-  const U = { uDirt: { value: 0 }, uWash: { value: 99 }, uSwirl: { value: 0 }, uCoat: { value: 99 }, uCoatOn: { value: 0 }, uSweep: { value: -99 } };
+  const U = { uDirt: { value: 0 }, uWash: { value: 99 }, uSwirl: { value: 0 }, uCoat: { value: 99 }, uCoatOn: { value: 0 }, uSweep: { value: -99 }, uScratch: { value: 0 }, uHeal: { value: 0 } };
   let paint = null; const dirtables = [], lights = [], paintMeshes = [];
   car.traverse(o => {
     if (!o.isMesh) return;
@@ -165,9 +178,9 @@ export async function create(host, url, opts = {}) {
   const tailLight = new THREE.PointLight(0xff1a1a, 0, 6); tailLight.position.set(0, .9, -LEN / 2 - .3); scene.add(tailLight);
   // gota de água (efeito hidrofóbico do cerâmico)
   const dropMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0, transmission: opts.room ? 1 : 0, thickness: .06, ior: 1.33, transparent: true, opacity: opts.room ? 1 : .55, envMapIntensity: 2.6, clearcoat: 1, clearcoatRoughness: 0 });
-  const drop = new THREE.Mesh(new THREE.SphereGeometry(.05, 32, 20), dropMat); drop.visible = false; pivot.add(drop);
+  const drop = new THREE.Mesh(new THREE.SphereGeometry(.022, 32, 20), dropMat); drop.visible = false; pivot.add(drop);
   const beadMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0, transparent: true, opacity: .55, envMapIntensity: 2.4, clearcoat: 1 });
-  const beads = Array.from({ length: 9 }, () => { const b = new THREE.Mesh(new THREE.SphereGeometry(.014, 16, 10), beadMat); b.scale.y = .6; b.visible = false; pivot.add(b); return b; });
+  const beads = Array.from({ length: 9 }, () => { const b = new THREE.Mesh(new THREE.SphereGeometry(.0065, 12, 8), beadMat); b.scale.y = .6; b.visible = false; pivot.add(b); return b; });
   scene.updateMatrixWorld(true);
   const ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0);
   const surf = (x, z) => { ray.set(new THREE.Vector3(x, 3, z), DOWN); const h = ray.intersectObjects(paintMeshes, false)[0]; return h ? h.point.y : null; };
@@ -175,15 +188,15 @@ export async function create(host, url, opts = {}) {
   for (let i = 0; i <= 40; i++) { const t = i / 40, x = P0[0] + (P1[0] - P0[0]) * t, z = P0[1] + (P1[1] - P0[1]) * t, y = surf(x, z); if (y === null || (path.length && y < path[path.length - 1].y - .25)) break; path.push({ x, y, z }); }
   if (!path.length) path.push({ x: 0, y: 1, z: 1.5 });
   const at = u => path[Math.min(path.length - 1, Math.round(u * (path.length - 1)))];
-  beads.forEach((b, i) => { const p = at((i + .5) / beads.length * .9); b.position.set(p.x + (Math.sin(i * 7.3) * .03), p.y + .006, p.z); b.userData.u = (i + .5) / beads.length * .9; });
+  beads.forEach((b, i) => { const p = at((i + .5) / beads.length * .9); b.position.set(p.x + (Math.sin(i * 7.3) * .02), p.y + .003, p.z); b.userData.u = (i + .5) / beads.length * .9; });
   function placeDrop(t) {
     drop.visible = t > 0 && t < 1.001; beads.forEach(b => { b.visible = false; });
     if (!drop.visible) return;
     const p0 = path[0];
-    if (t < .35) { const f = t / .35; drop.position.set(p0.x, p0.y + .045 + Math.pow(1 - f, 2) * 1.25, p0.z); drop.scale.set(.85, 1.25, .85); return; }
-    if (t < .46) { const f = (t - .35) / .11, sq = Math.sin(f * Math.PI); drop.position.set(p0.x, p0.y + .03 - sq * .012, p0.z); drop.scale.set(1 + sq * .35, .72 - sq * .25, 1 + sq * .35); return; }
+    if (t < .35) { const f = t / .35; drop.position.set(p0.x, p0.y + .02 + Math.pow(1 - f, 2) * 1.1, p0.z); drop.scale.set(.85, 1.25, .85); return; }
+    if (t < .46) { const f = (t - .35) / .11, sq = Math.sin(f * Math.PI); drop.position.set(p0.x, p0.y + .014 - sq * .006, p0.z); drop.scale.set(1 + sq * .35, .72 - sq * .25, 1 + sq * .35); return; }
     const u = Math.min(1, (t - .46) / .54), e = u * u * (3 - 2 * u), p = at(e);
-    drop.position.set(p.x, p.y + .032, p.z); drop.scale.set(1.05, .66, 1.25);
+    drop.position.set(p.x, p.y + .0145, p.z); drop.scale.set(1.05, .66, 1.25);
     beads.forEach(b => { b.visible = b.userData.u < e * .98; });
   }
   const room = opts.room ? buildRoom() : null;
@@ -192,14 +205,14 @@ export async function create(host, url, opts = {}) {
   const S = { cam: [6.5, 1.4, 0], target: [0, .6, 0], fov: 30, dirt: 0, wash: 99, swirl: 0, coat: 99, coatOn: 0, sweep: -99, drop: 0, rough: .32, cc: 1, ccr: .04, env: 'studio', envI: 1.25, split: null, satin: null, yaw: 0, tail: 0, exposure: 1.05 };
   let W = 1, H = 1;
   function resize() { const r = host.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); renderer.setSize(W, H, false); cv.style.width = W + 'px'; cv.style.height = H + 'px'; cam.aspect = W / H; cam.updateProjectionMatrix(); }
-  function applyPaint(p) { paint.roughness = p.rough; paint.clearcoat = p.cc; paint.clearcoatRoughness = p.ccr; paint.envMapIntensity = p.envI; U.uDirt.value = p.dirt; U.uWash.value = p.wash; U.uSwirl.value = p.swirl || 0; U.uCoat.value = p.coat ?? 99; U.uCoatOn.value = p.coatOn || 0; U.uSweep.value = p.sweep ?? -99; }
+  function applyPaint(p) { paint.roughness = p.rough; paint.clearcoat = p.cc; paint.clearcoatRoughness = p.ccr; paint.envMapIntensity = p.envI; U.uDirt.value = p.dirt; U.uWash.value = p.wash; U.uSwirl.value = p.swirl || 0; U.uCoat.value = p.coat ?? 99; U.uCoatOn.value = p.coatOn || 0; U.uSweep.value = p.sweep ?? -99; U.uScratch.value = p.scratch || 0; U.uHeal.value = p.heal || 0; }
   function render() {
     const kd = cam.aspect < 1.15 ? Math.min(2.3, 1.2 / cam.aspect) : 1;                       // telemóvel: afastar a câmara
     cam.position.set(...S.cam.map((v, i) => S.target[i] + (v - S.target[i]) * kd)); cam.fov = S.fov; cam.updateProjectionMatrix(); cam.lookAt(...S.target);
-    if (room) { const sun = S.env === 'sunset'; room.win.color.setRGB(sun ? 3.6 : .02, sun ? 1.5 : .022, sun ? .45 : .026); scene.background.setRGB(sun ? .09 : .043, sun ? .05 : .043, sun ? .03 : .047); room.floorMat.color.setRGB(sun ? 1.5 : 1, sun ? 1.05 : 1, sun ? .7 : 1); }
+    if (room) { const sun = S.env === 'sunset'; room.win.color.setRGB(sun ? 2.2 : .02, sun ? 1.25 : .022, sun ? .6 : .026); scene.background.setRGB(sun ? .06 : .043, sun ? .048 : .043, sun ? .04 : .047); room.floorMat.color.setRGB(sun ? 1.12 : 1, sun ? 1.0 : 1, sun ? .88 : 1); }
     pivot.rotation.y = S.yaw; placeDrop(S.drop || 0);
     scene.environment = ENV[S.env] || ENV.studio; renderer.toneMappingExposure = S.exposure;
-    tailLight.intensity = S.tail * 6; lights.forEach(m => { m.emissive?.setRGB(S.tail * .9, S.tail * .05, S.tail * .05); });
+    tailLight.intensity = S.tail * 1.6; lights.forEach(m => { m.emissive?.setRGB(S.tail * .55, S.tail * .03, S.tail * .03); });
     if (S.split === null || !(S.satin || S.right || S.left)) { applyPaint(S); renderer.setScissorTest(false); renderer.render(scene, cam); return; }
     // estados diferentes de cada lado da divisória (brilho/satin, antes/depois)
     const x = Math.round(W * S.split);

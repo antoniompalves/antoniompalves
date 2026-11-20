@@ -244,8 +244,7 @@ function bindPPF(v) {
     el.style.setProperty('--zoom', zoom.toFixed(3)); el.style.setProperty('--rot', rot.toFixed(2) + 'deg'); el.style.setProperty('--ty', ty.toFixed(1) + 'px');
     // 4 · risco desenha-se e depois regenera
     const draw = ci === 4 ? clamp(lp * 2.4) : ci > 4 ? 1 : 0, heal = ci === 4 ? clamp((lp - .55) * 2.6) : ci > 4 ? 1 : 0;
-    const sc = car ? scr3 : scr;
-    sc.style.strokeDashoffset = (1 - draw).toFixed(3); sc.style.opacity = (draw > 0 ? 1 - heal : 0).toFixed(3); sc.style.stroke = heal > 0 ? 'var(--ac)' : '#fff';
+    if (!car) { scr.style.strokeDashoffset = (1 - draw).toFixed(3); scr.style.opacity = (draw > 0 ? 1 - heal : 0).toFixed(3); scr.style.stroke = heal > 0 ? 'var(--ac)' : '#fff'; }
     el.classList.toggle('night', ci === 5 && lp > .15); el.classList.toggle('end', p > .93);
     if (car) {
       const side = [9.6, 1.25, 0], close = [2.5, 1.35, 3.5], rear = [-5.6, 1.35, -7.2];
@@ -256,8 +255,9 @@ function bindPPF(v) {
       if (ci === 4) { cam = close; tg = [0, .8, 1.7]; }
       if (ci === 5) { const t = ease(clamp(lp * 1.4)); cam = lerp(close, rear, t); tg = lerp([0, .8, 1.7], [0, .62, 0], t); }
       const sp = ci === 1 ? split / 100 : null;
-      car.set({ cam, target: tg, yaw, fov: ci >= 3 && ci < 5 ? 28 : 30, dirt: 0, wash: 99, rough: .24, cc: 1, ccr: .02, envI: 1.5,
-        split: sp, satin: { rough: .62, cc: .12, ccr: .7, envI: .85 }, env: ci === 5 ? 'night' : 'studio', exposure: ci === 5 ? .9 : 1.05, tail: ci === 5 ? ease(clamp(lp * 1.6)) : 0 });
+      car.set({ cam, target: tg, yaw, fov: ci >= 3 && ci < 5 ? 28 : 30, dirt: 0, wash: 99, rough: .24, cc: 1, ccr: .02, envI: ci === 5 ? 1.7 : 1.5,
+        scratch: ci === 4 ? clamp(lp / .4) : 0, heal: ci === 4 ? clamp((lp - .5) / .45) : 0,
+        split: sp, satin: { rough: .62, cc: .12, ccr: .7, envI: .85 }, env: ci === 5 ? 'night' : 'studio', exposure: ci === 5 ? 1.05 : 1.05, tail: ci === 5 ? ease(clamp(lp * 1.6)) : 0 });
     }
   }
   let car = null; const scr3 = $('.scratch3', el);
@@ -415,7 +415,7 @@ function bindHero(v) {
       car.set({ cam, target: tg, fov: ci === 3 ? 34 : 30, dirt: ci < 2 ? 1 : 0, wash: ci === 1 ? washZ : 99,
         swirl: ci === 2 ? ease(lp) : ci === 3 ? 1 : 0, coatOn: ci === 3 ? 1 : 0, coat: 2.6 - ease(cph) * 2.45,
         sweep: ci === 3 && sph > 0 && sph < 1 ? 2.5 - ease(sph) * 2.3 : -99, drop: dph,
-        rough: .5 - g * .28, cc: .3 + g * .7, ccr: .42 - g * .4, envI: 1.1 + g * .5, env: ci === 4 ? 'sunset' : 'studio', exposure: ci === 4 ? 1.12 : 1.05, yaw: 0 });
+        rough: .5 - g * .28, cc: .3 + g * .7, ccr: .42 - g * .4, envI: 1.1 + g * .5, env: ci === 4 ? 'sunset' : 'studio', exposure: 1.05, yaw: 0 });
       if (ci === 1) { const a = car.project([0, 1.45, washZ]), b = car.project([0, 0, washZ]); water.at(a[0], b[0], a[1], b[1]); }
       water.on(ci === 1 && lp > .02 && lp < .98);
     }
