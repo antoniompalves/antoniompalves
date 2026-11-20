@@ -288,3 +288,4 @@ body.portal{background:#0b0b0c;background-image:radial-gradient(900px 500px at 9
 .ppf.has3d .ppf-scr{display:none}
 .ppf.night .ppf-stick{background:radial-gradient(70% 60% at 50% 70%,#1a1013,#06070a 70%)}
 @media (max-width:520px){.p-acc{display:none}.p-logo b{font-size:17px}.p-logo-i img{height:38px!important}.p-logo-i{height:38px!important}}
+.p-nav a{font-family:'Geist',Inter,system-ui,sans-serif!important;font-size:13px!important;letter-spacing:0}

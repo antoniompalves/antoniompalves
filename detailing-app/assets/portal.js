@@ -404,7 +404,7 @@ function bindHero(v) {
     swirls.forEach(c => c.setAttribute('stroke-opacity', ci < 3 ? .09 : (.09 * (1 - gloss)).toFixed(3)));
     el.classList.toggle('sunset', ci === 4); el.classList.toggle('booking', ci === 4 && lp > .35);
     if (car) {
-      const K = [[8.6, 1.05, 1.2], [3.1, 1.6, 4.1], [1.25, 1.82, 3.35], [6.6, 1.25, 6.4]], T = [[0, 1.05, 0], [0, .95, 1.5], [-.05, .98, 1.45], [-.6, 1.0, 0]];
+      const K = [[8.6, 1.3, 1.2], [3.1, 1.6, 4.1], [1.25, 1.82, 3.35], [6.6, 1.35, 6.4]], T = [[0, .82, 0], [0, .95, 1.5], [-.05, .98, 1.45], [-.6, .85, 0]];
       const g = ci < 3 ? 0 : ci === 3 ? 0 : 1, washZ = 2.75 - wash * 5.5;
       // capítulo 3: 0–.2 swirls · .2–.53 cerâmico líquido · .53–.72 linha de luz · .72–1 gota
       const cph = ci === 3 ? clamp((lp - .2) / .33) : ci > 3 ? 1 : 0, sph = ci === 3 ? clamp((lp - .53) / .19) : 0, dph = ci === 3 ? clamp((lp - .72) / .28) : 0;

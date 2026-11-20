@@ -12,7 +12,7 @@ $v = APP_VERSION;
 <title>Serviços de detailing</title>
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Geist:wght@400;500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script>window.APP_V = '<?= $v ?>';</script>
 <script type="importmap">{"imports":{"three":"./assets/vendor/three/build/three.module.min.js"}}</script>
 <link rel="stylesheet" href="assets/app.css?v=<?= $v ?>">

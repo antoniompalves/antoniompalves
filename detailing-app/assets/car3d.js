@@ -38,14 +38,14 @@ function woodTex() {
 }
 function buildRoom() {
   const grp = new THREE.Group();
-  const R = .62, H = 3.35, cols = 30, rows = 24;
+  const R = .62, H = 4.15, cols = 34, rows = 28;
   const ring = new THREE.RingGeometry(R * .9, R * .985, 6, 1); ring.rotateX(Math.PI / 2);
   const glow = new THREE.RingGeometry(R * .78, R * 1.08, 6, 1); glow.rotateX(Math.PI / 2);
   const tube = new THREE.InstancedMesh(ring, new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 2.4, 2.5), side: THREE.DoubleSide }), cols * rows);
   const halo = new THREE.InstancedMesh(glow, new THREE.MeshBasicMaterial({ color: new THREE.Color(.55, .6, .7), transparent: true, opacity: .16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }), cols * rows);
   const m = new THREE.Matrix4(); let i = 0;
   for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) {
-    const x = -16 + c * 1.5 * R, z = -11 + r * Math.sqrt(3) * R + (c % 2 ? Math.sqrt(3) * R / 2 : 0);
+    const x = -18 + c * 1.5 * R, z = -14 + r * Math.sqrt(3) * R + (c % 2 ? Math.sqrt(3) * R / 2 : 0);
     m.makeTranslation(x, H, z); tube.setMatrixAt(i, m); m.makeTranslation(x, H - .01, z); halo.setMatrixAt(i, m); i++;
   }
   grp.add(tube, halo);
