@@ -129,6 +129,7 @@ function seed_av(string $ownerName): void {
         ->execute(['Gestor de frota (exemplo)', 'faturacao@stand-exemplo.pt', '30 dias', 10, '500000000', $cl[11]]);
     // Planos de subscrição (o seed_base já criou 2 genéricos; substituímos pelos da AV)
     db()->exec('DELETE FROM ' . T('planos'));
+    av_photos($sid);
     $pl1 = seed_insert('planos', ['nome' => 'Classic Club', 'valor' => 55, 'frequencia' => 'Mensal', 'visitas' => 2, 'desconto_pct' => 10, 'servicos' => [$sid['Classic']], 'ativo' => 1, 'descricao' => '2 lavagens Classic por mês + 10% de desconto em todos os outros serviços.']);
     $pl2 = seed_insert('planos', ['nome' => 'Prestige Frota', 'valor' => 120, 'frequencia' => 'Mensal', 'visitas' => 2, 'desconto_pct' => 10, 'servicos' => [$sid['Prestige']], 'ativo' => 1, 'descricao' => 'Plano para frotas e stands: 2 lavagens Prestige por mês.']);
     $pl3 = seed_insert('planos', ['nome' => 'Manutenção Cerâmica', 'valor' => 45, 'frequencia' => 'Mensal', 'visitas' => 1, 'desconto_pct' => 10, 'servicos' => [$sid['Prestige']], 'ativo' => 1, 'descricao' => 'Manutenção mensal para viaturas com revestimento cerâmico — mantém a garantia válida.']);
@@ -268,4 +269,19 @@ function seed_av(string $ownerName): void {
     seed_insert('deslocacoes', ['data' => $d('-9 days'), 'origem' => 'Oficina', 'destino' => 'Stand Auto Prime', 'km' => 24, 'finalidade' => 'Serviço de frota', 'tecnico_id' => $tiago]);
     seed_insert('marketing', ['campanha' => 'Pacotes de lavagem — campanha de lançamento', 'canal' => 'Instagram', 'data_inicio' => $d('-45 days'), 'data_fim' => $d('-15 days'), 'custo' => 80, 'leads' => 14, 'clientes' => 5, 'receita' => 610, 'codigo' => 'AVSTART']);
     seed_insert('marketing', ['campanha' => 'Parceria com stand automóvel', 'canal' => 'Parceria', 'data_inicio' => $d('-45 days'), 'custo' => 0, 'leads' => 2, 'clientes' => 1, 'receita' => 240]);
+}
+
+/** Fotos reais da AV Car Detail (pasta demo/av-car-detail/fotos) → uploads/, serviços e secções do portal. */
+function av_photos(array $sid): void {
+    $dir = APP_ROOT . '/demo/av-car-detail/fotos'; if (!is_dir($dir)) return;
+    $cp = function (string $n) use ($dir) { $src = "$dir/$n"; if (!is_file($src)) return null; $dst = 'av_' . substr(md5($n . filesize($src)), 0, 10) . '.webp';
+        if (!is_file(APP_ROOT . '/uploads/' . $dst)) @copy($src, APP_ROOT . '/uploads/' . $dst); return is_file(APP_ROOT . '/uploads/' . $dst) ? $dst : null; };
+    $F = []; foreach (['av_oficina_bmw.webp', 'av_m3_e36.webp', 'av_andre.webp', 'av_equipa.webp', 'av_vidro.webp'] as $n) $F[$n] = $cp($n);
+    $map = ['Supreme' => ['av_oficina_bmw.webp', 'av_andre.webp'], 'Revestimentos Cerâmicos' => ['av_oficina_bmw.webp', 'av_m3_e36.webp'], 'Polimento' => ['av_m3_e36.webp', 'av_oficina_bmw.webp'],
+            'Correção de Pintura' => ['av_m3_e36.webp', 'av_andre.webp'], 'Restauro Completo' => ['av_m3_e36.webp', 'av_equipa.webp'], 'Classic' => ['av_andre.webp'], 'Prestige' => ['av_andre.webp', 'av_oficina_bmw.webp'],
+            'Películas Solares' => ['av_vidro.webp'], 'Detalhe Interior em Tecido' => ['av_vidro.webp'], 'Detalhe Interior com Pele' => ['av_vidro.webp']];
+    $st = db()->prepare('UPDATE ' . T('servicos') . ' SET fotos = ? WHERE id = ?');
+    foreach ($map as $svc => $fs) { if (empty($sid[$svc])) continue; $L = array_values(array_filter(array_map(fn($n) => $F[$n] ? ['f' => $F[$n], 'tipo' => 'Portfólio'] : null, $fs)));
+        if ($L) $st->execute([json_encode($L), $sid[$svc]]); }
+    foreach (['portal_img_oficina' => 'av_oficina_bmw.webp', 'portal_img_sobre' => 'av_andre.webp', 'portal_img_faq' => 'av_m3_e36.webp'] as $k => $n) if ($F[$n]) setting_set($k, $F[$n]);
 }

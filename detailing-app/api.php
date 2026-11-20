@@ -83,7 +83,7 @@ try {
                 if ($j) { $F = jdec($j['fotos']); $a1 = array_values(array_filter($F, fn($x) => ($x['tipo'] ?? '') === 'Antes'))[0]['f'] ?? null; $d1 = array_values(array_filter($F, fn($x) => ($x['tipo'] ?? '') === 'Depois'))[0]['f'] ?? null;
                     if ($a1 && $d1) $ad = ['antes' => $a1, 'depois' => $d1, 'titulo' => trim(($j['sn'] ?: $j['extras']) . ' · ' . trim($j['marca'] . ' ' . $j['modelo']), ' ·')]; } }
             $stats = ['trabalhos' => $nTrab, 'rating' => $rt && $rt['n'] ? round((float)$rt['a'], 1) : null, 'n_rating' => (int)($rt['n'] ?? 0), 'garantia_anos' => $gar ?: null, 'proxima_vaga' => $prox, 'ad' => $ad];
-            $keys = ['app_nome', 'slogan', 'iva_isento', 'logo_inverter', 'link_facebook', 'empresa_nome', 'empresa_telefone', 'empresa_email', 'empresa_morada', 'empresa_web', 'cor', 'portal_titulo', 'portal_texto', 'portal_horario', 'portal_instagram', 'portal_whatsapp', 'link_avaliacao', 'portal_faq', 'empresa_desde', 'portal_ppf', 'modelo_3d_credito', 'modelo_3d_cor'];
+            $keys = ['app_nome', 'slogan', 'iva_isento', 'logo_inverter', 'link_facebook', 'empresa_nome', 'empresa_telefone', 'empresa_email', 'empresa_morada', 'empresa_web', 'cor', 'portal_titulo', 'portal_texto', 'portal_horario', 'portal_instagram', 'portal_whatsapp', 'link_avaliacao', 'portal_faq', 'empresa_desde', 'portal_ppf', 'modelo_3d_credito', 'modelo_3d_cor', 'portal_img_oficina', 'portal_img_sobre', 'portal_img_faq'];
             $reviews = array_values(array_map(fn($r) => ['texto' => $r['texto'], 'pontuacao' => (int)$r['pontuacao'], 'plataforma' => $r['plataforma']],
                 array_filter(all_rows('avaliacoes'), fn($r) => $r['testemunho_ok'] && $r['texto'])));
             out(['info' => array_intersect_key($S, array_flip($keys)) + ['logo' => $S['logo'] ? 'api.php?a=logo' : '', 'modelo_3d' => !empty($S['modelo_3d']) && is_file(APP_ROOT . '/uploads/' . basename($S['modelo_3d'])) ? 'api.php?a=pub_model&v=' . substr(md5($S['modelo_3d']), 0, 8) : ''], 'servicos' => $sv, 'avaliacoes' => array_slice($reviews, 0, 6), 'stats' => $stats]);
@@ -95,7 +95,8 @@ try {
         }
         if ($a === 'pub_file') { // fotos de serviços públicos
             $f = basename((string)($_GET['f'] ?? ''));
-            foreach (all_rows('servicos') as $r) if ($r['publico'] && in_array($f, array_column(jdec($r['fotos']), 'f'), true)) send_file($f);
+            foreach (all_rows('servicos') as $r) if ($r['ativo'] && ($r['publico'] === null || $r['publico']) && in_array($f, array_column(jdec($r['fotos']), 'f'), true)) send_file($f);
+            foreach (['portal_img_oficina', 'portal_img_sobre', 'portal_img_faq'] as $k) if (!empty($S[$k]) && $S[$k] === $f) send_file($f);
             if (!empty($S['portal_ad'])) { $j = db()->query('SELECT fotos FROM ' . T('trabalhos') . ' WHERE id = ' . (int)$S['portal_ad'])->fetch(); // só a foto antes e a depois escolhidas
                 if ($j) { $F = jdec($j['fotos']); foreach (['Antes', 'Depois'] as $tp) { $x = array_values(array_filter($F, fn($y) => ($y['tipo'] ?? '') === $tp))[0]['f'] ?? null; if ($x === $f) send_file($f); } } }
             http_response_code(404); exit;

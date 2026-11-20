@@ -257,7 +257,7 @@ body.portal{background:#0b0b0c;background-image:radial-gradient(900px 500px at 9
 .p-top{display:none}
 .p-top2{position:sticky;top:0;z-index:40;height:76px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;padding:0 clamp(16px,2.4vw,36px);background:#0e0e0d;border-bottom:1px solid rgba(255,255,255,.08)}
 .p-logo{display:flex;align-items:center;gap:12px;color:var(--paper);text-decoration:none}
-.p-logo-i{width:34px;height:34px;border-radius:50%;overflow:hidden;background:#fff;display:grid;place-items:center}.p-logo-i img{width:100%;height:100%;object-fit:cover}
+.p-logo-i{width:38px;height:38px;border-radius:50%;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.18);display:grid;place-items:center}.p-logo-i img{width:100%;height:100%;object-fit:cover}
 .p-logo b{font-family:var(--disp);font-weight:400;font-size:24px;letter-spacing:.01em;line-height:1}
 .p-nav{display:flex;gap:30px}.p-nav a{font-family:Inter,system-ui,sans-serif;font-size:15px;color:#a3a19b;text-decoration:none;transition:color .2s}.p-nav a:hover,.p-nav a.on{color:var(--paper)}
 .p-right{display:flex;align-items:center;justify-content:flex-end;gap:14px}
@@ -275,3 +275,9 @@ body.portal{background:#0b0b0c;background-image:radial-gradient(900px 500px at 9
   .p-top2{grid-template-columns:auto 1fr;height:64px}.p-nav,.p-hours{display:none}.p-right{gap:8px}.p-top2 .pill.solid{padding:10px 14px;font-size:11px}.p-logo b{font-size:20px}
   .h3-mark-t{font-size:min(17vw,calc(140vw / var(--len)))}.h3-txt{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 }
+
+/* fotos reais */
+.studio-img img{min-height:420px}
+.about-img{margin:24px 0 10px;border-radius:22px;overflow:hidden;aspect-ratio:21/9;border:1px solid var(--line)}.about-img img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.faq-img{border-radius:16px;overflow:hidden;aspect-ratio:4/3;order:-1}.faq-img img{width:100%;height:100%;object-fit:cover}
+@media (max-width:900px){.about-img{aspect-ratio:4/3}.studio-img img{min-height:260px}}

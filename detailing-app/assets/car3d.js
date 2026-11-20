@@ -100,13 +100,13 @@ function patchDirt(mat, U, isPaint = false) {
         float sw = 0.;
         for (int i = 0; i < 6; i++) { float fi = float(i); vec2 c = vec2(fi * .3 - .75, .75 + mod(fi * .61, 1.6));
           vec2 d = vWP.xz - c; float r = length(d), a = atan(d.y, d.x);
-          float ring = pow(max(0., sin(r * 170. + h3(vec3(floor(r * 24.), fi, 1.)) * 6.283)), 22.);
+          float ring = pow(max(0., sin(r * 210. + h3(vec3(floor(r * 30.), fi, 1.)) * 6.283)), 30.);
           float arc = smoothstep(.38, .72, n3(vec3(a * 2.6 + fi * 3.1, r * 7., fi)));
           sw += ring * arc * smoothstep(.8, .08, r); }
         float swirl = uSwirl * up * clamp(sw, 0., 1.) * (1. - coated);
         float sweep = up * exp(-pow((vWP.z - uSweep) / .085, 2.)) * (1. - dm);`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vec3(.62, .64, .68) * swirl * .5 + vec3(.8, .92, 1.) * rim * 1.1 + vec3(1.) * sweep * (.35 + .45 * coated);`)
+        totalEmissiveRadiance += vec3(.62, .64, .68) * swirl * .32 + vec3(.8, .92, 1.) * rim * 1.1 + vec3(1.) * sweep * (.35 + .45 * coated);`)
       .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
         material.roughness = mix(material.roughness, .1, coated);
         #ifdef USE_CLEARCOAT

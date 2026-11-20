@@ -131,7 +131,7 @@ function bindBA(v) {
 function faqHTML() {
   const L = String(P.info.portal_faq || '').split('\n').map(l => l.split('|').map(x => x.trim())).filter(x => x[0] && x[1]);
   if (!L.length) return '';
-  return `<section class="p-sec" id="faq"><div class="faq-h glass"><div><div class="lbl">/ Perguntas frequentes</div><h2 class="disp">Bom <em>saber</em></h2><div class="lbl" style="margin-top:10px">Um pouco mais de clareza. Muito mais cuidado.</div></div>${carSVG('gloss')}</div>
+  return `<section class="p-sec" id="faq"><div class="faq-h glass"><div><div class="lbl">/ Perguntas frequentes</div><h2 class="disp">Bom <em>saber</em></h2><div class="lbl" style="margin-top:10px">Um pouco mais de clareza. Muito mais cuidado.</div></div>${P.info.portal_img_faq ? `<div class="faq-img"><img src="${pubImg(P.info.portal_img_faq)}" alt="" loading="lazy"></div>` : carSVG('gloss')}</div>
     <div class="faq">${L.map(([q, a], i) => `<details ${i ? '' : 'open'}><summary><span class="no">${nn(i)} /</span><span class="q disp">${esc(q)}</span><span class="pm">${icon('plus')}</span></summary><p>${esc(a)}</p></details>`).join('')}</div></section>`;
 }
 function quickForm(title = true) {
@@ -161,7 +161,7 @@ function pgHome(v) {
     </div>${heroStory(heroIds)}<div class="p-wrap">
     <section class="strip"><div class="stats">${ST.trabalhos ? `<div class="stat glass"><b class="disp">${ST.trabalhos}+</b><span class="lbl">Carros tratados</span></div>` : ''}${ST.garantia_anos ? `<div class="stat glass"><b class="disp">${ST.garantia_anos} anos</b><span class="lbl">Garantia cerâmica</span></div>` : ''}${ST.rating ? `<div class="stat glass"><b class="disp">${String(ST.rating).replace('.', ',')}★</b><span class="lbl">${ST.n_rating} avaliações</span></div>` : ''}</div>
       <div class="hero2-cta"><a class="pill solid" href="#/marcar">${icon('sparkle')} Pedir marcação</a>${ST.proxima_vaga ? `<span class="lbl">Próxima vaga: ${esc(ST.proxima_vaga.l)}</span>` : ''}</div></section>
-    <section class="studio"><div class="studio-img">${heroImg?.fotos?.[1] ? `<img src="${pubImg(heroImg.fotos[1])}" alt="">` : carSVG('satin')}</div>
+    <section class="studio"><div class="studio-img">${I.portal_img_oficina ? `<img src="${pubImg(I.portal_img_oficina)}" alt="A oficina ${esc(I.empresa_nome)}">` : heroImg?.fotos?.[1] ? `<img src="${pubImg(heroImg.fotos[1])}" alt="">` : carSVG('satin')}</div>
       <div class="studio-t"><div class="row lbl" style="justify-content:space-between"><span>/ A oficina</span><span>O brilho ↘</span></div>
         <h2 class="disp">${esc((I.portal_titulo || 'Cada detalhe conta').split(' ').slice(0, -2).join(' '))} <em>${esc((I.portal_titulo || 'Cada detalhe conta').split(' ').slice(-2).join(' '))}</em></h2>
         <p>${esc(I.portal_texto || '')}</p><div class="row lbl" style="justify-content:space-between;margin-top:auto"><span>${esc(I.portal_horario || '')}</span><a class="dot-go" href="#/servicos">↗</a></div></div></section>
@@ -171,7 +171,7 @@ function pgHome(v) {
     <div class="p-wrap">
     </div>${ppf && I.portal_ppf !== '0' ? `<div class="p-wrap"><div class="p-sec-h" style="margin:60px 0 0"><div><div class="lbl">/ Proteção de pintura · PPF</div><h2 class="disp" style="margin-top:8px">${esc(ppf.nome)}</h2></div><a class="pill" href="#/servico/${ppf.id}">Saber mais ↗</a></div></div>${ppfStory(ppf)}` : ''}<div class="p-wrap">
     <section class="p-sec"><div class="p-sec-h"><div><div class="lbl">/ Antes & depois</div><h2 class="disp" style="margin-top:8px">A transformação</h2></div><span class="lbl">Arraste para comparar</span></div>${baSlider()}</section>
-    <section class="p-sec about" id="sobre"><h2 class="disp big">Sobre nós</h2><div class="about-row"><p>( ${esc(I.portal_texto || 'Trabalho feito à mão, com tempo e cuidado.')} )</p>
+    <section class="p-sec about" id="sobre"><h2 class="disp big">Sobre nós</h2>${I.portal_img_sobre ? `<div class="about-img"><img src="${pubImg(I.portal_img_sobre)}" alt="${esc(I.empresa_nome)}" loading="lazy"></div>` : ''}<div class="about-row"><p>( ${esc(I.portal_texto || 'Trabalho feito à mão, com tempo e cuidado.')} )</p>
       <div class="stats">${yrs ? `<div class="stat glass"><b class="disp">${String(yrs).padStart(2, '0')}</b><span class="lbl">Anos de oficina</span></div>` : ''}${ST.rating ? `<div class="stat glass on"><b class="disp">${String(ST.rating).replace('.', ',')}★</b><span class="lbl">${ST.n_rating} avaliações</span></div>` : ''}<div class="stat glass"><b class="disp">100%</b><span class="lbl">Acabado à mão</span></div></div></div></section>
     ${P.reviews.length ? `<section class="p-sec"><div class="p-sec-h"><h2 class="disp">Clientes</h2></div><div class="svc-grid">${P.reviews.map(r => `<div class="glass rev"><div style="color:#fbbf24">${'★'.repeat(r.pontuacao || 5)}</div><q>“${esc(r.texto)}”</q><div class="lbl" style="margin-top:12px">${esc(r.plataforma || '')}</div></div>`).join('')}</div></section>` : ''}
     ${ex.length ? `<section class="p-sec"><div class="p-sec-h"><h2 class="disp">Outros serviços</h2><span class="lbl">Soluções por orçamento e complementos</span></div>${extrasList(ex)}</section>` : ''}
