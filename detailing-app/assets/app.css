@@ -319,3 +319,24 @@ h3>svg,h4>svg,.row>svg,a.row>svg,.ic{width:18px;height:18px;flex:none}
 .guide-ol{margin:0;padding-left:22px;line-height:1.65;color:var(--tx2)}.guide-ol li{margin-bottom:8px}.guide-ol b{color:var(--tx)}
 .guide-ul{margin:0;padding-left:18px;line-height:1.7}kbd{background:var(--glass2,rgba(255,255,255,.08));border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-family:inherit;font-size:12px;color:var(--tx)}
 .pimg{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:11.5px;color:var(--tx2)}.pimg img,.pimg>svg{width:96px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.pimg>svg{padding:18px;box-sizing:border-box}
+
+/* quadro: nada sai dos cartões */
+.kcol{min-width:0}.kcard{overflow:hidden;min-width:0}
+.kcard b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.kcard .m{overflow:hidden;text-overflow:ellipsis}
+.kfoot{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;min-width:0}
+.kbox{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 8px;font-size:11.5px}
+.knext{width:100%;justify-content:center;margin-top:8px;gap:6px;min-width:0}.knext span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.knext svg{flex:none;width:14px;height:14px}
+/* logótipo do menu: maior, sobre preto, inteiro */
+.brand.has-logo .logo{width:56px;height:56px;border-radius:14px;background:#050505;border:1px solid var(--line2);padding:5px}
+.brand.has-logo .logo img{object-fit:contain}
+.brand b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em}
+:root[data-theme="light"] .brand.has-logo .logo{background:#fff}
+/* telemóvel: título da página numa linha, ações compactas (nada ilegível) */
+@media (max-width:900px){
+  .topbar h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}
+  .topbar .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+  .topbar>.grow{flex:1 1 34%;min-width:110px!important}
+  #pgActs{max-width:44vw;overflow-x:auto;scrollbar-width:none;flex-shrink:1}#pgActs::-webkit-scrollbar{display:none}
+  #pgActs select{max-width:118px;padding-left:8px;padding-right:22px;font-size:12px}#pgActs .switch>span{display:none}
+}

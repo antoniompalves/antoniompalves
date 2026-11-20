@@ -139,8 +139,8 @@ function renderShell() {
   $('#root').innerHTML = `
   <div class="app" id="app">
     <aside class="sidebar">
-      <div class="brand"><div class="logo">${S.logo ? `<img src="api.php?a=logo" alt="">` : icon('car')}</div>
-        <div><b>${esc(S.app_nome)}</b><span>${esc(S.empresa_nome)}</span></div></div>
+      <div class="brand ${S.logo ? 'has-logo' : ''}"><div class="logo">${S.logo ? `<img src="api.php?a=logo" alt="">` : icon('car')}</div>
+        <div style="min-width:0"><b>${esc(S.app_nome)}</b><span>${esc(S.slogan || (S.empresa_nome !== S.app_nome ? S.empresa_nome : ''))}</span></div></div>
       <nav class="nav">${navItems().map(([g, items]) => `<div class="nav-g">${esc(g)}</div>` + items.map(([h, l, i]) =>
         `<a href="${h}" ${h.startsWith('#') ? '' : 'target="_blank"'} data-h="${h}">${icon(i)}<span>${esc(l)}</span><b class="cnt hide" data-cnt="${esc(h.replace('#/e/', ''))}"></b></a>`).join('')).join('')}</nav>
       <div style="margin:18px 8px 0" class="small muted">
@@ -1361,9 +1361,9 @@ function jobCard(r, color, ALL) {
       ${tec ? `<span class="avatar xs" style="background:${esc(tec.cor || '#ef4444')}" title="${esc(tec.nome)}">${esc(initials(tec.nome))}</span>` : ''}</div>
     <div class="m" style="margin-top:6px;color:var(--tx)">${esc(jobServices(r))}</div>
     ${r._c?.pct !== null && r._c?.pct !== undefined ? `<div class="row small" style="margin-top:8px;flex-wrap:nowrap"><div class="bar grow"><i style="width:${r._c.pct}%"></i></div><span class="muted">${r._c.pct}%</span></div>` : ''}
-    <div class="row small" style="margin-top:8px;flex-wrap:nowrap"><button class="btn sm ghost tmr ${r.timer_inicio ? 'run' : ''}" data-tmr="${r.id}" data-start="${esc(r.timer_inicio || '')}" data-h="${+r.horas || 0}">⏱ <span class="mono">${fmtTimer(r)}</span></button>
-      ${r.box ? `<span class="badge t-mut" style="padding:1px 7px">${esc(r.box)}</span>` : ''}
-      ${nxt ? `<button class="btn sm ghost right" data-next="${r.id}">${esc(nxt.split(' ')[0])} ${icon('right')}</button>` : ''}</div></div>`;
+    <div class="kfoot"><button class="btn sm ghost tmr ${r.timer_inicio ? 'run' : ''}" data-tmr="${r.id}" data-start="${esc(r.timer_inicio || '')}" data-h="${+r.horas || 0}">⏱ <span class="mono">${fmtTimer(r)}</span></button>
+      ${r.box ? `<span class="badge t-mut kbox" title="${esc(r.box)}">${esc(r.box)}</span>` : ''}</div>
+      ${nxt ? `<button class="btn sm ghost knext" data-next="${r.id}" title="Passar para ${esc(nxt)}"><span>${esc(nxt)}</span>${icon('right')}</button>` : ''}</div>`;
 }
 /* Arrastar com toque (toque longo) — o arrastar nativo HTML5 não funciona em ecrãs táteis */
 function touchDrag(board, onDrop) {
@@ -2387,7 +2387,7 @@ function showLogin(msg, brand) {
   const B = brand || A.brand || {};
   document.documentElement.style.setProperty('--ac', B.cor || '#ef4444');
   $('#root').innerHTML = `<div class="login"><form class="glass box" id="lf">
-    <div class="brand" style="padding:0"><div class="logo">${B.logo ? `<img src="${B.logo}">` : icon('car')}</div><div><b>${esc(B.app_nome || 'DetailPro')}</b><span>${esc(B.empresa_nome || '')}</span></div></div>
+    <div class="brand ${B.logo ? 'has-logo' : ''}" style="padding:0"><div class="logo">${B.logo ? `<img src="${B.logo}">` : icon('car')}</div><div><b>${esc(B.app_nome || 'DetailPro')}</b><span>${esc(B.empresa_nome || '')}</span></div></div>
     <h1>Iniciar sessão</h1><p class="muted small" style="margin:0 0 18px">Gestão da sua empresa de detailing.</p>
     <label class="f"><span>Email</span><input class="inp" type="email" id="le" autocomplete="username" required></label>
     <label class="f" style="margin-top:12px"><span>Palavra-passe</span><input class="inp" type="password" id="lp" autocomplete="current-password" required></label>
