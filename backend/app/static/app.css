@@ -1875,3 +1875,28 @@ html:root .stepper button::after, html:root[data-theme] .stepper button::after {
   .detail-actions > button:not(.btn-primary) { width: 2.9rem; height: 2.9rem; }
   html:root .detail-actions .btn-primary, html:root[data-theme] .detail-actions .btn-primary { letter-spacing: .08em; padding: 0 .7rem; gap: .4rem; }
 }
+/* last contrast + target fixes from the audit */
+html:root, html:root[data-theme] { --ink-2: color-mix(in srgb, var(--ink) 80%, transparent); --ink-3: color-mix(in srgb, var(--ink) 72%, transparent);
+  --accent-ink: color-mix(in srgb, var(--accent) 72%, #000); --ok-ink: #1a6b40; }
+@media (prefers-color-scheme: dark) { html:root, html:root[data-theme] { --accent-ink: color-mix(in srgb, var(--accent) 60%, #fff); --ok-ink: #7fdcab; } }
+html:root[data-theme="meianoite"] { --accent-ink: color-mix(in srgb, var(--accent) 60%, #fff); --ok-ink: #7fdcab; }
+.slot-label, .slot small, .add-meal, .aisle-head, .link, .ev-status { font-weight: 700; }
+.aisle-head { color: var(--accent-ink); }
+.today-pill { background: var(--accent-ink); font-weight: 700; }
+.ev-status { color: var(--ok-ink); }
+.litem.done { opacity: 1; }
+.litem.done .txt, .litem.done .qty, .litem.done .note, .ing.done .txt { color: var(--ink-2); }
+html:root .mini-seg button.on, html:root[data-theme] .mini-seg button.on,
+html:root .size-opt.on, html:root[data-theme] .size-opt.on { background: color-mix(in srgb, var(--ink) 78%, var(--bg)); border-color: transparent; }
+.tm-display .tm-time { background: #176a42; }
+html:root button.chip, html:root[data-theme] button.chip, .pantry-chip { min-height: 2.75rem; }
+.ev-status.open { color: var(--accent-ink); } .ev-status.done { color: var(--ok-ink); }
+.share-line .link { color: var(--accent-ink); font-weight: 700; }
+.slot-label, .slot small { color: var(--ink-2); }
+.add-meal { color: color-mix(in srgb, var(--accent-ink) 85%, var(--ink)); }
+.today-pill { color: var(--bg); }
+.pantry-chip button { position: relative; }
+.pantry-chip button::after { content: ""; position: absolute; inset: -9px; }
+.slot-label, .slot small { color: var(--ink); opacity: .82; }
+.add-meal { color: var(--ink); } .add-meal svg { color: var(--accent-ink); }
+.slot-label, .slot small { opacity: .9; }
