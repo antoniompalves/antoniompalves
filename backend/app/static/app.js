@@ -27,9 +27,9 @@ async function api(path, opts = {}) {
   const token = store.get("token", "");
   if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(path, { ...opts, headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
-  if (res.status === 401) { toast("Wrong or missing API token. Set it in Settings."); throw new Error("unauthorized"); }
+  if (res.status === 401) { toast("Token da API errado ou em falta. Defina-o nas Definições."); throw new Error("unauthorized"); }
   if (!res.ok) {
-    let msg = `Server error (${res.status})`;
+    let msg = `Erro do servidor (${res.status})`;
     try { msg = (await res.json()).detail || msg; } catch {}
     throw new Error(msg);
   }
@@ -54,7 +54,7 @@ async function startImport(input) {
   if (!url && !text) return;
   try {
     const job = await api("/imports", { method: "POST", body: url ? { url } : { text } });
-    state.pending.unshift({ id: job.id, label: url ? shortUrl(url) : "Pasted text", status: job.status });
+    state.pending.unshift({ id: job.id, label: url ? shortUrl(url) : "Texto colado", status: job.status });
     savePending(); haptic();
     if (currentRoute() === "/") renderLibrary(); else location.hash = "/";
     pollPending();
@@ -74,7 +74,7 @@ async function pollPending() {
           if (j.status !== p.status) { p.status = j.status; changed = true; }
           if (j.status === "done") {
             state.pending = state.pending.filter(x => x.id !== p.id);
-            await loadRecipes(); toast("Recipe added"); haptic(12);
+            await loadRecipes(); toast("Receita adicionada"); haptic(12);
           } else if (j.status === "failed") p.error = j.error;
         } catch (e) { if (e.message === "unauthorized") return; }
       }
@@ -107,7 +107,7 @@ const I = {
   warn: '<svg viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4zM12 10v4M12 17.2v.1"/></svg>',
   copy: '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
 };
-const PLATFORM = { tiktok: "TikTok", instagram: "Instagram", youtube: "YouTube", pinterest: "Pinterest", facebook: "Facebook", x: "X", web: "Web", text: "Pasted" };
+const PLATFORM = { tiktok: "TikTok", instagram: "Instagram", youtube: "YouTube", pinterest: "Pinterest", facebook: "Facebook", x: "X", web: "Web", text: "Texto colado" };
 const platformName = p => PLATFORM[p] || p;
 
 /** Deterministic warm gradient for recipes without a thumbnail. */
@@ -179,14 +179,14 @@ function filteredRecipes() {
 
 function renderLibrary() {
   const n = state.recipes.length;
-  largeTitle("Recipes", n ? `${n} saved recipe${n === 1 ? "" : "s"}` : "Your cookbook from social media");
+  largeTitle("Receitas", n ? `${n} receita${n === 1 ? " guardada" : "s guardadas"}` : "O seu livro de receitas das redes sociais");
   const cols = [...new Set(state.recipes.flatMap(r => r.collections))].sort();
   const favs = state.recipes.some(r => r.favorite);
   view.innerHTML = `
-    ${n ? `<div class="search-wrap glass">${I.search}<input class="search" type="search" enterkeyhint="search" aria-label="Search recipes" placeholder="Search recipes or ingredients" value="${esc(state.query)}"></div>` : ""}
-    ${cols.length || favs ? `<div class="chips" role="toolbar" aria-label="Collections">
-      <button class="chip glass ${!state.collection ? "on" : ""}" data-col="">All</button>
-      ${favs ? `<button class="chip glass ${state.collection === "♥" ? "on" : ""}" data-col="♥">${I.heart}Favorites</button>` : ""}
+    ${n ? `<div class="search-wrap glass">${I.search}<input class="search" type="search" enterkeyhint="search" aria-label="Pesquisar receitas" placeholder="Pesquisar receitas ou ingredientes" value="${esc(state.query)}"></div>` : ""}
+    ${cols.length || favs ? `<div class="chips" role="toolbar" aria-label="Coleções">
+      <button class="chip glass ${!state.collection ? "on" : ""}" data-col="">Todas</button>
+      ${favs ? `<button class="chip glass ${state.collection === "♥" ? "on" : ""}" data-col="♥">${I.heart}Favoritos</button>` : ""}
       ${cols.map(c => `<button class="chip glass ${state.collection === c ? "on" : ""}" data-col="${esc(c)}">${esc(c)}</button>`).join("")}
     </div>` : ""}
     <div id="pendingList">${pendingHTML()}</div>
@@ -212,8 +212,8 @@ function pendingHTML() {
     <div class="pending glass ${p.status === "failed" ? "failed" : ""}">
       <div class="thumb-spin">${p.status === "failed" ? I.warn : `<div class="spinner" aria-hidden="true"></div>`}</div>
       <div style="flex:1;min-width:0"><div class="mono" style="font-weight:600">${esc(p.label)}</div>
-        <div class="status">${p.status === "failed" ? esc(p.error || "Import failed") : statusLabel(p.status)}</div></div>
-      ${p.status === "failed" ? `<button class="text-btn" data-dismiss="${esc(p.id)}">Dismiss</button>` : ""}
+        <div class="status">${p.status === "failed" ? esc(p.error || "Falha na importação") : statusLabel(p.status)}</div></div>
+      ${p.status === "failed" ? `<button class="text-btn" data-dismiss="${esc(p.id)}">Ignorar</button>` : ""}
     </div>`).join("");
 }
 
@@ -224,12 +224,12 @@ function renderResults() {
   if (list.length) {
     el.innerHTML = `<div class="grid">${list.map(card).join("")}</div>`;
   } else if (state.recipes.length) {
-    el.innerHTML = `<div class="empty glass"><h3>No matches</h3><p>Nothing matches “${esc(state.query || state.collection)}”. Try an ingredient like “garlic”.</p></div>`;
+    el.innerHTML = `<div class="empty glass"><h3>Sem resultados</h3><p>Nada corresponde a “${esc(state.query || state.collection)}”. Experimente um ingrediente, como “alho”.</p></div>`;
   } else if (!state.pending.length) {
-    el.innerHTML = `<div class="empty glass"><div class="art">${I.fork}</div><h3>Save your first recipe</h3>
-      <p>Share a TikTok, Reel, YouTube video or blog post and get a clean recipe with ingredients and steps.</p>
-      <button class="btn-primary" data-import>${I.plus}Import a recipe</button>
-      <p class="meta" style="justify-content:center;margin-top:1rem;display:flex">Save straight from the share sheet: <a href="#/settings">set up the Shortcut</a></p></div>`;
+    el.innerHTML = `<div class="empty glass"><div class="art">${I.fork}</div><h3>Guarde a sua primeira receita</h3>
+      <p>Partilhe um TikTok, um Reel, um vídeo do YouTube ou um artigo de blogue e obtenha uma receita organizada, com ingredientes e passos.</p>
+      <button class="btn-primary" data-import>${I.plus}Importar receita</button>
+      <p class="meta" style="margin-top:1rem;display:block">Guarde diretamente a partir da folha de partilha: <a href="#/settings">configure o Atalho</a></p></div>`;
   } else el.innerHTML = "";
   el.querySelectorAll(".card").forEach(c => {
     c.onclick = () => location.hash = `/r/${c.dataset.id}`;
@@ -237,18 +237,18 @@ function renderResults() {
   });
 }
 
-const statusLabel = s => ({ queued: "Queued…", fetching: "Reading the post…", extracting: "Writing the recipe…" }[s] || "Working…");
+const statusLabel = s => ({ queued: "Em fila…", fetching: "A ler a publicação…", extracting: "A escrever a receita…" }[s] || "A processar…");
 const totalTime = r => r.total_minutes || ((r.prep_minutes || 0) + (r.cook_minutes || 0)) || null;
-const fmtMin = m => m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ""}` : `${m}m`;
+const fmtMin = m => m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`;
 
 function card(r) {
   const t = totalTime(r);
   return `<article class="card" data-id="${esc(r.id)}" role="link" tabindex="0" aria-label="${esc(r.title)}">
     ${photo(r, "photo")}
     <span class="tag glass-photo">${esc(platformName(r.source_platform))}</span>
-    ${r.favorite ? `<span class="fav glass-photo" aria-label="Favorite">${I.heart}</span>` : ""}
+    ${r.favorite ? `<span class="fav glass-photo" aria-label="Favorito">${I.heart}</span>` : ""}
     <div class="caption glass-photo"><h3>${esc(r.title)}</h3>
-      <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.servings ? `<span>Serves ${r.servings}</span>` : ""}</div>
+      <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.servings ? `<span>${r.servings} ${r.servings === 1 ? "dose" : "doses"}</span>` : ""}</div>
     </div></article>`;
 }
 
@@ -261,21 +261,21 @@ async function renderDetail(id) {
 
   const bar = () => {
     title.innerHTML = `<div style="display:flex;align-items:center;gap:.5rem">
-      <button class="bar-btn glass-photo" id="backBtn" aria-label="Back">${I.back}</button>
+      <button class="bar-btn glass-photo" id="backBtn" aria-label="Voltar">${I.back}</button>
       <div class="nav-title">${esc(r.title)}</div>
-      <button class="bar-btn glass-photo" id="shareTop" aria-label="Share">${I.share}</button>
-      <button class="bar-btn glass-photo" id="favTop" aria-label="Favorite" aria-pressed="${r.favorite}">${I.heart}</button></div>`;
+      <button class="bar-btn glass-photo" id="shareTop" aria-label="Partilhar">${I.share}</button>
+      <button class="bar-btn glass-photo" id="favTop" aria-label="Favorito" aria-pressed="${r.favorite}">${I.heart}</button></div>`;
     $("#backBtn").onclick = () => (history.length > 1 ? history.back() : (location.hash = "/"));
     $("#favTop").onclick = toggleFav;
     $("#shareTop").onclick = share;
   };
   const toggleFav = async () => {
     r = await patch(id, { favorite: !r.favorite }); current = { ...current, favorite: r.favorite };
-    bar(); haptic(); toast(r.favorite ? "Added to Favorites" : "Removed from Favorites");
+    bar(); haptic(); toast(r.favorite ? "Adicionada aos favoritos" : "Removida dos favoritos");
   };
   const share = () => navigator.share
     ? navigator.share({ title: r.title, text: shareText(current), url: r.source_url }).catch(() => {})
-    : navigator.clipboard.writeText(shareText(current)).then(() => toast("Recipe copied"));
+    : navigator.clipboard.writeText(shareText(current)).then(() => toast("Receita copiada"));
 
   const draw = () => {
     const groups = [];
@@ -297,21 +297,21 @@ async function renderDetail(id) {
         </div>
       </div>
       <div class="stats glass">
-        <div class="stat"><b>${r.prep_minutes ? fmtMin(r.prep_minutes) : "–"}</b><span>Prep</span></div>
-        <div class="stat"><b>${r.cook_minutes ? fmtMin(r.cook_minutes) : "–"}</b><span>Cook</span></div>
-        <div class="stat"><b>${current.servings || "–"}</b><span>Serves</span></div>
+        <div class="stat"><b>${r.prep_minutes ? fmtMin(r.prep_minutes) : "–"}</b><span>Preparação</span></div>
+        <div class="stat"><b>${r.cook_minutes ? fmtMin(r.cook_minutes) : "–"}</b><span>Confeção</span></div>
+        <div class="stat"><b>${current.servings || "–"}</b><span>Doses</span></div>
         <div class="stat"><b>${n?.calories ?? "–"}</b><span>kcal</span></div>
       </div>
       <div class="detail-actions">
-        <button class="btn-primary" id="cookBtn">${I.play}Start Cooking</button>
-        <button class="icon-glass glass" id="groBtn" aria-label="${onList ? "Remove from" : "Add to"} grocery list" aria-pressed="${onList}">${onList ? I.check : I.cart}</button>
+        <button class="btn-primary" id="cookBtn">${I.play}Começar a cozinhar</button>
+        <button class="icon-glass glass" id="groBtn" aria-label="${onList ? "Remover da" : "Adicionar à"} lista de compras" aria-pressed="${onList}">${onList ? I.check : I.cart}</button>
       </div>
-      ${r.confidence < 0.7 ? `<div class="notice glass">${I.sparkle}<span>Some details were estimated by AI${r.inferred_fields.length ? ` (${esc(r.inferred_fields.join(", "))})` : ""}. Double-check before cooking.</span></div>` : ""}
+      ${r.confidence < 0.7 ? `<div class="notice glass">${I.sparkle}<span>Alguns detalhes foram estimados pela IA${r.inferred_fields.length ? ` (${esc(r.inferred_fields.join(", "))})` : ""}. Confirme antes de cozinhar.</span></div>` : ""}
       ${r.description ? `<p class="desc">${esc(r.description)}</p>` : ""}
       <section class="section glass">
-        <div class="section-head"><h3>Ingredients</h3>
-          ${current.servings ? `<div class="stepper"><button data-s="-1" aria-label="Fewer servings">${I.minus}</button>
-            <output aria-live="polite">${current.servings} servings</output><button data-s="1" aria-label="More servings">${I.plus}</button></div>` : ""}
+        <div class="section-head"><h3>Ingredientes</h3>
+          ${current.servings ? `<div class="stepper"><button data-s="-1" aria-label="Menos doses">${I.minus}</button>
+            <output aria-live="polite">${current.servings} ${current.servings === 1 ? "dose" : "doses"}</output><button data-s="1" aria-label="Mais doses">${I.plus}</button></div>` : ""}
         </div>
         ${groups.map(g => `${g.name ? `<div class="group">${esc(g.name)}</div>` : ""}
           ${g.items.map(([i, ing]) => `<label class="ing ${checked.has(i) ? "done" : ""}">
@@ -319,17 +319,17 @@ async function renderDetail(id) {
             <span class="txt">${ingText(ing)}</span></label>`).join("")}`).join("")}
       </section>
       <section class="section glass">
-        <div class="section-head"><h3>Steps</h3><span class="meta">${current.steps.length} steps${totalTime(r) ? ` · ${fmtMin(totalTime(r))}` : ""}</span></div>
+        <div class="section-head"><h3>Passos</h3><span class="meta">${current.steps.length} ${current.steps.length === 1 ? "passo" : "passos"}${totalTime(r) ? ` · ${fmtMin(totalTime(r))}` : ""}</span></div>
         ${current.steps.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><p>${esc(s.text)}</p></div>`).join("")}
       </section>
-      ${n && (n.protein_g || n.carbs_g || n.fat_g) ? `<section class="section glass"><div class="section-head"><h3>Nutrition</h3><span class="meta">per serving, estimated</span></div>
-        <div class="nutrition"><div><b>${n.protein_g ?? "–"}g</b><span>Protein</span></div><div><b>${n.carbs_g ?? "–"}g</b><span>Carbs</span></div><div><b>${n.fat_g ?? "–"}g</b><span>Fat</span></div></div></section>` : ""}
+      ${n && (n.protein_g || n.carbs_g || n.fat_g) ? `<section class="section glass"><div class="section-head"><h3>Informação nutricional</h3><span class="meta">por dose, estimativa</span></div>
+        <div class="nutrition"><div><b>${n.protein_g ?? "–"}g</b><span>Proteína</span></div><div><b>${n.carbs_g ?? "–"}g</b><span>Hidratos</span></div><div><b>${n.fat_g ?? "–"}g</b><span>Gordura</span></div></div></section>` : ""}
       <section class="section glass">
-        <div class="section-head"><h3>Collections</h3></div>
-        <input id="colInput" placeholder="e.g. Dinner, Meal prep" value="${esc(r.collections.join(", "))}" aria-label="Collections, comma separated">
+        <div class="section-head"><h3>Coleções</h3></div>
+        <input id="colInput" placeholder="ex.: Jantar, Marmitas" value="${esc(r.collections.join(", "))}" aria-label="Coleções, separadas por vírgulas">
         ${r.tags.length ? `<div class="tags" style="margin-top:.8rem">${r.tags.map(t => `<span class="glass">#${esc(t)}</span>`).join("")}</div>` : ""}
       </section>
-      <button class="danger-link" id="delBtn">${I.trash}Delete Recipe</button>
+      <button class="danger-link" id="delBtn">${I.trash}Eliminar receita</button>
     </div>`;
 
     view.querySelectorAll("[data-i]").forEach(cb => cb.onchange = () => {
@@ -346,15 +346,15 @@ async function renderDetail(id) {
       const adding = !state.grocery.includes(id);
       state.grocery = adding ? [...state.grocery, id] : state.grocery.filter(x => x !== id);
       store.set("grocery", state.grocery); const y = scrollY; draw(); scrollTo(0, y);
-      toast(adding ? "Added to Groceries" : "Removed from Groceries"); haptic();
+      toast(adding ? "Adicionada às compras" : "Removida das compras"); haptic();
     };
     $("#colInput").onchange = async e => {
       const cols = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
-      r = await patch(id, { collections: cols }); toast("Collections saved");
+      r = await patch(id, { collections: cols }); toast("Coleções guardadas");
     };
     $("#delBtn").onclick = async () => {
       // Irreversible, so this is the one place a confirmation earns its keep.
-      if (!confirm(`Delete “${r.title}”? This can't be undone.`)) return;
+      if (!confirm(`Eliminar “${r.title}”? Esta ação não pode ser anulada.`)) return;
       await api(`/recipes/${id}`, { method: "DELETE" });
       state.recipes = state.recipes.filter(x => x.id !== id); location.hash = "/";
     };
@@ -363,8 +363,10 @@ async function renderDetail(id) {
   draw();
 }
 
-const ingText = i => `${i.quantity || i.unit ? `<span class="qty">${esc([i.quantity, i.unit].filter(Boolean).join(" "))}</span> ` : ""}${esc(i.name)}${i.note ? `<span class="note">, ${esc(i.note)}</span>` : ""}`;
-const shareText = r => `${r.title}\n\nIngredients:\n${r.ingredients.map(i => "• " + [i.quantity, i.unit, i.name].filter(Boolean).join(" ")).join("\n")}\n\nSteps:\n${r.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}\n\nSource: ${r.source_url}`;
+const withDe = (unit, name) => unit ? `de ${name}` : name;
+const ingLine = i => [i.quantity, i.unit, withDe(i.unit, i.name)].filter(Boolean).join(" ");
+const ingText = i => `${i.quantity || i.unit ? `<span class="qty">${esc([i.quantity, i.unit].filter(Boolean).join(" "))}</span> ` : ""}${esc(withDe(i.unit, i.name))}${i.note ? `<span class="note">, ${esc(i.note)}</span>` : ""}`;
+const shareText = r => `${r.title}\n\nIngredientes:\n${r.ingredients.map(i => "• " + ingLine(i)).join("\n")}\n\nPassos:\n${r.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}\n\nFonte: ${r.source_url}`;
 
 async function patch(id, body) {
   const updated = await api(`/recipes/${id}`, { method: "PATCH", body });
@@ -376,19 +378,19 @@ async function patch(id, body) {
 /** Full-screen sheet that rises from the bottom over a blurred photo of the dish.
     Swipe sideways between steps (momentum picks the page), pull down to dismiss. */
 async function cookMode(r) {
-  const steps = r.steps.length ? r.steps : [{ text: "No steps" }];
+  const steps = r.steps.length ? r.steps : [{ text: "Sem passos" }];
   let page = 0, lock = null;
   try { lock = await navigator.wakeLock?.request("screen"); } catch {}
 
   const el = document.createElement("div");
-  el.className = "cook"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", `Cook mode: ${r.title}`);
+  el.className = "cook"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", `Modo cozinha: ${r.title}`);
   const bg = r.thumbnail_url ? `<div class="cook-bg" style="background-image:url('${esc(r.thumbnail_url)}')"></div>` : placeholder(r.id, "cook-bg");
   el.innerHTML = `${bg}
-    <div class="cook-head"><span class="title" id="cm-count"></span><button class="close glass-photo" id="cm-done" aria-label="Close cook mode">${I.x}</button></div>
+    <div class="cook-head"><span class="title" id="cm-count"></span><button class="close glass-photo" id="cm-done" aria-label="Fechar modo cozinha">${I.x}</button></div>
     <div class="progress" aria-hidden="true"><i></i></div>
     <div class="pager" aria-live="polite"><div class="track">${steps.map((s, i) =>
-      `<div class="page" aria-hidden="${i !== 0}"><div class="step-card glass-photo"><p class="eyebrow">Step ${i + 1} of ${steps.length}</p><p>${esc(s.text)}</p></div></div>`).join("")}</div></div>
-    <div class="nav"><button class="back-btn glass-photo" id="cm-prev">Back</button><button class="next-btn" id="cm-next"></button></div>`;
+      `<div class="page" aria-hidden="${i !== 0}"><div class="step-card glass-photo"><p class="eyebrow">Passo ${i + 1} de ${steps.length}</p><p>${esc(s.text)}</p></div></div>`).join("")}</div></div>
+    <div class="nav"><button class="back-btn glass-photo" id="cm-prev">Anterior</button><button class="next-btn" id="cm-next"></button></div>`;
   document.body.append(el); document.body.classList.add("sheet-open");
   $("#app").inert = true;
   const track = $(".track", el), pager = $(".pager", el);
@@ -406,7 +408,7 @@ async function cookMode(r) {
     $(".progress i", el).style.width = `${((page + 1) / steps.length) * 100}%`;
     el.querySelectorAll(".page").forEach((p, i) => p.setAttribute("aria-hidden", String(i !== page)));
     $("#cm-prev", el).disabled = page === 0;
-    $("#cm-next", el).textContent = page === steps.length - 1 ? "Finish" : "Next Step";
+    $("#cm-next", el).textContent = page === steps.length - 1 ? "Concluir" : "Passo seguinte";
   };
   const goTo = (i, velocity = 0) => {
     const next = Math.max(0, Math.min(steps.length - 1, i));
@@ -471,70 +473,70 @@ async function cookMode(r) {
 
 // ---------------------------------------------------------------- groceries & settings
 async function renderGroceries() {
-  largeTitle("Groceries", state.grocery.length ? `From ${state.grocery.length} recipe${state.grocery.length === 1 ? "" : "s"}` : "");
+  largeTitle("Compras", state.grocery.length ? `De ${state.grocery.length} receita${state.grocery.length === 1 ? "" : "s"}` : "");
   if (!state.grocery.length) {
-    view.innerHTML = `<div class="empty glass"><div class="art">${I.cart}</div><h3>Your list is empty</h3>
-      <p>Open a recipe and tap the cart button. Ingredients from several recipes are combined here.</p></div>`; return;
+    view.innerHTML = `<div class="empty glass"><div class="art">${I.cart}</div><h3>A sua lista está vazia</h3>
+      <p>Abra uma receita e toque no botão do carrinho. Os ingredientes de várias receitas são reunidos aqui.</p></div>`; return;
   }
-  view.innerHTML = `<div class="section glass"><p class="meta">Loading…</p></div>`;
+  view.innerHTML = `<div class="section glass"><p class="meta">A carregar…</p></div>`;
   let items = [];
   try { items = await api(`/grocery-list?ids=${encodeURIComponent(state.grocery.join(","))}`); } catch (e) { toast(e.message); }
   const done = new Set(state.groceryDone);
   const key = it => `${it.name}|${it.unit || ""}`;
   view.innerHTML = `<section class="section glass">
-      <div class="section-head"><h3>${items.length} items</h3><span class="meta" id="leftCount"></span></div>
+      <div class="section-head"><h3>${items.length} ${items.length === 1 ? "artigo" : "artigos"}</h3><span class="meta" id="leftCount"></span></div>
       ${items.map(it => `<label class="ing ${done.has(key(it)) ? "done" : ""}">
       <input type="checkbox" data-k="${esc(key(it))}" ${done.has(key(it)) ? "checked" : ""}>
-      <span class="txt">${it.quantities.length ? `<span class="qty">${esc(it.quantities.join(" + "))}${it.unit ? " " + esc(it.unit) : ""}</span> ` : ""}${esc(it.name)}
+      <span class="txt">${it.quantities.length ? `<span class="qty">${esc(it.quantities.join(" + "))}${it.unit ? " " + esc(it.unit) : ""}</span> ` : ""}${esc(withDe(it.quantities.length && it.unit, it.name))}
       <br><small class="note">${esc(it.recipes.join(", "))}</small></span></label>`).join("")}</section>
-    <div class="row-actions"><button class="btn-glass glass" id="copyList">${I.copy}Copy List</button><button class="btn-glass glass" id="clearList">${I.trash}Clear</button></div>`;
-  const left = () => $("#leftCount").textContent = `${items.filter(it => !done.has(key(it))).length} left`;
+    <div class="row-actions"><button class="btn-glass glass" id="copyList">${I.copy}Copiar lista</button><button class="btn-glass glass" id="clearList">${I.trash}Limpar</button></div>`;
+  const left = () => $("#leftCount").textContent = `faltam ${items.filter(it => !done.has(key(it))).length}`;
   left();
   view.querySelectorAll("[data-k]").forEach(cb => cb.onchange = () => {
     cb.checked ? done.add(cb.dataset.k) : done.delete(cb.dataset.k);
     cb.closest(".ing").classList.toggle("done", cb.checked); store.set("groceryDone", [...done]); left();
   });
   $("#copyList").onclick = () => navigator.clipboard.writeText(items.filter(it => !done.has(key(it)))
-    .map(it => `• ${[it.quantities.join(" + "), it.unit, it.name].filter(Boolean).join(" ")}`).join("\n")).then(() => toast("List copied"));
+    .map(it => `• ${[it.quantities.join(" + "), it.unit, withDe(it.unit, it.name)].filter(Boolean).join(" ")}`).join("\n")).then(() => toast("Lista copiada"));
   $("#clearList").onclick = () => {
     // Undo instead of a confirmation dialog: forgiving, and doesn't train people to click through.
     const prev = [state.grocery, state.groceryDone];
     state.grocery = []; state.groceryDone = []; store.set("grocery", []); store.set("groceryDone", []); renderGroceries();
-    toast("List cleared", { action: "Undo", onAction: () => {
+    toast("Lista limpa", { action: "Anular", onAction: () => {
       [state.grocery, state.groceryDone] = prev; store.set("grocery", prev[0]); store.set("groceryDone", prev[1]); renderGroceries();
     } });
   };
 }
 
 function renderSettings() {
-  largeTitle("Settings");
+  largeTitle("Definições");
   const origin = location.origin;
   view.innerHTML = `
-    <section class="section glass"><div class="section-head"><h3>API Token</h3></div>
-      <p class="meta">Only needed if your server sets <code>API_TOKEN</code>. Stored on this device.</p>
+    <section class="section glass"><div class="section-head"><h3>Token da API</h3></div>
+      <p class="meta">Só é necessário se o seu servidor definir <code>API_TOKEN</code>. Fica guardado neste dispositivo.</p>
       <div class="settings-row" style="margin-top:.75rem"><input id="tok" type="password" value="${esc(store.get("token", ""))}" placeholder="Token" aria-label="API token">
-        <button class="btn-solid" id="saveTok">Save</button></div>
+        <button class="btn-solid" id="saveTok">Guardar</button></div>
     </section>
-    <section class="section glass"><div class="section-head"><h3>Install on iPhone</h3></div>
+    <section class="section glass"><div class="section-head"><h3>Instalar no iPhone</h3></div>
       <ol class="howto">
-        <li>Open <code>${esc(origin)}</code> in <b>Safari</b>.</li>
-        <li>Tap <b>Share</b> → <b>Add to Home Screen</b>.</li>
+        <li>Abra <code>${esc(origin)}</code> no <b>Safari</b>.</li>
+        <li>Toque em <b>Partilhar</b> → <b>Adicionar ao ecrã principal</b>.</li>
       </ol>
     </section>
-    <section class="section glass"><div class="section-head"><h3>Save from the Share Sheet</h3></div>
-      <p class="meta">iOS doesn't let web apps appear in the share sheet. A one-minute Shortcut does it instead:</p>
+    <section class="section glass"><div class="section-head"><h3>Guardar a partir da folha de partilha</h3></div>
+      <p class="meta">O iOS não permite que apps web apareçam na folha de partilha. Um Atalho, que se configura num minuto, resolve isso:</p>
       <ol class="howto">
-        <li>Open <b>Shortcuts</b> → <b>＋</b> → name it <b>Save to RecipeBox</b>.</li>
-        <li>Tap <b>ⓘ</b> → turn on <b>Show in Share Sheet</b> (receives <b>URLs</b> and <b>Text</b>).</li>
-        <li>Add <b>Get Contents of URL</b>: <code>${esc(origin)}/imports/shortcut</code>, Method <b>POST</b>, Body <b>JSON</b>, field <code>input</code> = <b>Shortcut Input</b>${store.get("token", "") ? `, header <code>Authorization</code> = <code>Bearer &lt;token&gt;</code>` : ""}.</li>
-        <li>Add <b>Show Notification</b> with <b>Contents of URL</b>.</li>
+        <li>Abra a app <b>Atalhos</b> → <b>＋</b> → dê-lhe o nome <b>Guardar no RecipeBox</b>.</li>
+        <li>Toque em <b>ⓘ</b> → ative <b>Mostrar na folha de partilha</b> (recebe <b>URL</b> e <b>Texto</b>).</li>
+        <li>Adicione <b>Obter conteúdo do URL</b>: <code>${esc(origin)}/imports/shortcut</code>, Método <b>POST</b>, Corpo do pedido <b>JSON</b>, campo <code>input</code> = <b>Entrada do atalho</b>${store.get("token", "") ? `, cabeçalho <code>Authorization</code> = <code>Bearer &lt;token&gt;</code>` : ""}.</li>
+        <li>Adicione <b>Mostrar notificação</b> com <b>Conteúdo do URL</b>.</li>
       </ol>
-      <p class="meta" style="margin-top:.5rem">Then in TikTok or Instagram: Share → <b>Save to RecipeBox</b>.</p>
+      <p class="meta" style="margin-top:.5rem">Depois, no TikTok ou no Instagram: Partilhar → <b>Guardar no RecipeBox</b>.</p>
     </section>
     <section class="section glass"><div class="section-head"><h3>Android</h3></div>
-      <p class="meta">Install from Chrome's menu (<b>Add to Home screen</b>). RecipeBox then appears in the share sheet directly.</p></section>`;
+      <p class="meta">Instale a partir do menu do Chrome (<b>Adicionar ao ecrã principal</b>). O RecipeBox passa a aparecer diretamente na folha de partilha.</p></section>`;
   $("#saveTok").onclick = async () => {
-    store.set("token", $("#tok").value.trim()); toast("Token saved");
+    store.set("token", $("#tok").value.trim()); toast("Token guardado");
     await loadRecipes().catch(() => {}); renderSettings();
   };
 }
@@ -599,7 +601,7 @@ const sheet = (() => {
     let ok = !!(url || text), msg = "";
     if (urlIn.value.trim()) {
       try { const u = new URL(urlIn.value.trim()); if (!/^https?:$/.test(u.protocol)) throw 0; }
-      catch { ok = !!text; msg = "That doesn't look like a link. Paste the full URL starting with https://"; }
+      catch { ok = !!text; msg = "Isto não parece uma ligação. Cole o URL completo, começado por https://"; }
     }
     hint.textContent = msg; go.disabled = !ok;
     return ok;
@@ -617,7 +619,7 @@ const sheet = (() => {
   addEventListener("keydown", e => { if (open && e.key === "Escape") hide(); });
   $("#pasteBtn").onclick = async () => {
     try { urlIn.value = (await navigator.clipboard.readText()).trim(); validate(); }
-    catch { hint.textContent = "Paste was blocked. Long-press the field and choose Paste."; }
+    catch { hint.textContent = "A colagem foi bloqueada. Toque sem soltar no campo e escolha Colar."; }
   };
 
   // Drag anywhere on the sheet (except form fields) to pull it down; it tracks 1:1,

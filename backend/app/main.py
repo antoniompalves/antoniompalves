@@ -45,7 +45,7 @@ def service_worker():
 def auth(authorization: Optional[str] = Header(None)) -> None:
     token = os.getenv("API_TOKEN")
     if token and authorization != f"Bearer {token}":
-        raise HTTPException(401, "bad token")
+        raise HTTPException(401, "Token inválido")
 
 
 @app.get("/health")
@@ -56,7 +56,7 @@ def health():
 @app.post("/imports", status_code=202, dependencies=[Depends(auth)])
 def create_import(req: ImportRequest, bg: BackgroundTasks) -> ImportJob:
     if not req.url and not req.text:
-        raise HTTPException(400, "url or text required")
+        raise HTTPException(400, "É necessário um URL ou texto.")
     job = ImportJob(id=uuid.uuid4().hex, status="queued", url=req.url, created_at=now())
     store.save_job(job)
     bg.add_task(run_job, store, job, req.text)
@@ -70,14 +70,14 @@ def shortcut_import(bg: BackgroundTasks, input: str = Body(..., embed=True)) -> 
     urls = extract_urls(input)
     req = ImportRequest(url=urls[0]) if urls and len(input) < 300 else ImportRequest(text=input)
     create_import(req, bg)
-    return "Saving recipe to RecipeBox…"
+    return "A guardar a receita no RecipeBox…"
 
 
 @app.get("/imports/{jid}", dependencies=[Depends(auth)])
 def get_import(jid: str) -> ImportJob:
     job = store.get_job(jid)
     if not job:
-        raise HTTPException(404)
+        raise HTTPException(404, "Não encontrado.")
     return job
 
 
@@ -90,7 +90,7 @@ def list_recipes(q: Optional[str] = None, collection: Optional[str] = None) -> l
 def get_recipe(rid: str) -> Recipe:
     r = store.get_recipe(rid)
     if not r:
-        raise HTTPException(404)
+        raise HTTPException(404, "Não encontrado.")
     return r
 
 
@@ -105,7 +105,7 @@ def patch_recipe(rid: str, patch: RecipePatch) -> Recipe:
 @app.delete("/recipes/{rid}", status_code=204, dependencies=[Depends(auth)])
 def delete_recipe(rid: str):
     if not store.delete_recipe(rid):
-        raise HTTPException(404)
+        raise HTTPException(404, "Não encontrado.")
 
 
 _NUM = re.compile(r"^\s*(\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)\s*$")
@@ -134,7 +134,7 @@ def scale_quantity(q: Optional[str], factor: Fraction) -> Optional[str]:
 def scaled(rid: str, servings: int) -> Recipe:
     r = get_recipe(rid)
     if not r.servings or servings <= 0:
-        raise HTTPException(400, "recipe has no servings to scale from")
+        raise HTTPException(400, "Esta receita não indica o número de doses.")
     f = Fraction(servings, r.servings)
     ings = [i.model_copy(update={"quantity": scale_quantity(i.quantity, f)}) for i in r.ingredients]
     return r.model_copy(update={"ingredients": ings, "servings": servings})

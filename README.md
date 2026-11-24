@@ -50,6 +50,7 @@ Endpoints: `POST /imports` (`url` or pasted `text`), `GET /imports/{id}`, `GET /
 `GET|PATCH|DELETE /recipes/{id}`, `GET /recipes/{id}/scaled?servings=N`, `GET /grocery-list?ids=a,b`.
 
 Environment variables: `RECIPE_MODEL` (default `claude-opus-5-5`), `RECIPE_EFFORT` (default `medium`),
+`RECIPE_LANGUAGE` (default `European Portuguese (pt-PT)`; set to `source` to keep each post's own language),
 `EXTRACT_FRAMES` (default `1`), `MAX_VIDEO_SECONDS` (default `1200`), `WHISPER_MODEL` (default `small`).
 
 Tests: `python -m pytest -q` (these use a fake extractor, so they make no API calls).

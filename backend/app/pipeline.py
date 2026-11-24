@@ -42,15 +42,15 @@ def import_recipe(
             except Exception:
                 pass
     else:
-        raise ValueError("url or text is required")
+        raise ValueError("É necessário um URL ou texto.")
 
     if not mat.has_content():
-        raise ValueError("Couldn't read anything from that link (private post or login required?)")
+        raise ValueError("Não foi possível ler nada dessa ligação (publicação privada ou requer sessão iniciada?)")
 
     on_status("extracting")
     draft = extract(mat)
     if not draft.is_recipe:
-        raise ValueError("No recipe found in that post.")
+        raise ValueError("Não foi encontrada nenhuma receita nessa publicação.")
 
     recipe = Recipe(
         **draft.model_dump(),

@@ -84,5 +84,5 @@ def test_web_app_and_shortcut(tmp_path, monkeypatch):
     assert c.get("/sw.js").headers["content-type"].startswith("text/javascript")
     assert c.get("/static/manifest.webmanifest").status_code == 200
     r = c.post("/imports/shortcut", json={"input": "Look at this! https://vm.tiktok.com/ZMabc/"})
-    assert r.status_code == 200 and "Saving" in r.text
+    assert r.status_code == 200 and "A guardar" in r.text
     assert seen == [("https://vm.tiktok.com/ZMabc/", None)]

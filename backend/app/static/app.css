@@ -50,7 +50,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); min-height: 100dvh; 
 body.sheet-open { overflow: hidden; }
 svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 a { color: var(--accent); text-decoration: none; }
-code, .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .8125rem; word-break: break-all; }
+code, .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .8125rem; overflow-wrap: anywhere; }
 img { -webkit-user-drag: none; }
 
 /* Ambient colour field: soft warm light that glass refracts. Static (no looping motion). */
@@ -318,7 +318,7 @@ body.route-detail .tabbar, body.sheet-open .tabbar { }
 #toast { position: fixed; left: 50%; bottom: calc(var(--tab-h) + 1.6rem + env(safe-area-inset-bottom)); z-index: 50; pointer-events: none;
   display: flex; align-items: center; gap: .5rem; padding: .7rem 1.1rem; border-radius: 999px; font-size: .9rem; font-weight: 600; letter-spacing: -0.005em;
   box-shadow: 0 1px 0 rgb(255 255 255 / .18) inset, 0 14px 34px -8px rgb(0 0 0 / .45); max-width: calc(100% - 2.5rem);
-  opacity: 0; transform: translate(-50%, 8px) scale(.94); filter: blur(6px); }
+  opacity: 0; transform: translate(-50%, 8px) scale(.94); filter: blur(6px); white-space: nowrap; }
 #toast svg { color: #7ee2a0; }
 #toast button { color: var(--accent-2); font-weight: 700; padding: 0 0 0 .4rem; }
 
