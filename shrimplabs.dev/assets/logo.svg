@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>Shrimp Labs</title>
+  <!-- curled shrimp body -->
+  <path d="M46 14c-9-6-24-3-30 8-6 11-1 24 10 28 6 2 12 0 15-4" stroke="#ff6b5a" stroke-width="7" stroke-linecap="round"/>
+  <!-- segments -->
+  <path d="M22 18l4 7M14 30l8 2M16 42l7-4M27 48l2-7" stroke="#141414" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- tail -->
+  <path d="M41 46l9 2-3 7z" fill="#ff6b5a"/>
+  <!-- eye + antennae -->
+  <circle cx="44" cy="17" r="2.6" fill="#141414"/>
+  <path d="M48 13c5-4 9-5 13-4M47 16c6-1 10 0 13 3" stroke="#ff6b5a" stroke-width="2" stroke-linecap="round"/>
+</svg>
