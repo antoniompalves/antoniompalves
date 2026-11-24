@@ -1,0 +1,6304 @@
+{
+ "version": "2026-11-24",
+ "sources": {
+  "nutrition": "USDA FoodData Central, SR Legacy (April 2018), public domain (CC0)",
+  "prices": "Preços de prateleira em continente.pt e auchan.pt recolhidos em 2026-11-24",
+  "price_collected": "2026-11-24"
+ },
+ "items": [
+  {
+   "key": "alho",
+   "aliases": [
+    "dente de alho",
+    "dentes de alho",
+    "alho picado",
+    "garlic"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 33.06,
+    "kcal": 149.0,
+    "sugars_g": 1.0,
+    "fiber_g": 2.1,
+    "sodium_mg": 17.0,
+    "protein_g": 6.36,
+    "fat_g": 0.5
+   },
+   "usda": {
+    "fdc_id": 169230,
+    "description": "Garlic, raw"
+   },
+   "portions": {
+    "cup": 136.0,
+    "tsp": 2.8,
+    "clove": 3.0
+   },
+   "density": 0.575,
+   "unit_g": 5,
+   "price": {
+    "basis": "kg",
+    "low": 11.43,
+    "typical": 16.18,
+    "high": 18.31,
+    "n": 11,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Alho Seco Descascado ELS",
+     "Continente: Alho Seco Continente",
+     "Continente: Alho Seco Continente",
+     "Continente: Alho Seco Morado Continente"
+    ]
+   }
+  },
+  {
+   "key": "cebola",
+   "aliases": [
+    "cebolas",
+    "onion",
+    "cebola branca",
+    "cebola amarela"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 4.24,
+    "fat_g": 0.1,
+    "carbs_g": 9.34,
+    "kcal": 40.0,
+    "protein_g": 1.1,
+    "fiber_g": 1.7,
+    "sodium_mg": 4.0
+   },
+   "usda": {
+    "fdc_id": 170000,
+    "description": "Onions, raw"
+   },
+   "portions": {
+    "cup": 160.0,
+    "tbsp": 10.0,
+    "slice": 115.0,
+    "unit": 110.0
+   },
+   "density": 0.676,
+   "unit_g": 110.0,
+   "price": {
+    "basis": "kg",
+    "low": 1.84,
+    "typical": 3.03,
+    "high": 3.7,
+    "n": 6,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Cebola Sem Resíduos de Pesticidas Continente",
+     "Continente: Cebola Zero Desperdício Continente",
+     "Continente: Cebola Biológica Continente Bio",
+     "Continente: Cebola Doce Continente"
+    ]
+   }
+  },
+  {
+   "key": "cebola roxa",
+   "aliases": [
+    "red onion"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 4.24,
+    "fat_g": 0.1,
+    "carbs_g": 9.34,
+    "kcal": 40.0,
+    "protein_g": 1.1,
+    "fiber_g": 1.7,
+    "sodium_mg": 4.0
+   },
+   "usda": {
+    "fdc_id": 170000,
+    "description": "Onions, raw"
+   },
+   "portions": {
+    "cup": 160.0,
+    "tbsp": 10.0,
+    "slice": 115.0,
+    "unit": 110.0
+   },
+   "density": 0.676,
+   "unit_g": 110.0,
+   "price": {
+    "basis": "kg",
+    "low": 2.99,
+    "typical": 3.98,
+    "high": 4.18,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Cebola Roxa Continente",
+     "Continente: Cebola Roxa Biológica Continente Bio",
+     "Continente: Cebola Roxa Continente"
+    ]
+   }
+  },
+  {
+   "key": "chalota",
+   "aliases": [
+    "chalotas",
+    "echalote",
+    "shallot"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 16.8,
+    "kcal": 72.0,
+    "fat_g": 0.1,
+    "sodium_mg": 12.0,
+    "protein_g": 2.5,
+    "sugars_g": 7.87,
+    "fiber_g": 3.2
+   },
+   "usda": {
+    "fdc_id": 170499,
+    "description": "Shallots, raw"
+   },
+   "portions": {
+    "tbsp": 10.0
+   },
+   "density": null,
+   "unit_g": 40
+  },
+  {
+   "key": "alho-francês",
+   "aliases": [
+    "alho frances",
+    "alho porro",
+    "leek"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "kcal": 61.0,
+    "fat_g": 0.3,
+    "fiber_g": 1.8,
+    "sodium_mg": 20.0,
+    "protein_g": 1.5,
+    "carbs_g": 14.15,
+    "sugars_g": 3.9
+   },
+   "usda": {
+    "fdc_id": 169246,
+    "description": "Leeks, (bulb and lower leaf-portion), raw"
+   },
+   "portions": {
+    "cup": 89.0,
+    "slice": 6.0
+   },
+   "density": 0.376,
+   "unit_g": 200,
+   "price": {
+    "basis": "kg",
+    "low": 3.47,
+    "typical": 4.35,
+    "high": 5.22,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Alho Francês Cortado Continente",
+     "Continente: Alho Francês Cortado Continente",
+     "Continente: Alho Francês Biológico Continente Bio",
+     "Continente: Alho Francês Continente"
+    ]
+   }
+  },
+  {
+   "key": "batata",
+   "aliases": [
+    "batatas",
+    "potato",
+    "batata branca",
+    "batata vermelha"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fat_g": 0.09,
+    "kcal": 77.0,
+    "sodium_mg": 6.0,
+    "protein_g": 2.05,
+    "fiber_g": 2.1,
+    "carbs_g": 17.49,
+    "sugars_g": 0.82
+   },
+   "usda": {
+    "fdc_id": 170026,
+    "description": "Potatoes, flesh and skin, raw"
+   },
+   "portions": {
+    "cup": 150.0,
+    "unit": 213.0
+   },
+   "density": 0.634,
+   "unit_g": 213.0,
+   "price": {
+    "basis": "kg",
+    "low": 1.28,
+    "typical": 1.4,
+    "high": 2.03,
+    "n": 12,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Batata Vermelha Continente",
+     "Continente: Batata Branca Média Vitacress",
+     "Continente: Batata Vermelha Continente",
+     "Continente: Batata Branca Biológica Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "batata-doce",
+   "aliases": [
+    "batata doce",
+    "sweet potato",
+    "batatas-doces"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fiber_g": 3.0,
+    "sugars_g": 4.18,
+    "carbs_g": 20.12,
+    "kcal": 86.0,
+    "sodium_mg": 55.0,
+    "fat_g": 0.05,
+    "protein_g": 1.57
+   },
+   "usda": {
+    "fdc_id": 168482,
+    "description": "Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program)"
+   },
+   "portions": {
+    "cup": 133.0
+   },
+   "density": 0.562,
+   "unit_g": 200,
+   "price": {
+    "basis": "kg",
+    "low": 3.1,
+    "typical": 3.7,
+    "high": 3.84,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Batata Doce Continente",
+     "Continente: Batata Doce Vitacress",
+     "Continente: Batata Doce Palitos Air Fryer Continente"
+    ]
+   }
+  },
+  {
+   "key": "cenoura",
+   "aliases": [
+    "cenouras",
+    "carrot"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sodium_mg": 69.0,
+    "protein_g": 0.93,
+    "fat_g": 0.24,
+    "sugars_g": 4.74,
+    "carbs_g": 9.58,
+    "kcal": 41.0,
+    "fiber_g": 2.8
+   },
+   "usda": {
+    "fdc_id": 170393,
+    "description": "Carrots, raw"
+   },
+   "portions": {
+    "cup": 128.0,
+    "slice": 122.0,
+    "unit": 61.0
+   },
+   "density": 0.541,
+   "unit_g": 61.0,
+   "price": {
+    "basis": "kg",
+    "low": 1.52,
+    "typical": 1.98,
+    "high": 3.46,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Cenoura Continente",
+     "Continente: Cenoura Biológica Continente Bio",
+     "Continente: Cenoura Ripada Continente"
+    ]
+   }
+  },
+  {
+   "key": "tomate",
+   "aliases": [
+    "tomates",
+    "tomato",
+    "tomate maduro",
+    "tomate chucha"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 2.63,
+    "carbs_g": 3.89,
+    "kcal": 18.0,
+    "fat_g": 0.2,
+    "fiber_g": 1.2,
+    "sodium_mg": 5.0,
+    "protein_g": 0.88
+   },
+   "usda": {
+    "fdc_id": 170457,
+    "description": "Tomatoes, red, ripe, raw, year round average"
+   },
+   "portions": {
+    "cup": 149.0,
+    "slice": 180.0,
+    "unit": 123.0
+   },
+   "density": 0.63,
+   "unit_g": 123.0,
+   "price": {
+    "basis": "kg",
+    "low": 2.61,
+    "typical": 3.0,
+    "high": 4.64,
+    "n": 22,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Tomate Chucha Continente",
+     "Continente: Tomate de Coração de Boi Chocolate Continente",
+     "Continente: Tomate em Cacho Continente",
+     "Continente: Tomate Coração de Boi Chocolate Continente"
+    ]
+   }
+  },
+  {
+   "key": "tomate-cereja",
+   "aliases": [
+    "tomate cereja",
+    "tomates cereja",
+    "cherry tomatoes",
+    "tomate cherry"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 2.63,
+    "carbs_g": 3.89,
+    "kcal": 18.0,
+    "fat_g": 0.2,
+    "fiber_g": 1.2,
+    "sodium_mg": 5.0,
+    "protein_g": 0.88
+   },
+   "usda": {
+    "fdc_id": 170457,
+    "description": "Tomatoes, red, ripe, raw, year round average"
+   },
+   "portions": {
+    "cup": 149.0,
+    "slice": 180.0,
+    "unit": 123.0
+   },
+   "density": 0.63,
+   "unit_g": 123.0,
+   "price": {
+    "basis": "kg",
+    "low": 6.68,
+    "typical": 7.96,
+    "high": 9.55,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Tomate Cherry Alongado Tomaticious",
+     "Continente: Tomate Cherry Rama Premium Tomatier",
+     "Continente: Tomate Cherry Vermelho Continente",
+     "Continente: Tomate Cherry Trimix Continente"
+    ]
+   }
+  },
+  {
+   "key": "pimento",
+   "aliases": [
+    "pimentos",
+    "pimento vermelho",
+    "pimento verde",
+    "pimento amarelo",
+    "bell pepper"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fiber_g": 2.1,
+    "kcal": 26.0,
+    "sodium_mg": 4.0,
+    "sugars_g": 4.2,
+    "carbs_g": 6.03,
+    "protein_g": 0.99,
+    "fat_g": 0.3
+   },
+   "usda": {
+    "fdc_id": 170108,
+    "description": "Peppers, sweet, red, raw"
+   },
+   "portions": {
+    "cup": 149.0,
+    "tbsp": 9.3,
+    "slice": 92.0,
+    "unit": 119.0
+   },
+   "density": 0.63,
+   "unit_g": 119.0,
+   "price": {
+    "basis": "kg",
+    "low": 4.91,
+    "typical": 8.96,
+    "high": 12.81,
+    "n": 8,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Pimento Palermo Biológico Almaverde",
+     "Continente: Pimento Vermelho Continente",
+     "Continente: Pimento Tricolor Continente",
+     "Continente: Pimento Biológico Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "malagueta",
+   "aliases": [
+    "malaguetas",
+    "piri-piri",
+    "piripiri",
+    "chili",
+    "pimenta caiena fresca",
+    "jalapeño"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 5.3,
+    "fiber_g": 1.5,
+    "sodium_mg": 9.0,
+    "fat_g": 0.44,
+    "carbs_g": 8.81,
+    "kcal": 40.0,
+    "protein_g": 1.87
+   },
+   "usda": {
+    "fdc_id": 170106,
+    "description": "Peppers, hot chili, red, raw"
+   },
+   "portions": {
+    "cup": 150.0
+   },
+   "density": 0.634,
+   "unit_g": 5,
+   "price": {
+    "basis": "kg",
+    "low": 19.9,
+    "typical": 19.9,
+    "high": 19.9,
+    "n": 1,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Malagueta Vermelha Continente"
+    ]
+   }
+  },
+  {
+   "key": "pepino",
+   "aliases": [
+    "pepinos",
+    "cucumber"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 3.63,
+    "kcal": 15.0,
+    "sugars_g": 1.67,
+    "sodium_mg": 2.0,
+    "fat_g": 0.11,
+    "fiber_g": 0.5,
+    "protein_g": 0.65
+   },
+   "usda": {
+    "fdc_id": 168409,
+    "description": "Cucumber, with peel, raw"
+   },
+   "portions": {
+    "cup": 104.0,
+    "slice": 104.0
+   },
+   "density": 0.44,
+   "unit_g": 300,
+   "price": {
+    "basis": "kg",
+    "low": 3.29,
+    "typical": 4.59,
+    "high": 5.88,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Pepino Continente",
+     "Continente: Pepino Biológico Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "curgete",
+   "aliases": [
+    "curgetes",
+    "courgette",
+    "zucchini",
+    "abobrinha"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 2.5,
+    "fat_g": 0.32,
+    "carbs_g": 3.11,
+    "kcal": 17.0,
+    "fiber_g": 1.0,
+    "sodium_mg": 8.0,
+    "protein_g": 1.21
+   },
+   "usda": {
+    "fdc_id": 169291,
+    "description": "Squash, summer, zucchini, includes skin, raw"
+   },
+   "portions": {
+    "cup": 124.0,
+    "slice": 113.0,
+    "unit": 196.0
+   },
+   "density": 0.524,
+   "unit_g": 196.0,
+   "price": {
+    "basis": "kg",
+    "low": 2.08,
+    "typical": 2.98,
+    "high": 3.88,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Curgete Verde Continente",
+     "Continente: Curgete Biológica Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "beringela",
+   "aliases": [
+    "beringelas",
+    "eggplant",
+    "aubergine"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 3.53,
+    "fat_g": 0.18,
+    "carbs_g": 5.88,
+    "kcal": 25.0,
+    "fiber_g": 3.0,
+    "sodium_mg": 2.0,
+    "protein_g": 0.98
+   },
+   "usda": {
+    "fdc_id": 169228,
+    "description": "Eggplant, raw"
+   },
+   "portions": {
+    "cup": 82.0
+   },
+   "density": 0.347,
+   "unit_g": 300,
+   "price": {
+    "basis": "kg",
+    "low": 4.84,
+    "typical": 6.98,
+    "high": 7.3,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Beringela Japonesa",
+     "Continente: Beringela Biológica Continente Bio",
+     "Continente: Beringela Continente"
+    ]
+   }
+  },
+  {
+   "key": "abóbora",
+   "aliases": [
+    "abobora",
+    "pumpkin",
+    "abóbora-manteiga",
+    "butternut"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 6.5,
+    "fiber_g": 0.5,
+    "kcal": 26.0,
+    "sugars_g": 2.76,
+    "fat_g": 0.1,
+    "protein_g": 1.0,
+    "sodium_mg": 1.0
+   },
+   "usda": {
+    "fdc_id": 168448,
+    "description": "Pumpkin, raw"
+   },
+   "portions": {
+    "cup": 116.0
+   },
+   "density": 0.49,
+   "unit_g": 1000,
+   "price": {
+    "basis": "kg",
+    "low": 2.37,
+    "typical": 2.69,
+    "high": 2.77,
+    "n": 8,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Abóbora Bolina / Menina Sem Resíduos de Pesticidas Continente",
+     "Continente: Abóbora Butternut Sem Resíduos de Pesticidas Continente",
+     "Continente: Abóbora Menina Sem Resíduos de Pesticidas Continente",
+     "Continente: Abóbora Cubos Continente"
+    ]
+   }
+  },
+  {
+   "key": "alface",
+   "aliases": [
+    "alfaces",
+    "lettuce",
+    "alface iceberg",
+    "alface romana"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 3.29,
+    "kcal": 17.0,
+    "sodium_mg": 8.0,
+    "fat_g": 0.3,
+    "sugars_g": 1.19,
+    "fiber_g": 2.1,
+    "protein_g": 1.23
+   },
+   "usda": {
+    "fdc_id": 169247,
+    "description": "Lettuce, cos or romaine, raw"
+   },
+   "portions": {
+    "cup": 47.0
+   },
+   "density": 0.199,
+   "unit_g": 300,
+   "price": {
+    "basis": "kg",
+    "low": 4.23,
+    "typical": 6.21,
+    "high": 7.33,
+    "n": 8,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Alface Iceberg Continente",
+     "Continente: Alface Biológica Continente Bio",
+     "Continente: Alface Romana Biológica Continente Bio",
+     "Continente: Alface Iceberg Biológica Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "rúcula",
+   "aliases": [
+    "rucula",
+    "rocket",
+    "arugula"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 2.05,
+    "carbs_g": 3.65,
+    "fiber_g": 1.6,
+    "protein_g": 2.58,
+    "sodium_mg": 27.0,
+    "fat_g": 0.66,
+    "kcal": 25.0
+   },
+   "usda": {
+    "fdc_id": 169387,
+    "description": "Arugula, raw"
+   },
+   "portions": {
+    "cup": 20.0
+   },
+   "density": 0.085,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 17.38,
+    "typical": 19.88,
+    "high": 22.39,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Rúcula Selvagem Biológica Continente Bio",
+     "Continente: Rúcula Selvagem  Vitacress",
+     "Continente: Rúcula Florette",
+     "Continente: Rúcula Selvagem Continente"
+    ]
+   }
+  },
+  {
+   "key": "espinafres",
+   "aliases": [
+    "espinafre",
+    "spinach",
+    "espinafres baby"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "protein_g": 2.86,
+    "sodium_mg": 79.0,
+    "fiber_g": 2.2,
+    "sugars_g": 0.42,
+    "fat_g": 0.39,
+    "carbs_g": 3.63,
+    "kcal": 23.0
+   },
+   "usda": {
+    "fdc_id": 168462,
+    "description": "Spinach, raw"
+   },
+   "portions": {
+    "cup": 30.0
+   },
+   "density": 0.127,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 8.18,
+    "typical": 11.23,
+    "high": 13.08,
+    "n": 6,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Espinafre Baby Leaf Continente",
+     "Continente: Espinafre Baby Vitacress",
+     "Continente: Espinafre Biológico Continente Bio",
+     "Continente: Espinafre Baby Florette"
+    ]
+   }
+  },
+  {
+   "key": "brócolos",
+   "aliases": [
+    "brocolos",
+    "brócolo",
+    "broccoli"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 1.7,
+    "carbs_g": 6.64,
+    "kcal": 34.0,
+    "fat_g": 0.37,
+    "protein_g": 2.82,
+    "fiber_g": 2.6,
+    "sodium_mg": 33.0
+   },
+   "usda": {
+    "fdc_id": 170379,
+    "description": "Broccoli, raw"
+   },
+   "portions": {
+    "cup": 91.0
+   },
+   "density": 0.385,
+   "unit_g": 400,
+   "price": {
+    "basis": "kg",
+    "low": 8.65,
+    "typical": 8.65,
+    "high": 8.65,
+    "n": 1,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Floretes de Brócolo Campotec"
+    ]
+   }
+  },
+  {
+   "key": "couve-flor",
+   "aliases": [
+    "couve flor",
+    "cauliflower"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 4.97,
+    "kcal": 25.0,
+    "protein_g": 1.92,
+    "fiber_g": 2.0,
+    "sugars_g": 1.91,
+    "sodium_mg": 30.0,
+    "fat_g": 0.28
+   },
+   "usda": {
+    "fdc_id": 169986,
+    "description": "Cauliflower, raw"
+   },
+   "portions": {
+    "cup": 107.0,
+    "unit": 588.0
+   },
+   "density": 0.452,
+   "unit_g": 588.0,
+   "price": {
+    "basis": "kg",
+    "low": 3.97,
+    "typical": 5.46,
+    "high": 6.94,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Couve Flor Continente",
+     "Continente: Couve Flor Biológica Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "couve",
+   "aliases": [
+    "couve portuguesa",
+    "couve galega",
+    "couve lombarda",
+    "couve coração",
+    "cabbage",
+    "couve-portuguesa"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fat_g": 0.1,
+    "carbs_g": 5.8,
+    "kcal": 25.0,
+    "sugars_g": 3.2,
+    "protein_g": 1.28,
+    "fiber_g": 2.5,
+    "sodium_mg": 18.0
+   },
+   "usda": {
+    "fdc_id": 169975,
+    "description": "Cabbage, raw"
+   },
+   "portions": {
+    "cup": 89.0,
+    "unit": 908.0
+   },
+   "density": 0.376,
+   "unit_g": 908.0,
+   "price": {
+    "basis": "kg",
+    "low": 2.19,
+    "typical": 3.62,
+    "high": 3.99,
+    "n": 14,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Couve Brócolo Continente",
+     "Continente: Couve Coração Continente",
+     "Continente: Couve Branca Biológica Continente Bio",
+     "Continente: Couve Ripada para Caldo Verde Continente"
+    ]
+   }
+  },
+  {
+   "key": "couve roxa",
+   "aliases": [
+    "red cabbage"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 7.37,
+    "kcal": 31.0,
+    "sugars_g": 3.83,
+    "fiber_g": 2.1,
+    "fat_g": 0.16,
+    "protein_g": 1.43,
+    "sodium_mg": 27.0
+   },
+   "usda": {
+    "fdc_id": 169977,
+    "description": "Cabbage, red, raw"
+   },
+   "portions": {
+    "cup": 89.0,
+    "unit": 839.0
+   },
+   "density": 0.376,
+   "unit_g": 839.0,
+   "price": {
+    "basis": "kg",
+    "low": 3.18,
+    "typical": 4.78,
+    "high": 4.97,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Couve Roxa Biológica Biofrade",
+     "Continente: Couve Roxa Continente",
+     "Continente: Couve Roxa Ripada Continente"
+    ]
+   }
+  },
+  {
+   "key": "feijão-verde",
+   "aliases": [
+    "feijao verde",
+    "green beans",
+    "vagens"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fat_g": 0.22,
+    "sugars_g": 3.26,
+    "protein_g": 1.83,
+    "fiber_g": 2.7,
+    "sodium_mg": 6.0,
+    "carbs_g": 6.97,
+    "kcal": 31.0
+   },
+   "usda": {
+    "fdc_id": 169961,
+    "description": "Beans, snap, green, raw"
+   },
+   "portions": {
+    "cup": 100.0
+   },
+   "density": 0.423,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 7.82,
+    "typical": 9.9,
+    "high": 12.21,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Feijão Verde Continente",
+     "Continente: Feijão Verde Largo Continente",
+     "Continente: Feijão Verde Biológico Continente Bio",
+     "Continente: Feijão Verde Redondo Continente"
+    ]
+   }
+  },
+  {
+   "key": "cogumelos",
+   "aliases": [
+    "cogumelo",
+    "cogumelos frescos",
+    "cogumelos brancos",
+    "champignon",
+    "mushrooms",
+    "cogumelos marron"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 1.98,
+    "fiber_g": 1.0,
+    "fat_g": 0.34,
+    "sodium_mg": 5.0,
+    "protein_g": 3.09,
+    "carbs_g": 3.26,
+    "kcal": 22.0
+   },
+   "usda": {
+    "fdc_id": 169251,
+    "description": "Mushrooms, white, raw"
+   },
+   "portions": {
+    "cup": 96.0,
+    "slice": 70.0,
+    "unit": 18.0
+   },
+   "density": 0.406,
+   "unit_g": 18.0,
+   "price": {
+    "basis": "kg",
+    "low": 5.89,
+    "typical": 6.3,
+    "high": 8.83,
+    "n": 17,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Cogumelo Branco Laminado Fresco Continente",
+     "Continente: Cogumelo Branco Laminado Continente Bio",
+     "Continente: Cogumelo Branco Cuga",
+     "Continente: Cogumelo Branco Fresco Continente"
+    ]
+   }
+  },
+  {
+   "key": "espargos",
+   "aliases": [
+    "espargo",
+    "asparagus"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "protein_g": 2.2,
+    "sugars_g": 1.88,
+    "sodium_mg": 2.0,
+    "carbs_g": 3.88,
+    "kcal": 20.0,
+    "fiber_g": 2.1,
+    "fat_g": 0.12
+   },
+   "usda": {
+    "fdc_id": 168389,
+    "description": "Asparagus, raw"
+   },
+   "portions": {
+    "cup": 134.0,
+    "unit": 16.0
+   },
+   "density": 0.566,
+   "unit_g": 16.0,
+   "price": {
+    "basis": "kg",
+    "low": 14.85,
+    "typical": 17.36,
+    "high": 19.06,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Espargos Verdes Continente",
+     "Continente: Espargos Finos IMG",
+     "Continente: Espargos Biológicos Continente Bio",
+     "Continente: Espargos Brancos Extra Grosso Continente"
+    ]
+   }
+  },
+  {
+   "key": "beterraba",
+   "aliases": [
+    "beterrabas",
+    "beetroot"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fiber_g": 2.8,
+    "carbs_g": 9.56,
+    "kcal": 43.0,
+    "fat_g": 0.17,
+    "protein_g": 1.61,
+    "sodium_mg": 78.0,
+    "sugars_g": 6.76
+   },
+   "usda": {
+    "fdc_id": 169145,
+    "description": "Beets, raw"
+   },
+   "portions": {
+    "cup": 136.0
+   },
+   "density": 0.575,
+   "unit_g": 150,
+   "price": {
+    "basis": "kg",
+    "low": 2.78,
+    "typical": 3.98,
+    "high": 5.5,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Beterraba sem Rama Sem Resíduos de Pesticidas Continente",
+     "Continente: Beterraba Cozida Continente",
+     "Continente: Beterraba Cozida Biológica Beterraba Bio",
+     "Continente: Beterraba Ripada Continente"
+    ]
+   }
+  },
+  {
+   "key": "nabo",
+   "aliases": [
+    "nabos",
+    "turnip"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 6.43,
+    "kcal": 28.0,
+    "fiber_g": 1.8,
+    "sodium_mg": 67.0,
+    "protein_g": 0.9,
+    "fat_g": 0.1,
+    "sugars_g": 3.8
+   },
+   "usda": {
+    "fdc_id": 170465,
+    "description": "Turnips, raw"
+   },
+   "portions": {
+    "cup": 130.0,
+    "slice": 15.0,
+    "unit": 122.0
+   },
+   "density": 0.549,
+   "unit_g": 122.0
+  },
+  {
+   "key": "grelos",
+   "aliases": [
+    "grelos de nabo",
+    "nabiças",
+    "rapini"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 0.38,
+    "carbs_g": 2.85,
+    "kcal": 22.0,
+    "fat_g": 0.49,
+    "fiber_g": 2.7,
+    "sodium_mg": 33.0,
+    "protein_g": 3.17
+   },
+   "usda": {
+    "fdc_id": 170381,
+    "description": "Broccoli raab, raw"
+   },
+   "portions": {
+    "cup": 40.0
+   },
+   "density": 0.169,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 3.27,
+    "typical": 4.27,
+    "high": 5.69,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Nabiça Continente",
+     "Continente: Nabiça Biológica Continente Bio",
+     "Continente: Nabiça Continente",
+     "Continente: Grelos de Couve Continente"
+    ]
+   }
+  },
+  {
+   "key": "aipo",
+   "aliases": [
+    "salsão",
+    "celery"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "kcal": 14.0,
+    "carbs_g": 2.97,
+    "fat_g": 0.17,
+    "sugars_g": 1.34,
+    "sodium_mg": 80.0,
+    "fiber_g": 1.6,
+    "protein_g": 0.69
+   },
+   "usda": {
+    "fdc_id": 169988,
+    "description": "Celery, raw"
+   },
+   "portions": {
+    "cup": 101.0,
+    "tbsp": 7.5,
+    "unit": 40.0
+   },
+   "density": 0.427,
+   "unit_g": 40.0,
+   "price": {
+    "basis": "kg",
+    "low": 4.46,
+    "typical": 5.54,
+    "high": 6.61,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Aipo Biológico Continente Bio",
+     "Continente: Aipo Continente"
+    ]
+   }
+  },
+  {
+   "key": "milho doce",
+   "aliases": [
+    "milho",
+    "corn",
+    "maçaroca"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 1.22,
+    "carbs_g": 14.34,
+    "kcal": 67.0,
+    "sugars_g": 4.44,
+    "fiber_g": 2.0,
+    "sodium_mg": 205.0,
+    "protein_g": 2.29
+   },
+   "usda": {
+    "fdc_id": 169214,
+    "description": "Corn, sweet, yellow, canned, whole kernel, drained solids"
+   },
+   "portions": {
+    "cup": 164.0
+   },
+   "density": 0.693,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 4.47,
+    "typical": 5.44,
+    "high": 6.38,
+    "n": 6,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Milho Doce em Lata sem Glúten Continente",
+     "Continente: Milho Doce em Lata sem Glúten Bonduelle",
+     "Continente: Milho Doce em Lata sem Glúten Bonduelle",
+     "Continente: Milho Doce em Lata sem Glúten Continente"
+    ]
+   }
+  },
+  {
+   "key": "abacate",
+   "aliases": [
+    "abacates",
+    "avocado"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "protein_g": 2.0,
+    "fiber_g": 6.7,
+    "sodium_mg": 7.0,
+    "fat_g": 14.66,
+    "sugars_g": 0.66,
+    "carbs_g": 8.53,
+    "kcal": 160.0
+   },
+   "usda": {
+    "fdc_id": 171705,
+    "description": "Avocados, raw, all commercial varieties"
+   },
+   "portions": {
+    "cup": 150.0,
+    "slice": 146.0
+   },
+   "density": 0.634,
+   "unit_g": 150,
+   "price": {
+    "basis": "un",
+    "low": 0.69,
+    "typical": 0.76,
+    "high": 0.87,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Abacate Hass Continente",
+     "Continente: Abacate do Algarve",
+     "Continente: Abacate Hass Continente",
+     "Continente: Abacate Biológico Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "limão",
+   "aliases": [
+    "limao",
+    "limões",
+    "lemon",
+    "sumo de limão",
+    "raspa de limão"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 2.5,
+    "protein_g": 1.1,
+    "fiber_g": 2.8,
+    "sodium_mg": 2.0,
+    "fat_g": 0.3,
+    "carbs_g": 9.32,
+    "kcal": 29.0
+   },
+   "usda": {
+    "fdc_id": 167746,
+    "description": "Lemons, raw, without peel"
+   },
+   "portions": {
+    "cup": 212.0,
+    "slice": 7.0
+   },
+   "density": 0.896,
+   "unit_g": 100,
+   "price": {
+    "basis": "kg",
+    "low": 3.42,
+    "typical": 4.14,
+    "high": 4.86,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Limão Continente",
+     "Continente: Limão Biológico Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "lima",
+   "aliases": [
+    "limas",
+    "lime",
+    "sumo de lima"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fat_g": 0.2,
+    "carbs_g": 10.54,
+    "sugars_g": 1.69,
+    "protein_g": 0.7,
+    "sodium_mg": 2.0,
+    "fiber_g": 2.8,
+    "kcal": 30.0
+   },
+   "usda": {
+    "fdc_id": 168155,
+    "description": "Limes, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": 65,
+   "price": {
+    "basis": "kg",
+    "low": 5.19,
+    "typical": 6.38,
+    "high": 7.57,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Lima Biológica Continente Bio",
+     "Continente: Lima Continente"
+    ]
+   }
+  },
+  {
+   "key": "laranja",
+   "aliases": [
+    "laranjas",
+    "orange",
+    "sumo de laranja",
+    "raspa de laranja"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 9.35,
+    "fat_g": 0.12,
+    "carbs_g": 11.75,
+    "kcal": 47.0,
+    "fiber_g": 2.4,
+    "sodium_mg": 0.0,
+    "protein_g": 0.94
+   },
+   "usda": {
+    "fdc_id": 169097,
+    "description": "Oranges, raw, all commercial varieties"
+   },
+   "portions": {
+    "cup": 180.0,
+    "unit": 184.0
+   },
+   "density": 0.761,
+   "unit_g": 184.0,
+   "price": {
+    "basis": "kg",
+    "low": 1.2,
+    "typical": 1.33,
+    "high": 1.69,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Laranja Citrinos do Algarve - IGP IGP Algarve",
+     "Continente: Laranja Zero Desperdício Continente",
+     "Continente: Laranja Continente",
+     "Continente: Laranja Biológica Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "maçã",
+   "aliases": [
+    "maca",
+    "maçãs",
+    "apple"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 13.81,
+    "kcal": 52.0,
+    "fat_g": 0.17,
+    "sugars_g": 10.39,
+    "fiber_g": 2.4,
+    "sodium_mg": 1.0,
+    "protein_g": 0.26
+   },
+   "usda": {
+    "fdc_id": 171688,
+    "description": "Apples, raw, with skin (Includes foods for USDA's Food Distribution Program)"
+   },
+   "portions": {
+    "cup": 125.0,
+    "slice": 109.0,
+    "unit": 182.0
+   },
+   "density": 0.528,
+   "unit_g": 182.0,
+   "price": {
+    "basis": "kg",
+    "low": 2.0,
+    "typical": 2.43,
+    "high": 3.88,
+    "n": 12,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Maçã Gala IGP Alcobaça Sem Resíduos de Pesticidas Continente",
+     "Continente: Maçã Vermelha Zero Desperdício Continente",
+     "Continente: Maçã Pink Lady Continente",
+     "Continente: Maçã Golden Sem Resíduos de Pesticidas Continente"
+    ]
+   }
+  },
+  {
+   "key": "pera",
+   "aliases": [
+    "peras",
+    "pear"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fat_g": 0.14,
+    "carbs_g": 15.23,
+    "kcal": 57.0,
+    "sugars_g": 9.75,
+    "protein_g": 0.36,
+    "fiber_g": 3.1,
+    "sodium_mg": 1.0
+   },
+   "usda": {
+    "fdc_id": 169118,
+    "description": "Pears, raw"
+   },
+   "portions": {
+    "cup": 140.0,
+    "slice": 140.0,
+    "unit": 178.0
+   },
+   "density": 0.592,
+   "unit_g": 178.0,
+   "price": {
+    "basis": "kg",
+    "low": 2.58,
+    "typical": 2.78,
+    "high": 3.9,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Pera Rocha DOP Oeste Continente",
+     "Continente: Pera Rocha DOP Oeste Continente",
+     "Continente: Pera Conference Continente",
+     "Continente: Pera Rocha Biológica Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "banana",
+   "aliases": [
+    "bananas"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 22.84,
+    "kcal": 89.0,
+    "fiber_g": 2.6,
+    "sodium_mg": 1.0,
+    "protein_g": 1.09,
+    "sugars_g": 12.23,
+    "fat_g": 0.33
+   },
+   "usda": {
+    "fdc_id": 173944,
+    "description": "Bananas, raw"
+   },
+   "portions": {
+    "cup": 225.0,
+    "slice": 150.0,
+    "unit": 118.0
+   },
+   "density": 0.951,
+   "unit_g": 118.0,
+   "price": {
+    "basis": "kg",
+    "low": 1.57,
+    "typical": 2.34,
+    "high": 3.09,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Banana Continente",
+     "Continente: Banana da Madeira Continente",
+     "Continente: Banana Biológica Continente Bio",
+     "Continente: Banana das Canárias Continente"
+    ]
+   }
+  },
+  {
+   "key": "morangos",
+   "aliases": [
+    "morango",
+    "strawberries"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fat_g": 0.3,
+    "fiber_g": 2.0,
+    "protein_g": 0.67,
+    "sodium_mg": 1.0,
+    "sugars_g": 4.89,
+    "carbs_g": 7.68,
+    "kcal": 32.0
+   },
+   "usda": {
+    "fdc_id": 167762,
+    "description": "Strawberries, raw"
+   },
+   "portions": {
+    "cup": 152.0,
+    "slice": 166.0,
+    "unit": 12.0
+   },
+   "density": 0.642,
+   "unit_g": 12.0,
+   "price": {
+    "basis": "kg",
+    "low": 8.98,
+    "typical": 16.98,
+    "high": 18.3,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Morango Continente",
+     "Continente: Morango Biológico Quinta Santo Estevão",
+     "Continente: Morango Biológico Continente Bio",
+     "Continente: Morango Sem Resíduos de Pesticidas Candela"
+    ]
+   }
+  },
+  {
+   "key": "framboesas",
+   "aliases": [
+    "framboesa",
+    "raspberries"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 11.94,
+    "kcal": 52.0,
+    "sodium_mg": 1.0,
+    "fat_g": 0.65,
+    "sugars_g": 4.42,
+    "fiber_g": 6.5,
+    "protein_g": 1.2
+   },
+   "usda": {
+    "fdc_id": 167755,
+    "description": "Raspberries, raw"
+   },
+   "portions": {
+    "cup": 123.0
+   },
+   "density": 0.52,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 19.88,
+    "typical": 22.32,
+    "high": 27.12,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Framboesa Continente",
+     "Continente: Framboesa Driscoll's",
+     "Continente: Framboesa Biológica Continente Bio",
+     "Continente: Framboesa Liofilizada Summmer"
+    ]
+   }
+  },
+  {
+   "key": "mirtilos",
+   "aliases": [
+    "mirtilo",
+    "blueberries"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sodium_mg": 1.0,
+    "carbs_g": 14.49,
+    "kcal": 57.0,
+    "sugars_g": 9.96,
+    "fat_g": 0.33,
+    "fiber_g": 2.4,
+    "protein_g": 0.74
+   },
+   "usda": {
+    "fdc_id": 171711,
+    "description": "Blueberries, raw"
+   },
+   "portions": {
+    "cup": 148.0
+   },
+   "density": 0.626,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 16.88,
+    "typical": 19.9,
+    "high": 19.96,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Mirtilo Continente",
+     "Continente: Mirtilo",
+     "Continente: Mirtilo Beirabaga",
+     "Continente: Mirtilo Continente"
+    ]
+   }
+  },
+  {
+   "key": "manga",
+   "aliases": [
+    "mangas",
+    "mango"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fat_g": 0.38,
+    "protein_g": 0.82,
+    "fiber_g": 1.6,
+    "sodium_mg": 1.0,
+    "carbs_g": 14.98,
+    "kcal": 60.0,
+    "sugars_g": 13.66
+   },
+   "usda": {
+    "fdc_id": 169910,
+    "description": "Mangos, raw"
+   },
+   "portions": {
+    "cup": 165.0
+   },
+   "density": 0.697,
+   "unit_g": 300,
+   "price": {
+    "basis": "kg",
+    "low": 5.73,
+    "typical": 10.54,
+    "high": 29.07,
+    "n": 10,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Manga Supreme",
+     "Continente: Manga Supreme",
+     "Continente: Manga Palmer Maturada Continente",
+     "Continente: Manga Supreme"
+    ]
+   }
+  },
+  {
+   "key": "ananás",
+   "aliases": [
+    "ananas",
+    "abacaxi",
+    "pineapple"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "protein_g": 0.54,
+    "sodium_mg": 1.0,
+    "sugars_g": 9.85,
+    "fat_g": 0.12,
+    "fiber_g": 1.4,
+    "carbs_g": 13.12,
+    "kcal": 50.0
+   },
+   "usda": {
+    "fdc_id": 169124,
+    "description": "Pineapple, raw, all varieties"
+   },
+   "portions": {
+    "cup": 165.0,
+    "slice": 166.0,
+    "unit": 905.0
+   },
+   "density": 0.697,
+   "unit_g": 905.0,
+   "price": {
+    "basis": "kg",
+    "low": 1.69,
+    "typical": 4.24,
+    "high": 9.58,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Abacaxi Supreme",
+     "Continente: Abacaxi Supreme",
+     "Continente: Abacaxi Super Sweet Continente",
+     "Continente: Abacaxi de Avião Continente"
+    ]
+   }
+  },
+  {
+   "key": "coentros",
+   "aliases": [
+    "coentro",
+    "cilantro",
+    "coriander"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "protein_g": 2.13,
+    "carbs_g": 3.67,
+    "kcal": 23.0,
+    "fiber_g": 2.8,
+    "sodium_mg": 46.0,
+    "fat_g": 0.52,
+    "sugars_g": 0.87
+   },
+   "usda": {
+    "fdc_id": 169997,
+    "description": "Coriander (cilantro) leaves, raw"
+   },
+   "portions": {
+    "cup": 16.0
+   },
+   "density": 0.068,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 19.8,
+    "typical": 33.0,
+    "high": 36.33,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Coentros Frescos Continente",
+     "Continente: Coentros Frescos Continente",
+     "Continente: Coentros Biológicos Frescos Continente Bio",
+     "Continente: Coentros Natura Frescos Vitacress"
+    ]
+   }
+  },
+  {
+   "key": "salsa",
+   "aliases": [
+    "salsa fresca",
+    "parsley"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 6.33,
+    "kcal": 36.0,
+    "fat_g": 0.79,
+    "protein_g": 2.97,
+    "fiber_g": 3.3,
+    "sodium_mg": 56.0,
+    "sugars_g": 0.85
+   },
+   "usda": {
+    "fdc_id": 170416,
+    "description": "Parsley, fresh"
+   },
+   "portions": {
+    "cup": 60.0,
+    "tbsp": 3.8
+   },
+   "density": 0.254,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 29.45,
+    "typical": 32.84,
+    "high": 33.83,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Salsa Fresca Continente",
+     "Continente: Salsa Biológica Fresca Continente Bio",
+     "Continente: Salsa Lavada Fresca Vitacress",
+     "Continente: Salsa Natura Fresca Vitacress"
+    ]
+   }
+  },
+  {
+   "key": "manjericão",
+   "aliases": [
+    "manjericao",
+    "basil",
+    "folhas de manjericão"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 0.3,
+    "fat_g": 0.64,
+    "carbs_g": 2.65,
+    "kcal": 23.0,
+    "fiber_g": 1.6,
+    "sodium_mg": 4.0,
+    "protein_g": 3.15
+   },
+   "usda": {
+    "fdc_id": 172232,
+    "description": "Basil, fresh"
+   },
+   "portions": {
+    "cup": 24.0,
+    "tbsp": 2.6
+   },
+   "density": 0.101,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 47.88,
+    "typical": 56.09,
+    "high": 64.29,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Manjericão Biológico Continente Bio",
+     "Continente: Manjericão Fresco Continente"
+    ]
+   }
+  },
+  {
+   "key": "hortelã",
+   "aliases": [
+    "hortela",
+    "mint"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fat_g": 0.73,
+    "carbs_g": 8.41,
+    "kcal": 44.0,
+    "protein_g": 3.29,
+    "fiber_g": 6.8,
+    "sodium_mg": 30.0
+   },
+   "usda": {
+    "fdc_id": 173475,
+    "description": "Spearmint, fresh"
+   },
+   "portions": {
+    "tbsp": 5.7
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 23.1,
+    "typical": 26.4,
+    "high": 29.7,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Hortelã Biológica Fresca Continente Bio",
+     "Continente: Hortelã Fresca Continente"
+    ]
+   }
+  },
+  {
+   "key": "cebolinho",
+   "aliases": [
+    "cebolinha",
+    "chives",
+    "cebola verde",
+    "spring onion",
+    "scallions"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 2.33,
+    "kcal": 32.0,
+    "fat_g": 0.19,
+    "protein_g": 1.83,
+    "fiber_g": 2.6,
+    "sodium_mg": 16.0,
+    "carbs_g": 7.34
+   },
+   "usda": {
+    "fdc_id": 170005,
+    "description": "Onions, spring or scallions (includes tops and bulb), raw"
+   },
+   "portions": {
+    "cup": 100.0,
+    "tbsp": 6.0,
+    "unit": 15.0
+   },
+   "density": 0.423,
+   "unit_g": 15.0,
+   "price": {
+    "basis": "kg",
+    "low": 44.59,
+    "typical": 49.5,
+    "high": 86.62,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Cebolinho Biológico Fresco Continente Bio",
+     "Continente: Cebolinho Fresco Continente",
+     "Continente: Cebolinho Folha em Frasco Continente"
+    ]
+   }
+  },
+  {
+   "key": "gengibre",
+   "aliases": [
+    "gengibre fresco",
+    "ginger"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 1.7,
+    "fat_g": 0.75,
+    "sodium_mg": 13.0,
+    "protein_g": 1.82,
+    "carbs_g": 17.77,
+    "kcal": 80.0,
+    "fiber_g": 2.0
+   },
+   "usda": {
+    "fdc_id": 169231,
+    "description": "Ginger root, raw"
+   },
+   "portions": {
+    "cup": 96.0,
+    "tsp": 2.0,
+    "slice": 96.0
+   },
+   "density": 0.406,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.91,
+    "typical": 6.82,
+    "high": 7.72,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Gengibre Fresco Continente",
+     "Continente: Gengibre Biológico Fresco Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "peito de frango",
+   "aliases": [
+    "frango",
+    "peitos de frango",
+    "chicken breast",
+    "bifes de frango"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "fat_g": 2.62,
+    "kcal": 120.0,
+    "sodium_mg": 45.0,
+    "protein_g": 22.5,
+    "sugars_g": 0.0,
+    "carbs_g": 0.0,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171077,
+    "description": "Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 6.54,
+    "typical": 6.99,
+    "high": 8.29,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Bifes de Frango Continente",
+     "Continente: Peito de Frango em Vácuo Continente",
+     "Continente: Peito de Frango Continente",
+     "Continente: Bifes de Frango Extrafino Continente"
+    ]
+   }
+  },
+  {
+   "key": "coxas de frango",
+   "aliases": [
+    "coxa de frango",
+    "pernas de frango",
+    "chicken thighs",
+    "sobrecoxas"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "kcal": 121.0,
+    "fat_g": 4.12,
+    "sodium_mg": 95.0,
+    "protein_g": 19.66,
+    "sugars_g": 0.0,
+    "carbs_g": 0.0,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 173627,
+    "description": "Chicken, broilers or fryers, dark meat, thigh, meat only, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 2.99,
+    "typical": 4.49,
+    "high": 7.89,
+    "n": 9,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Coxas de Frango Continente",
+     "Continente: Coxas de Frango do Campo Continente Seleção",
+     "Continente: Perna de Frango Continente",
+     "Continente: Coxas de Frango Continente"
+    ]
+   }
+  },
+  {
+   "key": "frango inteiro",
+   "aliases": [
+    "frango do campo"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "fiber_g": 0.0,
+    "sodium_mg": 70.0,
+    "protein_g": 18.6,
+    "fat_g": 15.06,
+    "carbs_g": 0.0,
+    "kcal": 215.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171447,
+    "description": "Chicken, broilers or fryers, meat and skin, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 2.94,
+    "typical": 3.59,
+    "high": 4.99,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Frango Completo aos Pedaços Continente",
+     "Continente: Lombinhos de Frango Continente",
+     "Continente: Frango Inteiro com Miúdos Continente",
+     "Continente: Frango do Campo Inteiro Com Miúdos Continente"
+    ]
+   }
+  },
+  {
+   "key": "carne picada de vaca",
+   "aliases": [
+    "carne picada",
+    "carne moída",
+    "ground beef",
+    "carne picada de novilho"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "fiber_g": 0.0,
+    "protein_g": 17.17,
+    "fat_g": 20.0,
+    "carbs_g": 0.0,
+    "sugars_g": 0.0,
+    "kcal": 254.0,
+    "sodium_mg": 66.0
+   },
+   "usda": {
+    "fdc_id": 174036,
+    "description": "Beef, ground, 80% lean meat / 20% fat, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 18.73,
+    "typical": 18.73,
+    "high": 18.73,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Carne Picada 100% Aberdeen Angus Continente Seleção",
+     "Continente: Carne Picada 100% Aberdeen Angus Continente Seleção"
+    ]
+   }
+  },
+  {
+   "key": "carne de vaca para estufar",
+   "aliases": [
+    "vaca",
+    "novilho",
+    "carne de vaca",
+    "carne para estufar",
+    "acém",
+    "beef stew meat"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "fat_g": 17.98,
+    "protein_g": 19.23,
+    "sugars_g": 0.0,
+    "sodium_mg": 62.0,
+    "kcal": 244.0,
+    "fiber_g": 0.0,
+    "carbs_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 169491,
+    "description": "Beef, chuck, arm pot roast, separable lean and fat, trimmed to 1/8\" fat, all grades, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 12.99,
+    "typical": 12.99,
+    "high": 12.99,
+    "n": 1,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Novilho para Estufar Continente"
+    ]
+   }
+  },
+  {
+   "key": "bife de vaca",
+   "aliases": [
+    "bifes de vaca",
+    "bife",
+    "entrecosto de vaca",
+    "lombo de vaca",
+    "steak",
+    "vazia"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fat_g": 14.28,
+    "protein_g": 19.92,
+    "sodium_mg": 51.0,
+    "kcal": 214.0,
+    "carbs_g": 0.0,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 168728,
+    "description": "Beef, top sirloin, steak, separable lean and fat, trimmed to 1/8\" fat, choice, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 20.0,
+    "typical": 20.0,
+    "high": 20.0,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Entrecôte de Novilho Continente",
+     "Continente: Bife do Coração de Alcatra de Vitela Fatiado no Balcão Continente",
+     "Continente: Bife do Lombo de Novilho Continente",
+     "Continente: Bife da Vazia de Novilho Continente"
+    ]
+   }
+  },
+  {
+   "key": "lombo de porco",
+   "aliases": [
+    "porco",
+    "carne de porco",
+    "bifes de porco",
+    "febras",
+    "pork loin"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fat_g": 12.58,
+    "carbs_g": 0.0,
+    "kcal": 198.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 50.0,
+    "protein_g": 19.74
+   },
+   "usda": {
+    "fdc_id": 167818,
+    "description": "Pork, fresh, loin, whole, separable lean and fat, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.29,
+    "typical": 5.29,
+    "high": 6.49,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Cachaço Inteiro de Porco sem Osso Continente",
+     "Continente: Lombo de Porco sem Osso para Assar Continente",
+     "Continente: Bifes do Lombo de Porco Marinados ElPozo",
+     "Continente: Lombo de Porco Duroc para Assar Continente Seleção"
+    ]
+   }
+  },
+  {
+   "key": "entremeada",
+   "aliases": [
+    "toucinho",
+    "barriga de porco",
+    "pork belly"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fat_g": 53.01,
+    "carbs_g": 0.0,
+    "kcal": 518.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 32.0,
+    "protein_g": 9.34
+   },
+   "usda": {
+    "fdc_id": 167812,
+    "description": "Pork, fresh, belly, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 10.09,
+    "typical": 11.22,
+    "high": 12.36,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Entremeada de Porco Preto Salgada Serpo Carnes",
+     "Continente: Toucinho do Lombo de Porco Preto Miguel & Miguel"
+    ]
+   }
+  },
+  {
+   "key": "costeletas de porco",
+   "aliases": [
+    "costeleta de porco",
+    "pork chops",
+    "entrecosto"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "protein_g": 20.28,
+    "fiber_g": 0.0,
+    "sodium_mg": 56.0,
+    "fat_g": 11.04,
+    "carbs_g": 0.0,
+    "kcal": 186.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 168242,
+    "description": "Pork, fresh, loin, center rib (chops or roasts), bone-in, separable lean and fat, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 4.99,
+    "typical": 5.99,
+    "high": 6.24,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Costeletas do Cachaço de Porco Continente",
+     "Continente: Costeletas de Porco Continente",
+     "Continente: Costeletas do Lombo de Porco Continente",
+     "Continente: Tiras de Entrecosto de Porco Continente"
+    ]
+   }
+  },
+  {
+   "key": "carne picada de porco",
+   "aliases": [
+    "picado de porco"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "fiber_g": 0.0,
+    "sodium_mg": 56.0,
+    "protein_g": 16.88,
+    "fat_g": 21.19,
+    "carbs_g": 0.0,
+    "kcal": 263.0
+   },
+   "usda": {
+    "fdc_id": 167902,
+    "description": "Pork, fresh, ground, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "peru",
+   "aliases": [
+    "peito de peru",
+    "bifes de peru",
+    "turkey"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "kcal": 114.0,
+    "sugars_g": 0.05,
+    "fat_g": 1.48,
+    "protein_g": 23.66,
+    "sodium_mg": 113.0,
+    "carbs_g": 0.14,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171098,
+    "description": "Turkey, whole, breast, meat only, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.39,
+    "typical": 7.54,
+    "high": 8.86,
+    "n": 6,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Bifes de Peru Continente",
+     "Continente: Perna de Peru em Vácuo Continente",
+     "Continente: Peito de Peru Continente",
+     "Continente: Perna de Peru Continente"
+    ]
+   }
+  },
+  {
+   "key": "borrego",
+   "aliases": [
+    "cordeiro",
+    "lamb"
+   ],
+   "aisle": "Talho",
+   "nutrition": {
+    "protein_g": 16.94,
+    "fiber_g": 0.0,
+    "sodium_mg": 56.0,
+    "fat_g": 22.11,
+    "carbs_g": 0.0,
+    "kcal": 272.0
+   },
+   "usda": {
+    "fdc_id": 172488,
+    "description": "Lamb, leg, sirloin half, separable lean and fat, trimmed to 1/4\" fat, choice, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 20.49,
+    "typical": 23.99,
+    "high": 27.5,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Lombo de Borrego Nipa",
+     "Continente: Borrego Ponto Enrolado Desossado The Posh Burcher"
+    ]
+   }
+  },
+  {
+   "key": "salmão",
+   "aliases": [
+    "salmao",
+    "lombo de salmão",
+    "posta de salmão",
+    "salmon"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "kcal": 208.0,
+    "fat_g": 13.42,
+    "protein_g": 20.42,
+    "sodium_mg": 59.0,
+    "sugars_g": 0.0,
+    "fiber_g": 0.0,
+    "carbs_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 175167,
+    "description": "Fish, salmon, Atlantic, farmed, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 12.0,
+    "typical": 21.57,
+    "high": 22.97,
+    "n": 10,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Filete de Salmão Fresco Continente",
+     "Continente: Filete de Salmão Fresco Continente",
+     "Continente: Lombo de Salmão Fresco Continente",
+     "Continente: Posta de Salmão Fresca"
+    ]
+   }
+  },
+  {
+   "key": "bacalhau",
+   "aliases": [
+    "bacalhau demolhado",
+    "lombos de bacalhau",
+    "cod"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "kcal": 82.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 54.0,
+    "protein_g": 17.81,
+    "fat_g": 0.67,
+    "carbs_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171955,
+    "description": "Fish, cod, Atlantic, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 26.38,
+    "typical": 32.97,
+    "high": 54.42,
+    "n": 13,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Lombos de Bacalhau Premium Nördsson",
+     "Continente: Bacalhau Graúdo 1ª Noruega Nördsson",
+     "Continente: Bacalhau Graúdo 1.ª Islândia Blaest",
+     "Continente: Bacalhau Graúdo Cura Amarela Pescanova"
+    ]
+   }
+  },
+  {
+   "key": "pescada",
+   "aliases": [
+    "filetes de pescada",
+    "hake",
+    "postas de pescada"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "kcal": 82.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 54.0,
+    "protein_g": 17.81,
+    "fat_g": 0.67,
+    "carbs_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171955,
+    "description": "Fish, cod, Atlantic, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 8.54,
+    "typical": 10.61,
+    "high": 16.64,
+    "n": 28,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Pescada Grande de Anzol Fresca",
+     "Continente: Pescada Pequena Fresca",
+     "Continente: Pescada Grande Fresca",
+     "Continente: Rabos de Pescada Fresca"
+    ]
+   }
+  },
+  {
+   "key": "camarão",
+   "aliases": [
+    "camarao",
+    "camarões",
+    "gambas",
+    "shrimp",
+    "prawns",
+    "camarão descascado"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "fat_g": 0.51,
+    "carbs_g": 0.0,
+    "kcal": 85.0,
+    "protein_g": 20.1,
+    "sodium_mg": 119.0
+   },
+   "usda": {
+    "fdc_id": 175179,
+    "description": "Crustaceans, shrimp, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 12.25,
+    "typical": 18.73,
+    "high": 29.37,
+    "n": 18,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Camarão Cozido 30/50 Fresco",
+     "Continente: Camarão Cozido 30/50 Fresco Continente",
+     "Continente: Camarão Cozido 40/60 Fresco Pescanova",
+     "Continente: Camarão Moçambique Cozido 80/100 Fresco Pescanova"
+    ]
+   }
+  },
+  {
+   "key": "atum em lata",
+   "aliases": [
+    "atum",
+    "atum ao natural",
+    "atum em azeite",
+    "canned tuna",
+    "lata de atum"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "kcal": 198.0,
+    "sodium_mg": 416.0,
+    "fat_g": 8.21,
+    "carbs_g": 0.0,
+    "protein_g": 29.13,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 173708,
+    "description": "Fish, tuna, light, canned in oil, drained solids"
+   },
+   "portions": {
+    "cup": 146.0
+   },
+   "density": 0.617,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 13.89,
+    "typical": 19.27,
+    "high": 23.25,
+    "n": 32,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Atum em Azeite Continente",
+     "Continente: Atum Posta em Azeite Bom Petisco",
+     "Continente: Atum Posta em Azeite Continente Seleção",
+     "Continente: Atum ao Natural Continente Equilíbrio"
+    ]
+   }
+  },
+  {
+   "key": "sardinhas",
+   "aliases": [
+    "sardinha",
+    "sardines"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "sodium_mg": 307.0,
+    "fat_g": 11.45,
+    "carbs_g": 0.0,
+    "kcal": 208.0,
+    "fiber_g": 0.0,
+    "protein_g": 24.62
+   },
+   "usda": {
+    "fdc_id": 175139,
+    "description": "Fish, sardine, Atlantic, canned in oil, drained solids with bone"
+   },
+   "portions": {
+    "cup": 149.0
+   },
+   "density": 0.63,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 15.88,
+    "typical": 19.62,
+    "high": 22.47,
+    "n": 19,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Sardinha Fresca",
+     "Continente: Sardinha Congelada",
+     "Continente: Sardinha em Azeite Continente",
+     "Continente: Sardinha em Tomate Continente"
+    ]
+   }
+  },
+  {
+   "key": "lulas",
+   "aliases": [
+    "lula",
+    "squid",
+    "argolas de lula"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "protein_g": 15.58,
+    "fiber_g": 0.0,
+    "sodium_mg": 44.0,
+    "fat_g": 1.38,
+    "carbs_g": 3.08,
+    "kcal": 92.0
+   },
+   "usda": {
+    "fdc_id": 174223,
+    "description": "Mollusks, squid, mixed species, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 10.62,
+    "typical": 13.31,
+    "high": 16.12,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Lulas Limpas Congeladas Pescanova",
+     "Continente: Lulas Limpas 20/40 Ultracongeladas Pescanova",
+     "Continente: Lulas Limpas Ultracongeladas Continente",
+     "Continente: Lulas Descongeladas"
+    ]
+   }
+  },
+  {
+   "key": "polvo",
+   "aliases": [
+    "octopus"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fat_g": 1.04,
+    "carbs_g": 2.2,
+    "kcal": 82.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 230.0,
+    "protein_g": 14.91
+   },
+   "usda": {
+    "fdc_id": 174218,
+    "description": "Mollusks, octopus, common, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 13.74,
+    "typical": 14.49,
+    "high": 15.24,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Polvo Fresco (750 gr a 2 kg)",
+     "Continente: Polvo Fresco (+ 2 kg)"
+    ]
+   }
+  },
+  {
+   "key": "mexilhão",
+   "aliases": [
+    "mexilhao",
+    "mexilhões",
+    "mussels"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fat_g": 2.24,
+    "carbs_g": 3.69,
+    "kcal": 86.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 286.0,
+    "protein_g": 11.9
+   },
+   "usda": {
+    "fdc_id": 174216,
+    "description": "Mollusks, mussel, blue, raw"
+   },
+   "portions": {
+    "cup": 150.0,
+    "unit": 16.0
+   },
+   "density": 0.634,
+   "unit_g": 16.0,
+   "price": {
+    "basis": "kg",
+    "low": 2.74,
+    "typical": 3.49,
+    "high": 4.24,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Mexilhão Fresco",
+     "Continente: Mexilhão Inteiro Cozido a Vapor Pescanova"
+    ]
+   }
+  },
+  {
+   "key": "dourada",
+   "aliases": [
+    "sea bream"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 68.0,
+    "protein_g": 18.43,
+    "fat_g": 2.0,
+    "carbs_g": 0.0,
+    "kcal": 97.0
+   },
+   "usda": {
+    "fdc_id": 175142,
+    "description": "Fish, sea bass, mixed species, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 26.63,
+    "typical": 28.34,
+    "high": 30.06,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Filetes de Dourada Fresca Continente",
+     "Continente: Filetes de Dourada Fresca"
+    ]
+   }
+  },
+  {
+   "key": "robalo",
+   "aliases": [
+    "sea bass"
+   ],
+   "aisle": "Peixaria",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 68.0,
+    "protein_g": 18.43,
+    "fat_g": 2.0,
+    "carbs_g": 0.0,
+    "kcal": 97.0
+   },
+   "usda": {
+    "fdc_id": 175142,
+    "description": "Fish, sea bass, mixed species, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 10.99,
+    "typical": 13.99,
+    "high": 24.96,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Filetes de Robalo Continente",
+     "Continente: Filetes de Robalo Fresco",
+     "Continente: Robalo Médio Fresco",
+     "Continente: Robalo Médio Fresco Nacional"
+    ]
+   }
+  },
+  {
+   "key": "ovos",
+   "aliases": [
+    "ovo",
+    "eggs",
+    "egg",
+    "ovos M",
+    "ovos L",
+    "ovo inteiro",
+    "ovos inteiros"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "kcal": 143.0,
+    "protein_g": 12.56,
+    "sodium_mg": 142.0,
+    "sugars_g": 0.37,
+    "fat_g": 9.51,
+    "carbs_g": 0.72,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171287,
+    "description": "Egg, whole, raw, fresh"
+   },
+   "portions": {
+    "cup": 243.0,
+    "unit": 44.0
+   },
+   "density": 1.027,
+   "unit_g": 55,
+   "price": {
+    "basis": "un",
+    "low": 0.29,
+    "typical": 0.35,
+    "high": 0.41,
+    "n": 11,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Ovos Classe M Dona Gema",
+     "Continente: Ovos de Solo Classe M/L Continente",
+     "Continente: Ovos Classe M/L Matinados",
+     "Continente: Ovos Biológicos Frescos Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "gemas de ovo",
+   "aliases": [
+    "gema",
+    "gemas",
+    "gema de ovo",
+    "egg yolks"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "sugars_g": 0.56,
+    "fat_g": 26.54,
+    "protein_g": 15.86,
+    "sodium_mg": 48.0,
+    "carbs_g": 3.59,
+    "kcal": 322.0,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 172184,
+    "description": "Egg, yolk, raw, fresh"
+   },
+   "portions": {
+    "cup": 243.0,
+    "unit": 17.0
+   },
+   "density": 1.027,
+   "unit_g": 17,
+   "price": {
+    "basis": "un",
+    "low": 0.29,
+    "typical": 0.35,
+    "high": 0.41,
+    "n": 11,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Ovos Classe M Dona Gema",
+     "Continente: Ovos de Solo Classe M/L Continente",
+     "Continente: Ovos Classe M/L Matinados",
+     "Continente: Ovos Biológicos Frescos Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "claras de ovo",
+   "aliases": [
+    "clara",
+    "claras",
+    "egg whites"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "fiber_g": 0.0,
+    "sugars_g": 0.71,
+    "sodium_mg": 166.0,
+    "protein_g": 10.9,
+    "fat_g": 0.17,
+    "kcal": 52.0,
+    "carbs_g": 0.73
+   },
+   "usda": {
+    "fdc_id": 172183,
+    "description": "Egg, white, raw, fresh"
+   },
+   "portions": {
+    "cup": 243.0,
+    "unit": 33.0
+   },
+   "density": 1.027,
+   "unit_g": 33,
+   "price": {
+    "basis": "un",
+    "low": 0.29,
+    "typical": 0.35,
+    "high": 0.41,
+    "n": 11,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Ovos Classe M Dona Gema",
+     "Continente: Ovos de Solo Classe M/L Continente",
+     "Continente: Ovos Classe M/L Matinados",
+     "Continente: Ovos Biológicos Frescos Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "leite",
+   "aliases": [
+    "leite meio-gordo",
+    "leite gordo",
+    "leite magro",
+    "milk"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "protein_g": 3.3,
+    "fiber_g": 0.0,
+    "carbs_g": 4.8,
+    "kcal": 50.0,
+    "sugars_g": 5.06,
+    "fat_g": 1.98,
+    "sodium_mg": 47.0
+   },
+   "usda": {
+    "fdc_id": 171267,
+    "description": "Milk, reduced fat, fluid, 2% milkfat, with added vitamin A and vitamin D"
+   },
+   "portions": {
+    "cup": 244.0
+   },
+   "density": 1.031,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 0.86,
+    "typical": 0.96,
+    "high": 1.06,
+    "n": 66,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Leite UHT Magro Continente",
+     "Continente: Leite UHT Magro Mimosa",
+     "Continente: Leite de Pastagem Magro Terra Nostra",
+     "Continente: Leite UHT Magro Matinal"
+    ]
+   }
+  },
+  {
+   "key": "natas",
+   "aliases": [
+    "natas para culinária",
+    "nata",
+    "cream",
+    "heavy cream",
+    "natas para bater",
+    "double cream"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "fat_g": 36.08,
+    "kcal": 340.0,
+    "sugars_g": 2.92,
+    "sodium_mg": 27.0,
+    "protein_g": 2.84,
+    "fiber_g": 0.0,
+    "carbs_g": 2.84
+   },
+   "usda": {
+    "fdc_id": 170859,
+    "description": "Cream, fluid, heavy whipping"
+   },
+   "portions": {
+    "cup": 120.0,
+    "tbsp": 15.0
+   },
+   "density": 0.507,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 9.85,
+    "typical": 12.23,
+    "high": 13.71,
+    "n": 44,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Natas Cremosa para Bater Continente",
+     "Continente: Natas para Culinária sem Lactose  Continente",
+     "Continente: Natas Cremosas sem Lactose Mimosa",
+     "Continente: Natas UHT para Culinária sem Lactose Mimosa"
+    ]
+   }
+  },
+  {
+   "key": "manteiga",
+   "aliases": [
+    "butter",
+    "manteiga sem sal",
+    "manteiga com sal"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "sugars_g": 0.06,
+    "kcal": 717.0,
+    "fat_g": 81.11,
+    "carbs_g": 0.06,
+    "protein_g": 0.85,
+    "fiber_g": 0.0,
+    "sodium_mg": 11.0
+   },
+   "usda": {
+    "fdc_id": 173430,
+    "description": "Butter, without salt"
+   },
+   "portions": {
+    "cup": 227.0,
+    "tbsp": 14.2
+   },
+   "density": 0.959,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 9.46,
+    "typical": 9.96,
+    "high": 13.52,
+    "n": 35,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Manteiga com Sal Mimosa",
+     "Continente: Manteiga com Sal Açores Continente",
+     "Continente: Manteiga com Sal Milhafre",
+     "Continente: Manteiga com Sal Primor"
+    ]
+   }
+  },
+  {
+   "key": "iogurte natural",
+   "aliases": [
+    "iogurte",
+    "iogurte grego",
+    "yogurt",
+    "greek yogurt"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "sugars_g": 4.66,
+    "kcal": 61.0,
+    "protein_g": 3.47,
+    "fiber_g": 0.0,
+    "sodium_mg": 46.0,
+    "fat_g": 3.25,
+    "carbs_g": 4.66
+   },
+   "usda": {
+    "fdc_id": 171284,
+    "description": "Yogurt, plain, whole milk"
+   },
+   "portions": {
+    "cup": 245.0
+   },
+   "density": 1.036,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 3.67,
+    "typical": 5.32,
+    "high": 5.66,
+    "n": 43,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Iogurte Natural Danone",
+     "Continente: Iogurte Natural Pur Natur",
+     "Continente: Iogurte Magro Natural sem Lactose Mimosa",
+     "Continente: Iogurte Natural Grego Pur Natur"
+    ]
+   }
+  },
+  {
+   "key": "queijo mozzarella",
+   "aliases": [
+    "mozzarella",
+    "mozarela",
+    "queijo mozarela"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "protein_g": 22.17,
+    "sodium_mg": 486.0,
+    "sugars_g": 0.0,
+    "fat_g": 22.14,
+    "carbs_g": 2.4,
+    "kcal": 299.0,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 170845,
+    "description": "Cheese, mozzarella, whole milk"
+   },
+   "portions": {
+    "cup": 112.0,
+    "slice": 28.3
+   },
+   "density": 0.473,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 9.93,
+    "typical": 15.12,
+    "high": 16.9,
+    "n": 21,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Queijo Mozzarella Continente",
+     "Continente: Queijo Mozzarella Proteína Granarolo",
+     "Continente: Queijo Mozzarella Fatiado Continente",
+     "Continente: Queijo Mozzarella Fatiado Mr. Cheese"
+    ]
+   }
+  },
+  {
+   "key": "queijo parmesão",
+   "aliases": [
+    "parmesão",
+    "parmesao",
+    "parmigiano",
+    "grana padano",
+    "parmesan",
+    "queijo parmesão ralado"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "fat_g": 27.84,
+    "carbs_g": 13.91,
+    "kcal": 420.0,
+    "sugars_g": 0.07,
+    "protein_g": 28.42,
+    "sodium_mg": 1804.0,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171247,
+    "description": "Cheese, parmesan, grated"
+   },
+   "portions": {
+    "cup": 100.0,
+    "tbsp": 5.0
+   },
+   "density": 0.423,
+   "unit_g": null
+  },
+  {
+   "key": "queijo pecorino",
+   "aliases": [
+    "pecorino",
+    "pecorino romano"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "kcal": 387.0,
+    "sodium_mg": 1433.0,
+    "fat_g": 26.94,
+    "carbs_g": 3.63,
+    "fiber_g": 0.0,
+    "protein_g": 31.8,
+    "sugars_g": 0.73
+   },
+   "usda": {
+    "fdc_id": 171249,
+    "description": "Cheese, romano"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "queijo flamengo",
+   "aliases": [
+    "queijo",
+    "queijo fatiado",
+    "queijo ralado",
+    "cheddar",
+    "queijo amanteigado"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "sugars_g": 2.22,
+    "kcal": 356.0,
+    "sodium_mg": 819.0,
+    "fiber_g": 0.0,
+    "protein_g": 24.94,
+    "fat_g": 27.44,
+    "carbs_g": 2.22
+   },
+   "usda": {
+    "fdc_id": 171241,
+    "description": "Cheese, gouda"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 9.96,
+    "typical": 12.48,
+    "high": 17.67,
+    "n": 69,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Queijo Flamengo Ralado para Gratinar Continente",
+     "Continente: Queijo Flamengo Fatiado Continente",
+     "Continente: Queijo Flamengo Quarto A Nossa Queijaria",
+     "Continente: Queijo Flamengo sem Lactose Fatiado Limiano"
+    ]
+   }
+  },
+  {
+   "key": "queijo fresco",
+   "aliases": [
+    "requeijão",
+    "requeijao",
+    "ricotta",
+    "cottage"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "protein_g": 7.54,
+    "sodium_mg": 110.0,
+    "fat_g": 10.18,
+    "carbs_g": 7.27,
+    "kcal": 150.0,
+    "fiber_g": 0.0,
+    "sugars_g": 0.27
+   },
+   "usda": {
+    "fdc_id": 170851,
+    "description": "Cheese, ricotta, whole milk"
+   },
+   "portions": {
+    "cup": 248.0
+   },
+   "density": 1.048,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 9.02,
+    "typical": 10.95,
+    "high": 12.88,
+    "n": 51,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Queijo Fresco Limiano",
+     "Continente: Queijo Fresco Sem Lactose Continente",
+     "Continente: Queijo Fresco Longa Duração Light Continente Equilíbrio",
+     "Continente: Queijo Fresco + Oferta Bolsa Térmica Montiqueijo"
+    ]
+   }
+  },
+  {
+   "key": "queijo-creme",
+   "aliases": [
+    "queijo creme",
+    "cream cheese",
+    "philadelphia",
+    "queijo para barrar"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "protein_g": 6.15,
+    "fat_g": 34.44,
+    "carbs_g": 5.52,
+    "kcal": 350.0,
+    "sugars_g": 3.76,
+    "sodium_mg": 314.0,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 173418,
+    "description": "Cheese, cream"
+   },
+   "portions": {
+    "cup": 232.0,
+    "tbsp": 14.5
+   },
+   "density": 0.981,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 12.6,
+    "typical": 13.0,
+    "high": 15.27,
+    "n": 14,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Queijo para Barrar sem Lactose Continente",
+     "Continente: Queijo para Barrar Light Philadelphia",
+     "Continente: Queijo para Barrar de Cabra com Alecrim Philadelphia",
+     "Continente: Queijo Creme Azul Reny Picot"
+    ]
+   }
+  },
+  {
+   "key": "queijo feta",
+   "aliases": [
+    "feta"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fat_g": 21.49,
+    "carbs_g": 3.88,
+    "kcal": 265.0,
+    "sodium_mg": 1139.0,
+    "protein_g": 14.21,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 173420,
+    "description": "Cheese, feta"
+   },
+   "portions": {
+    "cup": 150.0
+   },
+   "density": 0.634,
+   "unit_g": null
+  },
+  {
+   "key": "leite de coco",
+   "aliases": [
+    "coconut milk"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 21.33,
+    "carbs_g": 2.81,
+    "kcal": 197.0,
+    "protein_g": 2.02,
+    "sodium_mg": 13.0
+   },
+   "usda": {
+    "fdc_id": 170173,
+    "description": "Nuts, coconut milk, canned (liquid expressed from grated meat and water)"
+   },
+   "portions": {
+    "cup": 226.0,
+    "tbsp": 15.0
+   },
+   "density": 0.955,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.37,
+    "typical": 5.86,
+    "high": 8.36,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Leite de Coco Ayam",
+     "Continente: Leite de Coco Tai",
+     "Continente: Leite de Coco Koala",
+     "Continente: Leite de Coco Light Origens Bio"
+    ]
+   }
+  },
+  {
+   "key": "bacon",
+   "aliases": [
+    "bacon fumado",
+    "bacon em cubos",
+    "toucinho fumado",
+    "pancetta"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "protein_g": 13.66,
+    "sodium_mg": 751.0,
+    "fat_g": 37.13,
+    "carbs_g": 0.0,
+    "kcal": 393.0,
+    "sugars_g": 0.35,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 168277,
+    "description": "Pork, cured, bacon, unprepared"
+   },
+   "portions": {
+    "slice": 28.0
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 12.82,
+    "typical": 17.61,
+    "high": 20.6,
+    "n": 16,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Bacon Fumado Tiras Pack Familiar Continente",
+     "Continente: Bacon Fios Primor",
+     "Continente: Bacon Fumado Tiras Continente",
+     "Continente: Bacon Extra Naco Primor"
+    ]
+   }
+  },
+  {
+   "key": "guanciale",
+   "aliases": [
+    "papada de porco"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "protein_g": 13.66,
+    "sodium_mg": 751.0,
+    "fat_g": 37.13,
+    "carbs_g": 0.0,
+    "kcal": 393.0,
+    "sugars_g": 0.35,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 168277,
+    "description": "Pork, cured, bacon, unprepared"
+   },
+   "portions": {
+    "slice": 28.0
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 13.45,
+    "typical": 17.95,
+    "high": 22.6,
+    "n": 17,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Bacon Fumado Tiras Pack Familiar Continente",
+     "Continente: Bacon Fios Primor",
+     "Continente: Bacon Fumado Tiras Continente",
+     "Continente: Bacon Extra Naco Primor"
+    ]
+   }
+  },
+  {
+   "key": "chouriço",
+   "aliases": [
+    "chourico",
+    "chouriço de carne",
+    "chorizo"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fiber_g": 0.0,
+    "fat_g": 25.1,
+    "carbs_g": 3.78,
+    "kcal": 296.0,
+    "protein_g": 13.63,
+    "sodium_mg": 788.0
+   },
+   "usda": {
+    "fdc_id": 173859,
+    "description": "Sausage, pork, chorizo, link or ground, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 13.03,
+    "typical": 14.93,
+    "high": 30.07,
+    "n": 18,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Chouriço em Cubos Continente",
+     "Continente: Chouriço 50% Ibérico Fatiado Continente Seleção",
+     "Continente: Chouriço Picante de Porco Preto Miguel & Miguel",
+     "Continente: Chouriço em Rodelas Continente"
+    ]
+   }
+  },
+  {
+   "key": "presunto",
+   "aliases": [
+    "prosciutto",
+    "presunto fatiado",
+    "jamón"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fat_g": 18.52,
+    "carbs_g": 0.06,
+    "kcal": 246.0,
+    "protein_g": 18.49,
+    "fiber_g": 0.0,
+    "sodium_mg": 1284.0
+   },
+   "usda": {
+    "fdc_id": 167875,
+    "description": "Pork, cured, ham, whole, separable lean and fat, unheated"
+   },
+   "portions": {
+    "cup": 140.0
+   },
+   "density": 0.592,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 27.44,
+    "typical": 36.23,
+    "high": 69.25,
+    "n": 24,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Presunto Serrano Fatiado 9 Meses de Cura Continente",
+     "Continente: Presunto Fatiado 12 Meses de Cura Casa do Monte",
+     "Continente: Presunto Fatiado 7 Meses de Cura Continente",
+     "Continente: Presunto Parma DOP 16 Meses Continente Seleção"
+    ]
+   }
+  },
+  {
+   "key": "fiambre",
+   "aliases": [
+    "ham",
+    "fiambre de porco",
+    "fiambre da perna"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "fiber_g": 1.3,
+    "sodium_mg": 814.0,
+    "fat_g": 8.8,
+    "carbs_g": 3.63,
+    "kcal": 164.0,
+    "sugars_g": 1.0,
+    "protein_g": 16.6
+   },
+   "usda": {
+    "fdc_id": 173864,
+    "description": "Ham, sliced, regular (approximately 11% fat)"
+   },
+   "portions": {
+    "slice": 28.0
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 12.59,
+    "typical": 17.36,
+    "high": 21.18,
+    "n": 28,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Fiambre da Perna Extra em Cubos Continente",
+     "Continente: Fiambre da Pá Fatiado Continente",
+     "Continente: Fiambre Italiano Continente Seleção",
+     "Continente: Fiambre da Pá Fatiado Pack Familiar Continente"
+    ]
+   }
+  },
+  {
+   "key": "salsichas",
+   "aliases": [
+    "salsicha",
+    "sausages",
+    "salsichas frescas"
+   ],
+   "aisle": "Charcutaria e queijos",
+   "nutrition": {
+    "fiber_g": 0.0,
+    "sodium_mg": 563.0,
+    "protein_g": 13.9,
+    "fat_g": 24.26,
+    "carbs_g": 2.97,
+    "kcal": 290.0,
+    "sugars_g": 1.19
+   },
+   "usda": {
+    "fdc_id": 171631,
+    "description": "Sausage, Italian, pork, mild, raw"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 8.2,
+    "typical": 10.81,
+    "high": 11.92,
+    "n": 47,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Salsichas Frescas de Porco Continente",
+     "Continente: Salsichas Frescas de Porco Argentinas Chakall Stec",
+     "Continente: Salsichas Frescas de Porco Continente",
+     "Continente: Salsichão de Porco Preto Fatiado Continente Seleção"
+    ]
+   }
+  },
+  {
+   "key": "pão",
+   "aliases": [
+    "pao",
+    "pão de forma",
+    "pão ralado",
+    "bread",
+    "carcaça",
+    "baguete"
+   ],
+   "aisle": "Padaria",
+   "nutrition": {
+    "fiber_g": 2.7,
+    "fat_g": 3.33,
+    "carbs_g": 49.42,
+    "kcal": 266.0,
+    "sugars_g": 5.67,
+    "protein_g": 8.85,
+    "sodium_mg": 490.0
+   },
+   "usda": {
+    "fdc_id": 174924,
+    "description": "Bread, white, commercially prepared (includes soft bread crumbs)"
+   },
+   "portions": {
+    "cup": 45.0,
+    "slice": 29.0
+   },
+   "density": 0.19,
+   "unit_g": 50,
+   "price": {
+    "basis": "kg",
+    "low": 3.74,
+    "typical": 4.87,
+    "high": 5.95,
+    "n": 32,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Pão Francês Continente",
+     "Continente: Pão de Kebab Continente",
+     "Continente: Pão Escuro Rio Maior Com Sementes",
+     "Continente: Pão Padeira"
+    ]
+   }
+  },
+  {
+   "key": "pão ralado",
+   "aliases": [
+    "pao ralado",
+    "breadcrumbs",
+    "panko"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 5.3,
+    "protein_g": 13.35,
+    "fiber_g": 4.5,
+    "sodium_mg": 732.0,
+    "carbs_g": 71.98,
+    "kcal": 395.0,
+    "sugars_g": 6.2
+   },
+   "usda": {
+    "fdc_id": 174928,
+    "description": "Bread, crumbs, dry, grated, plain"
+   },
+   "portions": {
+    "cup": 108.0
+   },
+   "density": 0.456,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 2.42,
+    "typical": 2.88,
+    "high": 3.85,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Pão Ralado",
+     "Continente: Pão Ralado de Alho e Salsa Continente",
+     "Continente: Pão Ralado Crocante Continente"
+    ]
+   }
+  },
+  {
+   "key": "tortilhas",
+   "aliases": [
+    "wraps",
+    "tortilha de trigo",
+    "tortillas"
+   ],
+   "aisle": "Padaria",
+   "nutrition": {
+    "fat_g": 7.99,
+    "carbs_g": 49.38,
+    "kcal": 306.0,
+    "sugars_g": 3.71,
+    "protein_g": 8.2,
+    "fiber_g": 3.5,
+    "sodium_mg": 736.0
+   },
+   "usda": {
+    "fdc_id": 175037,
+    "description": "Tortillas, ready-to-bake or -fry, flour, refrigerated"
+   },
+   "portions": {
+    "unit": 30.0
+   },
+   "density": null,
+   "unit_g": 30.0,
+   "price": {
+    "basis": "kg",
+    "low": 5.23,
+    "typical": 8.05,
+    "high": 10.32,
+    "n": 26,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Wrap de Trigo Continente",
+     "Continente: Wrap de Trigo Integral Koala",
+     "Continente: Tortilhas Wraps Brioche Mission",
+     "Continente: Wraps de Centeio Mission"
+    ]
+   }
+  },
+  {
+   "key": "farinha",
+   "aliases": [
+    "farinha de trigo",
+    "farinha sem fermento",
+    "farinha T55",
+    "flour",
+    "all-purpose flour",
+    "farinha T65"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fiber_g": 2.7,
+    "sodium_mg": 2.0,
+    "protein_g": 10.33,
+    "fat_g": 0.98,
+    "carbs_g": 76.31,
+    "kcal": 364.0,
+    "sugars_g": 0.27
+   },
+   "usda": {
+    "fdc_id": 168894,
+    "description": "Wheat flour, white, all-purpose, enriched, bleached"
+   },
+   "portions": {
+    "cup": 125.0
+   },
+   "density": 0.528,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 1.39,
+    "typical": 2.05,
+    "high": 2.71,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Farinha de Trigo T65 Sem Fermento Pack Poupança Continente",
+     "Continente: Farinha de Trigo Branca Seara"
+    ]
+   }
+  },
+  {
+   "key": "farinha com fermento",
+   "aliases": [
+    "self-raising flour"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fiber_g": 2.7,
+    "sodium_mg": 1193.0,
+    "fat_g": 0.97,
+    "carbs_g": 74.22,
+    "kcal": 354.0,
+    "protein_g": 9.89,
+    "sugars_g": 0.22
+   },
+   "usda": {
+    "fdc_id": 168895,
+    "description": "Wheat flour, white, all-purpose, self-rising, enriched"
+   },
+   "portions": {
+    "cup": 125.0
+   },
+   "density": 0.528,
+   "unit_g": null
+  },
+  {
+   "key": "amido de milho",
+   "aliases": [
+    "maizena",
+    "maisena",
+    "cornstarch",
+    "farinha maizena"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sugars_g": 0.0,
+    "fat_g": 0.05,
+    "carbs_g": 91.27,
+    "kcal": 381.0,
+    "protein_g": 0.26,
+    "fiber_g": 0.9,
+    "sodium_mg": 9.0
+   },
+   "usda": {
+    "fdc_id": 169698,
+    "description": "Cornstarch"
+   },
+   "portions": {
+    "cup": 128.0
+   },
+   "density": 0.541,
+   "unit_g": null
+  },
+  {
+   "key": "açúcar",
+   "aliases": [
+    "acucar",
+    "açúcar branco",
+    "sugar",
+    "açúcar granulado"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "protein_g": 0.0,
+    "sodium_mg": 1.0,
+    "fat_g": 0.0,
+    "kcal": 387.0,
+    "sugars_g": 99.8,
+    "carbs_g": 99.98,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 169655,
+    "description": "Sugars, granulated"
+   },
+   "portions": {
+    "cup": 200.0,
+    "tsp": 4.2
+   },
+   "density": 0.845,
+   "unit_g": null
+  },
+  {
+   "key": "açúcar amarelo",
+   "aliases": [
+    "açúcar mascavado",
+    "brown sugar",
+    "acucar amarelo"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.0,
+    "carbs_g": 98.09,
+    "kcal": 380.0,
+    "sugars_g": 97.02,
+    "protein_g": 0.12,
+    "fiber_g": 0.0,
+    "sodium_mg": 28.0
+   },
+   "usda": {
+    "fdc_id": 168833,
+    "description": "Sugars, brown"
+   },
+   "portions": {
+    "cup": 220.0,
+    "tsp": 3.0
+   },
+   "density": 0.93,
+   "unit_g": null
+  },
+  {
+   "key": "açúcar em pó",
+   "aliases": [
+    "açúcar glacé",
+    "powdered sugar",
+    "icing sugar"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.0,
+    "kcal": 389.0,
+    "protein_g": 0.0,
+    "sodium_mg": 2.0,
+    "carbs_g": 99.77,
+    "sugars_g": 97.81,
+    "fiber_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 169656,
+    "description": "Sugars, powdered"
+   },
+   "portions": {
+    "cup": 120.0,
+    "tbsp": 8.0,
+    "tsp": 2.5
+   },
+   "density": 0.507,
+   "unit_g": null
+  },
+  {
+   "key": "mel",
+   "aliases": [
+    "honey"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "protein_g": 0.3,
+    "fiber_g": 0.2,
+    "sodium_mg": 4.0,
+    "fat_g": 0.0,
+    "carbs_g": 82.4,
+    "kcal": 304.0,
+    "sugars_g": 82.12
+   },
+   "usda": {
+    "fdc_id": 169640,
+    "description": "Honey"
+   },
+   "portions": {
+    "cup": 339.0,
+    "tbsp": 21.0
+   },
+   "density": 1.433,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 12.38,
+    "typical": 12.98,
+    "high": 18.26,
+    "n": 25,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Mel de Rosmaninho Serramel",
+     "Continente: Mel de Rosmaninho Serramel",
+     "Continente: Mel Flores de Rosmaninho com Doseador Serramel",
+     "Continente: Mel de Flores Origens Bio"
+    ]
+   }
+  },
+  {
+   "key": "fermento em pó",
+   "aliases": [
+    "fermento",
+    "baking powder",
+    "fermento químico"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fiber_g": 0.2,
+    "protein_g": 0.0,
+    "sodium_mg": 10600.0,
+    "fat_g": 0.0,
+    "carbs_g": 27.7,
+    "kcal": 53.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 172803,
+    "description": "Leavening agents, baking powder, double-acting, sodium aluminum sulfate"
+   },
+   "portions": {
+    "tsp": 4.6
+   },
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "fermento de padeiro",
+   "aliases": [
+    "levedura",
+    "yeast",
+    "fermento seco"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 7.61,
+    "carbs_g": 41.22,
+    "kcal": 325.0,
+    "protein_g": 40.44,
+    "fiber_g": 26.9,
+    "sodium_mg": 51.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 175043,
+    "description": "Leavening agents, yeast, baker's, active dry"
+   },
+   "portions": {
+    "tbsp": 12.0,
+    "tsp": 4.0
+   },
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "bicarbonato de sódio",
+   "aliases": [
+    "bicarbonato",
+    "baking soda"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fiber_g": 0.0,
+    "fat_g": 0.0,
+    "carbs_g": 0.0,
+    "kcal": 0.0,
+    "protein_g": 0.0,
+    "sodium_mg": 27360.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 175040,
+    "description": "Leavening agents, baking soda"
+   },
+   "portions": {
+    "tsp": 4.6
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 4.53,
+    "typical": 4.99,
+    "high": 7.88,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Bicarbonato de Sódio Alimentar Continente",
+     "Continente: Bicarbonato de Sódio Alimentar Vatel",
+     "Continente: Bicarbonato de Sódio Alimentar Frutogal",
+     "Continente: Bicarbonato de Sódio Alimentar em Saqueta Margão"
+    ]
+   }
+  },
+  {
+   "key": "arroz",
+   "aliases": [
+    "arroz carolino",
+    "arroz agulha",
+    "rice",
+    "arroz branco",
+    "arroz do dia anterior"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.66,
+    "carbs_g": 79.95,
+    "kcal": 365.0,
+    "protein_g": 7.13,
+    "fiber_g": 1.3,
+    "sodium_mg": 5.0,
+    "sugars_g": 0.12
+   },
+   "usda": {
+    "fdc_id": 168877,
+    "description": "Rice, white, long-grain, regular, raw, enriched"
+   },
+   "portions": {
+    "cup": 185.0
+   },
+   "density": 0.782,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 1.04,
+    "typical": 1.08,
+    "high": 1.14,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Arroz Agulha Pack Poupança Continente",
+     "Continente: Arroz Agulha Oriente",
+     "Continente: Arroz Carolino Pack Poupança Continente"
+    ]
+   }
+  },
+  {
+   "key": "arroz basmati",
+   "aliases": [
+    "basmati",
+    "arroz jasmim",
+    "arroz thai"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.66,
+    "carbs_g": 79.95,
+    "kcal": 365.0,
+    "protein_g": 7.13,
+    "fiber_g": 1.3,
+    "sodium_mg": 5.0,
+    "sugars_g": 0.12
+   },
+   "usda": {
+    "fdc_id": 168877,
+    "description": "Rice, white, long-grain, regular, raw, enriched"
+   },
+   "portions": {
+    "cup": 185.0
+   },
+   "density": 0.782,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 1.95,
+    "typical": 2.0,
+    "high": 2.36,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Arroz Basmati Pack Poupança Continente",
+     "Continente: Arroz Basmati Caçarola",
+     "Continente: Arroz Basmati Caçarola",
+     "Continente: Arroz Thai Jasmim Oriente"
+    ]
+   }
+  },
+  {
+   "key": "arroz arbóreo",
+   "aliases": [
+    "arroz para risotto",
+    "arborio",
+    "arroz carnaroli"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "protein_g": 6.61,
+    "fiber_g": 1.4,
+    "sodium_mg": 1.0,
+    "fat_g": 0.58,
+    "carbs_g": 79.34,
+    "kcal": 360.0
+   },
+   "usda": {
+    "fdc_id": 168879,
+    "description": "Rice, white, medium-grain, raw, enriched"
+   },
+   "portions": {
+    "cup": 195.0
+   },
+   "density": 0.824,
+   "unit_g": null
+  },
+  {
+   "key": "massa",
+   "aliases": [
+    "massa seca",
+    "pasta",
+    "massa laços",
+    "laços",
+    "penne",
+    "fusilli",
+    "macarrão",
+    "massa espiral",
+    "cotovelos",
+    "massa curta"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sodium_mg": 6.0,
+    "sugars_g": 2.67,
+    "carbs_g": 74.67,
+    "kcal": 371.0,
+    "fat_g": 1.51,
+    "fiber_g": 3.2,
+    "protein_g": 13.04
+   },
+   "usda": {
+    "fdc_id": 169736,
+    "description": "Pasta, dry, enriched"
+   },
+   "portions": {
+    "cup": 91.0
+   },
+   "density": 0.385,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 3.78,
+    "typical": 4.78,
+    "high": 6.78,
+    "n": 22,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Laços Virgen del Brezo",
+     "Continente: Massa para Pastel Saúda",
+     "Continente: Massa Ninhos com Ovos Continente",
+     "Continente: Massa Esparguete Nº5 Barilla"
+    ]
+   }
+  },
+  {
+   "key": "esparguete",
+   "aliases": [
+    "spaghetti",
+    "esparguetes",
+    "linguine",
+    "tagliatelle",
+    "esparguete seco"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sodium_mg": 6.0,
+    "sugars_g": 2.67,
+    "carbs_g": 74.67,
+    "kcal": 371.0,
+    "fat_g": 1.51,
+    "fiber_g": 3.2,
+    "protein_g": 13.04
+   },
+   "usda": {
+    "fdc_id": 169736,
+    "description": "Pasta, dry, enriched"
+   },
+   "portions": {
+    "cup": 91.0
+   },
+   "density": 0.385,
+   "unit_g": null
+  },
+  {
+   "key": "lasanha",
+   "aliases": [
+    "folhas de lasanha",
+    "massa de lasanha"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sodium_mg": 6.0,
+    "sugars_g": 2.67,
+    "carbs_g": 74.67,
+    "kcal": 371.0,
+    "fat_g": 1.51,
+    "fiber_g": 3.2,
+    "protein_g": 13.04
+   },
+   "usda": {
+    "fdc_id": 169736,
+    "description": "Pasta, dry, enriched"
+   },
+   "portions": {
+    "cup": 91.0
+   },
+   "density": 0.385,
+   "unit_g": null
+  },
+  {
+   "key": "massa de arroz",
+   "aliases": [
+    "noodles de arroz",
+    "rice noodles",
+    "massa chinesa",
+    "noodles"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.56,
+    "kcal": 364.0,
+    "fiber_g": 1.6,
+    "sodium_mg": 182.0,
+    "sugars_g": 0.12,
+    "protein_g": 5.95,
+    "carbs_g": 80.18
+   },
+   "usda": {
+    "fdc_id": 169742,
+    "description": "Rice noodles, dry"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 15.9,
+    "typical": 17.16,
+    "high": 20.95,
+    "n": 9,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Noodles de Carne Banzai Cigala",
+     "Continente: Noodles de Frango Indómie",
+     "Continente: Noodles Carne Pot Koala",
+     "Continente: Noodles de Vitela Cup Nissin"
+    ]
+   }
+  },
+  {
+   "key": "flocos de aveia",
+   "aliases": [
+    "aveia",
+    "oats",
+    "rolled oats"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fiber_g": 10.1,
+    "sugars_g": 0.99,
+    "fat_g": 6.52,
+    "carbs_g": 67.7,
+    "kcal": 379.0,
+    "sodium_mg": 6.0,
+    "protein_g": 13.15
+   },
+   "usda": {
+    "fdc_id": 173904,
+    "description": "Cereals, oats, regular and quick, not fortified, dry"
+   },
+   "portions": {
+    "cup": 81.0
+   },
+   "density": 0.342,
+   "unit_g": null
+  },
+  {
+   "key": "grão-de-bico",
+   "aliases": [
+    "grão",
+    "grao de bico",
+    "chickpeas",
+    "grão cozido"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "protein_g": 7.05,
+    "sodium_mg": 246.0,
+    "fat_g": 2.77,
+    "carbs_g": 22.53,
+    "kcal": 139.0,
+    "fiber_g": 6.4,
+    "sugars_g": 4.01
+   },
+   "usda": {
+    "fdc_id": 173800,
+    "description": "Chickpeas (garbanzo beans, bengal gram), mature seeds, canned, drained solids"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 2.33,
+    "typical": 3.52,
+    "high": 5.16,
+    "n": 10,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Grão de Bico Continente",
+     "Continente: Grão de Bico Caçarola",
+     "Continente: Grão de Bico Seara",
+     "Continente: Grão de Bico Cozido sem Glúten Continente"
+    ]
+   }
+  },
+  {
+   "key": "feijão",
+   "aliases": [
+    "feijão encarnado",
+    "feijão branco",
+    "feijão preto",
+    "feijão manteiga",
+    "beans",
+    "kidney beans",
+    "feijão cozido"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 1.05,
+    "carbs_g": 21.49,
+    "kcal": 124.0,
+    "sugars_g": 3.8,
+    "sodium_mg": 231.0,
+    "protein_g": 7.98,
+    "fiber_g": 5.5
+   },
+   "usda": {
+    "fdc_id": 174285,
+    "description": "Beans, kidney, red, mature seeds, canned, drained solids"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 2.39,
+    "typical": 3.28,
+    "high": 4.96,
+    "n": 40,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Feijão Preto Continente",
+     "Continente: Feijão Manteiga Continente",
+     "Continente: Feijão Catarino Caçarola",
+     "Continente: Feijão Vermelho Caçarola"
+    ]
+   }
+  },
+  {
+   "key": "lentilhas",
+   "aliases": [
+    "lentilha",
+    "lentils",
+    "lentilhas vermelhas"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sugars_g": 2.03,
+    "fat_g": 1.06,
+    "sodium_mg": 6.0,
+    "fiber_g": 10.7,
+    "protein_g": 24.63,
+    "carbs_g": 63.35,
+    "kcal": 352.0
+   },
+   "usda": {
+    "fdc_id": 172420,
+    "description": "Lentils, raw"
+   },
+   "portions": {
+    "cup": 192.0,
+    "tbsp": 12.0
+   },
+   "density": 0.811,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 3.83,
+    "typical": 4.14,
+    "high": 7.6,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Lentilhas Encarnadas sem Casca Continente Bio",
+     "Continente: Lentilhas Secas Continente",
+     "Continente: Lentilha Vermelha Cimarrom",
+     "Continente: Lentilhas Verdes Secas Cimarrom"
+    ]
+   }
+  },
+  {
+   "key": "ervilhas",
+   "aliases": [
+    "ervilha",
+    "peas",
+    "ervilhas congeladas"
+   ],
+   "aisle": "Congelados",
+   "nutrition": {
+    "sugars_g": 5.0,
+    "fat_g": 0.4,
+    "carbs_g": 13.62,
+    "kcal": 77.0,
+    "protein_g": 5.22,
+    "fiber_g": 4.5,
+    "sodium_mg": 108.0
+   },
+   "usda": {
+    "fdc_id": 170016,
+    "description": "Peas, green, frozen, unprepared (Includes foods for USDA's Food Distribution Program)"
+   },
+   "portions": {
+    "cup": 134.0
+   },
+   "density": 0.566,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 6.37,
+    "typical": 6.45,
+    "high": 7.21,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Ervilhas Cozidas~em Lata sem Glúten Compal da Horta",
+     "Continente: Ervilhas Cozidas em Lata sem Glúten Continente",
+     "Continente: Ervilhas em Lata sem Glúten Bonduelle",
+     "Continente: Ervilhas e Cenouras em Lata sem Glúten Bonduelle"
+    ]
+   }
+  },
+  {
+   "key": "tomate pelado",
+   "aliases": [
+    "tomate em lata",
+    "tomates pelados",
+    "canned tomatoes",
+    "tomate triturado",
+    "polpa de tomate",
+    "passata",
+    "tomate em pedaços"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sodium_mg": 115.0,
+    "sugars_g": 2.55,
+    "fat_g": 0.25,
+    "carbs_g": 3.47,
+    "kcal": 16.0,
+    "fiber_g": 1.9,
+    "protein_g": 0.79
+   },
+   "usda": {
+    "fdc_id": 170051,
+    "description": "Tomatoes, red, ripe, canned, packed in tomato juice"
+   },
+   "portions": {
+    "cup": 240.0,
+    "tbsp": 15.0,
+    "unit": 111.0
+   },
+   "density": 1.014,
+   "unit_g": 111.0,
+   "price": {
+    "basis": "kg",
+    "low": 2.41,
+    "typical": 3.31,
+    "high": 3.78,
+    "n": 32,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Polpa de Tomate Continente",
+     "Continente: Tomate em Pedaços Continente",
+     "Continente: Polpa de Tomate Continente",
+     "Continente: Tomate Triturado Continente"
+    ]
+   }
+  },
+  {
+   "key": "concentrado de tomate",
+   "aliases": [
+    "pasta de tomate",
+    "tomato paste",
+    "massa de tomate"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "carbs_g": 18.91,
+    "kcal": 82.0,
+    "sugars_g": 12.18,
+    "sodium_mg": 59.0,
+    "fat_g": 0.47,
+    "protein_g": 4.32,
+    "fiber_g": 4.1
+   },
+   "usda": {
+    "fdc_id": 170459,
+    "description": "Tomato products, canned, paste, without salt added (Includes foods for USDA's Food Distribution Program)"
+   },
+   "portions": {
+    "cup": 264.0,
+    "tbsp": 16.0
+   },
+   "density": 1.116,
+   "unit_g": null
+  },
+  {
+   "key": "azeite",
+   "aliases": [
+    "azeite virgem extra",
+    "olive oil",
+    "fio de azeite",
+    "extra virgin olive oil"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 100.0,
+    "carbs_g": 0.0,
+    "kcal": 884.0,
+    "sodium_mg": 2.0,
+    "protein_g": 0.0,
+    "fiber_g": 0.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171413,
+    "description": "Oil, olive, salad or cooking"
+   },
+   "portions": {
+    "cup": 216.0,
+    "tbsp": 13.5,
+    "tsp": 4.5
+   },
+   "density": 0.913,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.53,
+    "typical": 6.56,
+    "high": 9.04,
+    "n": 33,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Azeite Virgem Extra Selecionado Pet Oliveira da Serra",
+     "Continente: Azeite Virgem Extra Sublime Gallo",
+     "Continente: Azeite Virgem Extra Sublime Gallo",
+     "Continente: Azeite Virgem Extra Oliveira da Serra"
+    ]
+   }
+  },
+  {
+   "key": "óleo",
+   "aliases": [
+    "oleo",
+    "óleo vegetal",
+    "óleo de girassol",
+    "vegetable oil",
+    "sunflower oil",
+    "óleo de amendoim"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 100.0,
+    "carbs_g": 0.0,
+    "kcal": 884.0,
+    "protein_g": 0.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 0.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171017,
+    "description": "Oil, sunflower, linoleic (less than 60%)"
+   },
+   "portions": {
+    "cup": 218.0,
+    "tbsp": 13.6,
+    "tsp": 4.5
+   },
+   "density": 0.921,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 1.93,
+    "typical": 2.26,
+    "high": 2.29,
+    "n": 7,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Óleo Alimentar Fula",
+     "Continente: Óleo Alimentar Continente",
+     "Continente: Óleo de Girassol Fula",
+     "Continente: Óleo Alimentar Especial Fritura Fula"
+    ]
+   }
+  },
+  {
+   "key": "óleo de sésamo",
+   "aliases": [
+    "oleo de sesamo",
+    "sesame oil"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "protein_g": 0.0,
+    "fiber_g": 0.0,
+    "sodium_mg": 0.0,
+    "fat_g": 100.0,
+    "carbs_g": 0.0,
+    "kcal": 884.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 171016,
+    "description": "Oil, sesame, salad or cooking"
+   },
+   "portions": {
+    "cup": 218.0,
+    "tbsp": 13.6,
+    "tsp": 4.5
+   },
+   "density": 0.921,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 26.82,
+    "typical": 28.48,
+    "high": 30.14,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Óleo de Sésamo Emile Noël",
+     "Continente: Óleo de Sésamo Origens Bio"
+    ]
+   }
+  },
+  {
+   "key": "vinagre",
+   "aliases": [
+    "vinagre de vinho",
+    "vinagre balsâmico",
+    "vinegar",
+    "vinagre de cidra"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.0,
+    "carbs_g": 0.27,
+    "kcal": 19.0,
+    "sugars_g": 0.0,
+    "protein_g": 0.04,
+    "fiber_g": 0.0,
+    "sodium_mg": 8.0
+   },
+   "usda": {
+    "fdc_id": 172240,
+    "description": "Vinegar, red wine"
+   },
+   "portions": {
+    "cup": 239.0,
+    "tbsp": 14.9,
+    "tsp": 5.0
+   },
+   "density": 1.01,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 3.94,
+    "typical": 5.11,
+    "high": 7.88,
+    "n": 25,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Vinagre Balsâmico de Modena Gallo",
+     "Continente: Vinagre Balsâmico Continente",
+     "Continente: Vinagre de Vinho Branco Gallo",
+     "Continente: Vinagre de Sidra Original Gallo"
+    ]
+   }
+  },
+  {
+   "key": "vinho branco",
+   "aliases": [
+    "white wine",
+    "vinho branco para cozinhar"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.0,
+    "sugars_g": 0.96,
+    "fiber_g": 0.0,
+    "sodium_mg": 5.0,
+    "carbs_g": 2.6,
+    "protein_g": 0.07,
+    "kcal": 82.0
+   },
+   "usda": {
+    "fdc_id": 174837,
+    "description": "Alcoholic beverage, wine, table, white"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "vinho tinto",
+   "aliases": [
+    "red wine"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fiber_g": 0.0,
+    "sodium_mg": 4.0,
+    "fat_g": 0.0,
+    "carbs_g": 2.61,
+    "sugars_g": 0.62,
+    "kcal": 85.0,
+    "protein_g": 0.07
+   },
+   "usda": {
+    "fdc_id": 173190,
+    "description": "Alcoholic beverage, wine, table, red"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "caldo de legumes",
+   "aliases": [
+    "caldo",
+    "cubo de caldo",
+    "caldo de galinha",
+    "caldo de carne",
+    "stock cube",
+    "broth",
+    "caldo knorr"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "carbs_g": 64.88,
+    "kcal": 438.0,
+    "protein_g": 16.7,
+    "fiber_g": 0.2,
+    "sodium_mg": 1067.0,
+    "fat_g": 13.89,
+    "sugars_g": 14.47
+   },
+   "usda": {
+    "fdc_id": 171613,
+    "description": "Soup, bouillon cubes and granules, low sodium, dry"
+   },
+   "portions": {
+    "tsp": 2.6
+   },
+   "density": null,
+   "unit_g": 10,
+   "price": {
+    "basis": "kg",
+    "low": 8.25,
+    "typical": 13.75,
+    "high": 18.5,
+    "n": 23,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Caldo de Galinha Cubos Knorr",
+     "Continente: Caldo de Galinha Cubos Continente",
+     "Continente: Caldo de Carne Cubos sem Glúten Knorr",
+     "Continente: Caldo de Legumes Natura sem Glúten Knorr"
+    ]
+   }
+  },
+  {
+   "key": "molho de soja",
+   "aliases": [
+    "soja",
+    "soy sauce",
+    "molho soja",
+    "shoyu",
+    "tamari"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.57,
+    "carbs_g": 4.93,
+    "sugars_g": 0.4,
+    "protein_g": 8.14,
+    "sodium_mg": 5493.0,
+    "kcal": 53.0,
+    "fiber_g": 0.8
+   },
+   "usda": {
+    "fdc_id": 174277,
+    "description": "Soy sauce made from soy and wheat (shoyu)"
+   },
+   "portions": {
+    "cup": 255.0,
+    "tbsp": 16.0,
+    "tsp": 5.3
+   },
+   "density": 1.078,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.81,
+    "typical": 17.92,
+    "high": 29.62,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Molho de Soja Continente",
+     "Continente: Molho de Soja com Menos Sal Kikkoman",
+     "Continente: Molho de Soja Kikkoman",
+     "Continente: Molho de Soja Paladin"
+    ]
+   }
+  },
+  {
+   "key": "molho teriyaki",
+   "aliases": [
+    "teriyaki"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "protein_g": 5.93,
+    "fiber_g": 0.1,
+    "sodium_mg": 3833.0,
+    "sugars_g": 14.1,
+    "fat_g": 0.02,
+    "carbs_g": 15.56,
+    "kcal": 89.0
+   },
+   "usda": {
+    "fdc_id": 171167,
+    "description": "Sauce, teriyaki, ready-to-serve"
+   },
+   "portions": {
+    "cup": 288.0,
+    "tbsp": 18.0
+   },
+   "density": 1.217,
+   "unit_g": null
+  },
+  {
+   "key": "maionese",
+   "aliases": [
+    "mayonnaise",
+    "mayo"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sodium_mg": 635.0,
+    "protein_g": 0.96,
+    "fat_g": 74.85,
+    "carbs_g": 0.57,
+    "kcal": 680.0,
+    "fiber_g": 0.0,
+    "sugars_g": 0.57
+   },
+   "usda": {
+    "fdc_id": 171009,
+    "description": "Salad dressing, mayonnaise, regular"
+   },
+   "portions": {
+    "cup": 220.0,
+    "tbsp": 13.8
+   },
+   "density": 0.93,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.73,
+    "typical": 7.49,
+    "high": 8.97,
+    "n": 15,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Maionese Hellmann's",
+     "Continente: Maionese em Vidro Heinz",
+     "Continente: Maionese XXL Top Down Calvé",
+     "Continente: Maionese Top Down sem Glúten Continente"
+    ]
+   }
+  },
+  {
+   "key": "mostarda",
+   "aliases": [
+    "mustard",
+    "mostarda dijon",
+    "mostarda antiga"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "protein_g": 3.74,
+    "fiber_g": 4.0,
+    "sodium_mg": 1104.0,
+    "fat_g": 3.34,
+    "carbs_g": 5.83,
+    "kcal": 60.0,
+    "sugars_g": 0.92
+   },
+   "usda": {
+    "fdc_id": 172234,
+    "description": "Mustard, prepared, yellow"
+   },
+   "portions": {
+    "cup": 249.0,
+    "tsp": 5.0
+   },
+   "density": 1.052,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 6.17,
+    "typical": 10.88,
+    "high": 12.21,
+    "n": 8,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Mostarda Top Down Calvé",
+     "Continente: Mostarda Dijon Original em Vidro Maille",
+     "Continente: Mostarda Original Frasco Savora",
+     "Continente: Mostarda Top Down Paladin"
+    ]
+   }
+  },
+  {
+   "key": "ketchup",
+   "aliases": [
+    "catchup"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sodium_mg": 907.0,
+    "protein_g": 1.04,
+    "fiber_g": 0.3,
+    "sugars_g": 21.27,
+    "fat_g": 0.1,
+    "carbs_g": 27.4,
+    "kcal": 101.0
+   },
+   "usda": {
+    "fdc_id": 168556,
+    "description": "Catsup"
+   },
+   "portions": {
+    "cup": 240.0,
+    "tbsp": 17.0
+   },
+   "density": 1.014,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 4.89,
+    "typical": 8.7,
+    "high": 10.07,
+    "n": 10,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Ketchup Top Down sem Glúten Heinz",
+     "Continente: Ketchup Top Down sem Glúten Heinz",
+     "Continente: Ketchup Top Down sem Glúten Heinz",
+     "Continente: Ketchup com Redução de Sal Top Down Heinz"
+    ]
+   }
+  },
+  {
+   "key": "pesto",
+   "aliases": [
+    "pesto de manjericão",
+    "molho pesto"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 37.6,
+    "carbs_g": 10.09,
+    "kcal": 418.0,
+    "sugars_g": 6.33,
+    "protein_g": 9.83,
+    "fiber_g": 1.8,
+    "sodium_mg": 603.0
+   },
+   "usda": {
+    "fdc_id": 171579,
+    "description": "Sauce, pesto, ready-to-serve, refrigerated"
+   },
+   "portions": {
+    "cup": 252.0
+   },
+   "density": 1.065,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 17.84,
+    "typical": 26.26,
+    "high": 27.58,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Molho Pesto Alla Genovese Barilla",
+     "Continente: Molho Pesto Continente",
+     "Continente: Molho Pesto Pistáchio Barilla"
+    ]
+   }
+  },
+  {
+   "key": "chocolate de culinária",
+   "aliases": [
+    "chocolate",
+    "chocolate negro",
+    "chocolate para culinária",
+    "dark chocolate",
+    "pepitas de chocolate"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 42.63,
+    "carbs_g": 45.9,
+    "kcal": 598.0,
+    "sugars_g": 23.99,
+    "protein_g": 7.79,
+    "fiber_g": 10.9,
+    "sodium_mg": 20.0
+   },
+   "usda": {
+    "fdc_id": 170273,
+    "description": "Chocolate, dark, 70-85% cacao solids"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "cacau em pó",
+   "aliases": [
+    "cacau",
+    "cocoa powder"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sugars_g": 1.75,
+    "carbs_g": 57.9,
+    "kcal": 228.0,
+    "fiber_g": 37.0,
+    "sodium_mg": 21.0,
+    "protein_g": 19.6,
+    "fat_g": 13.7
+   },
+   "usda": {
+    "fdc_id": 169593,
+    "description": "Cocoa, dry powder, unsweetened"
+   },
+   "portions": {
+    "cup": 86.0,
+    "tbsp": 5.4
+   },
+   "density": 0.363,
+   "unit_g": null
+  },
+  {
+   "key": "amêndoa",
+   "aliases": [
+    "amendoas",
+    "amêndoas",
+    "almonds",
+    "amêndoa laminada",
+    "farinha de amêndoa"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "protein_g": 21.15,
+    "fiber_g": 12.5,
+    "fat_g": 49.93,
+    "carbs_g": 21.55,
+    "kcal": 579.0,
+    "sodium_mg": 1.0,
+    "sugars_g": 4.35
+   },
+   "usda": {
+    "fdc_id": 170567,
+    "description": "Nuts, almonds"
+   },
+   "portions": {
+    "cup": 143.0,
+    "slice": 92.0
+   },
+   "density": 0.604,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 14.06,
+    "typical": 18.38,
+    "high": 22.09,
+    "n": 12,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Miolo de Amêndoa Torrada Continente",
+     "Continente: Miolo de Amêndoa sem Pele Continente",
+     "Continente: Amêndoa com Pele Pack Poupança Continente",
+     "Continente: Amêndoa Caramelizada Bio Nolita"
+    ]
+   }
+  },
+  {
+   "key": "nozes",
+   "aliases": [
+    "noz",
+    "walnuts",
+    "miolo de noz"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "carbs_g": 13.71,
+    "kcal": 654.0,
+    "sugars_g": 2.61,
+    "protein_g": 15.23,
+    "fiber_g": 6.7,
+    "sodium_mg": 2.0,
+    "fat_g": 65.21
+   },
+   "usda": {
+    "fdc_id": 170187,
+    "description": "Nuts, walnuts, english"
+   },
+   "portions": {
+    "cup": 117.0
+   },
+   "density": 0.495,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 9.96,
+    "typical": 12.29,
+    "high": 18.21,
+    "n": 10,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Miolo de Nozes Metades Continente",
+     "Continente: Miolo de Noz Pedaços Zero Desperdício Continente",
+     "Continente: Noz com Casca Biológica Continente Bio",
+     "Continente: Miolo de Noz Frumesa"
+    ]
+   }
+  },
+  {
+   "key": "amendoins",
+   "aliases": [
+    "amendoim",
+    "peanuts",
+    "manteiga de amendoim"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "fiber_g": 8.5,
+    "sugars_g": 4.72,
+    "sodium_mg": 18.0,
+    "protein_g": 25.8,
+    "fat_g": 49.24,
+    "carbs_g": 16.13,
+    "kcal": 567.0
+   },
+   "usda": {
+    "fdc_id": 172430,
+    "description": "Peanuts, all types, raw"
+   },
+   "portions": {
+    "cup": 146.0
+   },
+   "density": 0.617,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.55,
+    "typical": 6.41,
+    "high": 18.04,
+    "n": 8,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Miolo de Amendoim Torrado Continente",
+     "Continente: Miolo de Amendoim com Sal Continente",
+     "Continente: Amendoim Frito com Sal Frutorra",
+     "Continente: Amendoim Torrado com Casca Continente"
+    ]
+   }
+  },
+  {
+   "key": "sementes de sésamo",
+   "aliases": [
+    "sésamo",
+    "sesamo",
+    "sesame seeds"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sugars_g": 0.3,
+    "protein_g": 17.73,
+    "fiber_g": 11.8,
+    "sodium_mg": 11.0,
+    "fat_g": 49.67,
+    "carbs_g": 23.45,
+    "kcal": 573.0
+   },
+   "usda": {
+    "fdc_id": 170150,
+    "description": "Seeds, sesame seeds, whole, dried"
+   },
+   "portions": {
+    "cup": 144.0,
+    "tbsp": 9.0
+   },
+   "density": 0.609,
+   "unit_g": null
+  },
+  {
+   "key": "azeitonas",
+   "aliases": [
+    "azeitona",
+    "olives",
+    "azeitonas pretas",
+    "azeitonas verdes"
+   ],
+   "aisle": "Frutas e legumes",
+   "nutrition": {
+    "sodium_mg": 735.0,
+    "sugars_g": 0.0,
+    "protein_g": 0.84,
+    "fiber_g": 1.6,
+    "fat_g": 10.9,
+    "carbs_g": 6.04,
+    "kcal": 116.0
+   },
+   "usda": {
+    "fdc_id": 169094,
+    "description": "Olives, ripe, canned (small-extra large)"
+   },
+   "portions": {
+    "tbsp": 8.4,
+    "unit": 4.4
+   },
+   "density": null,
+   "unit_g": 4.4,
+   "price": {
+    "basis": "kg",
+    "low": 9.04,
+    "typical": 14.95,
+    "high": 18.95,
+    "n": 22,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Azeitona Preta Descaroçada Oxidada Continente",
+     "Continente: Azeitona Verde Descaroçada Continente",
+     "Continente: Azeitona Verde com Azeite, Alho e Louro Maçarico",
+     "Continente: Azeitona Mista com Azeite, Alho e Oregãos Maçarico"
+    ]
+   }
+  },
+  {
+   "key": "alcaparras",
+   "aliases": [
+    "alcaparra",
+    "capers"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "sugars_g": 0.41,
+    "fat_g": 0.86,
+    "carbs_g": 4.89,
+    "protein_g": 2.36,
+    "fiber_g": 3.2,
+    "kcal": 23.0,
+    "sodium_mg": 2348.0
+   },
+   "usda": {
+    "fdc_id": 172238,
+    "description": "Capers, canned"
+   },
+   "portions": {
+    "tbsp": 8.6
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 22.88,
+    "typical": 22.88,
+    "high": 28.02,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Alcaparras Transmontanas Biológicas Casa dos Montes",
+     "Continente: Alcaparras Transmontanas Biológicas Casa dos Montes",
+     "Continente: Alcaparras em Vinagre Cimarrom"
+    ]
+   }
+  },
+  {
+   "key": "tofu",
+   "aliases": [
+    "tofu firme",
+    "tofu fumado"
+   ],
+   "aisle": "Laticínios e ovos",
+   "nutrition": {
+    "fiber_g": 2.3,
+    "carbs_g": 2.78,
+    "kcal": 144.0,
+    "protein_g": 17.27,
+    "sodium_mg": 14.0,
+    "fat_g": 8.72
+   },
+   "usda": {
+    "fdc_id": 172475,
+    "description": "Tofu, raw, firm, prepared with calcium sulfate"
+   },
+   "portions": {
+    "cup": 252.0
+   },
+   "density": 1.065,
+   "unit_g": null
+  },
+  {
+   "key": "água",
+   "aliases": [
+    "agua",
+    "água a ferver",
+    "água quente",
+    "water",
+    "água fria"
+   ],
+   "aisle": null,
+   "free": true
+  },
+  {
+   "key": "sal",
+   "aliases": [
+    "sal fino",
+    "sal grosso",
+    "flor de sal",
+    "salt",
+    "sal marinho"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "fiber_g": 0.0,
+    "sodium_mg": 38758.0,
+    "protein_g": 0.0,
+    "fat_g": 0.0,
+    "carbs_g": 0.0,
+    "kcal": 0.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 173468,
+    "description": "Salt, table"
+   },
+   "portions": {
+    "cup": 292.0,
+    "tbsp": 18.0,
+    "tsp": 6.0
+   },
+   "density": 1.234,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 2.85,
+    "typical": 7.31,
+    "high": 10.18,
+    "n": 10,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Flor de Sal Vatel",
+     "Continente: Flor de Sal Marnoto",
+     "Continente: Flor de Sal Continente",
+     "Continente: Sal Grosso Vatel"
+    ]
+   }
+  },
+  {
+   "key": "pimenta preta",
+   "aliases": [
+    "pimenta",
+    "pimenta moída",
+    "black pepper",
+    "pimenta em grão"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "fat_g": 3.26,
+    "sugars_g": 0.64,
+    "carbs_g": 63.95,
+    "kcal": 251.0,
+    "protein_g": 10.39,
+    "fiber_g": 25.3,
+    "sodium_mg": 20.0
+   },
+   "usda": {
+    "fdc_id": 170931,
+    "description": "Spices, pepper, black"
+   },
+   "portions": {
+    "tbsp": 6.9,
+    "tsp": 2.3
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 37.19,
+    "typical": 52.57,
+    "high": 67.43,
+    "n": 3,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Pimenta Preta com Moínho em Frasco Margão",
+     "Continente: Pimenta Preta em Grão em Saqueta Continente",
+     "Continente: Pimenta Preta em Grão Saqueta Margão"
+    ]
+   }
+  },
+  {
+   "key": "colorau",
+   "aliases": [
+    "paprika",
+    "pimentão doce",
+    "pimentão-doce",
+    "paprika fumada",
+    "smoked paprika"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "sugars_g": 10.34,
+    "fiber_g": 34.9,
+    "sodium_mg": 68.0,
+    "protein_g": 14.14,
+    "fat_g": 12.89,
+    "carbs_g": 53.99,
+    "kcal": 282.0
+   },
+   "usda": {
+    "fdc_id": 171329,
+    "description": "Spices, paprika"
+   },
+   "portions": {
+    "tbsp": 6.8,
+    "tsp": 2.3
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 14.44,
+    "typical": 30.67,
+    "high": 45.43,
+    "n": 5,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Pimentão Doce em Saqueta Continente",
+     "Continente: Pimentão Doce em Frasco Continente",
+     "Continente: Pimentão Doce Margão",
+     "Continente: Paprika Fumada Saqueta Margão"
+    ]
+   }
+  },
+  {
+   "key": "cominhos",
+   "aliases": [
+    "cominho",
+    "cumin"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "protein_g": 17.81,
+    "fiber_g": 10.5,
+    "sodium_mg": 168.0,
+    "fat_g": 22.27,
+    "carbs_g": 44.24,
+    "kcal": 375.0,
+    "sugars_g": 2.25
+   },
+   "usda": {
+    "fdc_id": 170923,
+    "description": "Spices, cumin seed"
+   },
+   "portions": {
+    "tbsp": 6.0,
+    "tsp": 2.1
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 24.04,
+    "typical": 28.29,
+    "high": 32.55,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Cominhos Moídos em Frasco Continente",
+     "Continente: Cominhos Moídos em Saqueta Margão"
+    ]
+   }
+  },
+  {
+   "key": "canela",
+   "aliases": [
+    "canela em pó",
+    "pau de canela",
+    "cinnamon"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "sugars_g": 2.17,
+    "fiber_g": 53.1,
+    "protein_g": 3.99,
+    "sodium_mg": 10.0,
+    "fat_g": 1.24,
+    "carbs_g": 80.59,
+    "kcal": 247.0
+   },
+   "usda": {
+    "fdc_id": 171320,
+    "description": "Spices, cinnamon, ground"
+   },
+   "portions": {
+    "tbsp": 7.8,
+    "tsp": 2.6
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 17.59,
+    "typical": 29.65,
+    "high": 44.06,
+    "n": 6,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Canela em Pau em Saqueta Continente",
+     "Continente: Canela Moída em Saqueta Continente",
+     "Continente: Canela Moída em Frasco Margão",
+     "Continente: Canela Moída em Frasco Continente"
+    ]
+   }
+  },
+  {
+   "key": "noz-moscada",
+   "aliases": [
+    "noz moscada",
+    "nutmeg"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "protein_g": 5.84,
+    "sodium_mg": 16.0,
+    "fat_g": 36.31,
+    "carbs_g": 49.29,
+    "kcal": 525.0,
+    "sugars_g": 2.99,
+    "fiber_g": 20.8
+   },
+   "usda": {
+    "fdc_id": 171326,
+    "description": "Spices, nutmeg, ground"
+   },
+   "portions": {
+    "tbsp": 7.0,
+    "tsp": 2.2
+   },
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "orégãos",
+   "aliases": [
+    "oregaos",
+    "oregano",
+    "orégãos secos"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "sugars_g": 4.09,
+    "fat_g": 4.28,
+    "carbs_g": 68.92,
+    "kcal": 265.0,
+    "fiber_g": 42.5,
+    "sodium_mg": 25.0,
+    "protein_g": 9.0
+   },
+   "usda": {
+    "fdc_id": 171328,
+    "description": "Spices, oregano, dried"
+   },
+   "portions": {
+    "tsp": 1.0
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 49.5,
+    "typical": 51.66,
+    "high": 67.87,
+    "n": 4,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Oregãos Secos Louriplanta",
+     "Continente: Orégãos Folha em Saqueta Margão",
+     "Continente: Orégãos Folha em Frasco Continente",
+     "Continente: Orégãos Folha em Saqueta Continente"
+    ]
+   }
+  },
+  {
+   "key": "louro",
+   "aliases": [
+    "folha de louro",
+    "folhas de louro",
+    "bay leaf"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "fiber_g": 26.3,
+    "sodium_mg": 23.0,
+    "protein_g": 7.61,
+    "fat_g": 8.36,
+    "carbs_g": 74.97,
+    "kcal": 313.0
+   },
+   "usda": {
+    "fdc_id": 170917,
+    "description": "Spices, bay leaf"
+   },
+   "portions": {
+    "tbsp": 1.8,
+    "tsp": 0.6
+   },
+   "density": null,
+   "unit_g": 0.2,
+   "price": {
+    "basis": "kg",
+    "low": 69.0,
+    "typical": 69.0,
+    "high": 69.0,
+    "n": 1,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Louro Folha em Saqueta Continente"
+    ]
+   }
+  },
+  {
+   "key": "tomilho",
+   "aliases": [
+    "thyme"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "fat_g": 7.43,
+    "carbs_g": 63.94,
+    "kcal": 276.0,
+    "protein_g": 9.11,
+    "sodium_mg": 55.0,
+    "fiber_g": 37.0,
+    "sugars_g": 1.71
+   },
+   "usda": {
+    "fdc_id": 170938,
+    "description": "Spices, thyme, dried"
+   },
+   "portions": {
+    "tbsp": 2.7,
+    "tsp": 1.0
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 52.13,
+    "typical": 64.59,
+    "high": 77.04,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Tomilho Biológico Fresco Continente Bio",
+     "Continente: Tomilho Fresco Continente"
+    ]
+   }
+  },
+  {
+   "key": "alecrim",
+   "aliases": [
+    "rosemary"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "protein_g": 4.88,
+    "sodium_mg": 50.0,
+    "fat_g": 15.22,
+    "carbs_g": 64.06,
+    "kcal": 331.0,
+    "fiber_g": 42.6
+   },
+   "usda": {
+    "fdc_id": 171333,
+    "description": "Spices, rosemary, dried"
+   },
+   "portions": {
+    "tbsp": 3.3,
+    "tsp": 1.2
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 85.64,
+    "typical": 86.92,
+    "high": 88.21,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Alecrim Fresco Continente",
+     "Continente: Alecrim Folha em Frasco Margão"
+    ]
+   }
+  },
+  {
+   "key": "caril",
+   "aliases": [
+    "caril em pó",
+    "curry",
+    "pasta de caril",
+    "curry powder"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "kcal": 325.0,
+    "sodium_mg": 52.0,
+    "sugars_g": 2.76,
+    "fiber_g": 53.2,
+    "protein_g": 14.29,
+    "fat_g": 14.01,
+    "carbs_g": 55.83
+   },
+   "usda": {
+    "fdc_id": 170924,
+    "description": "Spices, curry powder"
+   },
+   "portions": {
+    "tbsp": 6.3,
+    "tsp": 2.0
+   },
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "açafrão-da-índia",
+   "aliases": [
+    "curcuma",
+    "curcuma",
+    "açafrão",
+    "turmeric"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "sugars_g": 3.21,
+    "fat_g": 3.25,
+    "carbs_g": 67.14,
+    "kcal": 312.0,
+    "protein_g": 9.68,
+    "fiber_g": 22.7,
+    "sodium_mg": 27.0
+   },
+   "usda": {
+    "fdc_id": 172231,
+    "description": "Spices, turmeric, ground"
+   },
+   "portions": {
+    "tbsp": 9.4,
+    "tsp": 3.0
+   },
+   "density": null,
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 13.52,
+    "typical": 13.52,
+    "high": 13.52,
+    "n": 1,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Curcuma Biológica Fresca Continente Bio"
+    ]
+   }
+  },
+  {
+   "key": "pimenta caiena",
+   "aliases": [
+    "caiena",
+    "cayenne",
+    "chili em pó",
+    "malagueta seca",
+    "flocos de malagueta"
+   ],
+   "aisle": "Temperos e especiarias",
+   "nutrition": {
+    "fat_g": 17.27,
+    "carbs_g": 56.63,
+    "kcal": 318.0,
+    "protein_g": 12.01,
+    "sodium_mg": 30.0,
+    "fiber_g": 27.2,
+    "sugars_g": 10.34
+   },
+   "usda": {
+    "fdc_id": 170932,
+    "description": "Spices, pepper, red or cayenne"
+   },
+   "portions": {
+    "tbsp": 5.3,
+    "tsp": 1.8
+   },
+   "density": null,
+   "unit_g": null
+  },
+  {
+   "key": "baunilha",
+   "aliases": [
+    "extrato de baunilha",
+    "essência de baunilha",
+    "vanilla",
+    "açúcar baunilhado"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "fat_g": 0.06,
+    "carbs_g": 12.65,
+    "kcal": 288.0,
+    "protein_g": 0.06,
+    "fiber_g": 0.0,
+    "sodium_mg": 9.0,
+    "sugars_g": 12.65
+   },
+   "usda": {
+    "fdc_id": 173471,
+    "description": "Vanilla extract"
+   },
+   "portions": {
+    "cup": 208.0,
+    "tbsp": 13.0,
+    "tsp": 4.2
+   },
+   "density": 0.879,
+   "unit_g": null
+  },
+  {
+   "key": "gelatina",
+   "aliases": [
+    "folhas de gelatina",
+    "gelatin"
+   ],
+   "aisle": "Mercearia",
+   "nutrition": {
+    "protein_g": 85.6,
+    "fiber_g": 0.0,
+    "sodium_mg": 196.0,
+    "fat_g": 0.1,
+    "carbs_g": 0.0,
+    "kcal": 335.0,
+    "sugars_g": 0.0
+   },
+   "usda": {
+    "fdc_id": 169599,
+    "description": "Gelatins, dry powder, unsweetened"
+   },
+   "portions": {},
+   "density": null,
+   "unit_g": 2
+  }
+ ]
+}

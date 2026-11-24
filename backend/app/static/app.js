@@ -125,6 +125,10 @@ const I = {
   vote: '<svg viewBox="0 0 24 24"><path d="M5 12.5 9.5 17 19 7.5"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>',
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg>',
 };
+const EUR = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
+const eur = v => EUR.format(v);
+/** "≈ 2,40 €" from a [low, typical, high] triple; null when there's no price data. */
+const costText = c => c && c[1] > 0 ? `≈ ${eur(c[1])}` : null;
 /** Initial-letter avatar in the person's colour. */
 const avatar = (u, cls = "") => u ? `<span class="av ${cls}" style="background:${esc(u.color || "#e2531d")}" title="${esc(u.name)}">${esc((u.name || "?").trim().charAt(0).toUpperCase())}</span>` : "";
 const firstName = u => (u?.name || "").split(" ")[0];
@@ -295,7 +299,7 @@ function card(r) {
     <span class="tag glass-photo">${esc(platformName(r.source_platform))}</span>
     ${r.favorite ? `<span class="fav glass-photo" aria-label="Favorito">${I.heart}</span>` : ""}
     <div class="caption glass-photo"><h3>${esc(r.title)}</h3>
-      <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.stats?.cooks ? `<span>${I.check}${r.stats.cooks}×</span>` : r.servings ? `<span>${r.servings} ${r.servings === 1 ? "dose" : "doses"}</span>` : ""}
+      <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.facts && r.facts.price_coverage >= 0.6 && costText(r.facts.cost) ? `<span>${costText(r.facts.cost)}</span>` : ""}${r.stats?.cooks ? `<span>${I.check}${r.stats.cooks}×</span>` : r.servings ? `<span>${r.servings} ${r.servings === 1 ? "dose" : "doses"}</span>` : ""}
         ${!r.is_owner && r.owner ? `<span class="by">${avatar(r.owner, "xs")}</span>` : ""}</div>
     </div></article>`;
 }
@@ -373,6 +377,22 @@ async function renderDetail(id) {
       </section>`;
   };
 
+  // ---- cost & nutrition (computed from the ingredient lines; see backend costing.py)
+  let facts = null;
+  const loadFacts = async () => {
+    try { facts = await api(`/recipes/${id}/facts`); } catch { return; }
+    drawFacts();
+  };
+  const drawFacts = () => {
+    const el = $("#factsArea"); if (!el || !facts) return;
+    el.innerHTML = factsHTML(facts, current.servings || r.servings);
+    const statK = view.querySelector(".stat:last-child b");
+    const kcal = facts.coverage >= 0.6 ? facts.per_serving.kcal : r.nutrition_estimate?.calories;
+    if (statK && kcal) statK.textContent = kcal;
+    $("#factsMore", el) && ($("#factsMore", el).onclick = () => { el.querySelector(".facts-lines").hidden ^= true; $("#factsMore", el).textContent = el.querySelector(".facts-lines").hidden ? "Ver por ingrediente" : "Esconder detalhe"; });
+    el.querySelectorAll("[data-fix]").forEach(b => b.onclick = () => openFixSheet(b.dataset.fix, async () => { await loadFacts(); }));
+  };
+
   const loadSocial = async () => {
     try { social = await api(`/recipes/${id}/social`); } catch { social = { cooks: [], variations: [], rating: { yes: [], no: [], mine: 0 } }; }
     const el = $("#socialArea");
@@ -441,6 +461,7 @@ async function renderDetail(id) {
         <div class="section-head"><h3>Passos</h3><span class="meta">${current.steps.length} ${current.steps.length === 1 ? "passo" : "passos"}${totalTime(r) ? ` · ${fmtMin(totalTime(r))}` : ""}</span></div>
         ${current.steps.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><p>${esc(s.text)}</p></div>`).join("")}
       </section>
+      <div id="factsArea"></div>
       <div id="socialArea">${socialHTML()}</div>
       ${n && (n.protein_g || n.carbs_g || n.fat_g) ? `<section class="section glass"><div class="section-head"><h3>Informação nutricional</h3><span class="meta">por dose, estimativa</span></div>
         <div class="nutrition"><div><b>${n.protein_g ?? "–"}g</b><span>Proteína</span></div><div><b>${n.carbs_g ?? "–"}g</b><span>Hidratos</span></div><div><b>${n.fat_g ?? "–"}g</b><span>Gordura</span></div></div></section>` : ""}
@@ -476,10 +497,12 @@ async function renderDetail(id) {
       state.recipes = state.recipes.filter(x => x.id !== id); location.hash = "/";
     });
     if (social) wireSocial();
+    drawFacts();
   };
   bar();
   draw();
   loadSocial();
+  loadFacts();
   detailRefresh = { id, reload: async () => { try { r = await api(`/recipes/${id}`); current = current.servings === r.servings ? r : current; } catch { return; } loadSocial(); } };
 }
 let detailRefresh = null;

@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from . import costing
 from .models import Recipe
 from .pipeline import now
 from .realtime import broker
@@ -84,6 +85,15 @@ class ItemIn(BaseModel):
     unit: Optional[str] = None
     recipe_id: Optional[str] = None
     servings: Optional[int] = None
+
+
+class MapIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    key: Optional[str] = None  # None = "not an ingredient to count" (e.g. "água da cozedura")
+
+
+class PaidIn(BaseModel):
+    paid: float = Field(gt=0, lt=1000, description="euros paid for this list item")
 
 
 class ItemPatch(BaseModel):
@@ -160,6 +170,27 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
             if notifier:
                 notifier.on_activity(gid, uid, type_, rid, data or {})
 
+    # ---------- cost & nutrition (costing.py) with the group's corrections and paid prices
+    def overrides() -> dict:
+        return {x["name_norm"]: x["ref_key"] for x in store.q("SELECT name_norm, ref_key FROM ingredient_map")}
+
+    def paid_prices(uid: str) -> dict:
+        groups = my_groups(uid)
+        if not groups:
+            return {}
+        ph = ",".join("?" * len(groups))
+        by: dict[str, list[float]] = {}
+        for x in store.q(f"SELECT ref_key, price_per_kg FROM paid_prices WHERE group_id IN ({ph}) AND created_at > ?", [*groups, ago(120)]):
+            by.setdefault(x["ref_key"], []).append(x["price_per_kg"])
+        return {k: costing.median_recent(v) for k, v in by.items()}
+
+    def facts_for(rec: Recipe, uid: str, ov=None, pp=None) -> dict:
+        return costing.compute([i.model_dump() for i in rec.ingredients], rec.servings,
+                               ov if ov is not None else overrides(), pp if pp is not None else paid_prices(uid))
+
+    def brief(f: dict) -> dict:
+        return {"cost": f["per_serving"]["cost"], "kcal": f["per_serving"]["kcal"], "coverage": f["coverage"], "price_coverage": f["price_coverage"]}
+
     # ---------- recipe views (personal state + social stats merged in)
     def views(uid: str, recs: list[Recipe]) -> list[dict]:
         if not recs:
@@ -179,6 +210,7 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
             if x["user_id"] == uid:
                 d["mine"] = x["value"]
         people = users_by_id(owners.values())
+        ov, pp = overrides(), paid_prices(uid)
         out = []
         for rec in recs:
             d = rec.model_dump()
@@ -190,6 +222,7 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
             d["shared_group_ids"] = shares.get(rec.id, [])
             rt = rates.get(rec.id, {"yes": 0, "no": 0, "mine": 0})
             d["stats"] = {"cooks": cooks.get(rec.id, 0), **rt}
+            d["facts"] = brief(facts_for(rec, uid, ov, pp))
             out.append(d)
         return out
 
@@ -548,7 +581,8 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
                 continue
             voters = [people.get(v["user_id"]) for v in votes if v["recipe_id"] == rec.id]
             options.append({"recipe": {"id": rec.id, "title": rec.title, "thumbnail_url": rec.thumbnail_url,
-                                       "total_minutes": rec.total_minutes, "servings": rec.servings},
+                                       "total_minutes": rec.total_minutes, "servings": rec.servings,
+                                       "facts": brief(facts_for(rec, uid))},
                             "votes": len(voters), "voters": voters})
         e["options"] = options
         e["my_vote"] = next((v["recipe_id"] for v in votes if v["user_id"] == uid), None)
@@ -683,6 +717,19 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
                 x["assignee"] = people.get(x["assigned_to"])
                 x["checked_by_user"] = people.get(x["checked_by"])
             d["items"] = items
+            ov, pp = overrides(), paid_prices(uid)
+            est = [0.0, 0.0, 0.0]
+            known = 0
+            for x in items:
+                if x["checked"]:
+                    continue
+                f = costing.compute([{"name": x["name"], "quantity": x["quantity"], "unit": x["unit"]}], None, ov, pp)
+                c = f["total"]["cost"]
+                x["estimate"] = c[1] if any(c) else None
+                if any(c):
+                    known += 1
+                    est = [a + b for a, b in zip(est, c)]
+            d["estimate"] = {"cost": [round(v, 2) for v in est], "known": known, "todo": sum(1 for x in items if not x["checked"])}
         return d
 
     @r.get("/lists")
@@ -757,6 +804,57 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
         store.x("DELETE FROM list_items WHERE list_id=? AND checked=1", (lid,))
         broker.publish(list_audience(lst), {"kind": "list", "id": lid})
         return list_view(lst, user["id"])
+
+    # ---------- cost & nutrition endpoints
+    @r.get("/recipes/{rid}/facts")
+    def recipe_facts(rid: str, user=U) -> dict:
+        rec = get_visible(user["id"], rid)
+        f = facts_for(rec, user["id"])
+        ref = costing.reference()["by_key"]
+        for line in f["lines"]:
+            it = ref.get(line["key"]) if line["key"] else None
+            if it and it.get("price"):
+                line["price"] = {k: it["price"][k] for k in ("basis", "typical", "low", "high", "stores")}
+            line["aisle"] = it.get("aisle") if it else None
+        if f["coverage"] < 0.6 and rec.nutrition_estimate:  # too little matched: fall back to the import-time AI estimate
+            f["ai_estimate"] = rec.nutrition_estimate.model_dump()
+        return f
+
+    @r.get("/ingredients/search")
+    def ingredient_search(q: str = "", user=U) -> list[dict]:
+        return costing.search(q)
+
+    @r.put("/ingredient-map")
+    def set_mapping(body: MapIn, user=U) -> dict:
+        if body.key and body.key not in costing.reference()["by_key"]:
+            raise HTTPException(400, "Ingrediente de referência desconhecido.")
+        store.x("INSERT OR REPLACE INTO ingredient_map(name_norm, ref_key, updated_by, updated_at) VALUES (?,?,?,?)",
+                (costing.norm(body.name), body.key, user["id"], now()))
+        for g in my_groups(user["id"]):
+            broker.publish(members(g), {"kind": "recipe", "id": "*"})
+        return {"ok": True}
+
+    @r.post("/items/{iid}/paid")
+    def item_paid(iid: str, body: PaidIn, user=U) -> dict:
+        """Record what was paid for a list item: feeds the group's own price estimates."""
+        item = store.one("SELECT * FROM list_items WHERE id=?", (iid,))
+        if not item:
+            raise HTTPException(404, "Artigo não encontrado.")
+        lst = get_list_row(item["list_id"], user["id"])
+        key, _ = costing.match_key(item["name"], overrides())
+        ref = costing.reference()["by_key"].get(key) if key else None
+        if not ref or ref.get("free"):
+            raise HTTPException(400, "Não reconheço este artigo para guardar o preço.")
+        grams, _ = costing.grams_for(ref, costing.amount(item["quantity"]), item["unit"])
+        if not grams:
+            raise HTTPException(400, "Indica a quantidade do artigo (ex.: 500 g) para calcular o preço por kg.")
+        per_kg = body.paid / grams * 1000
+        if lst["group_id"]:
+            store.x("INSERT INTO paid_prices(id, group_id, ref_key, price_per_kg, user_id, created_at) VALUES (?,?,?,?,?,?)",
+                    (uuid.uuid4().hex, lst["group_id"], key, round(per_kg, 2), user["id"], now()))
+        store.x("UPDATE list_items SET checked=1, checked_by=?, paid=? WHERE id=?", (user["id"], body.paid, iid))
+        broker.publish(list_audience(lst), {"kind": "list", "id": lst["id"]})
+        return {"ref_key": key, "price_per_kg": round(per_kg, 2)}
 
     # ---------- realtime stream
     @r.get("/stream")

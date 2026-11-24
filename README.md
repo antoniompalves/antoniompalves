@@ -85,6 +85,35 @@ before accounts existed). After that, sign-up needs a **group invite link** (`/#
 tab) or the server's `SIGNUP_CODE` if you set one. Passwords are hashed with scrypt; sessions are bearer tokens.
 The iOS Shortcut uses your personal token (Definições → copy token).
 
+## Estimated cost and calories
+
+Every recipe shows an **estimated cost per serving** (with a low–high range) and **calories and macros per
+serving**, computed from its ingredient lines rather than guessed:
+
+1. Each line (`200 g de esparguete`, `2 dentes de alho`, `1 c. sopa de azeite`, `sal q.b.`) is matched to one of
+   ~160 reference ingredients (`app/data/ingredients_pt.json`): aliases, plural and note stripping, then a one-off
+   Claude mapping for unknown names (cached), then people's corrections (*Corrigir*, applies to everyone).
+2. Quantities become grams using **measured USDA portion weights** (1 dente de alho = 3 g, 1 chávena de farinha ≈ 127 g),
+   Portuguese household measures (chávena 240 ml, c. sopa 15 ml, c. chá 5 ml) and per-ingredient densities.
+3. **Nutrition**: USDA FoodData Central SR Legacy (public domain). **Prices**: shelf prices from Continente and Auchan
+   category pages (median = typical, 25th–75th percentile = range), used only for the amount the recipe needs.
+4. **Group prices**: tapping the price chip on a shopping-list item records what was actually paid; the group's
+   median paid price (last 120 days) replaces the reference price for that ingredient.
+
+Recipes where fewer than 60% of ingredients could be matched hide the cost and fall back to the AI estimate for
+calories, clearly labelled. Shopping lists show an estimated total, and dinner polls show cost per person.
+
+**Refreshing prices** (e.g. quarterly). Collection is low-volume (one request every 1.5 s) and follows each site's
+robots.txt: Continente disallows search and pagination, so only the first page of each category is read; Auchan
+allows a larger page size. Check the sites' terms before running it, and keep it occasional.
+```bash
+python backend/tools/collect_prices.py continente && python backend/tools/collect_prices.py auchan
+python backend/tools/build_reference.py --usda <FoodData_Central_sr_legacy_food_csv dir> --prices continente_prices.json auchan_prices.json
+```
+`tools/reference_seed.py` holds the ingredient list, USDA food names and product-name patterns; edit it to add
+ingredients or fix a bad price match. The Portuguese INSA food composition table (TCA) would be a better nutrition
+source for Portuguese dishes once its licence is confirmed; the pipeline is ready to take a second source.
+
 ## Web app (no App Store, no sideloading)
 
 The backend also serves an installable web app (PWA) at `/`. It has the library, search,

@@ -22,6 +22,7 @@ from fastapi.staticfiles import StaticFiles
 from . import social
 from .auth import make_auth
 from .notify import Notifier
+from . import mapper
 from .models import ImportJob, ImportRequest
 from .pipeline import now, run_job
 from .realtime import broker
@@ -81,6 +82,8 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
             router.share_on_import(user["id"], recipe, req.group_id)
             broker.publish([user["id"]], {"kind": "import", "id": job.id})
             notifier.on_import_done(user["id"], recipe.id, recipe.title)
+            if os.getenv("INGREDIENT_LLM_MAPPING", "1") == "1":
+                mapper.map_with_llm(store, [i.name for i in recipe.ingredients])
 
         def on_failed(error):
             notifier.on_import_failed(user["id"], error)

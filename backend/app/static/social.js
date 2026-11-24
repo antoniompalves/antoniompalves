@@ -509,6 +509,7 @@ async function renderEvent(id, silent = false) {
         <a href="#/r/${esc(o.recipe.id)}" class="opt-photo">${o.recipe.thumbnail_url ? `<img src="${esc(o.recipe.thumbnail_url)}" alt="" referrerpolicy="no-referrer">` : placeholder(o.recipe.id)}</a>
         <div class="opt-body">
           <b>${esc(o.recipe.title)}</b>
+          ${o.recipe.facts?.price_coverage >= 0.6 && costText(o.recipe.facts.cost) ? `<span class="meta">${costText(o.recipe.facts.cost)} por pessoa · ${o.recipe.facts.kcal} kcal</span>` : ""}
           <div class="bar"><i style="width:${(o.votes / max) * 100}%"></i></div>
           <div class="opt-foot"><span class="faces">${o.voters.map(u => avatar(u, "xs")).join("")}</span>
             <span class="meta">${o.votes} ${o.votes === 1 ? "voto" : "votos"}</span>
@@ -589,7 +590,8 @@ async function renderList(id, silent = false) {
       <label class="ing-check"><input type="checkbox" ${i.checked ? "checked" : ""} aria-label="Comprado"></label>
       <div class="litem-body"><span class="txt">${i.quantity || i.unit ? `<span class="qty">${esc([i.quantity, i.unit].filter(Boolean).join(" "))}</span> ` : ""}${esc(withDe(i.unit, i.name))}</span>
         ${i.sources.length ? `<small class="note">${esc(i.sources.join(", "))}</small>` : ""}
-        ${i.checked && i.checked_by_user ? `<small class="note">comprado por ${esc(firstName(i.checked_by_user))}</small>` : ""}</div>
+        ${i.checked && i.checked_by_user ? `<small class="note">comprado por ${esc(firstName(i.checked_by_user))}${i.paid ? ` · ${eur(i.paid)}` : ""}</small>` : ""}</div>
+      ${!i.checked && i.estimate ? `<button class="price-chip" data-paid title="Registar quanto pagaste">${costText([0, i.estimate, 0])}</button>` : ""}
       ${l.group_id && !i.checked ? (i.assignee
         ? `<button class="bring ${i.assignee.id === me()?.id ? "mine" : ""}" data-unassign ${i.assignee.id === me()?.id ? "" : "disabled"} aria-label="${esc(i.assignee.name)} traz">${avatar(i.assignee, "xs")}${i.assignee.id === me()?.id ? "Eu trago" : esc(firstName(i.assignee))}</button>`
         : `<button class="bring" data-assign>Eu trago</button>`) : ""}
@@ -599,6 +601,7 @@ async function renderList(id, silent = false) {
     <div class="list-head glass">
       <div><span class="eyebrow">${l.group_id ? `${I.users} ${esc(l.group_name || "Grupo")} · em tempo real` : "Lista pessoal"}</span>
         <b>${todo.length ? `Faltam ${todo.length}` : l.items.length ? "Está tudo!" : "Lista vazia"}</b>
+        ${l.estimate?.known && todo.length ? `<span class="meta">${costText(l.estimate.cost)} estimados${l.estimate.known < l.estimate.todo ? ` (${l.estimate.known} de ${l.estimate.todo} artigos)` : ""}</span>` : ""}
         ${l.group_id && mineCount ? `<span class="meta">Tu trazes ${mineCount} ${mineCount === 1 ? "coisa" : "coisas"}</span>` : ""}</div>
       ${l.items.length ? `<div class="progress-ring" style="--p:${l.items.length ? done.length / l.items.length : 0}"><b>${done.length}/${l.items.length}</b><span>comprados</span></div>` : ""}
     </div>
@@ -617,6 +620,7 @@ async function renderList(id, silent = false) {
     $("[data-assign]", rowEl) && ($("[data-assign]", rowEl).onclick = () => { haptic(); act(() => api(`/items/${iid}`, { method: "PATCH", body: { assign: "me" } })); });
     $("[data-unassign]", rowEl) && ($("[data-unassign]", rowEl).onclick = () => act(() => api(`/items/${iid}`, { method: "PATCH", body: { assign: "none" } })));
     $("[data-del]", rowEl).onclick = () => act(() => api(`/items/${iid}`, { method: "DELETE" }));
+    $("[data-paid]", rowEl) && ($("[data-paid]", rowEl).onclick = () => openPaidSheet(l.items.find(x => x.id === iid), () => renderList(id, true)));
   });
   $("#addItem").onsubmit = e => {
     e.preventDefault();
@@ -794,5 +798,84 @@ async function pushNudge() {
   $("#nudgeX").onclick = () => { store.set("pushNudgeDismissed", true); slot.innerHTML = ""; };
   $("#nudgeOn") && ($("#nudgeOn").onclick = async () => {
     try { if (await enablePush()) { slot.innerHTML = ""; toast("Notificações ativadas"); } } catch (e) { toast(e.message || "Não foi possível ativar"); }
+  });
+}
+
+
+// ---------------------------------------------------------------- cost & nutrition
+const CONF_LABEL = { high: "", medium: "aprox.", low: "estimativa fraca", none: "" };
+
+function factsHTML(f, servings) {
+  const ps = f.per_serving, n = servings || f.servings || 1;
+  const priced = f.price_coverage >= 0.6 && ps.cost[1] > 0;
+  const nutri = f.coverage >= 0.6;
+  const kcal = nutri ? ps.kcal : f.ai_estimate?.calories;
+  const macros = nutri ? ps : f.ai_estimate ? { protein_g: f.ai_estimate.protein_g, carbs_g: f.ai_estimate.carbs_g, fat_g: f.ai_estimate.fat_g } : null;
+  const mtot = macros ? (macros.protein_g || 0) * 4 + (macros.carbs_g || 0) * 4 + (macros.fat_g || 0) * 9 : 0;
+  const pctOf = (g, k) => mtot ? Math.round(((g || 0) * k / mtot) * 100) : 0;
+  const unmatched = f.lines.filter(l => !l.free && (!l.key || l.grams == null));
+  const month = f.sources.price_collected ? new Date(f.sources.price_collected).toLocaleDateString("pt-PT", { month: "long", year: "numeric" }) : "";
+  return `<section class="section glass facts">
+    <div class="section-head"><h3>Custo e nutrição</h3><span class="meta">por dose</span></div>
+    <div class="facts-top">
+      <div class="fact-big">${priced ? `<b>${eur(ps.cost[1])}</b><span>${eur(ps.cost[0])} – ${eur(ps.cost[2])}</span>` : `<b>–</b><span>sem preços suficientes</span>`}<em>custo estimado</em></div>
+      <div class="fact-big">${kcal ? `<b>${kcal}</b><span>kcal</span>` : `<b>–</b><span>sem dados</span>`}<em>${nutri ? "calculado" : f.ai_estimate ? "estimativa da IA" : "calorias"}</em></div>
+    </div>
+    ${macros && mtot ? `<div class="macro-bar" role="img" aria-label="Proteína ${macros.protein_g} g, hidratos ${macros.carbs_g} g, gordura ${macros.fat_g} g">
+        <i class="p" style="flex:${pctOf(macros.protein_g, 4)}"></i><i class="c" style="flex:${pctOf(macros.carbs_g, 4)}"></i><i class="f" style="flex:${pctOf(macros.fat_g, 9)}"></i></div>
+      <div class="macro-legend"><span><i class="p"></i>Proteína <b>${Math.round(macros.protein_g)} g</b></span><span><i class="c"></i>Hidratos <b>${Math.round(macros.carbs_g)} g</b></span><span><i class="f"></i>Gordura <b>${Math.round(macros.fat_g)} g</b></span>${nutri && ps.fiber_g ? `<span>Fibra <b>${Math.round(ps.fiber_g)} g</b></span>` : ""}</div>` : ""}
+    ${priced ? `<p class="meta">Total para ${n} ${n === 1 ? "dose" : "doses"}: <b>${eur(ps.cost[1] * n)}</b> (só a parte usada de cada ingrediente).</p>` : ""}
+    ${unmatched.length ? `<p class="warn-line">${I.warn}<span>${unmatched.length === 1 ? "1 ingrediente ficou" : `${unmatched.length} ingredientes ficaram`} de fora do cálculo: ${unmatched.map(l => esc(l.name)).join(", ")}.</span></p>` : ""}
+    <button class="text-btn" id="factsMore">Ver por ingrediente</button>
+    <div class="facts-lines" hidden>
+      ${f.lines.filter(l => !l.free).map(l => `<div class="fline ${!l.key || l.grams == null ? "bad" : ""}">
+        <div><b>${esc(l.name)}</b><small>${l.key ? `${esc(l.key)}${l.grams != null ? ` · ${l.grams >= 10 ? Math.round(l.grams) : l.grams} g` : " · quantidade?"}${CONF_LABEL[l.confidence] ? ` · ${CONF_LABEL[l.confidence]}` : ""}` : "sem correspondência"}</small></div>
+        <span class="fnum">${l.kcal != null ? `${l.kcal} kcal` : ""}</span><span class="fnum">${l.cost != null ? eur(l.cost) : ""}</span>
+        <button class="mini" data-fix="${esc(l.name)}" aria-label="Corrigir ${esc(l.name)}">${I.edit}</button></div>`).join("")}
+      <p class="meta src">Estimativa. Nutrição: USDA FoodData Central. Preços de prateleira do Continente e do Auchan${month ? ` (${month})` : ""}, ou os que o teu grupo registou ao fazer compras.</p>
+    </div>
+  </section>`;
+}
+
+/** Correct which reference ingredient a recipe line counts as. Applies to everyone's recipes. */
+function openFixSheet(name, done) {
+  openSheet({
+    title: "Corrigir ingrediente", noSubmit: true,
+    body: `<p class="meta sheet-lead">Como devemos contar “<b>${esc(name)}</b>” no custo e nas calorias?</p>
+      <div class="search-wrap glass">${I.search}<input class="search" id="refQ" placeholder="Procurar ingrediente" value="${esc(name.split(",")[0])}" autocomplete="off"></div>
+      <div class="choice-list" id="refList"></div>
+      <button type="button" class="btn-glass glass wide" id="refNone">Não contar este ingrediente</button>`,
+    onMount: (el, hide) => {
+      const choose = async key => {
+        await api("/ingredient-map", { method: "PUT", body: { name, key } });
+        hide(); toast(key ? `Contado como ${key}` : "Ingrediente ignorado no cálculo"); done?.();
+      };
+      const run = async () => {
+        const items = await api(`/ingredients/search?q=${encodeURIComponent($("#refQ", el).value)}`).catch(() => []);
+        $("#refList", el).innerHTML = items.map(it => `<button type="button" class="choice" data-k="${esc(it.key)}">
+          <span class="list-ico">${I.fork}</span><span><b>${esc(it.key)}</b><small>${esc(it.aisle || "")}${it.kcal != null ? ` · ${Math.round(it.kcal)} kcal/100 g` : ""}${it.price ? ` · ${eur(it.price)}/${it.basis === "un" ? "un" : "kg"}` : ""}</small></span></button>`).join("")
+          || `<p class="meta">Sem resultados. Experimenta um nome mais simples (ex.: “queijo”).</p>`;
+        el.querySelectorAll("[data-k]").forEach(b => b.onclick = () => choose(b.dataset.k));
+      };
+      let t; $("#refQ", el).oninput = () => { clearTimeout(t); t = setTimeout(run, 150); };
+      $("#refNone", el).onclick = () => choose(null);
+      run();
+    },
+  });
+}
+
+/** "Quanto pagaste?": feeds the group's own prices, which then beat the reference table. */
+function openPaidSheet(item, done) {
+  openSheet({
+    title: "Quanto pagaste?", submit: "Guardar",
+    body: `<p class="meta sheet-lead"><b>${esc([item.quantity, item.unit, withDe(item.unit, item.name)].filter(Boolean).join(" "))}</b>. O preço fica a contar para as estimativas do grupo.</p>
+      <label class="field"><span class="field-label">Preço pago (€)</span>
+        <input name="paid" type="text" inputmode="decimal" placeholder="${item.estimate ? item.estimate.toFixed(2).replace(".", ",") : "ex.: 2,49"}" autocomplete="off"></label>`,
+    onSubmit: async form => {
+      const v = parseFloat(form.paid.value.replace(",", "."));
+      if (!(v > 0)) { toast("Indica um valor, ex.: 2,49"); return false; }
+      const r = await api(`/items/${item.id}/paid`, { method: "POST", body: { paid: v } });
+      toast(`Obrigado! ${eur(r.price_per_kg)}/kg guardado para o grupo`); haptic(); done?.();
+    },
   });
 }
