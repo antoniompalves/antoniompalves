@@ -1731,3 +1731,15 @@ html:root[data-theme="washi"] .card .top :is(.tag, .badge-cook, .fav) { backgrou
   html:root[data-theme="umami"] .hh-text { position: relative; z-index: 1; min-width: 0; }
   html:root[data-theme="umami"] .hh-week { width: 128%; margin-right: -2.4rem; }
 }
+
+/* Buttons: small capitals, tracked out — quiet, precise labels */
+html:root :is(.btn-primary, .btn-outline, .hh-ghost, .cm-import, .btn-solid, .seg button, .danger-link),
+html:root[data-theme] :is(.btn-primary, .btn-outline, .hh-ghost, .cm-import, .btn-solid, .seg button, .danger-link) {
+  text-transform: uppercase; font-size: .75rem; font-weight: 700; letter-spacing: .12em; line-height: 1; white-space: nowrap; }
+html:root :is(.btn-primary, .btn-outline, .hh-ghost, .cm-import, .btn-solid) svg,
+html:root[data-theme] :is(.btn-primary, .btn-outline, .hh-ghost, .cm-import, .btn-solid) svg { width: 1rem; height: 1rem; }
+html:root .btn-solid, html:root[data-theme] .btn-solid { border-radius: 999px; padding: 0 1.25rem; min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: center; }
+html:root .seg button, html:root[data-theme] .seg button { font-size: .6875rem; letter-spacing: .1em; }
+html:root .hh-actions :is(.btn-primary, .hh-ghost), html:root[data-theme] .hh-actions :is(.btn-primary, .hh-ghost) { min-height: 2.9rem; padding: 0 1.4rem; gap: .6rem; }
+html:root .cup-menu .cm-import, html:root[data-theme] .cup-menu .cm-import { padding: .8rem 1.2rem; }
+html:root[data-theme] .hh-actions .btn-primary, html:root[data-theme] .hh-ghost { border-radius: 999px; }

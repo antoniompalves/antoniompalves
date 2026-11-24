@@ -74,3 +74,30 @@ def is_bimby(title: str, steps: list[str], tags: list[str]) -> bool:
 
 def item_key(name: str, unit: Optional[str]) -> tuple[str, str]:
     return (name.strip().lower(), (unit or "").strip().lower())
+
+
+# Portuguese titles use sentence case ("Arroz de pato à moda de Braga"), not Title Case.
+KEEP_CAPS = {"Brás", "Gomes", "Sá", "Bulhão", "Pato", "Porto", "Lisboa", "Braga", "Alentejo", "Minho", "Algarve", "Madeira",
+             "Açores", "Coimbra", "Aveiro", "Bimby", "Thermomix", "Nutella", "Oreo", "Kinder", "Bairrada", "Setúbal", "Viseu", "Tomar"}
+
+
+def sentence_case(title: str) -> str:
+    """'Taça de Tofu Teriyaki' -> 'Taça de tofu teriyaki'. Only rewrites titles that look Title Cased; keeps
+    acronyms (BBQ), mixed-case brands (TikTok), place and people names in KEEP_CAPS, and text in brackets."""
+    if not title:
+        return title
+    words = title.split(" ")
+    caps = [w for w in words[1:] if len(w) > 2 and w[:1].isupper() and w[1:].islower()]
+    if len(caps) < 1 or len([w for w in words[1:] if len(w) > 2]) == 0:
+        return title
+    out, bracket = [words[0]], False
+    for w in words[1:]:
+        if w.startswith("("):
+            bracket = True
+        core = w.strip("()[],.:;!?\"'«»")
+        keep = (bracket or not core or core.isupper() or not core[1:].islower() or core in KEEP_CAPS
+                or (out and out[-1].endswith((":", ".", "!", "?"))))
+        out.append(w if keep else w[:1].lower() + w[1:])
+        if w.endswith(")"):
+            bracket = False
+    return " ".join(out)

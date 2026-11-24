@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class Ingredient(BaseModel):
@@ -58,6 +58,12 @@ class RecipeDraft(BaseModel):
     confidence: float = Field(
         description="0-1: how complete the recipe is from the source (1 = fully stated, low = inferred)"
     )
+    @field_validator("title")
+    @classmethod
+    def _sentence_case(cls, v: str) -> str:
+        from .util import sentence_case
+        return sentence_case(v)
+
     inferred_fields: list[str] = Field(
         default_factory=list,
         description="Fields guessed rather than stated in the source, e.g. ['quantities', 'servings']",
