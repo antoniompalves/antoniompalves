@@ -37,11 +37,12 @@
    "unit_g": 5,
    "price": {
     "basis": "kg",
-    "low": 11.43,
-    "typical": 16.18,
-    "high": 18.31,
-    "n": 11,
+    "low": 8.34,
+    "typical": 9.96,
+    "high": 27.76,
+    "n": 15,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -84,11 +85,12 @@
    "unit_g": 110.0,
    "price": {
     "basis": "kg",
-    "low": 1.84,
-    "typical": 3.03,
-    "high": 3.7,
-    "n": 6,
+    "low": 2.02,
+    "typical": 2.67,
+    "high": 3.3,
+    "n": 14,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -128,17 +130,19 @@
    "unit_g": 110.0,
    "price": {
     "basis": "kg",
-    "low": 2.99,
-    "typical": 3.98,
-    "high": 4.18,
-    "n": 3,
+    "low": 2.55,
+    "typical": 3.66,
+    "high": 4.28,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Cebola Roxa Continente",
      "Continente: Cebola Roxa Biológica Continente Bio",
-     "Continente: Cebola Roxa Continente"
+     "Continente: Cebola Roxa Continente",
+     "Auchan: CEBOLA ROXA KG"
     ]
    }
   },
@@ -167,7 +171,22 @@
     "tbsp": 10.0
    },
    "density": null,
-   "unit_g": 40
+   "unit_g": 40,
+   "price": {
+    "basis": "kg",
+    "low": 4.82,
+    "typical": 4.88,
+    "high": 4.94,
+    "n": 2,
+    "stores": [
+     "Auchan",
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Cebola Chalota Continente",
+     "Auchan: CHALOTAS 250G"
+    ]
+   }
   },
   {
    "key": "alho-francês",
@@ -198,11 +217,12 @@
    "unit_g": 200,
    "price": {
     "basis": "kg",
-    "low": 3.47,
-    "typical": 4.35,
-    "high": 5.22,
-    "n": 4,
+    "low": 4.35,
+    "typical": 5.0,
+    "high": 6.37,
+    "n": 11,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -243,11 +263,12 @@
    "unit_g": 213.0,
    "price": {
     "basis": "kg",
-    "low": 1.28,
-    "typical": 1.4,
-    "high": 2.03,
-    "n": 12,
+    "low": 1.33,
+    "typical": 1.84,
+    "high": 2.11,
+    "n": 30,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -286,17 +307,19 @@
    "unit_g": 200,
    "price": {
     "basis": "kg",
-    "low": 3.1,
+    "low": 2.79,
     "typical": 3.7,
-    "high": 3.84,
-    "n": 3,
+    "high": 3.87,
+    "n": 11,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Batata Doce Continente",
      "Continente: Batata Doce Vitacress",
-     "Continente: Batata Doce Palitos Air Fryer Continente"
+     "Continente: Batata Doce Palitos Air Fryer Continente",
+     "Auchan: BATATA DOCE LARANJA KG"
     ]
    }
   },
@@ -330,16 +353,18 @@
    "price": {
     "basis": "kg",
     "low": 1.52,
-    "typical": 1.98,
-    "high": 3.46,
-    "n": 3,
+    "typical": 2.18,
+    "high": 2.64,
+    "n": 7,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Cenoura Continente",
      "Continente: Cenoura Biológica Continente Bio",
-     "Continente: Cenoura Ripada Continente"
+     "Continente: Cenoura Ripada Continente",
+     "Auchan: TIRAS DE CENOURA KÜHNE EM CONSERVA 330ML (190G)"
     ]
    }
   },
@@ -374,11 +399,12 @@
    "unit_g": 123.0,
    "price": {
     "basis": "kg",
-    "low": 2.61,
-    "typical": 3.0,
-    "high": 4.64,
-    "n": 22,
+    "low": 3.0,
+    "typical": 5.0,
+    "high": 6.48,
+    "n": 43,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -420,11 +446,12 @@
    "unit_g": 123.0,
    "price": {
     "basis": "kg",
-    "low": 6.68,
-    "typical": 7.96,
-    "high": 9.55,
-    "n": 7,
+    "low": 6.52,
+    "typical": 8.16,
+    "high": 9.0,
+    "n": 14,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -468,11 +495,12 @@
    "unit_g": 119.0,
    "price": {
     "basis": "kg",
-    "low": 4.91,
-    "typical": 8.96,
-    "high": 12.81,
-    "n": 8,
+    "low": 5.38,
+    "typical": 8.05,
+    "high": 9.96,
+    "n": 16,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -514,15 +542,19 @@
    "unit_g": 5,
    "price": {
     "basis": "kg",
-    "low": 19.9,
-    "typical": 19.9,
-    "high": 19.9,
-    "n": 1,
+    "low": 12.9,
+    "typical": 13.9,
+    "high": 16.9,
+    "n": 3,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
-     "Continente: Malagueta Vermelha Continente"
+     "Continente: Malagueta Vermelha Continente",
+     "Auchan: MALAGUETA ESSENTIA 35G",
+     "Auchan: MALAGUETA VERMELHA COM QUEIJO DITTMANN KG",
+     "Auchan: MALAGUETA VERMELHA AUCHAN 100 G"
     ]
    }
   },
@@ -554,16 +586,19 @@
    "unit_g": 300,
    "price": {
     "basis": "kg",
-    "low": 3.29,
-    "typical": 4.59,
-    "high": 5.88,
-    "n": 2,
+    "low": 5.92,
+    "typical": 7.51,
+    "high": 12.12,
+    "n": 15,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Pepino Continente",
-     "Continente: Pepino Biológico Continente Bio"
+     "Continente: Pepino Biológico Continente Bio",
+     "Auchan: PEPINO MELÃO KG",
+     "Auchan: PEPINO RODELAS HENGSTENBERG P/ HAMBURGUER 300(185)G"
     ]
    }
   },
@@ -598,16 +633,19 @@
    "unit_g": 196.0,
    "price": {
     "basis": "kg",
-    "low": 2.08,
-    "typical": 2.98,
-    "high": 3.88,
-    "n": 2,
+    "low": 3.98,
+    "typical": 4.64,
+    "high": 4.98,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Curgete Verde Continente",
-     "Continente: Curgete Biológica Continente Bio"
+     "Continente: Curgete Biológica Continente Bio",
+     "Auchan: CURGETE KG",
+     "Auchan: CURGETE KG PRODUTO LOCAL"
     ]
    }
   },
@@ -639,17 +677,19 @@
    "unit_g": 300,
    "price": {
     "basis": "kg",
-    "low": 4.84,
-    "typical": 6.98,
-    "high": 7.3,
-    "n": 3,
+    "low": 4.05,
+    "typical": 5.74,
+    "high": 7.14,
+    "n": 4,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Beringela Japonesa",
      "Continente: Beringela Biológica Continente Bio",
-     "Continente: Beringela Continente"
+     "Continente: Beringela Continente",
+     "Auchan: BERINGELA KG"
     ]
    }
   },
@@ -682,11 +722,12 @@
    "unit_g": 1000,
    "price": {
     "basis": "kg",
-    "low": 2.37,
+    "low": 2.16,
     "typical": 2.69,
-    "high": 2.77,
-    "n": 8,
+    "high": 2.98,
+    "n": 20,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -726,11 +767,12 @@
    "unit_g": 300,
    "price": {
     "basis": "kg",
-    "low": 4.23,
-    "typical": 6.21,
-    "high": 7.33,
-    "n": 8,
+    "low": 3.41,
+    "typical": 5.97,
+    "high": 6.45,
+    "n": 19,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -769,11 +811,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 17.38,
+    "low": 16.14,
     "typical": 19.88,
-    "high": 22.39,
-    "n": 4,
+    "high": 27.37,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -812,11 +855,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 8.18,
-    "typical": 11.23,
-    "high": 13.08,
-    "n": 6,
+    "low": 6.87,
+    "typical": 8.82,
+    "high": 12.51,
+    "n": 14,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -855,15 +899,17 @@
    "unit_g": 400,
    "price": {
     "basis": "kg",
-    "low": 8.65,
-    "typical": 8.65,
-    "high": 8.65,
-    "n": 1,
+    "low": 5.24,
+    "typical": 6.38,
+    "high": 7.51,
+    "n": 2,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
-     "Continente: Floretes de Brócolo Campotec"
+     "Continente: Floretes de Brócolo Campotec",
+     "Auchan: BRÓCOLOS KG"
     ]
    }
   },
@@ -895,16 +941,19 @@
    "unit_g": 588.0,
    "price": {
     "basis": "kg",
-    "low": 3.97,
-    "typical": 5.46,
-    "high": 6.94,
-    "n": 2,
+    "low": 3.32,
+    "typical": 4.32,
+    "high": 7.34,
+    "n": 5,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Couve Flor Continente",
-     "Continente: Couve Flor Biológica Continente Bio"
+     "Continente: Couve Flor Biológica Continente Bio",
+     "Auchan: COUVE FLOR AUCHAN KG",
+     "Auchan: COUVE FLOR KG PRODUTO LOCAL"
     ]
    }
   },
@@ -940,11 +989,12 @@
    "unit_g": 908.0,
    "price": {
     "basis": "kg",
-    "low": 2.19,
-    "typical": 3.62,
-    "high": 3.99,
-    "n": 14,
+    "low": 2.78,
+    "typical": 3.63,
+    "high": 4.02,
+    "n": 28,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -982,17 +1032,19 @@
    "unit_g": 839.0,
    "price": {
     "basis": "kg",
-    "low": 3.18,
-    "typical": 4.78,
-    "high": 4.97,
-    "n": 3,
+    "low": 2.5,
+    "typical": 3.76,
+    "high": 5.07,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Couve Roxa Biológica Biofrade",
      "Continente: Couve Roxa Continente",
-     "Continente: Couve Roxa Ripada Continente"
+     "Continente: Couve Roxa Ripada Continente",
+     "Auchan: COUVE ROXA KG"
     ]
    }
   },
@@ -1024,11 +1076,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 7.82,
-    "typical": 9.9,
-    "high": 12.21,
-    "n": 4,
+    "low": 8.5,
+    "typical": 8.87,
+    "high": 11.3,
+    "n": 5,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1073,10 +1126,11 @@
    "price": {
     "basis": "kg",
     "low": 5.89,
-    "typical": 6.3,
-    "high": 8.83,
-    "n": 17,
+    "typical": 6.36,
+    "high": 8.71,
+    "n": 27,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1115,11 +1169,12 @@
    "unit_g": 16.0,
    "price": {
     "basis": "kg",
-    "low": 14.85,
-    "typical": 17.36,
-    "high": 19.06,
-    "n": 4,
+    "low": 13.75,
+    "typical": 15.96,
+    "high": 17.36,
+    "n": 7,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1157,11 +1212,12 @@
    "unit_g": 150,
    "price": {
     "basis": "kg",
-    "low": 2.78,
-    "typical": 3.98,
-    "high": 5.5,
-    "n": 5,
+    "low": 3.68,
+    "typical": 5.58,
+    "high": 5.92,
+    "n": 10,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1228,11 +1284,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 3.27,
-    "typical": 4.27,
-    "high": 5.69,
-    "n": 5,
+    "low": 3.52,
+    "typical": 4.98,
+    "high": 8.38,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1272,16 +1329,19 @@
    "unit_g": 40.0,
    "price": {
     "basis": "kg",
-    "low": 4.46,
-    "typical": 5.54,
-    "high": 6.61,
+    "low": 11.02,
+    "typical": 14.35,
+    "high": 17.67,
     "n": 2,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Aipo Biológico Continente Bio",
-     "Continente: Aipo Continente"
+     "Continente: Aipo Continente",
+     "Auchan: TIRAS DE AIPO KÜHNE EM CONSERVA 320ML (190G)",
+     "Auchan: AIPO 500G"
     ]
    }
   },
@@ -1313,11 +1373,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 4.47,
-    "typical": 5.44,
-    "high": 6.38,
-    "n": 6,
+    "low": 4.56,
+    "typical": 6.14,
+    "high": 8.08,
+    "n": 11,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1356,11 +1417,12 @@
    "unit_g": 150,
    "price": {
     "basis": "un",
-    "low": 0.69,
-    "typical": 0.76,
-    "high": 0.87,
-    "n": 4,
+    "low": 0.74,
+    "typical": 0.9,
+    "high": 1.05,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1402,16 +1464,19 @@
    "unit_g": 100,
    "price": {
     "basis": "kg",
-    "low": 3.42,
-    "typical": 4.14,
-    "high": 4.86,
-    "n": 2,
+    "low": 4.58,
+    "typical": 5.0,
+    "high": 5.58,
+    "n": 5,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Limão Continente",
-     "Continente: Limão Biológico Continente Bio"
+     "Continente: Limão Biológico Continente Bio",
+     "Auchan: LIMÃO KG",
+     "Auchan: LIMÃO BIO 500G"
     ]
    }
   },
@@ -1441,16 +1506,19 @@
    "unit_g": 65,
    "price": {
     "basis": "kg",
-    "low": 5.19,
-    "typical": 6.38,
-    "high": 7.57,
-    "n": 2,
+    "low": 6.54,
+    "typical": 7.45,
+    "high": 8.76,
+    "n": 5,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Lima Biológica Continente Bio",
-     "Continente: Lima Continente"
+     "Continente: Lima Continente",
+     "Auchan: LIMA KG",
+     "Auchan: LIMA  200 G"
     ]
    }
   },
@@ -1484,11 +1552,12 @@
    "unit_g": 184.0,
    "price": {
     "basis": "kg",
-    "low": 1.2,
-    "typical": 1.33,
-    "high": 1.69,
-    "n": 5,
+    "low": 1.33,
+    "typical": 1.69,
+    "high": 3.61,
+    "n": 9,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1530,10 +1599,11 @@
    "price": {
     "basis": "kg",
     "low": 2.0,
-    "typical": 2.43,
-    "high": 3.88,
-    "n": 12,
+    "typical": 2.36,
+    "high": 3.6,
+    "n": 49,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1573,11 +1643,12 @@
    "unit_g": 178.0,
    "price": {
     "basis": "kg",
-    "low": 2.58,
-    "typical": 2.78,
-    "high": 3.9,
-    "n": 7,
+    "low": 2.78,
+    "typical": 3.06,
+    "high": 4.32,
+    "n": 22,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1616,11 +1687,12 @@
    "unit_g": 118.0,
    "price": {
     "basis": "kg",
-    "low": 1.57,
-    "typical": 2.34,
-    "high": 3.09,
-    "n": 4,
+    "low": 1.69,
+    "typical": 2.99,
+    "high": 3.17,
+    "n": 5,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1660,11 +1732,12 @@
    "unit_g": 12.0,
    "price": {
     "basis": "kg",
-    "low": 8.98,
-    "typical": 16.98,
-    "high": 18.3,
-    "n": 5,
+    "low": 8.83,
+    "typical": 10.73,
+    "high": 17.31,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1702,11 +1775,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 19.88,
-    "typical": 22.32,
-    "high": 27.12,
-    "n": 3,
+    "low": 19.43,
+    "typical": 19.95,
+    "high": 24.12,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1744,11 +1818,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 16.88,
-    "typical": 19.9,
-    "high": 19.96,
-    "n": 7,
+    "low": 17.2,
+    "typical": 19.48,
+    "high": 19.95,
+    "n": 14,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1786,11 +1861,12 @@
    "unit_g": 300,
    "price": {
     "basis": "kg",
-    "low": 5.73,
-    "typical": 10.54,
-    "high": 29.07,
-    "n": 10,
+    "low": 9.97,
+    "typical": 15.0,
+    "high": 18.73,
+    "n": 20,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1831,11 +1907,12 @@
    "unit_g": 905.0,
    "price": {
     "basis": "kg",
-    "low": 1.69,
-    "typical": 4.24,
-    "high": 9.58,
-    "n": 5,
+    "low": 2.7,
+    "typical": 5.29,
+    "high": 8.0,
+    "n": 25,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1874,11 +1951,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 19.8,
-    "typical": 33.0,
-    "high": 36.33,
-    "n": 5,
+    "low": 19.07,
+    "typical": 19.8,
+    "high": 33.83,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1917,11 +1995,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 29.45,
-    "typical": 32.84,
+    "low": 19.8,
+    "typical": 26.23,
     "high": 33.83,
-    "n": 4,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -1961,16 +2040,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 47.88,
-    "typical": 56.09,
-    "high": 64.29,
-    "n": 2,
+    "low": 49.25,
+    "typical": 61.91,
+    "high": 70.83,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Manjericão Biológico Continente Bio",
-     "Continente: Manjericão Fresco Continente"
+     "Continente: Manjericão Fresco Continente",
+     "Auchan: MANJERICÃO PICADO AUCHAN DESIDRATADO FRASCO 12 G",
+     "Auchan: MANJERICÃO MARGÃO SAQUETA 11G"
     ]
    }
   },
@@ -2000,16 +2082,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 23.1,
-    "typical": 26.4,
-    "high": 29.7,
-    "n": 2,
+    "low": 19.07,
+    "typical": 19.8,
+    "high": 23.1,
+    "n": 4,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Hortelã Biológica Fresca Continente Bio",
-     "Continente: Hortelã Fresca Continente"
+     "Continente: Hortelã Fresca Continente",
+     "Auchan: HORTELÃ FRESCA 50G",
+     "Auchan: HORTELÃ FRESCA 100G"
     ]
    }
   },
@@ -2045,17 +2130,19 @@
    "unit_g": 15.0,
    "price": {
     "basis": "kg",
-    "low": 44.59,
-    "typical": 49.5,
-    "high": 86.62,
-    "n": 3,
+    "low": 47.12,
+    "typical": 49.75,
+    "high": 102.0,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Cebolinho Biológico Fresco Continente Bio",
      "Continente: Cebolinho Fresco Continente",
-     "Continente: Cebolinho Folha em Frasco Continente"
+     "Auchan: CEBOLINHO ESSENTIA BIO 25G",
+     "Auchan: CEBOLINHO AUCHAN 25 G"
     ]
    }
   },
@@ -2088,16 +2175,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 5.91,
-    "typical": 6.82,
-    "high": 7.72,
-    "n": 2,
+    "low": 7.72,
+    "typical": 8.63,
+    "high": 8.71,
+    "n": 4,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Gengibre Fresco Continente",
-     "Continente: Gengibre Biológico Fresco Continente Bio"
+     "Continente: Gengibre Biológico Fresco Continente Bio",
+     "Auchan: GENGIBRE ORSERO BIO PT 03 200G",
+     "Auchan: GENGIBRE BIO 300G"
     ]
    }
   },
@@ -2128,11 +2218,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 6.54,
-    "typical": 6.99,
-    "high": 8.29,
-    "n": 7,
+    "low": 6.59,
+    "typical": 8.29,
+    "high": 8.98,
+    "n": 9,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2170,11 +2261,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 2.99,
-    "typical": 4.49,
-    "high": 7.89,
-    "n": 9,
+    "low": 3.24,
+    "typical": 4.44,
+    "high": 7.11,
+    "n": 10,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2214,6 +2306,7 @@
     "high": 4.99,
     "n": 7,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2252,15 +2345,18 @@
    "price": {
     "basis": "kg",
     "low": 18.73,
-    "typical": 18.73,
-    "high": 18.73,
-    "n": 2,
+    "typical": 19.62,
+    "high": 20.5,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Carne Picada 100% Aberdeen Angus Continente Seleção",
-     "Continente: Carne Picada 100% Aberdeen Angus Continente Seleção"
+     "Continente: Carne Picada 100% Aberdeen Angus Continente Seleção",
+     "Auchan: CARNE PICADA 100% CARNE MINHOTA  400GR",
+     "Auchan: CARNE PICADA MATURADA DE NOVILHA SKP 450G"
     ]
    }
   },
@@ -2293,15 +2389,17 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 12.99,
-    "typical": 12.99,
-    "high": 12.99,
-    "n": 1,
+    "low": 18.48,
+    "typical": 23.97,
+    "high": 29.46,
+    "n": 2,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
-     "Continente: Novilho para Estufar Continente"
+     "Continente: Novilho para Estufar Continente",
+     "Auchan: VITELA DE ALCATRA EUROPA 200G"
     ]
    }
   },
@@ -2336,9 +2434,10 @@
     "basis": "kg",
     "low": 20.0,
     "typical": 20.0,
-    "high": 20.0,
-    "n": 5,
+    "high": 27.5,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2378,10 +2477,11 @@
    "price": {
     "basis": "kg",
     "low": 5.29,
-    "typical": 5.29,
-    "high": 6.49,
-    "n": 5,
+    "typical": 5.89,
+    "high": 10.31,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2459,9 +2559,10 @@
     "basis": "kg",
     "low": 4.99,
     "typical": 5.99,
-    "high": 6.24,
-    "n": 7,
+    "high": 7.36,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2520,11 +2621,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 5.39,
-    "typical": 7.54,
-    "high": 8.86,
-    "n": 6,
+    "low": 7.54,
+    "typical": 9.6,
+    "high": 18.2,
+    "n": 11,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2599,11 +2701,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 12.0,
-    "typical": 21.57,
-    "high": 22.97,
-    "n": 10,
+    "low": 16.58,
+    "typical": 22.97,
+    "high": 37.66,
+    "n": 15,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2640,11 +2743,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 26.38,
-    "typical": 32.97,
-    "high": 54.42,
-    "n": 13,
+    "low": 23.18,
+    "typical": 34.81,
+    "high": 44.52,
+    "n": 26,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2681,11 +2785,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 8.54,
-    "typical": 10.61,
-    "high": 16.64,
-    "n": 28,
+    "low": 8.73,
+    "typical": 10.99,
+    "high": 16.65,
+    "n": 29,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2723,11 +2828,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 12.25,
-    "typical": 18.73,
+    "low": 11.98,
+    "typical": 13.98,
     "high": 29.37,
-    "n": 18,
+    "n": 27,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2768,11 +2874,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 13.89,
-    "typical": 19.27,
-    "high": 23.25,
-    "n": 32,
+    "low": 14.17,
+    "typical": 20.75,
+    "high": 28.15,
+    "n": 85,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2810,11 +2917,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 15.88,
-    "typical": 19.62,
-    "high": 22.47,
-    "n": 19,
+    "low": 16.72,
+    "typical": 23.22,
+    "high": 28.08,
+    "n": 53,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -2895,11 +3003,13 @@
     "high": 15.24,
     "n": 2,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Polvo Fresco (750 gr a 2 kg)",
-     "Continente: Polvo Fresco (+ 2 kg)"
+     "Continente: Polvo Fresco (+ 2 kg)",
+     "Auchan: POLVO RENNA EM AZEITE DE OLIVA 180G"
     ]
    }
   },
@@ -2932,16 +3042,19 @@
    "unit_g": 16.0,
    "price": {
     "basis": "kg",
-    "low": 2.74,
-    "typical": 3.49,
-    "high": 4.24,
-    "n": 2,
+    "low": 1.99,
+    "typical": 2.21,
+    "high": 4.99,
+    "n": 5,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Mexilhão Fresco",
-     "Continente: Mexilhão Inteiro Cozido a Vapor Pescanova"
+     "Continente: Mexilhão Inteiro Cozido a Vapor Pescanova",
+     "Auchan: MEXILHÃO 1KG",
+     "Auchan: MEXILHÃO GRANDE COZIDO 800 GR"
     ]
    }
   },
@@ -3006,11 +3119,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 10.99,
-    "typical": 13.99,
-    "high": 24.96,
-    "n": 7,
+    "low": 11.0,
+    "typical": 19.45,
+    "high": 26.01,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3054,18 +3168,19 @@
    "unit_g": 55,
    "price": {
     "basis": "un",
-    "low": 0.29,
-    "typical": 0.35,
-    "high": 0.41,
-    "n": 11,
+    "low": 0.28,
+    "typical": 0.33,
+    "high": 0.4,
+    "n": 42,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Ovos Classe M Dona Gema",
      "Continente: Ovos de Solo Classe M/L Continente",
      "Continente: Ovos Classe M/L Matinados",
-     "Continente: Ovos Biológicos Frescos Continente Bio"
+     "Continente: Ovos de Ar Livre Classe M/L Continente"
     ]
    }
   },
@@ -3099,18 +3214,19 @@
    "unit_g": 17,
    "price": {
     "basis": "un",
-    "low": 0.29,
-    "typical": 0.35,
-    "high": 0.41,
-    "n": 11,
+    "low": 0.28,
+    "typical": 0.33,
+    "high": 0.4,
+    "n": 42,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Ovos Classe M Dona Gema",
      "Continente: Ovos de Solo Classe M/L Continente",
      "Continente: Ovos Classe M/L Matinados",
-     "Continente: Ovos Biológicos Frescos Continente Bio"
+     "Continente: Ovos de Ar Livre Classe M/L Continente"
     ]
    }
   },
@@ -3143,18 +3259,19 @@
    "unit_g": 33,
    "price": {
     "basis": "un",
-    "low": 0.29,
-    "typical": 0.35,
-    "high": 0.41,
-    "n": 11,
+    "low": 0.28,
+    "typical": 0.33,
+    "high": 0.4,
+    "n": 42,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Ovos Classe M Dona Gema",
      "Continente: Ovos de Solo Classe M/L Continente",
      "Continente: Ovos Classe M/L Matinados",
-     "Continente: Ovos Biológicos Frescos Continente Bio"
+     "Continente: Ovos de Ar Livre Classe M/L Continente"
     ]
    }
   },
@@ -3187,11 +3304,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 0.86,
-    "typical": 0.96,
-    "high": 1.06,
-    "n": 66,
+    "low": 0.87,
+    "typical": 1.04,
+    "high": 1.15,
+    "n": 119,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3234,11 +3352,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 9.85,
+    "low": 9.86,
     "typical": 12.23,
-    "high": 13.71,
-    "n": 44,
+    "high": 13.61,
+    "n": 89,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3278,11 +3397,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 9.46,
-    "typical": 9.96,
-    "high": 13.52,
-    "n": 35,
+    "low": 9.76,
+    "typical": 10.96,
+    "high": 15.67,
+    "n": 80,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3322,11 +3442,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 3.67,
-    "typical": 5.32,
-    "high": 5.66,
-    "n": 43,
+    "low": 3.38,
+    "typical": 5.2,
+    "high": 5.93,
+    "n": 165,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3366,11 +3487,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 9.93,
-    "typical": 15.12,
-    "high": 16.9,
-    "n": 21,
+    "low": 9.91,
+    "typical": 13.27,
+    "high": 15.92,
+    "n": 58,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3410,7 +3532,24 @@
     "tbsp": 5.0
    },
    "density": 0.423,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 27.39,
+    "typical": 32.33,
+    "high": 35.22,
+    "n": 27,
+    "stores": [
+     "Auchan",
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Queijo Parmigiano Reggiano DOP Ralado Continente Seleção",
+     "Continente: Queijo Parmigiano Reggiano DOP Ralado Galbani",
+     "Continente: Queijo Parmigiano Reggiano Ralado Parmareggio",
+     "Continente: Queijo Grana Padano DOP Ralado Granarolo"
+    ]
+   }
   },
   {
    "key": "queijo pecorino",
@@ -3434,7 +3573,24 @@
    },
    "portions": {},
    "density": null,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 34.95,
+    "typical": 37.48,
+    "high": 43.11,
+    "n": 6,
+    "stores": [
+     "Auchan",
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Queijo Pecorino Romano DOP Ralado Granarolo",
+     "Continente: Queijo Pecorino Romano DOP Continente",
+     "Continente: Queijo Pecorino Romano DOP Balcão Granarolo",
+     "Continente: Queijo Pecorino Toscano DOP Balcão Contradaiolo"
+    ]
+   }
   },
   {
    "key": "queijo flamengo",
@@ -3464,11 +3620,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 9.96,
+    "low": 9.93,
     "typical": 12.48,
-    "high": 17.67,
-    "n": 69,
+    "high": 17.27,
+    "n": 137,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3508,11 +3665,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 9.02,
-    "typical": 10.95,
-    "high": 12.88,
-    "n": 51,
+    "low": 8.3,
+    "typical": 10.53,
+    "high": 12.45,
+    "n": 113,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3553,11 +3711,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 12.6,
-    "typical": 13.0,
+    "low": 12.56,
+    "typical": 13.52,
     "high": 15.27,
-    "n": 14,
+    "n": 29,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3591,7 +3750,24 @@
     "cup": 150.0
    },
    "density": 0.634,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 21.67,
+    "typical": 23.8,
+    "high": 24.33,
+    "n": 14,
+    "stores": [
+     "Auchan",
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Queijo Feta DOP Continente",
+     "Continente: Queijo Feta DOP Cubos Omiros",
+     "Continente: Queijo Feta DOP Président",
+     "Continente: Queijo Feta DOP Islos"
+    ]
+   }
   },
   {
    "key": "leite de coco",
@@ -3618,11 +3794,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 5.37,
-    "typical": 5.86,
-    "high": 8.36,
-    "n": 5,
+    "low": 5.62,
+    "typical": 7.42,
+    "high": 8.69,
+    "n": 7,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3662,11 +3839,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 12.82,
-    "typical": 17.61,
-    "high": 20.6,
-    "n": 16,
+    "low": 11.93,
+    "typical": 15.27,
+    "high": 19.88,
+    "n": 29,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3703,11 +3881,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 13.45,
-    "typical": 17.95,
-    "high": 22.6,
-    "n": 17,
+    "low": 13.07,
+    "typical": 16.94,
+    "high": 20.6,
+    "n": 32,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3744,11 +3923,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 13.03,
-    "typical": 14.93,
-    "high": 30.07,
-    "n": 18,
+    "low": 10.97,
+    "typical": 14.97,
+    "high": 20.1,
+    "n": 40,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3787,11 +3967,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 27.44,
-    "typical": 36.23,
-    "high": 69.25,
-    "n": 24,
+    "low": 27.05,
+    "typical": 33.25,
+    "high": 55.61,
+    "n": 64,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3830,11 +4011,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 12.59,
-    "typical": 17.36,
-    "high": 21.18,
-    "n": 28,
+    "low": 9.95,
+    "typical": 16.58,
+    "high": 20.75,
+    "n": 56,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3871,11 +4053,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 8.2,
-    "typical": 10.81,
-    "high": 11.92,
-    "n": 47,
+    "low": 7.96,
+    "typical": 9.96,
+    "high": 13.17,
+    "n": 103,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3918,11 +4101,12 @@
    "unit_g": 50,
    "price": {
     "basis": "kg",
-    "low": 3.74,
-    "typical": 4.87,
-    "high": 5.95,
-    "n": 32,
+    "low": 3.29,
+    "typical": 4.59,
+    "high": 5.97,
+    "n": 130,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -3961,17 +4145,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 2.42,
-    "typical": 2.88,
-    "high": 3.85,
-    "n": 3,
+    "low": 2.88,
+    "typical": 6.95,
+    "high": 8.45,
+    "n": 9,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Pão Ralado",
      "Continente: Pão Ralado de Alho e Salsa Continente",
-     "Continente: Pão Ralado Crocante Continente"
+     "Continente: Pão Ralado Crocante Continente",
+     "Auchan: PÃO RALADO AUCHAN  240G"
     ]
    }
   },
@@ -4003,11 +4189,12 @@
    "unit_g": 30.0,
    "price": {
     "basis": "kg",
-    "low": 5.23,
-    "typical": 8.05,
-    "high": 10.32,
-    "n": 26,
+    "low": 6.33,
+    "typical": 8.08,
+    "high": 9.88,
+    "n": 38,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4049,16 +4236,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 1.39,
-    "typical": 2.05,
-    "high": 2.71,
-    "n": 2,
+    "low": 1.59,
+    "typical": 1.89,
+    "high": 2.74,
+    "n": 19,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Farinha de Trigo T65 Sem Fermento Pack Poupança Continente",
-     "Continente: Farinha de Trigo Branca Seara"
+     "Continente: Farinha de Trigo Branca Seara",
+     "Auchan: FARINHA DE TRIGO T55 AUCHAN 1KG",
+     "Auchan: FARINHA DE TRIGO BRANCA DE NEVE FINA 1KG"
     ]
    }
   },
@@ -4085,7 +4275,20 @@
     "cup": 125.0
    },
    "density": 0.528,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 0.79,
+    "typical": 0.79,
+    "high": 0.79,
+    "n": 1,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: FARINHA DE TRIGO AUCHAN COM FERMENTO 1KG"
+    ]
+   }
   },
   {
    "key": "amido de milho",
@@ -4113,7 +4316,24 @@
     "cup": 128.0
    },
    "density": 0.541,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 6.09,
+    "typical": 6.46,
+    "high": 8.07,
+    "n": 8,
+    "stores": [
+     "Auchan",
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Farinha Amido de Milho sem Glúten Maizena",
+     "Continente: Farinha Amido de Milho sem Glúten Maizena",
+     "Auchan: FARINHA MAIZENA 400G",
+     "Auchan: FARINHA MAIZENA 700G"
+    ]
+   }
   },
   {
    "key": "açúcar",
@@ -4142,7 +4362,23 @@
     "tsp": 4.2
    },
    "density": 0.845,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 1.04,
+    "typical": 1.14,
+    "high": 1.31,
+    "n": 4,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: AÇÚCAR AUCHAN BRANCO GRANULADO 1KG",
+     "Auchan: AÇÚCAR SIDUL BRANCO GRANULADO PAPEL 1KG",
+     "Auchan: AÇÚCAR SIDUL BRANCO GRANULADO 1KG",
+     "Auchan: AÇÚCAR SIDUL BRANCO GRANULADO FINO 1KG"
+    ]
+   }
   },
   {
    "key": "açúcar amarelo",
@@ -4170,7 +4406,20 @@
     "tsp": 3.0
    },
    "density": 0.93,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 7.95,
+    "typical": 7.95,
+    "high": 7.95,
+    "n": 1,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: AÇUCAR MASCAVADO AUCHAN EM SAQUETAS 50 UN 200 G"
+    ]
+   }
   },
   {
    "key": "açúcar em pó",
@@ -4199,7 +4448,20 @@
     "tsp": 2.5
    },
    "density": 0.507,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 5.16,
+    "typical": 5.16,
+    "high": 5.16,
+    "n": 1,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: AÇÚCAR EM PÓ AUCHAN TUBO 250G"
+    ]
+   }
   },
   {
    "key": "mel",
@@ -4228,11 +4490,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 12.38,
+    "low": 11.84,
     "typical": 12.98,
-    "high": 18.26,
-    "n": 25,
+    "high": 18.23,
+    "n": 54,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4268,7 +4531,21 @@
     "tsp": 4.6
    },
    "density": null,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 20.47,
+    "typical": 21.52,
+    "high": 22.58,
+    "n": 2,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: FERMENTO ROYAL LATA 226G",
+     "Auchan: FERMENTO ROYAL 80G"
+    ]
+   }
   },
   {
    "key": "fermento de padeiro",
@@ -4296,7 +4573,20 @@
     "tsp": 4.0
    },
    "density": null,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 12.0,
+    "typical": 12.0,
+    "high": 12.0,
+    "n": 1,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: LEVEDURA CUBINHOS 2X25G"
+    ]
+   }
   },
   {
    "key": "bicarbonato de sódio",
@@ -4325,11 +4615,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 4.53,
-    "typical": 4.99,
-    "high": 7.88,
-    "n": 4,
+    "low": 4.98,
+    "typical": 4.98,
+    "high": 5.0,
+    "n": 11,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4370,17 +4661,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 1.04,
-    "typical": 1.08,
-    "high": 1.14,
-    "n": 3,
+    "low": 1.15,
+    "typical": 1.38,
+    "high": 1.65,
+    "n": 32,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Arroz Agulha Pack Poupança Continente",
      "Continente: Arroz Agulha Oriente",
-     "Continente: Arroz Carolino Pack Poupança Continente"
+     "Continente: Arroz Carolino Pack Poupança Continente",
+     "Auchan: ARROZ AGULHA AUCHAN EXTRA LONGO BRANQUEADO 1KG"
     ]
    }
   },
@@ -4412,11 +4705,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 1.95,
-    "typical": 2.0,
-    "high": 2.36,
-    "n": 5,
+    "low": 2.07,
+    "typical": 2.79,
+    "high": 3.12,
+    "n": 27,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4451,7 +4745,23 @@
     "cup": 195.0
    },
    "density": 0.824,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 2.19,
+    "typical": 2.39,
+    "high": 3.59,
+    "n": 7,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: ARROZ RISOTTO AUCHAN  500G",
+     "Auchan: ARROZ RISOTTO CIGALA  1KG",
+     "Auchan: ARROZ RISOTTO SCOTTI ARBÓREO 500G",
+     "Auchan: ARROZ RISOTTO CAÇAROLA  500G"
+    ]
+   }
   },
   {
    "key": "massa",
@@ -4488,11 +4798,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 3.78,
-    "typical": 4.78,
-    "high": 6.78,
-    "n": 22,
+    "low": 2.25,
+    "typical": 3.82,
+    "high": 5.67,
+    "n": 138,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4530,7 +4841,23 @@
     "cup": 91.0
    },
    "density": 0.385,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 1.89,
+    "typical": 2.38,
+    "high": 3.53,
+    "n": 23,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: ESPARGUETE AUCHAN 1KG",
+     "Auchan: ESPARGUETE NACIONAL 1 KG",
+     "Auchan: ESPARGUETE AUCHAN 500G",
+     "Auchan: ESPARGUETE MILANEZA 500G"
+    ]
+   }
   },
   {
    "key": "lasanha",
@@ -4556,7 +4883,20 @@
     "cup": 91.0
    },
    "density": 0.385,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 4.76,
+    "typical": 4.76,
+    "high": 4.76,
+    "n": 1,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: LASANHA NACIONAL S/ OVO 250G"
+    ]
+   }
   },
   {
    "key": "massa de arroz",
@@ -4582,23 +4922,7 @@
    },
    "portions": {},
    "density": null,
-   "unit_g": null,
-   "price": {
-    "basis": "kg",
-    "low": 15.9,
-    "typical": 17.16,
-    "high": 20.95,
-    "n": 9,
-    "stores": [
-     "Continente"
-    ],
-    "samples": [
-     "Continente: Noodles de Carne Banzai Cigala",
-     "Continente: Noodles de Frango Indómie",
-     "Continente: Noodles Carne Pot Koala",
-     "Continente: Noodles de Vitela Cup Nissin"
-    ]
-   }
+   "unit_g": null
   },
   {
    "key": "flocos de aveia",
@@ -4654,11 +4978,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 2.33,
-    "typical": 3.52,
-    "high": 5.16,
-    "n": 10,
+    "low": 2.19,
+    "typical": 3.23,
+    "high": 5.12,
+    "n": 20,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4699,11 +5024,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 2.39,
-    "typical": 3.28,
-    "high": 4.96,
-    "n": 40,
+    "low": 2.29,
+    "typical": 3.23,
+    "high": 4.02,
+    "n": 81,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4743,11 +5069,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 3.83,
-    "typical": 4.14,
-    "high": 7.6,
-    "n": 7,
+    "low": 3.68,
+    "typical": 3.98,
+    "high": 6.21,
+    "n": 15,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4786,11 +5113,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 6.37,
-    "typical": 6.45,
-    "high": 7.21,
-    "n": 5,
+    "low": 3.51,
+    "typical": 6.37,
+    "high": 7.02,
+    "n": 10,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4835,11 +5163,12 @@
    "unit_g": 111.0,
    "price": {
     "basis": "kg",
-    "low": 2.41,
+    "low": 2.54,
     "typical": 3.31,
-    "high": 3.78,
-    "n": 32,
+    "high": 3.98,
+    "n": 54,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4876,7 +5205,20 @@
     "tbsp": 16.0
    },
    "density": 1.116,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 22.11,
+    "typical": 22.11,
+    "high": 22.11,
+    "n": 1,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: PASTA DE TOMATE AUCHAN À MESA EM PORTUGAL 90G"
+    ]
+   }
   },
   {
    "key": "azeite",
@@ -4909,11 +5251,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 5.53,
-    "typical": 6.56,
-    "high": 9.04,
-    "n": 33,
+    "low": 6.56,
+    "typical": 10.21,
+    "high": 14.59,
+    "n": 114,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -4957,11 +5300,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 1.93,
+    "low": 1.95,
     "typical": 2.26,
-    "high": 2.29,
-    "n": 7,
+    "high": 2.38,
+    "n": 20,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5001,16 +5345,18 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 26.82,
-    "typical": 28.48,
-    "high": 30.14,
-    "n": 2,
+    "low": 28.48,
+    "typical": 31.79,
+    "high": 31.79,
+    "n": 3,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Óleo de Sésamo Emile Noël",
-     "Continente: Óleo de Sésamo Origens Bio"
+     "Continente: Óleo de Sésamo Origens Bio",
+     "Auchan: ÓLEO DE SESAMO ORIGENS BIO 250 ML"
     ]
    }
   },
@@ -5045,11 +5391,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 3.94,
-    "typical": 5.11,
-    "high": 7.88,
-    "n": 25,
+    "low": 4.42,
+    "typical": 6.3,
+    "high": 8.48,
+    "n": 79,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5139,11 +5486,12 @@
    "unit_g": 10,
    "price": {
     "basis": "kg",
-    "low": 8.25,
-    "typical": 13.75,
-    "high": 18.5,
-    "n": 23,
+    "low": 10.58,
+    "typical": 15.3,
+    "high": 23.73,
+    "n": 48,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5186,11 +5534,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 5.81,
-    "typical": 17.92,
+    "low": 8.3,
+    "typical": 29.62,
     "high": 29.62,
-    "n": 4,
+    "n": 5,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5255,11 +5604,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 5.73,
-    "typical": 7.49,
-    "high": 8.97,
-    "n": 15,
+    "low": 6.45,
+    "typical": 7.55,
+    "high": 9.54,
+    "n": 41,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5299,11 +5649,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 6.17,
-    "typical": 10.88,
-    "high": 12.21,
-    "n": 8,
+    "low": 5.95,
+    "typical": 12.13,
+    "high": 15.74,
+    "n": 25,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5341,11 +5692,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 4.89,
-    "typical": 8.7,
-    "high": 10.07,
-    "n": 10,
+    "low": 4.53,
+    "typical": 8.64,
+    "high": 10.38,
+    "n": 27,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5383,17 +5735,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 17.84,
-    "typical": 26.26,
-    "high": 27.58,
-    "n": 3,
+    "low": 22.32,
+    "typical": 27.58,
+    "high": 34.22,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Molho Pesto Alla Genovese Barilla",
      "Continente: Molho Pesto Continente",
-     "Continente: Molho Pesto Pistáchio Barilla"
+     "Continente: Molho Pesto Pistáchio Barilla",
+     "Auchan: MOLHO PESTO BARILLA PISTACCHIO 190G"
     ]
    }
   },
@@ -5422,7 +5776,23 @@
    },
    "portions": {},
    "density": null,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 18.45,
+    "typical": 19.9,
+    "high": 22.9,
+    "n": 13,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: CHOCOLATE NEGRO AUCHAN COB CULINÁRIA 52% 200G",
+     "Auchan: CHOCOLATE  NEGRO AUCHAN CULINÁRIA BAIXO TEOR DE AÇÚCAR 200G",
+     "Auchan: CHOCOLATE CULINÁRIA PANTAGRUEL CARAMELO & SAL 200G",
+     "Auchan: CHOCOLATE NEGRO AUCHAN COB CULINÁRIA 52% 200G"
+    ]
+   }
   },
   {
    "key": "cacau em pó",
@@ -5449,7 +5819,23 @@
     "tbsp": 5.4
    },
    "density": 0.363,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 19.74,
+    "typical": 22.32,
+    "high": 23.11,
+    "n": 7,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: CACAU AUCHAN EM PÓ 100% SEM ADIÇÃO DE AÇÚCARES 250G",
+     "Auchan: CACAU PANTAGRUEL EM PÓ MAGRO 125G",
+     "Auchan: CACAU 100% AUCHAN PÓ BIO 250G",
+     "Auchan: CACAU DISFALA EM PÓ MAGRO 125G"
+    ]
+   }
   },
   {
    "key": "amêndoa",
@@ -5482,11 +5868,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 14.06,
-    "typical": 18.38,
-    "high": 22.09,
-    "n": 12,
+    "low": 14.29,
+    "typical": 17.52,
+    "high": 19.93,
+    "n": 19,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5525,11 +5912,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 9.96,
-    "typical": 12.29,
-    "high": 18.21,
-    "n": 10,
+    "low": 9.97,
+    "typical": 12.46,
+    "high": 19.82,
+    "n": 16,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5568,11 +5956,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 5.55,
-    "typical": 6.41,
-    "high": 18.04,
-    "n": 8,
+    "low": 4.58,
+    "typical": 5.36,
+    "high": 6.38,
+    "n": 12,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5609,7 +5998,22 @@
     "tbsp": 9.0
    },
    "density": 0.609,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 7.8,
+    "typical": 8.35,
+    "high": 8.9,
+    "n": 2,
+    "stores": [
+     "Continente"
+    ],
+    "samples": [
+     "Continente: Sementes de Sésamo Continente",
+     "Continente: Sementes de Sésamo Biológicas Continente Bio",
+     "Continente: Sementes de Sésamo Cem Porcento"
+    ]
+   }
   },
   {
    "key": "azeitonas",
@@ -5641,11 +6045,12 @@
    "unit_g": 4.4,
    "price": {
     "basis": "kg",
-    "low": 9.04,
-    "typical": 14.95,
-    "high": 18.95,
-    "n": 22,
+    "low": 7.83,
+    "typical": 10.9,
+    "high": 14.95,
+    "n": 86,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5683,17 +6088,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 22.88,
+    "low": 17.99,
     "typical": 22.88,
-    "high": 28.02,
-    "n": 3,
+    "high": 27.47,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Alcaparras Transmontanas Biológicas Casa dos Montes",
      "Continente: Alcaparras Transmontanas Biológicas Casa dos Montes",
-     "Continente: Alcaparras em Vinagre Cimarrom"
+     "Continente: Alcaparras em Vinagre Cimarrom",
+     "Auchan: ALCAPARRAS FERBAR EM VINAGRE 180(110)G"
     ]
    }
   },
@@ -5766,11 +6173,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 2.85,
-    "typical": 7.31,
-    "high": 10.18,
-    "n": 10,
+    "low": 6.38,
+    "typical": 7.46,
+    "high": 11.6,
+    "n": 16,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5811,17 +6219,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 37.19,
-    "typical": 52.57,
-    "high": 67.43,
-    "n": 3,
+    "low": 24.72,
+    "typical": 47.11,
+    "high": 52.57,
+    "n": 5,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Pimenta Preta com Moínho em Frasco Margão",
      "Continente: Pimenta Preta em Grão em Saqueta Continente",
-     "Continente: Pimenta Preta em Grão Saqueta Margão"
+     "Continente: Pimenta Preta em Grão Saqueta Margão",
+     "Auchan: PIMENTA PRETA AUCHAN MOÍDA EM FRASCO 36G"
     ]
    }
   },
@@ -5856,11 +6266,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 14.44,
-    "typical": 30.67,
-    "high": 45.43,
-    "n": 5,
+    "low": 18.5,
+    "typical": 38.28,
+    "high": 49.54,
+    "n": 14,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5899,16 +6310,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 24.04,
-    "typical": 28.29,
-    "high": 32.55,
-    "n": 2,
+    "low": 32.3,
+    "typical": 36.8,
+    "high": 92.17,
+    "n": 7,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Cominhos Moídos em Frasco Continente",
-     "Continente: Cominhos Moídos em Saqueta Margão"
+     "Continente: Cominhos Moídos em Saqueta Margão",
+     "Auchan: COMINHOS MOÍDOS AUCHAN EM FRASCO 32G",
+     "Auchan: COMINHOS MARGÃO MOIDOS 50G"
     ]
    }
   },
@@ -5941,11 +6355,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 17.59,
-    "typical": 29.65,
-    "high": 44.06,
-    "n": 6,
+    "low": 23.29,
+    "typical": 33.17,
+    "high": 50.69,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -5981,7 +6396,22 @@
     "tsp": 2.2
    },
    "density": null,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 50.08,
+    "typical": 64.22,
+    "high": 65.25,
+    "n": 3,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: NOZ MOSCADA AUCHAN MOIDA 32 G",
+     "Auchan: NOZ MOSCADA MARGÃO MOÍDA SAQUETA 45G",
+     "Auchan: NOZ MOSCADA GRÃO MARGÃO SAQUETA 70G"
+    ]
+   }
   },
   {
    "key": "orégãos",
@@ -6011,11 +6441,12 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 49.5,
-    "typical": 51.66,
-    "high": 67.87,
-    "n": 4,
+    "low": 59.35,
+    "typical": 77.25,
+    "high": 120.69,
+    "n": 16,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
@@ -6093,16 +6524,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 52.13,
-    "typical": 64.59,
-    "high": 77.04,
-    "n": 2,
+    "low": 54.95,
+    "typical": 89.5,
+    "high": 135.13,
+    "n": 7,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Tomilho Biológico Fresco Continente Bio",
-     "Continente: Tomilho Fresco Continente"
+     "Continente: Tomilho Fresco Continente",
+     "Auchan: TOMILHO BIO ESSENTIA 30G",
+     "Auchan: TOMILHO PICADO AUCHAN DESIDRATADO EM FRASCO 14 G"
     ]
    }
   },
@@ -6132,16 +6566,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 85.64,
+    "low": 74.79,
     "typical": 86.92,
-    "high": 88.21,
-    "n": 2,
+    "high": 95.12,
+    "n": 6,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
      "Continente: Alecrim Fresco Continente",
-     "Continente: Alecrim Folha em Frasco Margão"
+     "Continente: Alecrim Folha em Frasco Margão",
+     "Auchan: ALECRIM MARGÃO FRASCO 23G",
+     "Auchan: ALECRIM MARGÃO 15G"
     ]
    }
   },
@@ -6172,7 +6609,23 @@
     "tsp": 2.0
    },
    "density": null,
-   "unit_g": null
+   "unit_g": null,
+   "price": {
+    "basis": "kg",
+    "low": 59.65,
+    "typical": 80.56,
+    "high": 83.0,
+    "n": 6,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: CARIL AUCHAN 50G",
+     "Auchan: CARIL AUCHAN FRASCO 42 G",
+     "Auchan: CARIL MARGÃO SAQUETA 35G",
+     "Auchan: CARIL MARGÃO BIO 36G"
+    ]
+   }
   },
   {
    "key": "açafrão-da-índia",
@@ -6204,15 +6657,19 @@
    "unit_g": null,
    "price": {
     "basis": "kg",
-    "low": 13.52,
-    "typical": 13.52,
-    "high": 13.52,
-    "n": 1,
+    "low": 14.63,
+    "typical": 35.14,
+    "high": 52.53,
+    "n": 8,
     "stores": [
+     "Auchan",
      "Continente"
     ],
     "samples": [
-     "Continente: Curcuma Biológica Fresca Continente Bio"
+     "Continente: Curcuma Biológica Fresca Continente Bio",
+     "Auchan: AÇAFRÃO AUCHAN DAS ÍNDIAS 50G",
+     "Auchan: AÇAFRÃO CARMENCITA HEBRAS 0.37G",
+     "Auchan: AÇAFRÃO DAS ÍNDIAS MARGÃO SAQUETA PAPEL 35G"
     ]
    }
   },
@@ -6298,7 +6755,23 @@
    },
    "portions": {},
    "density": null,
-   "unit_g": 2
+   "unit_g": 2,
+   "price": {
+    "basis": "kg",
+    "low": 59.0,
+    "typical": 67.0,
+    "high": 80.39,
+    "n": 4,
+    "stores": [
+     "Auchan"
+    ],
+    "samples": [
+     "Auchan: GELATINA AUCHAN EM FOLHAS 9UN 17G",
+     "Auchan: GELATINA CONDI NEUTRA 2X10G",
+     "Auchan: GELATINA ROYAL NEUTRA 20G",
+     "Auchan: GELATINA KOALA EM FOLHAS 9G"
+    ]
+   }
   }
  ]
 }
