@@ -54,7 +54,35 @@ Environment variables: `RECIPE_MODEL` (default `claude-opus-5-5`), `RECIPE_EFFOR
 
 Tests: `python -m pytest -q` (these use a fake extractor, so they make no API calls).
 
-## iOS app
+## Web app (no App Store, no sideloading)
+
+The backend also serves an installable web app (PWA) at `/`. It has the library, search,
+collections, favorites, the servings scaler, ingredient checkboxes, cook mode (keeps the
+screen awake) and the grocery list.
+
+**1. Host it on HTTPS.** Installing to the home screen and the service worker both need HTTPS.
+Any Docker host works (Render, Railway, Fly.io, a VPS with Caddy):
+```bash
+cd backend
+docker build -t recipebox .
+docker run -p 8000:8000 -v recipebox-data:/data -e ANTHROPIC_API_KEY=... -e API_TOKEN=pick-a-secret recipebox
+```
+Always set `API_TOKEN` on a public server, or anyone can spend your Anthropic credits.
+
+**2. Install it on your iPhone.** Open the URL in Safari, tap Share → **Add to Home Screen**,
+then enter the token in the app's Settings tab.
+
+**3. Save straight from TikTok or Instagram.** iOS doesn't let web apps appear in the share
+sheet, so set up a one-time **Shortcut** instead (the Settings tab shows these steps with your server URL filled in):
+- Shortcuts → ＋ → turn on **Show in Share Sheet** (accepts URLs and Text)
+- Add the action **Get Contents of URL**: `POST https://your-host/imports/shortcut`, JSON body
+  `input` = *Shortcut Input*, header `Authorization: Bearer <token>`
+- Add the action **Show Notification** with *Contents of URL*
+
+Then in any app, tap Share → **Save to RecipeBox**. The recipe shows up in the web app a few seconds later.
+On Android, the installed PWA appears in the share sheet directly (Web Share Target).
+
+## iOS app (optional, native)
 
 SwiftUI, iOS 17+. The Xcode project is generated with [XcodeGen](https://github.com/yonaskolb/XcodeGen):
 

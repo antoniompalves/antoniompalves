@@ -70,3 +70,19 @@ def test_content_includes_frames_and_sources():
     content = build_content(mat)
     assert content[1]["type"] == "image"
     assert "<spoken_transcript>" in content[-2]["text"]
+
+
+def test_web_app_and_shortcut(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+    import app.main as main
+
+    main.store = Store(str(tmp_path / "w.db"))
+    seen = []
+    monkeypatch.setattr(main, "run_job", lambda store, job, text=None: seen.append((job.url, text)))
+    c = TestClient(main.app)
+    assert "RecipeBox" in c.get("/").text
+    assert c.get("/sw.js").headers["content-type"].startswith("text/javascript")
+    assert c.get("/static/manifest.webmanifest").status_code == 200
+    r = c.post("/imports/shortcut", json={"input": "Look at this! https://vm.tiktok.com/ZMabc/"})
+    assert r.status_code == 200 and "Saving" in r.text
+    assert seen == [("https://vm.tiktok.com/ZMabc/", None)]

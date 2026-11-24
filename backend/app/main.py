@@ -14,14 +14,32 @@ import uuid
 from fractions import Fraction
 from typing import Optional
 
-from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
+from fastapi import BackgroundTasks, Body, Depends, FastAPI, Header, HTTPException
+from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 
 from .models import ImportJob, ImportRequest, Recipe, RecipePatch
 from .pipeline import now, run_job
+from .sources import extract_urls
 from .store import Store
 
 app = FastAPI(title="Recipe Importer")
 store = Store()
+
+STATIC = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    return FileResponse(os.path.join(STATIC, "index.html"), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/sw.js", include_in_schema=False)
+def service_worker():
+    # Served from the root so the worker's scope covers the whole app.
+    return FileResponse(os.path.join(STATIC, "sw.js"), media_type="text/javascript",
+                        headers={"Cache-Control": "no-cache"})
 
 
 def auth(authorization: Optional[str] = Header(None)) -> None:
@@ -43,6 +61,16 @@ def create_import(req: ImportRequest, bg: BackgroundTasks) -> ImportJob:
     store.save_job(job)
     bg.add_task(run_job, store, job, req.text)
     return job
+
+
+@app.post("/imports/shortcut", dependencies=[Depends(auth)], response_class=PlainTextResponse)
+def shortcut_import(bg: BackgroundTasks, input: str = Body(..., embed=True)) -> str:
+    """For the iOS Shortcut: takes whatever the share sheet passed (URL or text) and
+    replies with a one-line message for the notification."""
+    urls = extract_urls(input)
+    req = ImportRequest(url=urls[0]) if urls and len(input) < 300 else ImportRequest(text=input)
+    create_import(req, bg)
+    return "Saving recipe to RecipeBox…"
 
 
 @app.get("/imports/{jid}", dependencies=[Depends(auth)])
