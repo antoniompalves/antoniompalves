@@ -172,3 +172,12 @@ ingredients, cook mode, grocery list, manual link/caption import) and `ShareExte
 - **Stillness**: no pinch or double-tap zoom, no rubber-band dragging of the bars, no sideways scrolling; fields stay at 16 px so iOS doesn't zoom on focus.
 - **Bimby converter (AI)**: on any recipe, "fazer na bimby" → choose TM5/TM6/TM7. Claude rewrites it for the machine: ingredients in bowl order (metric), and each step with the exact program (time / temperature or Varoma / speed, colher inversa, vel. colher, modes such as amassar or alta temperatura, accessories like borboleta, cesto, Varoma). Saved as a new personal recipe linked to the original (`POST /recipes/{id}/bimby`). Steps show a Bimby display; the time cell starts a timer.
 - **Themes (proposals)**: Washi (washi paper, shoji glass, kintsugi gold) and Umami (neumorphic controls, liquid glass overlays, Material 3 states, seigaiha + red sun). The seigaiha is a CSS mask, so its colour follows the theme.
+
+## Typography and accessibility
+
+- **Two voices.** Fraunces (light) for titles and moments: page and section titles, recipe names on the photo, the home line, the greeting, plan day headers, the bowl menu. Zen Kaku Gothic New for the interface, in 400 / 500 / 700 only.
+- **Scale** (iOS names): display 2.4–3.2rem · large title 2.125rem (2.5 on iPad/desktop) · section 1.375rem · headline 1.0625rem · body 1rem (reading text in steps 1.0625rem) · subhead .9375rem · footnote .8125rem · caption .75rem · minimum .6875rem for small caps eyebrows. Desktop (≥1024px) renders at 17px base, like Apple's body size.
+- **Buttons** use small tracked capitals; titles use Portuguese sentence case.
+- **Contrast:** secondary and tertiary text are derived from the ink colour (76% / 66%) and pass 4.5:1 in every theme, light and dark. Accent and success colours used as text get a darker "ink" variant. `prefers-contrast: more` strengthens them further; `prefers-reduced-transparency` replaces glass with solid surfaces; `prefers-reduced-motion` turns animations off.
+- **Text size:** pinch-zoom is disabled (by request), so Definições → Aparência → *Tamanho do texto* scales the whole app (94–125%). Layouts reflow at larger sizes (stats 2×2, actions on two rows, long buttons wrap).
+- **Targets:** controls are at least 44×44px; small inline controls (price, "eu trago", remove) get an invisible hit area. Keyboard focus is always visible.

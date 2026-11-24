@@ -1035,6 +1035,10 @@ function applyTheme(t) {
   document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || (dark ? "#120d0a" : "#f7efe6")));
 }
 applyTheme(store.get("theme", "gohan"));
+// Text size (Definições → Aparência): the app blocks pinch-zoom, so text scaling lives here.
+const TEXT_SIZES = { s: .9375, m: 1, l: 1.125, xl: 1.25 };
+function applyTextSize(k) { document.documentElement.style.setProperty("--text-scale", TEXT_SIZES[k] || 1); }
+applyTextSize(store.get("textSize", "m"));
 
 // ---------------------------------------------------------------- boot (after social.js has loaded)
 async function boot() {

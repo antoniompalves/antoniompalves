@@ -511,7 +511,7 @@ async function renderEvent(id, silent = false) {
       ${e.list_id ? `<button class="btn-primary wide" id="toList">${I.cart}Ver lista de compras para ${e.guests}</button>` : ""}` : ""; })() : ""}
     <div class="options">${e.options.map(o => `
       <article class="option glass ${e.my_vote === o.recipe.id ? "mine" : ""} ${decided && o.recipe.id === e.winner_recipe_id ? "won" : ""}">
-        <a href="#/r/${esc(o.recipe.id)}" class="opt-photo">${o.recipe.thumbnail_url ? `<img src="${esc(o.recipe.thumbnail_url)}" alt="" referrerpolicy="no-referrer">` : placeholder(o.recipe.id)}</a>
+        <a href="#/r/${esc(o.recipe.id)}" class="opt-photo" aria-label="Abrir ${esc(o.recipe.title)}">${o.recipe.thumbnail_url ? `<img src="${esc(o.recipe.thumbnail_url)}" alt="" referrerpolicy="no-referrer">` : placeholder(o.recipe.id)}</a>
         <div class="opt-body">
           <b>${esc(o.recipe.title)}</b>
           ${o.recipe.facts?.price_coverage >= 0.6 && costText(o.recipe.facts.cost) ? `<span class="meta">${costText(o.recipe.facts.cost)} por pessoa · ${o.recipe.facts.kcal} kcal</span>` : ""}
@@ -676,6 +676,11 @@ function renderSettings() {
     <section class="section glass"><div class="section-head"><h3>Aparência</h3></div>
       <div class="themes">${THEMES.map(([k, label, color]) => `<button class="theme-opt ${store.get("theme", "gohan") === k ? "on" : ""}" data-theme-opt="${k}" aria-pressed="${store.get("theme", "gohan") === k}"><i style="background:${color}"></i>${label}</button>`).join("")}</div>
       <p class="meta" style="margin-top:.6rem">Os temas claros seguem o modo escuro do sistema. Meia-noite é sempre escuro.</p>
+      <p class="eyebrow" style="margin-top:1.1rem">Tamanho do texto</p>
+      <div class="size-picker text-size" role="radiogroup" aria-label="Tamanho do texto">
+        ${[["s", "Pequeno", .9375], ["m", "Normal", 1], ["l", "Grande", 1.125], ["xl", "Muito grande", 1.25]].map(([k, label, f]) =>
+          `<button type="button" role="radio" class="size-opt ${store.get("textSize", "m") === k ? "on" : ""}" aria-checked="${store.get("textSize", "m") === k}" aria-label="${label}" data-ts="${k}" style="font-size:${f * .95}rem">A</button>`).join("")}
+      </div>
     </section>
 
     <section class="section glass" id="pushSec"><div class="section-head"><h3>Notificações</h3></div><p class="meta">A verificar…</p></section>
@@ -710,6 +715,10 @@ function renderSettings() {
     </section>
     <section class="section glass"><div class="section-head"><h3>Android</h3></div>
       <p class="meta">Instala a partir do menu do Chrome (<b>Adicionar ao ecrã principal</b>). O Gohan passa a aparecer diretamente na folha de partilha.</p></section>`;
+  view.querySelectorAll("[data-ts]").forEach(b => b.onclick = () => {
+    store.set("textSize", b.dataset.ts); applyTextSize(b.dataset.ts); haptic(6);
+    view.querySelectorAll("[data-ts]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); });
+  });
   view.querySelectorAll("[data-theme-opt]").forEach(b => b.onclick = () => {
     store.set("theme", b.dataset.themeOpt); applyTheme(b.dataset.themeOpt); haptic(6);
     view.querySelectorAll("[data-theme-opt]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
