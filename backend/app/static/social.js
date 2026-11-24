@@ -196,7 +196,7 @@ async function renderAuth() {
   let mode = invite ? "signup" : store.get("authMode", "login");
   const draw = () => {
     view.innerHTML = `<div class="auth">
-      <div class="auth-brand"><img class="auth-icon" src="/static/icon.svg" alt=""><h1 class="auth-title"><span class="brand" aria-label="Gohan, ご飯"><b aria-hidden="true">GOHAN</b><i lang="ja" aria-hidden="true">ご飯</i></span></h1>
+      <div class="auth-brand"><h1 class="auth-title">${LOGO()}</h1>
         <p class="subtitle">ご飯: a refeição. As receitas das redes sociais, guardadas e partilhadas com os teus amigos.</p></div>
       ${invite ? `<div class="invite glass">${I.users}<div><b>Foste convidado para ${esc(invite.name)}</b>
         <span class="meta">${esc(invite.members.join(", "))}</span></div></div>` : ""}

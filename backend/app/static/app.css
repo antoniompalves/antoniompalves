@@ -1028,3 +1028,61 @@ body { overscroll-behavior: none; overflow-x: clip; }
   body[data-tab="library"]:not(.route-detail) #title { display: none; }
 }
 @media (min-width: 768px) and (max-width: 1100px) { .tabbar { width: min(32rem, calc(100% - 15rem)); left: calc(50% + 4rem); } .tabbar button span:not(.badge) { font-size: .75rem; } }
+
+/* blocky wordmark (svg) */
+.logo { display: block; height: 100%; width: auto; color: var(--ink); overflow: visible; }
+.top-brand { height: 2.1rem; }
+.auth-title { height: 4.4rem; margin: 1.1rem 0 .4rem; display: flex; justify-content: center; }
+
+/* =====================================================================
+   iPad / desktop menu: a red bowl hanging from the top edge
+   ===================================================================== */
+.menu-btn, .cup-menu { display: none; }
+@media (min-width: 768px) {
+  .tabbar { display: none; }
+  .topbar { padding-top: calc(4.6rem + env(safe-area-inset-top)); }
+  .top-brand { top: calc(1.25rem + env(safe-area-inset-top)); }
+  .menu-btn { display: grid; place-items: center; position: fixed; z-index: 62; top: calc(1rem + env(safe-area-inset-top)); right: 2rem;
+    width: 2.75rem; height: 2.75rem; color: #e1001a; border: 2px solid #e1001a; border-radius: .2rem; background: color-mix(in srgb, var(--bg) 70%, transparent);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: color .3s, border-color .3s, background-color .3s; }
+  .menu-btn svg { width: 1.4rem; height: 1.4rem; stroke-width: 2.2; stroke-linecap: square; overflow: visible; }
+  .menu-btn path { transition: transform .35s cubic-bezier(.3,1.3,.5,1); transform-origin: 12px 12px; }
+  body.menu-open .menu-btn { background: #fff; }
+  body.menu-open .menu-btn .m1 { transform: translateY(4px) rotate(45deg); }
+  body.menu-open .menu-btn .m2 { transform: translateY(-4px) rotate(-45deg); }
+  .menu-btn .badge { position: absolute; top: -.45rem; right: -.45rem; min-width: 1.1rem; height: 1.1rem; padding: 0 .3rem; border-radius: 999px;
+    background: #e1001a; color: #fff; font-size: .6875rem; font-weight: 700; display: grid; place-items: center; font-style: normal; }
+  .menu-btn .badge[hidden], .cup-menu .badge[hidden] { display: none; }
+  body.route-detail .menu-btn { top: calc(1rem + env(safe-area-inset-top)); }
+
+  .cup-menu { --cup: #d9413d; display: flex; flex-direction: column; align-items: center; position: fixed; z-index: 61; top: 0; right: clamp(5rem, 9vw, 9rem);
+    width: 25rem; max-height: 100dvh; padding: 4.2rem 3.2rem 4.8rem; color: #fff; background: var(--cup);
+    border-radius: 0 0 12.5rem 12.5rem; box-shadow: 0 40px 80px -30px rgb(120 10 10 / .55);
+    transform: translateY(-105%); transition: transform .55s cubic-bezier(.22,1.15,.36,1); }
+  .cup-menu[hidden] { display: none; }
+  .cup-menu.in { transform: none; }
+  /* the flared lip at the top corners */
+  .cup-menu::before, .cup-menu::after { content: ""; position: absolute; top: 0; width: 1.4rem; height: 3.6rem; }
+  .cup-menu::before { left: -1.4rem; background: radial-gradient(ellipse 100% 100% at 0 100%, transparent 98%, var(--cup) 100%); }
+  .cup-menu::after { right: -1.4rem; background: radial-gradient(ellipse 100% 100% at 100% 100%, transparent 98%, var(--cup) 100%); }
+  .cup-menu ul { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: .35rem; }
+  .cup-menu a { display: grid; grid-template-columns: 1fr 6.5rem auto; align-items: baseline; gap: .75rem; color: #fff; padding: .35rem 0; border-radius: .4rem; position: relative; }
+  .mi-pt { font-family: "Fraunces", ui-serif, Georgia, serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.1; transition: transform .25s, opacity .25s; }
+  .mi-jp { font-size: .95rem; font-weight: 700; letter-spacing: .06em; opacity: .9; }
+  .cup-menu a:hover .mi-pt, .cup-menu a:focus-visible .mi-pt { transform: translateX(.35rem); }
+  .cup-menu a.on .mi-pt { font-style: italic; }
+  .cup-menu a.on::before { content: ""; position: absolute; left: -1.1rem; top: 50%; width: .45rem; height: .45rem; border-radius: 50%; background: #fff; transform: translateY(-50%); }
+  .cup-menu a .badge { align-self: center; min-width: 1.3rem; height: 1.3rem; padding: 0 .35rem; border-radius: 999px; background: #fff; color: var(--cup);
+    font-size: .75rem; font-weight: 800; font-style: normal; display: grid; place-items: center; }
+  .cup-menu a:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+  .cm-import { margin-top: 1.6rem; display: inline-flex; align-items: center; gap: .5rem; align-self: flex-start; color: #fff; font-weight: 650;
+    padding: .55rem 1rem; border-radius: 999px; box-shadow: 0 0 0 1.5px rgb(255 255 255 / .7) inset; }
+  .cm-import:hover { background: rgb(255 255 255 / .12); }
+  .cm-import svg { width: 1.1rem; height: 1.1rem; }
+  .cm-logo { margin-top: 2.6rem; display: flex; flex-direction: column; align-items: center; gap: .7rem; }
+  .cm-logo .logo { height: 3.4rem; color: #fff; }
+  .cm-logo .logo-cup { fill: #fff; }
+  .cm-logo small { font-size: .75rem; letter-spacing: .3em; opacity: .85; }
+  @media (prefers-reduced-motion: reduce) { .cup-menu { transition: opacity .2s; transform: none; opacity: 0; } .cup-menu.in { opacity: 1; } }
+  @media (max-height: 760px) { .cup-menu { padding-top: 3.4rem; padding-bottom: 4rem; } .mi-pt { font-size: 1.7rem; } .cm-logo { margin-top: 1.6rem; } .cm-logo .logo { height: 2.8rem; } }
+}

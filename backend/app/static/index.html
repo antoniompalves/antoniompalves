@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Apple devices use SF Pro via -apple-system; Inter is the fallback elsewhere -->
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600..700;1,9..144,500..700&family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,500..700&family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/app.css">
   <script>try { var t = JSON.parse(localStorage.getItem("theme")) || "gohan"; if (t !== "quente") document.documentElement.dataset.theme = t; } catch (e) { document.documentElement.dataset.theme = "gohan"; }</script>
 </head>
@@ -24,7 +24,9 @@
   <div class="ambient" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
   <div id="app">
-    <a class="top-brand" href="#/" aria-label="Gohan: início"><span class="brand" aria-label="Gohan, ご飯"><b aria-hidden="true">GOHAN</b><i lang="ja" aria-hidden="true">ご飯</i></span></a>
+    <a class="top-brand" href="#/" aria-label="Gohan: início" data-logo></a>
+    <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="cupMenu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="m1" d="M5 8h14"/><path class="m2" d="M5 16h14"/></svg><i class="badge" hidden></i></button>
     <header class="topbar">
       <div id="title"></div>
       <button id="addBtn" class="fab" aria-label="Importar receita" aria-haspopup="dialog">
