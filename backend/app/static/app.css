@@ -1086,3 +1086,122 @@ body { overscroll-behavior: none; overflow-x: clip; }
   @media (prefers-reduced-motion: reduce) { .cup-menu { transition: opacity .2s; transform: none; opacity: 0; } .cup-menu.in { opacity: 1; } }
   @media (max-height: 760px) { .cup-menu { padding-top: 3.4rem; padding-bottom: 4rem; } .mi-pt { font-size: 1.7rem; } .cm-logo { margin-top: 1.6rem; } .cm-logo .logo { height: 2.8rem; } }
 }
+
+/* =====================================================================
+   Lettering (after u-gohan.jp): lowercase high-contrast serif, tight tracking,
+   a heavy rule under the word and a small Japanese caption.
+   ===================================================================== */
+:root { --jp: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Zen Kaku Gothic New", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --letter: "Fraunces", ui-serif, "New York", Georgia, serif; }
+.jt { display: inline-flex; flex-direction: column; align-items: flex-start; margin: 0; color: var(--ink); max-width: 100%; }
+.jt b { position: relative; font-family: var(--letter); font-weight: 400; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0;
+  letter-spacing: -0.045em; line-height: 1; padding: 0 .04em .14em 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.jt b::after { content: ""; position: absolute; left: 34%; right: 0; bottom: 0; height: max(3px, .07em); background: currentColor; }
+.jt small { font-family: var(--jp); font-weight: 700; font-size: .75rem; letter-spacing: .4em; line-height: 1; margin: .7rem 0 0 34%; white-space: nowrap; color: var(--ink); }
+.jt-large b { font-size: 2.6rem; }
+.jt-large + .subtitle { margin-top: .35rem; }
+.jt-center { align-items: center; text-align: center; }
+.jt-center b { font-size: 2.4rem; }
+.jt-center b::after { left: 30%; }
+.jt-center small { margin-left: 30%; }
+.home-head { display: flex; justify-content: center; margin: .5rem 0 1.25rem !important; }
+@media (max-width: 767px) { .home-head { display: none; } }
+@media (min-width: 768px) { .home-head .jt b { font-size: 3rem; } }
+
+/* section headings inside cards */
+.section-head h3 { font-family: var(--letter); font-weight: 400; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0;
+  font-size: 1.45rem; letter-spacing: -0.035em; text-transform: lowercase; display: inline-flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
+.section-head h3[data-jp]::after { content: attr(data-jp); font-family: var(--jp); font-weight: 700; font-size: .6875rem; letter-spacing: .35em; color: var(--accent); text-transform: none; }
+.empty h3 { font-family: var(--letter); font-weight: 400; font-variation-settings: "opsz" 144; letter-spacing: -0.03em; font-size: 1.5rem; }
+
+/* thin, small lettering (no Japanese captions) */
+.jt b { font-weight: 300; letter-spacing: -0.035em; }
+.jt b::after { height: max(2px, .05em); }
+.jt-large b { font-size: 2.2rem; }
+@media (min-width: 768px) { .home-head .jt b { font-size: 2.25rem; } }
+.home-head { margin: .25rem 0 1rem !important; }
+.section-head h3 { font-weight: 300; font-size: 1.25rem; letter-spacing: -0.025em; }
+.mi-pt { font-weight: 300; }
+.cup-menu a { grid-template-columns: 1fr auto; }
+
+/* =====================================================================
+   Organic motion, from the bowl: things fill, settle and breathe.
+   Springy curves, soft squash-and-stretch, nothing mechanical.
+   ===================================================================== */
+:root { --ease-soft: cubic-bezier(.2,.8,.2,1); --ease-jelly: cubic-bezier(.3,1.35,.45,1); }
+
+/* the bowl pours in (anchored at its base), with a little settle */
+.logo-cup { transform-box: fill-box; transform-origin: 50% 100%; animation: bowl-pour .9s var(--ease-soft) both; }
+@keyframes bowl-pour {
+  0% { transform: scale(.7, .15); opacity: 0; }
+  45% { transform: scale(.96, 1.08); opacity: 1; }
+  70% { transform: scale(1.03, .96); }
+  100% { transform: none; }
+}
+.logo > g { animation: word-rise .8s .18s var(--ease-soft) both; }
+@keyframes word-rise { from { opacity: 0; transform: translateY(18px); filter: blur(4px); } }
+.top-brand:hover .logo-cup { animation: bowl-wobble .7s var(--ease-soft); }
+@keyframes bowl-wobble { 25% { transform: rotate(-6deg) scale(1.02, .98); } 55% { transform: rotate(4deg); } 80% { transform: rotate(-1.5deg); } }
+
+/* loading: a small bowl slowly filling, the surface rolling like broth */
+.spinner { width: 1.15rem; height: 1.6rem; border: 0; border-radius: 0; position: relative; overflow: hidden; animation: none;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 155"><path d="M0 0C30 6 70 6 100 0C97 4 96 12 96 32V108A46 46 0 0 1 4 108V32C4 12 3 4 0 0Z"/></svg>') center / contain no-repeat;
+          mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 155"><path d="M0 0C30 6 70 6 100 0C97 4 96 12 96 32V108A46 46 0 0 1 4 108V32C4 12 3 4 0 0Z"/></svg>') center / contain no-repeat; }
+.spinner::before { content: ""; position: absolute; left: -60%; width: 220%; aspect-ratio: 1; border-radius: 43%; background: var(--accent);
+  top: 100%; animation: broth-fill 2.4s var(--ease-soft) infinite, spin 2.8s linear infinite; }
+@keyframes broth-fill { 0% { top: 105%; opacity: 1; } 72% { top: 8%; opacity: 1; } 90%, 100% { top: 8%; opacity: 0; } }
+.btn-primary .spinner, .cook .spinner { background: rgb(255 255 255 / .25); }
+.btn-primary .spinner::before, .cook .spinner::before { background: #fff; }
+.home-side .spinner, .empty .spinner { width: 1.6rem; height: 2.2rem; }
+
+/* lettering: the rule under each title is drawn after the word lands */
+.jt b::after { transform-origin: 0 50%; animation: rule-draw .8s .25s var(--ease-soft) both; }
+@keyframes rule-draw { from { transform: scaleX(0); } }
+.jt b { animation: word-rise .7s var(--ease-soft) both; }
+
+/* cards rise in a soft wave */
+.grid .card { animation: card-in .7s calc(var(--n, 0) * 45ms) var(--ease-soft) both; }
+@keyframes card-in { from { opacity: 0; transform: translateY(22px) scale(.97); } }
+.card:active { transform: scale(.97); transition: transform .12s; }
+.card:hover .photo, .card:hover img { transform: scale(1.04); }
+.card .photo, .card img { transition: transform .8s var(--ease-soft); }
+
+/* the menu bowl drops like poured jelly: stretches, then settles */
+@media (min-width: 768px) {
+  .cup-menu { transform-origin: 50% 0; }
+  .cup-menu.in { animation: bowl-drop .8s var(--ease-soft) both; }
+  @keyframes bowl-drop {
+    0% { transform: translateY(-105%) scale(1, 1); }
+    55% { transform: translateY(0) scale(.985, 1.045); }
+    75% { transform: translateY(0) scale(1.01, .985); }
+    100% { transform: none; }
+  }
+  .cup-menu.in li, .cup-menu.in .cm-import, .cup-menu.in .cm-logo { animation: item-drip .6s var(--ease-jelly) both; }
+  .cup-menu.in li:nth-child(1) { animation-delay: .16s; } .cup-menu.in li:nth-child(2) { animation-delay: .2s; }
+  .cup-menu.in li:nth-child(3) { animation-delay: .24s; } .cup-menu.in li:nth-child(4) { animation-delay: .28s; }
+  .cup-menu.in li:nth-child(5) { animation-delay: .32s; } .cup-menu.in .cm-import { animation-delay: .38s; }
+  .cup-menu.in .cm-logo { animation-delay: .44s; }
+  @keyframes item-drip { from { opacity: 0; transform: translateY(-14px); } }
+  .home-hero { animation: hero-in .9s var(--ease-soft) both; }
+  @keyframes hero-in { from { opacity: 0; transform: translateY(16px) scale(.99); border-radius: 3rem; } }
+  .hh-week { animation: print-drop 1s .3s var(--ease-jelly) both; }
+  @keyframes print-drop { from { opacity: 0; transform: translateY(-24px) rotate(-4deg); } }
+}
+
+/* the ambient light drifts like steam, very slowly */
+.ambient i { will-change: transform; animation: steam 26s ease-in-out infinite alternate; }
+.ambient i:nth-child(2) { animation-duration: 31s; animation-delay: -8s; }
+.ambient i:nth-child(3) { animation-duration: 35s; animation-delay: -15s; }
+.ambient i:nth-child(4) { animation-duration: 29s; animation-delay: -4s; }
+@keyframes steam { 50% { transform: translate(4vmax, -3vmax) scale(1.08, .95); } 100% { transform: translate(-3vmax, 2vmax) scale(.96, 1.06); } }
+
+/* ticking an ingredient: the circle fills like a drop landing */
+.ing input:checked, .ing-check input:checked, .litem input:checked { animation: drop-in .45s var(--ease-jelly); }
+@keyframes drop-in { 0% { transform: scale(.6); } 60% { transform: scale(1.15, .9); } 100% { transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-cup, .logo > g, .jt b, .jt b::after, .grid .card, .cup-menu.in, .cup-menu.in li, .cup-menu.in .cm-import, .cup-menu.in .cm-logo,
+  .home-hero, .hh-week, .ambient i, .top-brand:hover .logo-cup { animation: none !important; }
+  .spinner::before { animation: broth-fill 3s linear infinite; }
+}

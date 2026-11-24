@@ -197,7 +197,7 @@ async function renderAuth() {
   const draw = () => {
     view.innerHTML = `<div class="auth">
       <div class="auth-brand"><h1 class="auth-title">${LOGO()}</h1>
-        <p class="subtitle">ご飯: a refeição. As receitas das redes sociais, guardadas e partilhadas com os teus amigos.</p></div>
+        <p class="subtitle">Gohan: a refeição. As receitas das redes sociais, guardadas e partilhadas com os teus amigos.</p></div>
       ${invite ? `<div class="invite glass">${I.users}<div><b>Foste convidado para ${esc(invite.name)}</b>
         <span class="meta">${esc(invite.members.join(", "))}</span></div></div>` : ""}
       <form class="auth-card glass glass-thick" novalidate>

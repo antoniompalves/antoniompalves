@@ -214,7 +214,14 @@ function route() {
   enterScreen(dir);
 }
 
-const largeTitle = (text, sub) => { title.innerHTML = `<h1 class="large-title">${esc(text)}</h1>${sub ? `<p class="subtitle">${esc(sub)}</p>` : ""}`; };
+// Lettering after u-gohan: lowercase high-contrast serif, a heavy rule beneath, a small Japanese caption.
+const JP = {"Receitas": "レシピ", "Plano": "献立", "Grupo": "仲間", "Compras": "買い物", "Definições": "設定", "Despensa": "食品庫", "Ingredientes": "材料", "Passos": "作り方", "Informação nutricional": "栄養", "As minhas coleções": "コレクション", "Voltava a fazer?": "また作る？", "Feita pelo grupo": "みんなの一皿", "Variações": "アレンジ", "Esta semana": "今週", "Jantares": "夕食会", "Ranking do grupo": "ランキング", "Atividade": "最近", "Listas": "リスト", "Comprados": "購入済み", "Aparência": "テーマ", "Notificações": "お知らせ", "Os meus grupos": "グループ", "Custo e nutrição": "費用と栄養", "Básicos": "基本", "Próximas": "これから", "Anteriores": "これまで", "Instalar no iPhone": "インストール", "Android": "アンドロイド"};
+const CAT_TITLES = {"": ["receitas recentes", "新着"], "bimby": ["bimby", "調理機"], "pequeno": ["pequeno-almoço", "朝ご飯"], "pratos": ["pratos principais", "主菜"], "sobremesas": ["sobremesas", "甘味"], "lanches": ["lanches", "軽食"], "bebidas": ["bebidas", "飲み物"]};
+const lettering = (text, _jp, tag = "h1", cls = "") => `<${tag} class="jt ${cls}"><b>${esc(text.toLowerCase())}</b></${tag}>`;
+const largeTitle = (text, sub) => {
+  title.innerHTML = JP[text] ? `${lettering(text, JP[text], "h1", "jt-large")}${sub ? `<p class="subtitle">${esc(sub)}</p>` : ""}`
+    : `<h1 class="large-title">${esc(text)}</h1>${sub ? `<p class="subtitle">${esc(sub)}</p>` : ""}`;
+};
 
 // ---------------------------------------------------------------- library
 function filteredRecipes() {
@@ -314,7 +321,7 @@ function renderLibrary() {
     <div class="home-grid">
     ${n ? `<aside class="home-side glass" id="homeSide" aria-label="Esta semana"><span class="eyebrow">Esta semana</span><div class="spinner" aria-hidden="true"></div></aside>` : ""}
     <div class="home-main">
-    ${n ? `<div class="home-head"><span class="eyebrow">Da mesa do grupo</span><h2>Adicionadas recentemente</h2></div>` : ""}
+    ${n ? `<div class="home-head" id="homeHead">${lettering(...CAT_TITLES[state.category || ""], "h2", "jt-center")}</div>` : ""}
     ${groups().length ? `<div class="seg glass" role="tablist" aria-label="Mostrar">${scopes.map(([k, label]) =>
       `<button role="tab" aria-selected="${state.scope === k}" class="${state.scope === k ? "on" : ""}" data-scope="${esc(k)}">${k.length > 8 ? I.users : ""}${esc(label)}</button>`).join("")}</div>` : ""}
     ${n ? `<div class="search-wrap glass">${I.search}<input class="search" type="search" enterkeyhint="search" aria-label="Pesquisar receitas" placeholder="Pesquisar receitas ou ingredientes" value="${esc(state.query)}"></div>` : ""}
@@ -335,6 +342,7 @@ function renderLibrary() {
   view.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => {
     state.category = b.dataset.cat || null;
     view.querySelectorAll("[data-cat]").forEach(x => x.classList.toggle("on", x === b));
+    const hh = $("#homeHead"); if (hh) hh.innerHTML = lettering(...CAT_TITLES[state.category || ""], "h2", "jt-center");
     renderResults();
   });
 
@@ -395,9 +403,9 @@ const statusLabel = s => ({ queued: "Em fila…", fetching: "A ler a publicaçã
 const totalTime = r => r.total_minutes || ((r.prep_minutes || 0) + (r.cook_minutes || 0)) || null;
 const fmtMin = m => m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`;
 
-function card(r) {
+function card(r, i = 0) {
   const t = totalTime(r);
-  return `<article class="card" data-id="${esc(r.id)}" role="link" tabindex="0" aria-label="${esc(r.title)}">
+  return `<article class="card" style="--n:${Math.min(i, 12)}" data-id="${esc(r.id)}" role="link" tabindex="0" aria-label="${esc(r.title)}">
     ${photo(r, "photo")}
     <div class="top"><span class="tag glass-photo">${isBimby(r) ? `${BIMBY_ICON}Bimby` : esc(platformName(r.source_platform))}</span>
     <span class="badges">${r.stats?.cooks ? `<span class="badge-cook glass-photo" aria-label="Feita ${r.stats.cooks} vezes">${I.check}${r.stats.cooks}</span>` : ""}${r.favorite ? `<span class="fav glass-photo" aria-label="Favorito">${I.heart}</span>` : ""}${!r.is_owner && r.owner ? `<span class="by" title="Trazida por ${esc(r.owner.name)}">${avatar(r.owner, "sm")}</span>` : ""}</span></div>
@@ -920,9 +928,9 @@ const cupMenu = (() => {
   const items = [["library", "receitas", "レシピ"], ["plan", "plano", "献立"], ["group", "grupo", "仲間"], ["lists", "compras", "買い物"], ["settings", "definições", "設定"]];
   const el = document.createElement("nav");
   el.id = "cupMenu"; el.className = "cup-menu"; el.setAttribute("aria-label", "Menu"); el.hidden = true;
-  el.innerHTML = `<ul>${items.map(([t, pt, jp]) => `<li><a href="#${t === "library" ? "/" : "/" + t}" data-mtab="${t}"><span class="mi-pt">${pt}</span><span class="mi-jp" lang="ja">${jp}</span><i class="badge" hidden></i></a></li>`).join("")}</ul>
+  el.innerHTML = `<ul>${items.map(([t, pt, jp]) => `<li><a href="#${t === "library" ? "/" : "/" + t}" data-mtab="${t}"><span class="mi-pt">${pt}</span><i class="badge" hidden></i></a></li>`).join("")}</ul>
     <button class="cm-import" type="button">${I.plus}importar receita</button>
-    <div class="cm-logo">${LOGO()}<small>ご飯 · a refeição</small></div>`;
+    <div class="cm-logo">${LOGO()}<small>a refeição</small></div>`;
   document.body.append(el);
   const btn = $("#menuBtn");
   let open = false;
