@@ -36,7 +36,7 @@ struct LibraryView: View {
                 if library.recipes.isEmpty && library.importing.isEmpty {
                     ContentUnavailableView("No recipes yet",
                         systemImage: "square.and.arrow.down",
-                        description: Text("Share a TikTok, Reel, YouTube video or recipe link to RecipeBox, or tap +."))
+                        description: Text("Share a TikTok, Reel, YouTube video or recipe link to Gohan, or tap +."))
                 }
             }
             .navigationTitle("Recipes")

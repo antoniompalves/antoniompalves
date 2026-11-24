@@ -121,3 +121,12 @@ def test_trip_plan_for_group_holidays(env):
     env.client.delete(f"/trips/{t['id']}", headers=bruno)
     assert env.client.get(f"/trips/{t['id']}", headers=ana).status_code == 404
     assert env.client.patch(f"/plan/{e['id']}", json={"servings": 2}, headers=ana).status_code == 404  # entries went with it
+
+
+def test_bimby_detection():
+    from app.util import is_bimby
+    steps = ["Coloque a cebola no copo e pique 5 seg/vel. 5.", "Junte o azeite e refogue 3 min/Varoma/vel. 1.", "Sirva."]
+    assert is_bimby("Sopa de legumes", steps, [])
+    assert is_bimby("Risotto na Bimby", ["Sirva."], [])
+    assert is_bimby("Bolo", ["Misture tudo."], ["thermomix"])
+    assert not is_bimby("Bacalhau à Brás", ["Frite a batata.", "Junte os ovos a 180 °C."], [])

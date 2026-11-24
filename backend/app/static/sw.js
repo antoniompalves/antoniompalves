@@ -1,5 +1,5 @@
 // Caches the app shell so it opens instantly; API calls always go to the network.
-const SHELL = "recipebox-v6";
+const SHELL = "gohan-v8";
 const ASSETS = ["/", "/static/app.js", "/static/motion.js", "/static/social.js", "/static/timers.js", "/static/handsfree.js", "/static/app.css", "/static/manifest.webmanifest", "/static/icon.svg"];
 self.addEventListener("install", e => e.waitUntil(caches.open(SHELL).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", e => e.waitUntil(
@@ -19,7 +19,7 @@ self.addEventListener("fetch", e => {
 // ---------------------------------------------------------------- push notifications
 self.addEventListener("push", e => {
   let msg = {};
-  try { msg = e.data ? e.data.json() : {}; } catch { msg = { title: "RecipeBox", body: e.data?.text() }; }
+  try { msg = e.data ? e.data.json() : {}; } catch { msg = { title: "Gohan", body: e.data?.text() }; }
   const opts = {
     body: msg.body || "",
     icon: "/static/icon-192.png",
@@ -31,7 +31,7 @@ self.addEventListener("push", e => {
     lang: "pt-PT",
   };
   e.waitUntil(Promise.all([
-    self.registration.showNotification(msg.title || "RecipeBox", opts),
+    self.registration.showNotification(msg.title || "Gohan", opts),
     // badge on the Home Screen icon where supported (iOS 16.4+ web apps, Chromium)
     self.navigator.setAppBadge ? self.registration.getNotifications().then(n => self.navigator.setAppBadge(n.length + 1)).catch(() => {}) : null,
   ]));

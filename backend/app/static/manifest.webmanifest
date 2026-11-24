@@ -1,17 +1,17 @@
 {
-  "name": "RecipeBox",
-  "short_name": "RecipeBox",
+  "name": "Gohan",
+  "short_name": "Gohan",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#fbf8f3",
-  "theme_color": "#c2410c",
+  "background_color": "#f6f1e8",
+  "theme_color": "#15120f",
   "icons": [
     {
       "src": "/static/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/static/icon-180.png",

@@ -1,5 +1,5 @@
 "use strict";
-// RecipeBox web app: vanilla JS, no build step. Talks to the same API as the iOS app.
+// Gohan web app: vanilla JS, no build step. Talks to the same API as the iOS app.
 // Motion follows the apple-design skill (see motion.js): springs from the live value,
 // 1:1 drags, velocity handoff, momentum projection, rubber-banding.
 
@@ -17,6 +17,7 @@ const state = {
   recipes: [],
   query: "",
   collection: null,
+  category: null,
   scope: store.get("scope", "all"),      // "all" | "mine" | <group id>
   groupId: store.get("groupId", null),   // selected group in the Grupo tab
   pending: store.get("pending", []),     // [{id, label, status, error}]
@@ -221,8 +222,82 @@ function filteredRecipes() {
   return state.recipes.filter(r =>
     (state.scope === "all" || (state.scope === "mine" ? r.is_owner : r.shared_group_ids.includes(state.scope))) &&
     (!state.collection || (state.collection === "♥" ? r.favorite : r.collections.includes(state.collection))) &&
+    (!state.category || CATEGORIES.find(c => c[0] === state.category)?.[2](r)) &&
     (!q || r.title.toLowerCase().includes(q) || r.tags.some(t => t.includes(q)) ||
       (r.cuisine || "").toLowerCase().includes(q) || r.ingredients.some(i => i.name.toLowerCase().includes(q))));
+}
+
+// Categories: Bimby is its own shelf (tag or machine settings in the steps); the rest come from meal_type.
+const BIMBY_RE = /\b(bimby|thermomix|varoma|colher inversa|vel(?:\.|ocidade)\s*(?:\d|colher))/i;
+const isBimby = r => r.tags.some(t => /^(bimby|thermomix)$/i.test(t)) || BIMBY_RE.test(r.title) ||
+  (r.steps.length > 0 && r.steps.filter(s => BIMBY_RE.test(s.text)).length >= Math.min(2, r.steps.length));
+const CATEGORIES = [
+  ["bimby", "Bimby", r => isBimby(r)],
+  ["pequeno", "Pequeno-almoço", r => /breakfast|brunch/i.test(r.meal_type || "")],
+  ["pratos", "Pratos principais", r => /lunch|dinner|main/i.test(r.meal_type || "")],
+  ["sobremesas", "Sobremesas", r => /dessert/i.test(r.meal_type || "") || r.tags.some(t => /sobremesa|doce|bolo/i.test(t))],
+  ["lanches", "Lanches", r => /snack/i.test(r.meal_type || "")],
+  ["bebidas", "Bebidas", r => /drink/i.test(r.meal_type || "")],
+];
+const BIMBY_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10l-1.2 12.5a2 2 0 0 1-2 1.8h-3.6a2 2 0 0 1-2-1.8z"/><path d="M17 7h1.5a1.5 1.5 0 0 1 1.5 1.5V11a2 2 0 0 1-2 2h-1M6 21h12M9.5 18.3 9 21M14.5 18.3 15 21M8.5 2.5h7"/></svg>`;
+
+function weekNumber(d = new Date()) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  return Math.ceil(((t - new Date(Date.UTC(t.getUTCFullYear(), 0, 1))) / 864e5 + 1) / 7);
+}
+// The front-page recipe: the group's favourites rotate weekly (stable during the week).
+function recipeOfWeek() {
+  const withPhoto = state.recipes.filter(r => r.thumbnail_url);
+  if (!withPhoto.length) return null;
+  const top = [...withPhoto].sort((a, b) => (b.stats?.cooks || 0) - (a.stats?.cooks || 0) || (b.favorite - a.favorite)).slice(0, 5);
+  return top[weekNumber() % top.length];
+}
+const greeting = () => { const h = new Date().getHours(); return h < 6 ? "Boa noite" : h < 13 ? "Bom dia" : h < 20 ? "Boa tarde" : "Boa noite"; };
+
+function homeHero() {
+  const r = recipeOfWeek(), first = (state.me?.user?.name || state.me?.name || "").split(" ")[0];
+  const n = state.recipes.length, gs = groups().length;
+  const cooked = state.recipes.reduce((a, x) => a + (x.stats?.cooks || 0), 0);
+  return `<section class="home-hero" aria-label="Início">
+    ${r ? `<div class="hh-bg" style="background-image:url('${esc(r.thumbnail_url)}')" aria-hidden="true"></div>` : ""}
+    <div class="hh-text">
+      <p class="hh-greet">${greeting()}${first ? `, ${esc(first)}` : ""}</p>
+      <h2>Cada receita tem uma <em>história.</em></h2>
+      <p class="hh-sub">Guarda as receitas dos TikToks, Reels e blogues, cozinha-as com o grupo e planeia a semana sem complicações.</p>
+      <div class="hh-actions"><button class="btn-primary" data-import>${I.plus}Importar receita</button>
+        <a class="hh-ghost" href="#/plan">${I.calendar}Planear a semana</a></div>
+      <p class="hh-stats"><b>${n}</b> receita${n === 1 ? "" : "s"}${cooked ? ` · <b>${cooked}</b> vez${cooked === 1 ? "" : "es"} cozinhadas` : ""}${gs ? ` · <b>${gs}</b> grupo${gs === 1 ? "" : "s"}` : ""}</p>
+    </div>
+    ${r ? `<a class="hh-week" href="#/r/${esc(r.id)}">
+      <img src="${esc(r.thumbnail_url)}" alt="" loading="lazy" onerror="this.remove()">
+      <span class="eyebrow">Receita da semana${isBimby(r) ? " · Bimby" : ""}</span>
+      <b>${esc(r.title)}</b>
+      <i>${r.stats?.cooks ? `Feita ${r.stats.cooks}× ${r.is_owner ? "" : `· trazida por ${esc(r.owner?.name?.split(" ")[0] || "")}`}` : r.description ? esc(r.description.slice(0, 60)) + (r.description.length > 60 ? "…" : "") : "Ainda ninguém a fez. Esta semana?"}</i>
+    </a>` : ""}
+  </section>`;
+}
+
+async function homeSide() {
+  const el = $("#homeSide"); if (!el) return;
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  let plan = null, lists = [];
+  try { [plan, lists] = await Promise.all([api(`/plan?week=${iso(today)}`), api("/lists")]); } catch { return; }
+  if (!$("#homeSide")) return;
+  const next = plan.days.filter(d => d.date >= iso(today)).flatMap(d => d.entries.filter(e => e.recipe).map(e => ({ ...e, date: d.date }))).slice(0, 4);
+  const dayName = d => d === iso(today) ? "Hoje" : new Date(d + "T12:00").toLocaleDateString("pt-PT", { weekday: "long" }).replace(/^./, c => c.toUpperCase());
+  const open = lists.filter(l => l.total && l.done < l.total).slice(0, 2);
+  el.innerHTML = `
+    <span class="eyebrow">Esta semana</span>
+    ${next.length ? `<ul class="hs-meals">${next.map(e => `<li><a href="#/r/${esc(e.recipe.id)}">
+        ${e.recipe.thumbnail_url ? `<img src="${esc(e.recipe.thumbnail_url)}" alt="" loading="lazy" onerror="this.remove()">` : `<span class="hs-dot">${I.fork}</span>`}
+        <span><small>${dayName(e.date)} · ${SLOT_NAMES[e.slot] || ""}</small><b>${esc(e.recipe.title)}</b></span></a></li>`).join("")}</ul>`
+      : `<p class="meta">Nada planeado para os próximos dias.</p>`}
+    <a class="hs-link" href="#/plan">${I.calendar}${next.length ? "Ver o plano" : "Planear a semana"}</a>
+    ${open.length ? `<span class="eyebrow" style="margin-top:1rem">Compras</span>${open.map(l => `<a class="hs-list" href="#/list/${esc(l.id)}">
+        <span><b>${esc(l.title)}</b><small>${l.done} de ${l.total}</small></span>
+        <span class="hs-bar"><i style="width:${Math.round(100 * l.done / l.total)}%"></i></span></a>`).join("")}` : ""}`;
 }
 
 function renderLibrary() {
@@ -232,7 +307,14 @@ function renderLibrary() {
   const favs = state.recipes.some(r => r.favorite);
   if (state.scope !== "all" && state.scope !== "mine" && !groupById(state.scope)) state.scope = "all";
   const scopes = [["all", "Todas"], ["mine", "Minhas"], ...groups().map(g => [g.id, g.name])];
+  const cats = CATEGORIES.filter(([k, , f]) => k === "bimby" || state.recipes.some(f));
+  if (state.category && !cats.some(c => c[0] === state.category)) state.category = null;
   view.innerHTML = `
+    ${n ? homeHero() : ""}
+    <div class="home-grid">
+    ${n ? `<aside class="home-side glass" id="homeSide" aria-label="Esta semana"><span class="eyebrow">Esta semana</span><div class="spinner" aria-hidden="true"></div></aside>` : ""}
+    <div class="home-main">
+    ${n ? `<div class="home-head"><span class="eyebrow">Da mesa do grupo</span><h2>Adicionadas recentemente</h2></div>` : ""}
     ${groups().length ? `<div class="seg glass" role="tablist" aria-label="Mostrar">${scopes.map(([k, label]) =>
       `<button role="tab" aria-selected="${state.scope === k}" class="${state.scope === k ? "on" : ""}" data-scope="${esc(k)}">${k.length > 8 ? I.users : ""}${esc(label)}</button>`).join("")}</div>` : ""}
     ${n ? `<div class="search-wrap glass">${I.search}<input class="search" type="search" enterkeyhint="search" aria-label="Pesquisar receitas" placeholder="Pesquisar receitas ou ingredientes" value="${esc(state.query)}"></div>` : ""}
@@ -241,9 +323,20 @@ function renderLibrary() {
       ${favs ? `<button class="chip glass ${state.collection === "♥" ? "on" : ""}" data-col="♥">${I.heart}Favoritos</button>` : ""}
       ${cols.map(c => `<button class="chip glass ${state.collection === c ? "on" : ""}" data-col="${esc(c)}">${esc(c)}</button>`).join("")}
     </div>` : ""}
+    ${n ? `<div class="chips cats" role="toolbar" aria-label="Categorias">
+      <button class="chip glass ${!state.category ? "on" : ""}" data-cat="">Todas</button>
+      ${cats.map(([k, label]) => `<button class="chip glass ${state.category === k ? "on" : ""} ${k === "bimby" ? "chip-bimby" : ""}" data-cat="${k}">${k === "bimby" ? BIMBY_ICON : ""}${label}</button>`).join("")}
+    </div>` : ""}
     <div id="pendingList">${pendingHTML()}</div>
-    <div id="results"></div>`;
+    <div id="results"></div>
+    </div></div>`;
   renderResults();
+  homeSide();
+  view.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => {
+    state.category = b.dataset.cat || null;
+    view.querySelectorAll("[data-cat]").forEach(x => x.classList.toggle("on", x === b));
+    renderResults();
+  });
 
   // Search filters locally on every keystroke: no debounce, no round trip on the input path.
   $(".search", view)?.addEventListener("input", e => { state.query = e.target.value; renderResults(); });
@@ -280,6 +373,10 @@ function renderResults() {
   if (!el) return;
   if (list.length) {
     el.innerHTML = `<div class="grid">${list.map(card).join("")}</div>`;
+  } else if (state.category === "bimby" && !state.query) {
+    el.innerHTML = `<div class="empty glass"><div class="art">${BIMBY_ICON}</div><h3>Ainda não tens receitas Bimby</h3>
+      <p>Importa uma receita da Bimby (Cookidoo, blogues, TikTok ou Instagram). Reconhecemos os programas, como “5 min/100 °C/vel. 1”, a colher inversa e a Varoma, e a receita aparece aqui.</p>
+      <button class="btn-primary" data-import>${I.plus}Importar receita Bimby</button></div>`;
   } else if (state.recipes.length) {
     el.innerHTML = `<div class="empty glass"><h3>Sem resultados</h3><p>Nada corresponde a “${esc(state.query || state.collection)}”. Experimenta um ingrediente, como “alho”.</p></div>`;
   } else if (!state.pending.length) {
@@ -302,7 +399,7 @@ function card(r) {
   const t = totalTime(r);
   return `<article class="card" data-id="${esc(r.id)}" role="link" tabindex="0" aria-label="${esc(r.title)}">
     ${photo(r, "photo")}
-    <div class="top"><span class="tag glass-photo">${esc(platformName(r.source_platform))}</span>
+    <div class="top"><span class="tag glass-photo">${isBimby(r) ? `${BIMBY_ICON}Bimby` : esc(platformName(r.source_platform))}</span>
     <span class="badges">${r.stats?.cooks ? `<span class="badge-cook glass-photo" aria-label="Feita ${r.stats.cooks} vezes">${I.check}${r.stats.cooks}</span>` : ""}${r.favorite ? `<span class="fav glass-photo" aria-label="Favorito">${I.heart}</span>` : ""}${!r.is_owner && r.owner ? `<span class="by" title="Trazida por ${esc(r.owner.name)}">${avatar(r.owner, "sm")}</span>` : ""}</span></div>
     <div class="caption glass-photo"><h3>${esc(r.title)}</h3>
       <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.facts && r.facts.price_coverage >= 0.6 && costText(r.facts.cost) ? `<span>${costText(r.facts.cost)}</span>` : r.servings ? `<span>${r.servings} ${r.servings === 1 ? "dose" : "doses"}</span>` : ""}</div>
@@ -771,6 +868,15 @@ const sheet = (() => {
     if (!validate()) return;
     const group_id = $("#importShare").value || null;
     store.set("importGroup", group_id || "");
+    // Several links at once (from bookmarks or notes): one import per link, queued in order.
+    const links = [...new Set(`${urlIn.value}\n${textIn.value}`.match(/https?:\/\/[^\s<>"']+/g) || [])];
+    const onlyLinks = !textIn.value.replace(/https?:\/\/[^\s<>"']+/g, "").trim();
+    if (links.length > 1 && onlyLinks) {
+      hide();
+      (async () => { for (const url of links.slice(0, 50)) { await startImport({ url, group_id }); await sleep(400); } })();
+      toast(`${Math.min(links.length, 50)} ligações em fila`);
+      return;
+    }
     const input = { url: hint.textContent ? "" : urlIn.value, text: textIn.value, group_id };
     hide(); startImport(input);
   });
@@ -811,6 +917,10 @@ function updateBadge() {
   try { n ? navigator.setAppBadge?.(n) : navigator.clearAppBadge?.(); } catch {}
 }
 window.addEventListener("hashchange", route);
+// Keep the app still: no pinch-zoom or double-tap zoom moving the bars out of place
+// (iOS ignores user-scalable=no in Safari, so block the gesture events too).
+["gesturestart", "gesturechange", "gestureend"].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+document.addEventListener("touchmove", e => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive: false });
 // iOS Safari only applies :active (our press-down feedback) when a touchstart listener exists.
 document.addEventListener("touchstart", () => {}, { passive: true });
 // Scroll edge effect under the top bar, only while content is actually beneath it.
@@ -824,15 +934,15 @@ document.addEventListener("visibilitychange", async () => {
 });
 
 // ---------------------------------------------------------------- themes
-const THEMES = [["quente", "Cozinha quente", "#e2531d"], ["salvia", "Sálvia", "#4e7d5b"], ["rosa", "Rosa", "#c2496b"],
+const THEMES = [["gohan", "Gohan", "#d7261e"], ["quente", "Cozinha quente", "#e2531d"], ["salvia", "Sálvia", "#4e7d5b"], ["rosa", "Rosa", "#c2496b"],
                 ["mel", "Mel", "#c98a12"], ["azul", "Azul", "#2f6fb3"], ["meianoite", "Meia-noite", "#1b1f2a"]];
 function applyTheme(t) {
-  t = THEMES.some(x => x[0] === t) ? t : "quente";
+  t = THEMES.some(x => x[0] === t) ? t : "gohan";
   if (t === "quente") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
   const dark = t === "meianoite" || matchMedia("(prefers-color-scheme: dark)").matches;
   document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || (dark ? "#120d0a" : "#f7efe6")));
 }
-applyTheme(store.get("theme", "quente"));
+applyTheme(store.get("theme", "gohan"));
 
 // ---------------------------------------------------------------- boot (after social.js has loaded)
 async function boot() {

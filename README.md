@@ -1,4 +1,4 @@
-# RecipeBox: save recipes from social media
+# Gohan (ご飯): save recipes from social media
 
 A ReciMe-style app. You share a TikTok, Instagram Reel, YouTube Short, Pinterest pin or
 recipe-blog link to the app, and it becomes a structured recipe in your library.
@@ -57,7 +57,7 @@ Tests: `python -m pytest -q` (these use a fake extractor, so they make no API ca
 
 ## Groups and accounts
 
-RecipeBox is built for groups of friends. Each person has an account; recipes are **private by default**
+Gohan is built for groups of friends. Each person has an account; recipes are **private by default**
 and can be shared with one or more groups (at import time or later). Shared recipes stay owned by whoever
 imported them; others can favourite them, file them in their own collections, cook them and add variations.
 
@@ -139,7 +139,7 @@ sheet, so set up a one-time **Shortcut** instead (the Settings tab shows these s
   `input` = *Shortcut Input*, header `Authorization: Bearer <token>`
 - Add the action **Show Notification** with *Contents of URL*
 
-Then in any app, tap Share → **Save to RecipeBox**. The recipe shows up in the web app a few seconds later.
+Then in any app, tap Share → **Save to Gohan**. The recipe shows up in the web app a few seconds later.
 On Android, the installed PWA appears in the share sheet directly (Web Share Target).
 
 ## iOS app (optional, native)
@@ -147,18 +147,26 @@ On Android, the installed PWA appears in the share sheet directly (Web Share Tar
 SwiftUI, iOS 17+. The Xcode project is generated with [XcodeGen](https://github.com/yonaskolb/XcodeGen):
 
 ```bash
-cd ios && brew install xcodegen && xcodegen && open RecipeBox.xcodeproj
+cd ios && brew install xcodegen && xcodegen && open Gohan.xcodeproj
 ```
 
 1. Set your Team, and change `com.example.recipebox` and `group.com.example.recipebox` to IDs you own.
    The app and the extension share settings and pending jobs through that App Group.
 2. Run the app, then open **Settings** and enter the backend URL. On a real device use your Mac's LAN IP or a deployed server.
-3. In TikTok or Instagram, tap **Share → More → Save to RecipeBox**.
+3. In TikTok or Instagram, tap **Share → More → Save to Gohan**.
 
-Targets: `RecipeBox` (library, search, collections, detail with serving scaler and checkable
+Targets: `Gohan` (library, search, collections, detail with serving scaler and checkable
 ingredients, cook mode, grocery list, manual link/caption import) and `ShareExtension`.
 
 ## Known limits
 - Instagram and Facebook often require login. Set `YTDLP_COOKIES_FILE` or the import falls back to page metadata only.
 - Keep yt-dlp up to date (`pip install -U yt-dlp`). Platforms change often.
 - Respect platform Terms of Service and creators' rights. Store a link back to the source (the app already does).
+
+## Gohan (ご飯): recent additions
+
+- **Brand**: Gohan (ご飯, "cooked rice / a meal"). House theme "Gohan" (sumi ink, washi paper, hanko red) is the default; the other themes stay in Definições → Aparência.
+- **Home on iPad and desktop** (≥ 768 px): greeting hero with the recipe of the week, "Esta semana" side panel (next planned meals and open shopping lists), tabs at the top.
+- **Bimby category**: recipes tagged `bimby`/`thermomix`, or whose steps use machine settings ("5 min/100 °C/vel. 1", colher inversa, Varoma), appear under **Bimby**. Settings are highlighted in the steps and the times start timers. The extractor keeps Bimby programs instead of converting them to stovetop steps.
+- **Several links at once**: paste many links (one per line) into the import text field; each is queued as its own import (up to 50).
+- **Stillness**: no pinch or double-tap zoom, no rubber-band dragging of the bars, no sideways scrolling; fields stay at 16 px so iOS doesn't zoom on focus.

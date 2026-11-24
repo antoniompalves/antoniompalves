@@ -221,7 +221,7 @@ class Notifier:
             if not n:
                 raise HTTPException(400, "Ainda não ativaste as notificações neste dispositivo.")
             subs = [dict(x) for x in self.store.q("SELECT * FROM push_subs WHERE user_id=?", (user["id"],))]
-            msg = {"title": "RecipeBox 🔔", "body": "As notificações estão a funcionar.", "url": "/#/settings", "tag": "test"}
+            msg = {"title": "Gohan 🔔", "body": "As notificações estão a funcionar.", "url": "/#/settings", "tag": "test"}
             for sub in subs:  # bypasses preferences on purpose: it's an explicit test
                 self._deliver(sub, msg) if self.sync else self.pool.submit(self._deliver, sub, msg)
             return {"devices": n}

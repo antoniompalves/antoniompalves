@@ -27,6 +27,9 @@ into concrete ingredients and imperative, numbered-style steps, keeping the crea
 field in inferred_fields and lower confidence accordingly.
 - Ignore sponsorships, hashtags, "follow for more", and discount codes. Put a few useful \
 hashtag-style topics in tags (lowercase, no '#').
+- Bimby/Thermomix recipes: include the tag "bimby" and keep the machine settings in each \
+step in the usual format, e.g. "Programa 5 min/100 °C/vel. 1", plus "colher inversa" and \
+"Varoma" when used. Never convert them into stovetop instructions.
 - Keep ingredient names short and put prep in note ("onion" + note "diced").
 - Use groups for multi-part recipes (e.g. "Dough", "Filling").
 - If a step clearly lines up with a part of the transcript and timing is known, set \

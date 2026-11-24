@@ -196,8 +196,8 @@ async function renderAuth() {
   let mode = invite ? "signup" : store.get("authMode", "login");
   const draw = () => {
     view.innerHTML = `<div class="auth">
-      <div class="auth-brand"><div class="art">${I.fork}</div><h1 class="large-title">RecipeBox</h1>
-        <p class="subtitle">As receitas das redes sociais, guardadas e partilhadas com os teus amigos.</p></div>
+      <div class="auth-brand"><img class="auth-icon" src="/static/icon.svg" alt=""><h1 class="auth-title"><span class="brand" aria-label="Gohan, ご飯"><b aria-hidden="true">GOHAN</b><i lang="ja" aria-hidden="true">ご飯</i></span></h1>
+        <p class="subtitle">ご飯: a refeição. As receitas das redes sociais, guardadas e partilhadas com os teus amigos.</p></div>
       ${invite ? `<div class="invite glass">${I.users}<div><b>Foste convidado para ${esc(invite.name)}</b>
         <span class="meta">${esc(invite.members.join(", "))}</span></div></div>` : ""}
       <form class="auth-card glass glass-thick" novalidate>
@@ -304,8 +304,8 @@ function currentGroup() {
 const inviteLink = g => `${location.origin}/#/join/${encodeURIComponent(g.invite_code)}`;
 async function shareInvite(g) {
   const url = inviteLink(g);
-  const text = `Junta-te ao grupo “${g.name}” no RecipeBox para partilharmos receitas:`;
-  if (navigator.share) return navigator.share({ title: "Convite RecipeBox", text, url }).catch(() => {});
+  const text = `Junta-te ao grupo “${g.name}” no Gohan para partilharmos receitas:`;
+  if (navigator.share) return navigator.share({ title: "Convite Gohan", text, url }).catch(() => {});
   await navigator.clipboard.writeText(`${text} ${url}`).catch(() => {});
   toast("Ligação de convite copiada");
 }
@@ -674,7 +674,7 @@ function renderSettings() {
     </section>
 
     <section class="section glass"><div class="section-head"><h3>Aparência</h3></div>
-      <div class="themes">${THEMES.map(([k, label, color]) => `<button class="theme-opt ${store.get("theme", "quente") === k ? "on" : ""}" data-theme-opt="${k}" aria-pressed="${store.get("theme", "quente") === k}"><i style="background:${color}"></i>${label}</button>`).join("")}</div>
+      <div class="themes">${THEMES.map(([k, label, color]) => `<button class="theme-opt ${store.get("theme", "gohan") === k ? "on" : ""}" data-theme-opt="${k}" aria-pressed="${store.get("theme", "gohan") === k}"><i style="background:${color}"></i>${label}</button>`).join("")}</div>
       <p class="meta" style="margin-top:.6rem">Os temas claros seguem o modo escuro do sistema. Meia-noite é sempre escuro.</p>
     </section>
 
@@ -699,7 +699,7 @@ function renderSettings() {
     <section class="section glass"><div class="section-head"><h3>Guardar a partir da folha de partilha</h3></div>
       <p class="meta">O iOS não deixa as apps web aparecerem na folha de partilha. Um Atalho, que configuras num minuto, resolve isso:</p>
       <ol class="howto">
-        <li>Abre a app <b>Atalhos</b> → <b>＋</b> → dá-lhe o nome <b>Guardar no RecipeBox</b>.</li>
+        <li>Abre a app <b>Atalhos</b> → <b>＋</b> → dá-lhe o nome <b>Guardar no Gohan</b>.</li>
         <li>Toca em <b>ⓘ</b> → ativa <b>Mostrar na folha de partilha</b> (recebe <b>URL</b> e <b>Texto</b>).</li>
         <li>Adiciona <b>Obter conteúdo do URL</b>: <code>${esc(origin)}/imports/shortcut</code>, Método <b>POST</b>, Corpo do pedido <b>JSON</b>, campo <code>input</code> = <b>Entrada do atalho</b>, cabeçalho <code>Authorization</code> = <code>Bearer</code> + o teu token pessoal.</li>
         <li>Adiciona <b>Mostrar notificação</b> com <b>Conteúdo do URL</b>.</li>
@@ -709,7 +709,7 @@ function renderSettings() {
       <p class="meta" style="margin-top:.5rem">O token dá acesso à tua conta: não o partilhes. Ao sair da conta, deixa de funcionar.</p>
     </section>
     <section class="section glass"><div class="section-head"><h3>Android</h3></div>
-      <p class="meta">Instala a partir do menu do Chrome (<b>Adicionar ao ecrã principal</b>). O RecipeBox passa a aparecer diretamente na folha de partilha.</p></section>`;
+      <p class="meta">Instala a partir do menu do Chrome (<b>Adicionar ao ecrã principal</b>). O Gohan passa a aparecer diretamente na folha de partilha.</p></section>`;
   view.querySelectorAll("[data-theme-opt]").forEach(b => b.onclick = () => {
     store.set("theme", b.dataset.themeOpt); applyTheme(b.dataset.themeOpt); haptic(6);
     view.querySelectorAll("[data-theme-opt]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
@@ -794,9 +794,9 @@ if ("serviceWorker" in navigator) {
 async function pushSettingsHTML() {
   const st = await pushState();
   const head = `<div class="section-head"><h3>Notificações</h3>${I.bell}</div>`;
-  if (st === "needs-install") return head + `<p class="meta">No iPhone, as notificações só funcionam com a app no ecrã principal: no Safari, toca em <b>Partilhar</b> → <b>Adicionar ao ecrã principal</b> e abre o RecipeBox a partir do ícone.</p>`;
+  if (st === "needs-install") return head + `<p class="meta">No iPhone, as notificações só funcionam com a app no ecrã principal: no Safari, toca em <b>Partilhar</b> → <b>Adicionar ao ecrã principal</b> e abre o Gohan a partir do ícone.</p>`;
   if (st === "unsupported") return head + `<p class="meta">Este browser não suporta notificações. No iPhone precisas do iOS 16.4 ou mais recente.</p>`;
-  if (st === "denied") return head + `<p class="meta">Bloqueaste as notificações. Para as voltares a ativar: <b>Definições do telemóvel</b> → <b>Notificações</b> → <b>RecipeBox</b>.</p>`;
+  if (st === "denied") return head + `<p class="meta">Bloqueaste as notificações. Para as voltares a ativar: <b>Definições do telemóvel</b> → <b>Notificações</b> → <b>Gohan</b>.</p>`;
   if (st === "off") return head + `<p class="meta">Fica a saber quando há um jantar para votar, quando alguém faz uma receita tua ou quando uma importação fica pronta.</p>
     <button class="btn-primary wide" id="pushOn">${I.bell}Ativar notificações</button>`;
   let cfg = { prefs: {}, kinds: [] };
@@ -827,7 +827,7 @@ async function pushNudge() {
   const st = await pushState();
   if (st !== "off" && st !== "needs-install") return;
   slot.innerHTML = `<div class="nudge glass">${I.bell}
-    <div><b>Não percas o próximo jantar</b><span class="meta">${st === "off" ? "Recebe um aviso quando houver votação ou quando alguém fizer uma receita tua." : "Adiciona o RecipeBox ao ecrã principal para receberes notificações."}</span></div>
+    <div><b>Não percas o próximo jantar</b><span class="meta">${st === "off" ? "Recebe um aviso quando houver votação ou quando alguém fizer uma receita tua." : "Adiciona o Gohan ao ecrã principal para receberes notificações."}</span></div>
     ${st === "off" ? `<button class="pill-btn" id="nudgeOn">Ativar</button>` : ""}
     <button class="mini" id="nudgeX" aria-label="Fechar">${I.x}</button></div>`;
   $("#nudgeX").onclick = () => { store.set("pushNudgeDismissed", true); slot.innerHTML = ""; };

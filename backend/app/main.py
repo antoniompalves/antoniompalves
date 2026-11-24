@@ -31,7 +31,7 @@ from .store import Store
 from .util import scale_quantity  # noqa: F401  (re-exported for tests/back-compat)
 
 def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=Notifier, weekly: bool = True) -> FastAPI:
-    app = FastAPI(title="RecipeBox")
+    app = FastAPI(title="Gohan")
     store = Store(db_path)
     current_user, signup, login, logout = make_auth(store)
     U = Depends(current_user)
@@ -104,7 +104,7 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
         urls = extract_urls(input)
         req = ImportRequest(url=urls[0]) if urls and len(input) < 300 else ImportRequest(text=input)
         _start_import(req, bg, user)
-        return "A guardar a receita no RecipeBox…"
+        return "A guardar a receita no Gohan…"
 
 
     @app.get("/imports/{jid}")

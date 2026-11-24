@@ -61,5 +61,16 @@ def add_quantities(a: Optional[str], b: Optional[str]) -> Optional[str]:
     return f"{a} + {b}"
 
 
+BIMBY_RE = re.compile(r"\b(bimby|thermomix|tm\s?[3-7]\b|varoma|colher inversa|vel(?:\.|ocidade)\s*(?:\d|colher)|velocidade colher|modo (?:amassar|turbo|espiga))", re.I)
+
+
+def is_bimby(title: str, steps: list[str], tags: list[str]) -> bool:
+    """Recipes written for a Bimby/Thermomix: speed settings, Varoma, reverse blade, or the brand itself."""
+    if any(t.lower() in ("bimby", "thermomix") for t in tags):
+        return True
+    hits = sum(1 for s in steps if BIMBY_RE.search(s))
+    return bool(BIMBY_RE.search(title)) or hits >= 2 or (hits == 1 and len(steps) <= 3)
+
+
 def item_key(name: str, unit: Optional[str]) -> tuple[str, str]:
     return (name.strip().lower(), (unit or "").strip().lower())

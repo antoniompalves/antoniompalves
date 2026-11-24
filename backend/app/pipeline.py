@@ -53,6 +53,9 @@ def import_recipe(
     if not draft.is_recipe:
         raise ValueError("Não foi encontrada nenhuma receita nessa publicação.")
 
+    from .util import is_bimby
+    if is_bimby(draft.title, [s.text for s in draft.steps], draft.tags):
+        draft.tags = ["bimby", *[t for t in draft.tags if t.lower() not in ("bimby", "thermomix")]]
     recipe = Recipe(
         **draft.model_dump(),
         id=uuid.uuid4().hex,

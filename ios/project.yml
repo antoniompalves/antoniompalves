@@ -15,7 +15,7 @@ targets:
     info:
       path: RecipeBox/Info.plist
       properties:
-        CFBundleDisplayName: RecipeBox
+        CFBundleDisplayName: Gohan
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         UILaunchScreen: {}
@@ -34,7 +34,7 @@ targets:
     info:
       path: ShareExtension/Info.plist
       properties:
-        CFBundleDisplayName: Save to RecipeBox
+        CFBundleDisplayName: Guardar no Gohan
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSExtension:

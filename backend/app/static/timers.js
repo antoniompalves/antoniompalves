@@ -22,6 +22,10 @@ const timers = (() => {
   };
   const label = s => s >= 3600 ? `${Math.floor(s / 3600)} h${s % 3600 ? ` ${Math.round((s % 3600) / 60)} min` : ""}` : s >= 60 ? `${Math.round(s / 60)} min` : `${s} s`;
 
+  // Bimby/Thermomix settings ("vel. 4", "colher inversa", "Varoma", "100 °C") read at a glance.
+  const BIMBY = /\b(vel(?:\.|ocidade)\s*(?:\d+(?:[.,]5)?(?:\s*-\s*\d+)?|colher)|colher inversa|varoma|modo (?:amassar|turbo|espiga)|turbo)\b|(\d{2,3}\s*°C?)(?=[\s/.,;)]|$)/gi;
+  const deco = t => esc(t).replace(BIMBY, m => `<span class="bimby-set">${m}</span>`);
+
   /** Escaped step text with time phrases turned into timer buttons. */
   function linkify(text, context = "") {
     const src = String(text ?? "");
@@ -35,12 +39,12 @@ const timers = (() => {
         secs = Math.round(toSecs(a, m[6]));       // ranges start at the lower bound: check early
       }
       if (!secs || secs > 12 * 3600) continue;
-      out += esc(src.slice(last, m.index)) +
+      out += deco(src.slice(last, m.index)) +
         `<button type="button" class="timer-chip" data-secs="${secs}" data-ctx="${esc(context)}" aria-label="Iniciar temporizador de ${label(secs)}">` +
         `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M10 3h4"/></svg>${esc(m[0])}</button>`;
       last = m.index + m[0].length;
     }
-    return out + esc(src.slice(last));
+    return out + deco(src.slice(last));
   }
 
   // ------------------------------------------------------------------ state
