@@ -1743,3 +1743,12 @@ html:root .seg button, html:root[data-theme] .seg button { font-size: .6875rem; 
 html:root .hh-actions :is(.btn-primary, .hh-ghost), html:root[data-theme] .hh-actions :is(.btn-primary, .hh-ghost) { min-height: 2.9rem; padding: 0 1.4rem; gap: .6rem; }
 html:root .cup-menu .cm-import, html:root[data-theme] .cup-menu .cm-import { padding: .8rem 1.2rem; }
 html:root[data-theme] .hh-actions .btn-primary, html:root[data-theme] .hh-ghost { border-radius: 999px; }
+
+/* Sheet header buttons: same small capitals as the rest; cancel quieter, confirm in accent */
+html:root .sheet-head .text-btn, html:root[data-theme] .sheet-head .text-btn {
+  text-transform: uppercase; font-size: .75rem; font-weight: 700; letter-spacing: .12em; line-height: 1; white-space: nowrap;
+  min-height: 2.75rem; padding: 0 .25rem; display: inline-flex; align-items: center; }
+html:root .sheet-head [data-close], html:root[data-theme] .sheet-head [data-close] { color: var(--ink-2); justify-self: start; }
+html:root .sheet-head [type=submit], html:root[data-theme] .sheet-head [type=submit] { color: var(--accent); }
+html:root .sheet-head [type=submit]:disabled, html:root[data-theme] .sheet-head [type=submit]:disabled { opacity: .4; }
+html:root #pasteBtn, html:root[data-theme] #pasteBtn { text-transform: uppercase; font-size: .6875rem; font-weight: 700; letter-spacing: .12em; line-height: 1; border-radius: 999px; }
