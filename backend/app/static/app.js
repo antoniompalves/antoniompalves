@@ -979,7 +979,7 @@ document.addEventListener("visibilitychange", async () => {
 
 // ---------------------------------------------------------------- themes
 const THEMES = [["gohan", "Gohan", "#d7261e"], ["quente", "Cozinha quente", "#e2531d"], ["salvia", "Sálvia", "#4e7d5b"], ["rosa", "Rosa", "#c2496b"],
-                ["mel", "Mel", "#c98a12"], ["azul", "Azul", "#2f6fb3"], ["meianoite", "Meia-noite", "#1b1f2a"], ["washi", "Washi (proposta)", "#c8372d"]];
+                ["mel", "Mel", "#c98a12"], ["azul", "Azul", "#2f6fb3"], ["meianoite", "Meia-noite", "#1b1f2a"], ["washi", "Washi (proposta)", "#c8372d"], ["umami", "Umami (proposta)", "#e3202c"]];
 function applyTheme(t) {
   t = THEMES.some(x => x[0] === t) ? t : "gohan";
   if (t === "quente") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
