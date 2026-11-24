@@ -9,7 +9,7 @@ import json
 import os
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from fractions import Fraction
 from typing import Literal, Optional
 
@@ -26,6 +26,7 @@ from .util import add_quantities, item_key, scale_quantity
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(os.path.dirname(os.getenv("RECIPES_DB", "recipes.db")) or ".", "uploads"))
 MAX_PHOTO_BYTES = 6 * 1024 * 1024
+MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
 
 
 def ago(days: int) -> str:
@@ -85,6 +86,49 @@ class ItemIn(BaseModel):
     unit: Optional[str] = None
     recipe_id: Optional[str] = None
     servings: Optional[int] = None
+    include_pantry: bool = False
+
+
+class PantryIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+
+
+class PlanIn(BaseModel):
+    day: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    slot: Literal["pequeno", "almoco", "jantar", "outro"] = "jantar"
+    recipe_id: str
+    servings: Optional[int] = Field(None, ge=1, le=100)
+    scope: str = "me"  # "me" or a group id
+    trip_id: Optional[str] = None
+    note: Optional[str] = Field(None, max_length=120)
+
+
+class PlanPatch(BaseModel):
+    day: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    slot: Optional[Literal["pequeno", "almoco", "jantar", "outro"]] = None
+    servings: Optional[int] = Field(None, ge=1, le=100)
+
+
+class PlanShopIn(BaseModel):
+    week: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    scope: str = "me"
+    trip_id: Optional[str] = None
+    include_pantry: bool = False
+
+
+class TripIn(BaseModel):
+    group_id: str
+    name: str = Field(min_length=1, max_length=60)
+    start: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    end: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    people: int = Field(ge=1, le=100)
+
+
+class TripPatch(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=60)
+    start: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    end: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    people: Optional[int] = Field(None, ge=1, le=100)
 
 
 class MapIn(BaseModel):
@@ -223,6 +267,7 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
             rt = rates.get(rec.id, {"yes": 0, "no": 0, "mine": 0})
             d["stats"] = {"cooks": cooks.get(rec.id, 0), **rt}
             d["facts"] = brief(facts_for(rec, uid, ov, pp))
+            d["metric"] = [costing.to_metric(i.model_dump(), ov) for i in rec.ingredients]
             out.append(d)
         return out
 
@@ -272,13 +317,20 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
         broker.publish(audience, {"kind": "recipe", "id": rid})
 
     @r.get("/recipes/{rid}/scaled")
-    def scaled(rid: str, servings: int, user=U) -> dict:
+    def scaled(rid: str, servings: Optional[int] = None, factor: Optional[float] = None, user=U) -> dict:
+        """Scale to N servings, or by a factor (x0.5, x2...) when the recipe doesn't say how many it serves."""
         rec = get_visible(user["id"], rid)
-        if not rec.servings or servings <= 0:
-            raise HTTPException(400, "Esta receita não indica o número de doses.")
-        f = Fraction(servings, rec.servings)
-        ings = [i.model_copy(update={"quantity": scale_quantity(i.quantity, f)}) for i in rec.ingredients]
-        return views(user["id"], [rec.model_copy(update={"ingredients": ings, "servings": servings})])[0]
+        if servings and servings > 0 and rec.servings:
+            f = Fraction(servings, rec.servings)
+        elif factor and 0 < factor <= 20:
+            f = Fraction(factor).limit_denominator(8)
+            servings = round(rec.servings * factor) if rec.servings else None
+        else:
+            raise HTTPException(400, "Indica o número de doses ou um fator de escala.")
+        ings = [i.model_copy(update={"quantity": scale_quantity(i.quantity, f, i.unit)}) for i in rec.ingredients]
+        out = views(user["id"], [rec.model_copy(update={"ingredients": ings, "servings": servings or rec.servings})])[0]
+        out["scale"] = float(f)
+        return out
 
     @r.put("/recipes/{rid}/shares")
     def set_shares(rid: str, body: SharesIn, user=U) -> dict:
@@ -678,14 +730,28 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
             raise HTTPException(404, "Lista não encontrada.")
         return lst
 
-    def add_recipe_to_list(lid: str, rec: Recipe, servings: Optional[int]) -> None:
-        f = Fraction(servings, rec.servings) if servings and rec.servings else Fraction(1)
-        existing = {item_key(x["name"], x["unit"]): x for x in store.q("SELECT * FROM list_items WHERE list_id=? AND checked=0", (lid,))}
+    def merge_key(name: str, unit: Optional[str], ov: dict):
+        ref, _ = costing.match_key(name, ov)
+        return (ref or costing.norm(name), costing.canon_unit(unit) or "")
+
+    def add_recipe_to_list(lid: str, rec: Recipe, servings: Optional[int], uid: Optional[str] = None,
+                           include_pantry: bool = False, factor: Optional[Fraction] = None) -> list[str]:
+        """Add a recipe's ingredients (scaled) to a list. Returns names skipped because they're in the pantry."""
+        f = factor or (Fraction(servings, rec.servings) if servings and rec.servings else Fraction(1))
+        ov = overrides()
+        have = pantry_keys(uid) if uid and not include_pantry else set()
+        existing = {merge_key(x["name"], x["unit"], ov): x for x in store.q("SELECT * FROM list_items WHERE list_id=? AND checked=0", (lid,))}
         pos = store.one("SELECT COALESCE(MAX(position), 0) p FROM list_items WHERE list_id=?", (lid,))["p"]
-        stmts = []
+        stmts, skipped = [], []
         for ing in rec.ingredients:
-            qty = scale_quantity(ing.quantity, f)
-            k = item_key(ing.name, ing.unit)
+            if costing.is_free(ing.name, ov):
+                continue  # água etc.
+            pk = pantry_key(ing.name, ov)
+            if pk in have:
+                skipped.append(ing.name)
+                continue
+            qty = scale_quantity(ing.quantity, f, ing.unit)
+            k = merge_key(ing.name, ing.unit, ov)
             if k in existing:
                 row = existing[k]
                 srcs = loads(row["sources"], [])
@@ -700,6 +766,7 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
                               (iid, lid, ing.name, qty, ing.unit, json.dumps([rec.title], ensure_ascii=False), pos, now())))
                 existing[k] = {"id": iid, "name": ing.name, "unit": ing.unit, "quantity": qty, "sources": json.dumps([rec.title])}
         store.xs(stmts)
+        return skipped
 
     def list_view(lst, uid: str, with_items: bool = True) -> dict:
         d = dict(lst)
@@ -716,8 +783,13 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
                 x["checked"] = bool(x["checked"])
                 x["assignee"] = people.get(x["assigned_to"])
                 x["checked_by_user"] = people.get(x["checked_by"])
-            d["items"] = items
             ov, pp = overrides(), paid_prices(uid)
+            for x in items:
+                x["aisle"] = costing.aisle_of(x["name"], ov)
+            order = {a: i for i, a in enumerate(costing.AISLE_ORDER)}
+            items.sort(key=lambda x: (x["checked"], order.get(x["aisle"], 99), x["position"]))
+            d["items"] = items
+            d["aisles"] = costing.AISLE_ORDER
             est = [0.0, 0.0, 0.0]
             known = 0
             for x in items:
@@ -763,8 +835,9 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
     @r.post("/lists/{lid}/items", status_code=201)
     def add_items(lid: str, body: ItemIn, user=U) -> dict:
         lst = get_list_row(lid, user["id"])
+        skipped: list[str] = []
         if body.recipe_id:
-            add_recipe_to_list(lid, get_visible(user["id"], body.recipe_id), body.servings)
+            skipped = add_recipe_to_list(lid, get_visible(user["id"], body.recipe_id), body.servings, user["id"], body.include_pantry)
         elif body.name and body.name.strip():
             pos = store.one("SELECT COALESCE(MAX(position), 0) p FROM list_items WHERE list_id=?", (lid,))["p"] + 1
             store.x("INSERT INTO list_items(id, list_id, name, quantity, unit, sources, position, created_at) VALUES (?,?,?,?,?,?,?,?)",
@@ -772,7 +845,9 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
         else:
             raise HTTPException(400, "Indica um artigo ou uma receita.")
         broker.publish(list_audience(lst), {"kind": "list", "id": lid})
-        return list_view(lst, user["id"])
+        out = list_view(lst, user["id"])
+        out["skipped_pantry"] = skipped
+        return out
 
     @r.patch("/items/{iid}")
     def patch_item(iid: str, body: ItemPatch, user=U) -> dict:
@@ -804,6 +879,256 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
         store.x("DELETE FROM list_items WHERE list_id=? AND checked=1", (lid,))
         broker.publish(list_audience(lst), {"kind": "list", "id": lid})
         return list_view(lst, user["id"])
+
+    # ---------- pantry ("temos em casa")
+    STAPLES = ["sal", "pimenta preta", "azeite", "óleo", "açúcar", "farinha", "arroz", "massa", "alho", "cebola", "vinagre",
+               "louro", "colorau", "orégãos", "manteiga", "leite", "ovos", "caldo de legumes", "molho de soja", "mostarda"]
+
+    def pantry_key(name: str, ov: Optional[dict] = None) -> str:
+        ref, _ = costing.match_key(name, ov)
+        return ref or costing.norm(name)
+
+    def pantry_keys(uid: str) -> set[str]:
+        return {x["key"] for x in store.q("SELECT key FROM pantry WHERE user_id=?", (uid,))}
+
+    @r.get("/pantry")
+    def pantry(user=U) -> dict:
+        rows = [dict(x) for x in store.q("SELECT key, label, added_at FROM pantry WHERE user_id=? ORDER BY label", (user["id"],))]
+        ref = costing.reference()["by_key"]
+        for x in rows:
+            x["aisle"] = (ref.get(x["key"]) or {}).get("aisle") or "Outros"
+        have = {x["key"] for x in rows}
+        return {"items": rows, "suggestions": [k for k in STAPLES if k not in have]}
+
+    @r.post("/pantry", status_code=201)
+    def pantry_add(body: PantryIn, user=U) -> dict:
+        key = pantry_key(body.name, overrides())
+        label = key if key in costing.reference()["by_key"] else body.name.strip()
+        store.x("INSERT OR REPLACE INTO pantry(user_id, key, label, added_at) VALUES (?,?,?,?)", (user["id"], key, label, now()))
+        return {"key": key, "label": label}
+
+    @r.delete("/pantry/{key}", status_code=204)
+    def pantry_remove(key: str, user=U):
+        store.x("DELETE FROM pantry WHERE user_id=? AND key=?", (user["id"], key))
+
+    @r.post("/items/{iid}/pantry")
+    def item_to_pantry(iid: str, user=U) -> dict:
+        """'Temos em casa': remove from the list and remember it for next time."""
+        item = store.one("SELECT * FROM list_items WHERE id=?", (iid,))
+        if not item:
+            raise HTTPException(404, "Artigo não encontrado.")
+        lst = get_list_row(item["list_id"], user["id"])
+        added = pantry_add(PantryIn(name=item["name"]), user)
+        store.x("DELETE FROM list_items WHERE id=?", (iid,))
+        broker.publish(list_audience(lst), {"kind": "list", "id": lst["id"]})
+        return added
+
+    # ---------- weekly meal plan
+    def plan_scope(uid: str, scope: str) -> Optional[str]:
+        """None for the personal plan, else the group id (membership checked)."""
+        if scope in ("me", "", None):
+            return None
+        require_member(uid, scope)
+        return scope
+
+    def week_bounds(week: str) -> tuple[date, list[str]]:
+        try:
+            d = date.fromisoformat(week)
+        except ValueError:
+            raise HTTPException(400, "Data inválida.")
+        start = d - timedelta(days=d.weekday())  # Monday
+        return start, [(start + timedelta(days=i)).isoformat() for i in range(7)]
+
+    def plan_rows(uid: str, scope: str, days: list[str]):
+        gid = plan_scope(uid, scope)
+        ph = ",".join("?" * len(days))
+        if gid:
+            return store.q(f"SELECT * FROM plan_entries WHERE group_id=? AND trip_id IS NULL AND day IN ({ph}) ORDER BY day, slot, created_at", [gid, *days])
+        return store.q(f"SELECT * FROM plan_entries WHERE group_id IS NULL AND trip_id IS NULL AND owner_id=? AND day IN ({ph}) ORDER BY day, slot, created_at", [uid, *days])
+
+    def plan_audience(uid: str, gid: Optional[str]) -> list[str]:
+        return members(gid) if gid else [uid]
+
+    @r.get("/plan")
+    def get_plan(week: str, scope: str = "me", user=U) -> dict:
+        start, days = week_bounds(week)
+        out = build_plan(user["id"], [dict(x) for x in plan_rows(user["id"], scope, days)], days)
+        out.update(week_start=start.isoformat(), scope=scope)
+        return out
+
+    def build_plan(uid: str, rows: list[dict], days: list[str]) -> dict:
+        ov, pp = overrides(), paid_prices(uid)
+        recs = {}
+        for x in rows:
+            if x["recipe_id"] not in recs:
+                rec = store.get_recipe(x["recipe_id"])
+                recs[x["recipe_id"]] = rec if rec and can_view(uid, rec.id) else None
+        people = users_by_id(x["created_by"] for x in rows)
+        week_cost = [0.0, 0.0, 0.0]
+        kcal_by_day: dict[str, float] = {}
+        for x in rows:
+            rec = recs.get(x["recipe_id"])
+            x["by"] = people.get(x["created_by"])
+            if not rec:
+                x["recipe"] = None
+                continue
+            f = facts_for(rec, uid, ov, pp)
+            n = x["servings"] or rec.servings or 1
+            per = f["per_serving"]
+            x["recipe"] = {"id": rec.id, "title": rec.title, "thumbnail_url": rec.thumbnail_url, "servings": rec.servings,
+                           "total_minutes": rec.total_minutes, "facts": brief(f)}
+            if f["price_coverage"] >= 0.6:
+                week_cost = [a + c * n for a, c in zip(week_cost, per["cost"])]
+            if f["coverage"] >= 0.6:
+                kcal_by_day[x["day"]] = kcal_by_day.get(x["day"], 0) + per["kcal"]  # one person's day
+        out_days = [{"date": d, "entries": [x for x in rows if x["day"] == d]} for d in days]
+        return {"days": out_days,
+                "totals": {"meals": len(rows), "cost": [round(v, 2) for v in week_cost],
+                           "kcal_per_day": round(sum(kcal_by_day.values()) / len(kcal_by_day)) if kcal_by_day else None}}
+
+    @r.post("/plan", status_code=201)
+    def add_plan(body: PlanIn, user=U) -> dict:
+        uid = user["id"]
+        trip = get_trip_row(body.trip_id, uid) if body.trip_id else None
+        gid = trip["group_id"] if trip else plan_scope(uid, body.scope)
+        rec = get_visible(uid, body.recipe_id)
+        if gid and gid not in recipe_groups(rec.id):
+            if store.recipe_owner(rec.id) != uid:
+                raise HTTPException(400, "Esta receita não está partilhada com o grupo.")
+            # your own recipe going into the group plan: share it so everyone can open it
+            store.x("INSERT OR IGNORE INTO recipe_shares(recipe_id, group_id, shared_by, shared_at) VALUES (?,?,?,?)", (rec.id, gid, uid, now()))
+        pid = uuid.uuid4().hex
+        servings = body.servings or (trip["people"] if trip else rec.servings)
+        store.x("INSERT INTO plan_entries(id, owner_id, group_id, day, slot, recipe_id, servings, note, created_by, created_at, trip_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (pid, uid, gid, body.day, body.slot, rec.id, servings, body.note, uid, now(), trip["id"] if trip else None))
+        broker.publish(plan_audience(uid, gid), {"kind": "plan", "scope": gid or "me"})
+        return {"id": pid}
+
+    def own_plan_entry(pid: str, uid: str):
+        row = store.one("SELECT * FROM plan_entries WHERE id=?", (pid,))
+        if not row or (row["group_id"] and row["group_id"] not in my_groups(uid)) or (not row["group_id"] and row["owner_id"] != uid):
+            raise HTTPException(404, "Refeição não encontrada.")
+        return row
+
+    @r.patch("/plan/{pid}")
+    def patch_plan(pid: str, body: PlanPatch, user=U) -> dict:
+        row = own_plan_entry(pid, user["id"])
+        upd = body.model_dump(exclude_none=True)
+        if upd:
+            store.x(f"UPDATE plan_entries SET {', '.join(f'{k}=?' for k in upd)} WHERE id=?", [*upd.values(), pid])
+        broker.publish(plan_audience(user["id"], row["group_id"]), {"kind": "plan", "scope": row["group_id"] or "me"})
+        return {"id": pid}
+
+    @r.delete("/plan/{pid}", status_code=204)
+    def delete_plan(pid: str, user=U):
+        row = own_plan_entry(pid, user["id"])
+        store.x("DELETE FROM plan_entries WHERE id=?", (pid,))
+        broker.publish(plan_audience(user["id"], row["group_id"]), {"kind": "plan", "scope": row["group_id"] or "me"})
+
+    @r.post("/plan/shopping")
+    def plan_shopping(body: PlanShopIn, user=U) -> dict:
+        """One shopping list for the whole week: each meal scaled to its servings, merged by ingredient,
+        minus what's in the pantry."""
+        uid = user["id"]
+        if body.trip_id:
+            trip = get_trip_row(body.trip_id, uid)
+            gid = trip["group_id"]
+            rows = store.q("SELECT * FROM plan_entries WHERE trip_id=? ORDER BY day", (trip["id"],))
+            if not rows:
+                raise HTTPException(400, "Ainda não há refeições planeadas para esta viagem.")
+            title = f"Compras: {trip['name']}"
+        else:
+            if not body.week:
+                raise HTTPException(400, "Indica a semana.")
+            gid = plan_scope(uid, body.scope)
+            start, days = week_bounds(body.week)
+            rows = plan_rows(uid, body.scope, days)
+            if not rows:
+                raise HTTPException(400, "O plano desta semana está vazio.")
+            title = f"Semana de {start.day} de {MONTHS[start.month - 1]}"
+        lid = new_list(title, uid, gid)
+        skipped: set[str] = set()
+        for x in rows:
+            rec = store.get_recipe(x["recipe_id"])
+            if rec and can_view(uid, rec.id):
+                skipped |= set(add_recipe_to_list(lid, rec, x["servings"], uid, body.include_pantry))
+        lst = store.one("SELECT * FROM lists WHERE id=?", (lid,))
+        broker.publish(list_audience(lst), {"kind": "lists"})
+        return {"list_id": lid, "skipped_pantry": sorted(skipped), "title": title}
+
+    # ---------- group trips / holidays (their own meal plan)
+    def get_trip_row(tid: str, uid: str):
+        t = store.one("SELECT * FROM trips WHERE id=?", (tid,))
+        if not t or t["group_id"] not in my_groups(uid):
+            raise HTTPException(404, "Viagem não encontrada.")
+        return t
+
+    def trip_days(t) -> list[str]:
+        a, b = date.fromisoformat(t["start"]), date.fromisoformat(t["end"])
+        return [(a + timedelta(days=i)).isoformat() for i in range((b - a).days + 1)]
+
+    def trip_view(t, uid: str, with_plan: bool = False) -> dict:
+        d = dict(t)
+        g = store.one("SELECT name FROM groups_ WHERE id=?", (t["group_id"],))
+        d["group_name"] = g["name"] if g else None
+        d["nights"] = max(0, len(trip_days(t)) - 1)
+        rows = [dict(x) for x in store.q("SELECT * FROM plan_entries WHERE trip_id=? ORDER BY day, slot, created_at", (t["id"],))]
+        plan = build_plan(uid, rows, trip_days(t))
+        d["totals"] = plan["totals"]
+        if with_plan:
+            d["days"] = plan["days"]
+        d["organiser"] = users_by_id([t["created_by"]]).get(t["created_by"])
+        return d
+
+    def check_dates(start: str, end: str):
+        try:
+            a, b = date.fromisoformat(start), date.fromisoformat(end)
+        except ValueError:
+            raise HTTPException(400, "Data inválida.")
+        if b < a:
+            raise HTTPException(400, "A data de fim é anterior à de início.")
+        if (b - a).days > 45:
+            raise HTTPException(400, "Uma viagem pode ter no máximo 45 dias.")
+
+    @r.get("/trips")
+    def list_trips(user=U) -> list[dict]:
+        groups = my_groups(user["id"])
+        if not groups:
+            return []
+        ph = ",".join("?" * len(groups))
+        rows = store.q(f"SELECT * FROM trips WHERE group_id IN ({ph}) ORDER BY start DESC", groups)
+        return [trip_view(t, user["id"]) for t in rows]
+
+    @r.post("/trips", status_code=201)
+    def create_trip(body: TripIn, user=U) -> dict:
+        require_member(user["id"], body.group_id)
+        check_dates(body.start, body.end)
+        tid = uuid.uuid4().hex
+        store.x("INSERT INTO trips(id, group_id, name, start, end, people, created_by, created_at) VALUES (?,?,?,?,?,?,?,?)",
+                (tid, body.group_id, body.name.strip(), body.start, body.end, body.people, user["id"], now()))
+        log([body.group_id], user["id"], "trip_created", None, {"trip_id": tid, "title": body.name.strip(), "start": body.start, "end": body.end})
+        broker.publish(members(body.group_id), {"kind": "plan", "scope": "trip"})
+        return trip_view(store.one("SELECT * FROM trips WHERE id=?", (tid,)), user["id"], True)
+
+    @r.get("/trips/{tid}")
+    def get_trip(tid: str, user=U) -> dict:
+        return trip_view(get_trip_row(tid, user["id"]), user["id"], True)
+
+    @r.patch("/trips/{tid}")
+    def patch_trip(tid: str, body: TripPatch, user=U) -> dict:
+        t = get_trip_row(tid, user["id"])
+        upd = body.model_dump(exclude_none=True)
+        check_dates(upd.get("start", t["start"]), upd.get("end", t["end"]))
+        if upd:
+            store.x(f"UPDATE trips SET {', '.join(f'{k}=?' for k in upd)} WHERE id=?", [*upd.values(), tid])
+        broker.publish(members(t["group_id"]), {"kind": "plan", "scope": "trip"})
+        return trip_view(get_trip_row(tid, user["id"]), user["id"], True)
+
+    @r.delete("/trips/{tid}", status_code=204)
+    def delete_trip(tid: str, user=U):
+        t = get_trip_row(tid, user["id"])
+        store.xs([("DELETE FROM plan_entries WHERE trip_id=?", (tid,)), ("DELETE FROM trips WHERE id=?", (tid,))])
+        broker.publish(members(t["group_id"]), {"kind": "plan", "scope": "trip"})
 
     # ---------- cost & nutrition endpoints
     @r.get("/recipes/{rid}/facts")

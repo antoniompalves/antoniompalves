@@ -69,6 +69,15 @@ CREATE TABLE IF NOT EXISTS activity (
     id TEXT PRIMARY KEY, group_id TEXT, user_id TEXT, type TEXT, recipe_id TEXT, data TEXT, created_at TEXT
 );
 CREATE INDEX IF NOT EXISTS activity_group ON activity(group_id, created_at);
+CREATE TABLE IF NOT EXISTS pantry (user_id TEXT, key TEXT, label TEXT, added_at TEXT, PRIMARY KEY (user_id, key));
+CREATE TABLE IF NOT EXISTS plan_entries (
+    id TEXT PRIMARY KEY, owner_id TEXT, group_id TEXT, day TEXT, slot TEXT, recipe_id TEXT, servings INTEGER,
+    note TEXT, created_by TEXT, created_at TEXT
+);
+CREATE INDEX IF NOT EXISTS plan_day ON plan_entries(day);
+CREATE TABLE IF NOT EXISTS trips (
+    id TEXT PRIMARY KEY, group_id TEXT, name TEXT, start TEXT, end TEXT, people INTEGER, created_by TEXT, created_at TEXT
+);
 CREATE TABLE IF NOT EXISTS ingredient_map (name_norm TEXT PRIMARY KEY, ref_key TEXT, updated_by TEXT, updated_at TEXT);
 CREATE TABLE IF NOT EXISTS paid_prices (
     id TEXT PRIMARY KEY, group_id TEXT, ref_key TEXT, price_per_kg REAL, user_id TEXT, created_at TEXT
@@ -87,6 +96,9 @@ class Store:
             cols = {r["name"] for r in self.db.execute("PRAGMA table_info(recipes)")}
             if "owner_id" not in cols:  # migration from the single-user version
                 self.db.execute("ALTER TABLE recipes ADD COLUMN owner_id TEXT")
+            plan_cols = {r["name"] for r in self.db.execute("PRAGMA table_info(plan_entries)")}
+            if "trip_id" not in plan_cols:
+                self.db.execute("ALTER TABLE plan_entries ADD COLUMN trip_id TEXT")
             item_cols = {r["name"] for r in self.db.execute("PRAGMA table_info(list_items)")}
             if "paid" not in item_cols:
                 self.db.execute("ALTER TABLE list_items ADD COLUMN paid REAL")

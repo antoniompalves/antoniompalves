@@ -34,7 +34,7 @@ KINDS = {
     "weekly": ("Resumo semanal ao domingo", True),
 }
 ACTIVITY_KIND = {"shared": "recipes", "variation": "recipes", "cooked": "cooks", "event_created": "dinners",
-                 "event_decided": "dinners", "joined": "members"}
+                 "event_decided": "dinners", "joined": "members", "trip_created": "dinners"}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
@@ -126,6 +126,9 @@ class Notifier:
         elif type_ == "event_decided":
             msg = {"title": f"{data.get('title')}: está decidido!", "body": f"Ganhou {data.get('recipe')}. A lista de compras para {data.get('guests')} já está pronta."}
             url = f"/#/event/{data.get('event_id')}"
+        elif type_ == "trip_created":
+            msg = {"title": f"Nova viagem em {gname} 🧳", "body": f"{who} criou “{data.get('title')}”. Ajuda a planear as refeições!"}
+            url = f"/#/trip/{data.get('trip_id')}"
         else:  # joined
             msg = {"title": gname, "body": f"{who} juntou-se ao grupo 👋"}
             url = "/#/group"

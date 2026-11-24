@@ -170,8 +170,10 @@ async function openAddToListSheet(r, servings) {
       let lid = form.querySelector("[name=l]:checked")?.value;
       if (lid === "__new") lid = (await api("/lists", { method: "POST", body: { title: "As minhas compras" } })).id;
       const n = parseInt(form.servings.value, 10);
-      await api(`/lists/${lid}/items`, { method: "POST", body: { recipe_id: r.id, servings: Number.isFinite(n) ? n : null } });
-      haptic(); toast("Ingredientes adicionados", { action: "Ver lista", onAction: () => location.hash = `/list/${lid}` });
+      const body = { recipe_id: r.id, servings: Number.isFinite(n) ? n : null };
+      const out = await api(`/lists/${lid}/items`, { method: "POST", body });
+      haptic();
+      pantryToast(out.skipped_pantry, () => api(`/lists/${lid}/items`, { method: "POST", body: { ...body, include_pantry: true } }), lid);
     },
   });
 }
@@ -283,6 +285,8 @@ async function flushRefresh() {
   const y = scrollY;
   if (h.startsWith("/list/") && evs.some(e => e.kind === "list" && e.id === h.slice(6))) await renderList(h.slice(6), true);
   else if (h === "/lists" && (kinds.has("lists") || kinds.has("list"))) await renderLists(true);
+  else if (h === "/plan" && kinds.has("plan")) await renderPlan(true);
+  else if (h.startsWith("/trip/") && kinds.has("plan")) await renderTrip(h.slice(6), true);
   else if (h.startsWith("/event/") && evs.some(e => e.kind === "event" && e.id === h.slice(7))) await renderEvent(h.slice(7), true);
   else if (h === "/group" && (kinds.has("activity") || kinds.has("event"))) await renderGroup(true);
   else if (h.startsWith("/r/") && detailRefresh?.id === h.slice(3) && evs.some(e => e.kind === "recipe" && e.id === h.slice(3))) detailRefresh.reload();
@@ -400,8 +404,9 @@ function feedItem(a) {
     joined: `${who} juntou-se ao grupo`,
     event_created: `${who} criou o jantar <b>${esc(a.data.title)}</b>. Vai votar!`,
     event_decided: `<b>${esc(a.data.title)}</b>: ganhou <b>${esc(a.data.recipe)}</b> para ${a.data.guests} pessoas`,
+    trip_created: `${who} criou a viagem <b>${esc(a.data.title)}</b>. Ajuda a planear as refeições!`,
   }[a.type] || `${who} fez uma alteração`;
-  const href = a.data.event_id ? `/event/${a.data.event_id}` : a.recipe_id ? `/r/${a.recipe_id}` : "";
+  const href = a.data.event_id ? `/event/${a.data.event_id}` : a.data.trip_id ? `/trip/${a.data.trip_id}` : a.recipe_id ? `/r/${a.recipe_id}` : "";
   return `<div class="feed-item" ${href ? `data-href="${esc(href)}" role="link" tabindex="0"` : ""}>
     ${avatar(a.user, "md")}
     <div class="feed-body"><p>${text}</p>
@@ -557,7 +562,11 @@ async function renderLists(silent = false) {
   try { lists = await api("/lists"); } catch (e) { toast(e.message); }
   if (currentRoute() !== "/lists") return;
   view.innerHTML = `
-    <div class="block-head" style="margin-top:0"><span></span><button class="pill-btn" id="newList">${I.plus}Nova lista</button></div>
+    <a class="list-card glass pantry-card" href="#/pantry">
+      <span class="list-ico">${I.home}</span>
+      <div><b>Despensa</b><span class="meta">O que tens em casa não entra nas listas</span></div>
+      <span class="chev">${I.back}</span></a>
+    <div class="block-head"><h3>Listas</h3><button class="pill-btn" id="newList">${I.plus}Nova lista</button></div>
     ${lists.length ? `<div class="lists">${lists.map(l => `
       <a class="list-card glass" href="#/list/${esc(l.id)}">
         <span class="list-ico ${l.group_id ? "shared" : ""}">${l.group_id ? I.users : I.list}</span>
@@ -581,32 +590,44 @@ async function renderList(id, silent = false) {
   let l;
   try { l = await api(`/lists/${id}`); } catch (e) { view.innerHTML = `<div class="empty glass"><p>${esc(e.message)}</p></div>`; return; }
   if (currentRoute() !== `/list/${id}`) return;
-  title.innerHTML = `<div style="display:flex;align-items:center;gap:.5rem"><button class="bar-btn plain-bar" id="backBtn" aria-label="Voltar">${I.back}</button><div class="nav-title" style="opacity:1">${esc(l.title)}</div><span style="width:2.75rem"></span></div>`;
+  title.innerHTML = `<div class="sub-bar"><button class="bar-btn plain-bar" id="backBtn" aria-label="Voltar">${I.back}</button><div class="nav-title" style="opacity:1">${esc(l.title)}</div><span class="bar-spacer"></span></div>`;
   $("#backBtn").onclick = () => (history.length > 1 ? history.back() : (location.hash = "/lists"));
   const todo = l.items.filter(i => !i.checked), done = l.items.filter(i => i.checked);
   const mineCount = todo.filter(i => i.assignee?.id === me()?.id).length;
   const row = i => `
     <div class="litem ${i.checked ? "done" : ""}" data-item="${esc(i.id)}">
       <label class="ing-check"><input type="checkbox" ${i.checked ? "checked" : ""} aria-label="Comprado"></label>
-      <div class="litem-body"><span class="txt">${i.quantity || i.unit ? `<span class="qty">${esc([i.quantity, i.unit].filter(Boolean).join(" "))}</span> ` : ""}${esc(withDe(i.unit, i.name))}</span>
+      <div class="litem-body">
+        <span class="txt">${i.quantity || i.unit ? `<span class="qty">${esc([i.quantity, i.unit].filter(Boolean).join(" "))}</span> ` : ""}${esc(withDe(i.unit, i.name))}</span>
         ${i.sources.length ? `<small class="note">${esc(i.sources.join(", "))}</small>` : ""}
-        ${i.checked && i.checked_by_user ? `<small class="note">comprado por ${esc(firstName(i.checked_by_user))}${i.paid ? ` · ${eur(i.paid)}` : ""}</small>` : ""}</div>
-      ${!i.checked && i.estimate ? `<button class="price-chip" data-paid title="Registar quanto pagaste">${costText([0, i.estimate, 0])}</button>` : ""}
-      ${l.group_id && !i.checked ? (i.assignee
-        ? `<button class="bring ${i.assignee.id === me()?.id ? "mine" : ""}" data-unassign ${i.assignee.id === me()?.id ? "" : "disabled"} aria-label="${esc(i.assignee.name)} traz">${avatar(i.assignee, "xs")}${i.assignee.id === me()?.id ? "Eu trago" : esc(firstName(i.assignee))}</button>`
-        : `<button class="bring" data-assign>Eu trago</button>`) : ""}
+        ${i.checked && i.checked_by_user ? `<small class="note">comprado por ${esc(firstName(i.checked_by_user))}${i.paid ? ` · ${eur(i.paid)}` : ""}</small>` : ""}
+        ${!i.checked && (i.estimate || l.group_id) ? `<div class="litem-tags">
+          ${l.group_id ? (i.assignee
+            ? `<button class="bring ${i.assignee.id === me()?.id ? "mine" : ""}" data-unassign ${i.assignee.id === me()?.id ? "" : "disabled"} aria-label="${esc(i.assignee.name)} traz">${avatar(i.assignee, "xs")}${i.assignee.id === me()?.id ? "Eu trago" : `${esc(firstName(i.assignee))} traz`}</button>`
+            : `<button class="bring" data-assign>Eu trago</button>`) : ""}
+          ${i.estimate ? `<button class="price-chip" data-paid title="Registar quanto pagaste">${costText([0, i.estimate, 0])}</button>` : ""}
+        </div>` : ""}
+      </div>
+      ${!i.checked ? `<button class="mini" data-home aria-label="Temos em casa" title="Temos em casa">${I.home}</button>` : ""}
       <button class="mini-del" data-del aria-label="Remover">${I.x}</button>
     </div>`;
+  // group the to-buy items by supermarket section, in walking order
+  const sections = [];
+  for (const it of todo) {
+    let sec = sections.find(x => x.name === it.aisle);
+    if (!sec) sections.push(sec = { name: it.aisle || "Outros", items: [] });
+    sec.items.push(it);
+  }
   view.innerHTML = `
     <div class="list-head glass">
-      <div><span class="eyebrow">${l.group_id ? `${I.users} ${esc(l.group_name || "Grupo")} · em tempo real` : "Lista pessoal"}</span>
+      <div><span class="eyebrow">${l.group_id ? `<i class="live-dot" aria-hidden="true"></i>${esc(l.group_name || "Grupo")} · ao vivo` : "Lista pessoal"}</span>
         <b>${todo.length ? `Faltam ${todo.length}` : l.items.length ? "Está tudo!" : "Lista vazia"}</b>
         ${l.estimate?.known && todo.length ? `<span class="meta">${costText(l.estimate.cost)} estimados${l.estimate.known < l.estimate.todo ? ` (${l.estimate.known} de ${l.estimate.todo} artigos)` : ""}</span>` : ""}
         ${l.group_id && mineCount ? `<span class="meta">Tu trazes ${mineCount} ${mineCount === 1 ? "coisa" : "coisas"}</span>` : ""}</div>
       ${l.items.length ? `<div class="progress-ring" style="--p:${l.items.length ? done.length / l.items.length : 0}"><b>${done.length}/${l.items.length}</b><span>comprados</span></div>` : ""}
     </div>
     <form class="add-item glass" id="addItem"><input name="name" placeholder="Adicionar artigo, ex.: 2 limões" autocomplete="off" aria-label="Novo artigo"><button class="icon-add" aria-label="Adicionar">${I.plus}</button></form>
-    ${todo.length ? `<section class="section glass litems">${todo.map(row).join("")}</section>` : ""}
+    ${sections.map(sec => `<section class="section glass litems"><div class="aisle-head">${esc(sec.name)}<span>${sec.items.length}</span></div>${sec.items.map(row).join("")}</section>`).join("")}
     ${done.length ? `<section class="section glass litems done-sec"><div class="section-head"><h3>Comprados</h3><button class="text-btn" id="clearDone">Limpar</button></div>${done.map(row).join("")}</section>` : ""}
     <div class="row-actions">
       <button class="btn-glass glass" id="copyList">${I.copy}Copiar</button>
@@ -620,6 +641,10 @@ async function renderList(id, silent = false) {
     $("[data-assign]", rowEl) && ($("[data-assign]", rowEl).onclick = () => { haptic(); act(() => api(`/items/${iid}`, { method: "PATCH", body: { assign: "me" } })); });
     $("[data-unassign]", rowEl) && ($("[data-unassign]", rowEl).onclick = () => act(() => api(`/items/${iid}`, { method: "PATCH", body: { assign: "none" } })));
     $("[data-del]", rowEl).onclick = () => act(() => api(`/items/${iid}`, { method: "DELETE" }));
+    $("[data-home]", rowEl) && ($("[data-home]", rowEl).onclick = () => act(async () => {
+      const r = await api(`/items/${iid}/pantry`, { method: "POST" });
+      toast(`${r.label} guardado na despensa`);
+    }));
     $("[data-paid]", rowEl) && ($("[data-paid]", rowEl).onclick = () => openPaidSheet(l.items.find(x => x.id === iid), () => renderList(id, true)));
   });
   $("#addItem").onsubmit = e => {
@@ -629,7 +654,8 @@ async function renderList(id, silent = false) {
     act(() => api(`/lists/${id}/items`, { method: "POST", body: m ? { quantity: m[1], name: m[2] } : { name: v } }));
   };
   $("#clearDone") && ($("#clearDone").onclick = () => act(() => api(`/lists/${id}/clear-checked`, { method: "POST" })));
-  $("#copyList").onclick = () => navigator.clipboard.writeText(todo.map(i => `• ${[i.quantity, i.unit, withDe(i.unit, i.name)].filter(Boolean).join(" ")}${i.assignee ? ` (${firstName(i.assignee)})` : ""}`).join("\n"))
+  $("#copyList").onclick = () => navigator.clipboard.writeText(sections.map(sec => `${sec.name}\n` + sec.items.map(i =>
+    `• ${[i.quantity, i.unit, withDe(i.unit, i.name)].filter(Boolean).join(" ")}${i.assignee ? ` (${firstName(i.assignee)})` : ""}`).join("\n")).join("\n\n"))
     .then(() => toast("Lista copiada"));
   $("#delList").onclick = async () => {
     if (!confirm(`Apagar a lista “${l.title}”${l.group_id ? " para todo o grupo" : ""}?`)) return;
@@ -645,6 +671,11 @@ function renderSettings() {
     <section class="section glass account">
       ${avatar(u, "lg")}<div><b>${esc(u.name)}</b><span class="meta">@${esc(u.username)}</span></div>
       <button class="btn-glass glass" id="logout">${I.logout}Sair</button>
+    </section>
+
+    <section class="section glass"><div class="section-head"><h3>Aparência</h3></div>
+      <div class="themes">${THEMES.map(([k, label, color]) => `<button class="theme-opt ${store.get("theme", "quente") === k ? "on" : ""}" data-theme-opt="${k}" aria-pressed="${store.get("theme", "quente") === k}"><i style="background:${color}"></i>${label}</button>`).join("")}</div>
+      <p class="meta" style="margin-top:.6rem">Os temas claros seguem o modo escuro do sistema. Meia-noite é sempre escuro.</p>
     </section>
 
     <section class="section glass" id="pushSec"><div class="section-head"><h3>Notificações</h3></div><p class="meta">A verificar…</p></section>
@@ -679,6 +710,10 @@ function renderSettings() {
     </section>
     <section class="section glass"><div class="section-head"><h3>Android</h3></div>
       <p class="meta">Instala a partir do menu do Chrome (<b>Adicionar ao ecrã principal</b>). O RecipeBox passa a aparecer diretamente na folha de partilha.</p></section>`;
+  view.querySelectorAll("[data-theme-opt]").forEach(b => b.onclick = () => {
+    store.set("theme", b.dataset.themeOpt); applyTheme(b.dataset.themeOpt); haptic(6);
+    view.querySelectorAll("[data-theme-opt]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
+  });
   $("#logout").onclick = async () => { await disablePush().catch(() => {}); await api("/auth/logout", { method: "POST" }).catch(() => {}); signOut(); };
   const drawPush = async () => { const sec = $("#pushSec"); if (!sec) return; sec.innerHTML = await pushSettingsHTML(); wirePushSettings(sec, drawPush); };
   drawPush();
@@ -876,6 +911,297 @@ function openPaidSheet(item, done) {
       if (!(v > 0)) { toast("Indica um valor, ex.: 2,49"); return false; }
       const r = await api(`/items/${item.id}/paid`, { method: "POST", body: { paid: v } });
       toast(`Obrigado! ${eur(r.price_per_kg)}/kg guardado para o grupo`); haptic(); done?.();
+    },
+  });
+}
+
+// ---------------------------------------------------------------- pantry ("temos em casa")
+function pantryToast(skipped, includeAnyway, lid) {
+  if (!skipped?.length) {
+    return toast("Ingredientes adicionados", lid ? { action: "Ver lista", onAction: () => location.hash = `/list/${lid}` } : {});
+  }
+  const names = [...new Set(skipped)];
+  toast(`Já tens em casa: ${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}`, {
+    action: "Juntar também", onAction: async () => { await includeAnyway(); toast("Adicionados também"); },
+  });
+}
+
+async function renderPantry() {
+  title.innerHTML = `<div class="sub-bar"><button class="bar-btn plain-bar" id="backBtn" aria-label="Voltar">${I.back}</button><div class="nav-title" style="opacity:1">Despensa</div><span class="bar-spacer"></span></div>`;
+  $("#backBtn").onclick = () => (history.length > 1 ? history.back() : (location.hash = "/lists"));
+  let p = { items: [], suggestions: [] };
+  try { p = await api("/pantry"); } catch (e) { toast(e.message); }
+  if (currentRoute() !== "/pantry") return;
+  const byAisle = {};
+  p.items.forEach(x => (byAisle[x.aisle] ||= []).push(x));
+  view.innerHTML = `
+    <p class="meta page-lead">O que marcas aqui não entra nas listas de compras nem na lista da semana. Podes sempre juntar na mesma.</p>
+    <form class="add-item glass" id="addPantry"><input name="name" placeholder="Ex.: azeite, arroz, sal" autocomplete="off" aria-label="Adicionar à despensa"><button class="icon-add" aria-label="Adicionar">${I.plus}</button></form>
+    ${p.suggestions.length ? `<section class="block"><div class="block-head"><h3>Básicos</h3><span class="meta">toca para juntar</span></div>
+      <div class="chip-wrap">${p.suggestions.map(k => `<button class="chip glass" data-add="${esc(k)}">${I.plus}${esc(k)}</button>`).join("")}</div></section>` : ""}
+    ${p.items.length ? Object.entries(byAisle).sort((a, b) => aisleRank(a[0]) - aisleRank(b[0])).map(([aisle, xs]) => `
+      <section class="section glass"><div class="aisle-head">${esc(aisle)}<span>${xs.length}</span></div>
+        <div class="chip-wrap">${xs.map(x => `<span class="pantry-chip">${esc(x.label)}<button data-rm="${esc(x.key)}" aria-label="Tirar ${esc(x.label)} da despensa">${I.x}</button></span>`).join("")}</div>
+      </section>`).join("")
+      : `<div class="empty glass"><div class="art">${I.home}</div><h3>Despensa vazia</h3><p>Junta o que costumas ter sempre em casa, como sal, azeite ou arroz.</p></div>`}`;
+  const add = async name => { try { await api("/pantry", { method: "POST", body: { name } }); haptic(); renderPantry(); } catch (e) { toast(e.message); } };
+  $("#addPantry").onsubmit = e => { e.preventDefault(); const v = e.target.name.value.trim(); if (v) add(v); };
+  view.querySelectorAll("[data-add]").forEach(b => b.onclick = () => add(b.dataset.add));
+  view.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => { await api(`/pantry/${encodeURIComponent(b.dataset.rm)}`, { method: "DELETE" }); renderPantry(); });
+}
+const AISLES = ["Frutas e legumes", "Talho", "Peixaria", "Charcutaria e queijos", "Laticínios e ovos", "Padaria", "Mercearia", "Temperos e especiarias", "Congelados", "Outros"];
+const aisleRank = a => { const i = AISLES.indexOf(a); return i < 0 ? 99 : i; };
+
+// ---------------------------------------------------------------- meal planner: personal week + group trips
+const SLOT_NAMES = { pequeno: "Pequeno-almoço", almoco: "Almoço", jantar: "Jantar", outro: "Outro" };
+const WEEK_SLOTS = ["almoco", "jantar"];
+const TRIP_SLOTS = ["pequeno", "almoco", "jantar"];
+const isoDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const mondayOf = d => { const x = new Date(d); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const MONTHS_SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const WEEKDAYS = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+const dateObj = iso => new Date(iso + "T12:00");
+const shortDate = iso => { const d = dateObj(iso); return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`; };
+/** "Segunda-feira, 24 nov" (PT-PT: only the first letter capitalised) */
+const dayLabel = iso => { const d = dateObj(iso); const w = WEEKDAYS[d.getDay()]; return `${w[0].toUpperCase()}${w.slice(1)}, ${shortDate(iso)}`; };
+const rangeLabel = (a, b) => `${shortDate(a)} – ${shortDate(b)}`;
+const planState = { week: isoDay(mondayOf(new Date())), mode: store.get("planMode", "me") };
+
+function planSeg() {
+  return `<div class="seg glass" role="tablist" aria-label="Planeador">
+    <button role="tab" class="${planState.mode === "me" ? "on" : ""}" aria-selected="${planState.mode === "me"}" data-pmode="me">${I.calendar}Pessoal</button>
+    <button role="tab" class="${planState.mode === "trips" ? "on" : ""}" aria-selected="${planState.mode === "trips"}" data-pmode="trips">${I.users}Viagens e férias</button></div>`;
+}
+function wirePlanSeg() {
+  view.querySelectorAll("[data-pmode]").forEach(b => b.onclick = () => { planState.mode = b.dataset.pmode; store.set("planMode", planState.mode); renderPlan(); });
+}
+
+/** Days with meal slots: shared by the personal week and trips. */
+function daysHTML(days, slots, { showBy = false } = {}) {
+  const today = isoDay(new Date());
+  return `<div class="days">${days.map(d => `
+    <section class="day glass ${d.date === today ? "today" : ""} ${d.date < today ? "past" : ""}">
+      <div class="day-head"><b>${esc(dayLabel(d.date))}</b>${d.date === today ? `<span class="today-pill">Hoje</span>` : ""}</div>
+      ${slots.map(slot => {
+        const es = d.entries.filter(e => e.slot === slot);
+        return `<div class="slot"><span class="slot-label">${SLOT_NAMES[slot]}</span><div class="slot-body">
+          ${es.map(e => e.recipe ? `<div class="meal" data-entry="${esc(e.id)}">
+              <a class="meal-main" href="#/r/${esc(e.recipe.id)}">${thumb(e.recipe)}<span><b>${esc(e.recipe.title)}</b>
+                <small>${[e.recipe.facts?.price_coverage >= 0.6 && e.recipe.facts.cost[1] ? `≈ ${eur(e.recipe.facts.cost[1] * (e.servings || 1))}` : "",
+                          showBy && e.by ? `por ${esc(firstName(e.by))}` : ""].filter(Boolean).join(" · ")}</small></span></a>
+              <button class="serv-pill" data-serv aria-label="${e.servings || "?"} pessoas, alterar">${I.users}${e.servings || "?"}</button>
+              <button class="mini-del" data-rm aria-label="Tirar do plano">${I.x}</button></div>`
+            : `<div class="meal gone" data-entry="${esc(e.id)}"><span class="meta">Receita indisponível</span><button class="mini-del" data-rm aria-label="Tirar">${I.x}</button></div>`).join("")}
+          <button class="add-meal ${es.length ? "more" : ""}" data-add-day="${d.date}" data-add-slot="${slot}">${I.plus}${es.length ? "Mais" : "Adicionar"}</button>
+        </div></div>`;
+      }).join("")}
+    </section>`).join("")}</div>`;
+}
+
+function wireDays(plan, ctx, rerender) {
+  const entryOf = el => plan.days.flatMap(d => d.entries).find(e => e.id === el.closest("[data-entry]")?.dataset.entry);
+  view.querySelectorAll("[data-add-day]").forEach(b => b.onclick = () => openPlanSheet({ day: b.dataset.addDay, slot: b.dataset.addSlot, trip: ctx.trip, done: rerender }));
+  view.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => {
+    const e = entryOf(b);
+    await api(`/plan/${e.id}`, { method: "DELETE" });
+    rerender();
+    toast("Tirado do plano", { action: "Anular", onAction: async () => {
+      await api("/plan", { method: "POST", body: { day: e.day, slot: e.slot, recipe_id: e.recipe_id, servings: e.servings, trip_id: ctx.trip?.id || null } });
+      rerender();
+    } });
+  });
+  view.querySelectorAll("[data-serv]").forEach(b => b.onclick = () => openServingsSheet(entryOf(b), rerender));
+}
+
+async function shopFor(body) {
+  try {
+    const out = await api("/plan/shopping", { method: "POST", body });
+    haptic(12);
+    toast(out.skipped_pantry.length ? `Lista criada sem o que tens em casa (${out.skipped_pantry.length})` : "Lista de compras criada");
+    location.hash = `/list/${out.list_id}`;
+  } catch (e) { toast(e.message); }
+}
+
+const sumHTML = t => `<div class="week-sum glass">
+  <div><b>${t.meals}</b><span>${t.meals === 1 ? "refeição" : "refeições"}</span></div>
+  <div><b>${t.cost[1] ? eur(t.cost[1]) : "–"}</b><span>custo</span></div>
+  <div><b>${t.kcal_per_day ?? "–"}</b><span>kcal/dia</span></div></div>`;
+
+async function renderPlan(silent = false) {
+  if (planState.mode === "trips") return renderTrips(silent);
+  const start = dateObj(planState.week);
+  const thisWeek = planState.week === isoDay(mondayOf(new Date()));
+  largeTitle("Plano", thisWeek ? "Esta semana" : rangeLabel(planState.week, isoDay(addDays(start, 6))));
+  if (!silent) view.innerHTML = `${planSeg()}<div class="section glass"><p class="meta">A carregar…</p></div>`;
+  let plan;
+  try { plan = await api(`/plan?week=${planState.week}&scope=me`); }
+  catch (e) { view.innerHTML = `<div class="empty glass"><p>${esc(e.message)}</p></div>`; return; }
+  if (currentRoute() !== "/plan" || planState.mode !== "me") return;
+  view.innerHTML = `
+    ${planSeg()}
+    <div class="week-nav">
+      <button class="icon-glass glass sm" data-wk="-1" aria-label="Semana anterior">${I.back}</button>
+      ${sumHTML(plan.totals)}
+      <button class="icon-glass glass sm fwd" data-wk="1" aria-label="Semana seguinte">${I.back}</button>
+    </div>
+    ${!thisWeek ? `<button class="text-btn center-btn" id="toToday">Voltar a esta semana</button>` : ""}
+    ${plan.totals.meals ? `<button class="btn-primary wide" id="weekShop">${I.cart}Lista de compras da semana</button>` : ""}
+    ${daysHTML(plan.days, WEEK_SLOTS)}`;
+  wirePlanSeg();
+  view.querySelectorAll("[data-wk]").forEach(b => b.onclick = () => { planState.week = isoDay(addDays(start, 7 * +b.dataset.wk)); renderPlan(); });
+  $("#toToday") && ($("#toToday").onclick = () => { planState.week = isoDay(mondayOf(new Date())); renderPlan(); });
+  $("#weekShop") && ($("#weekShop").onclick = () => shopFor({ week: planState.week, scope: "me" }));
+  wireDays(plan, {}, () => renderPlan(true));
+}
+
+async function renderTrips(silent = false) {
+  largeTitle("Plano", "Viagens e férias em grupo");
+  if (!silent) view.innerHTML = `${planSeg()}<div class="section glass"><p class="meta">A carregar…</p></div>`;
+  let trips = [];
+  try { trips = await api("/trips"); } catch (e) { toast(e.message); }
+  if (currentRoute() !== "/plan" || planState.mode !== "trips") return;
+  const today = isoDay(new Date());
+  const upcoming = trips.filter(t => t.end >= today).sort((a, b) => a.start.localeCompare(b.start));
+  const past = trips.filter(t => t.end < today);
+  const card = t => `<a class="trip-card glass ${t.end < today ? "past" : ""}" href="#/trip/${esc(t.id)}">
+      <span class="trip-ico">${I.calendar}</span>
+      <div><b>${esc(t.name)}</b><span class="meta">${rangeLabel(t.start, t.end)} · ${t.people} pessoas · ${esc(t.group_name || "")}</span>
+        <span class="meta">${t.totals.meals ? `${t.totals.meals} ${t.totals.meals === 1 ? "refeição" : "refeições"}${t.totals.cost[1] ? ` · ≈ ${eur(t.totals.cost[1])}` : ""}` : "Sem refeições ainda"}</span></div>
+      <span class="chev">${I.back}</span></a>`;
+  view.innerHTML = `
+    ${planSeg()}
+    ${groups().length ? `<button class="btn-primary wide" id="newTrip">${I.plus}Nova viagem</button>` : ""}
+    ${!groups().length ? `<div class="empty glass"><div class="art">${I.users}</div><h3>Precisas de um grupo</h3><p>As viagens são planeadas em grupo. Cria um grupo ou entra num com um convite.</p><a class="btn-primary" href="#/group">Ir para Grupo</a></div>`
+      : !trips.length ? `<div class="empty glass"><div class="art">${I.calendar}</div><h3>Planeiem as refeições da viagem</h3>
+        <p>Férias, fim de semana na serra, campismo: cada um propõe refeições, ajustam as doses ao número de pessoas e fazem uma lista de compras para a viagem inteira.</p></div>` : ""}
+    ${upcoming.length ? `<section class="block"><div class="block-head"><h3>Próximas</h3></div><div class="trips">${upcoming.map(card).join("")}</div></section>` : ""}
+    ${past.length ? `<section class="block"><div class="block-head"><h3>Anteriores</h3></div><div class="trips">${past.map(card).join("")}</div></section>` : ""}`;
+  wirePlanSeg();
+  $("#newTrip") && ($("#newTrip").onclick = () => openTripSheet());
+}
+
+async function renderTrip(id, silent = false) {
+  let t;
+  try { t = await api(`/trips/${id}`); } catch (e) { view.innerHTML = `<div class="empty glass"><p>${esc(e.message)}</p></div>`; return; }
+  if (currentRoute() !== `/trip/${id}`) return;
+  title.innerHTML = `<div class="sub-bar"><button class="bar-btn plain-bar" id="backBtn" aria-label="Voltar">${I.back}</button><div class="nav-title" style="opacity:1">${esc(t.name)}</div>
+    <button class="bar-btn plain-bar" id="editTrip" aria-label="Editar viagem">${I.edit}</button></div>`;
+  $("#backBtn").onclick = () => { planState.mode = "trips"; history.length > 1 ? history.back() : (location.hash = "/plan"); };
+  $("#editTrip").onclick = () => openTripSheet(t);
+  view.innerHTML = `
+    <div class="trip-head glass">
+      <span class="eyebrow">${I.users} ${esc(t.group_name || "")}</span>
+      <h2>${esc(t.name)}</h2>
+      <span class="meta">${rangeLabel(t.start, t.end)} · ${t.nights} ${t.nights === 1 ? "noite" : "noites"} · ${t.people} pessoas</span>
+    </div>
+    ${sumHTML(t.totals)}
+    ${t.totals.meals ? `<button class="btn-primary wide" id="tripShop">${I.cart}Lista de compras da viagem</button>` : `<p class="meta page-lead">Toca em “Adicionar” para propor refeições. As doses começam no número de pessoas da viagem.</p>`}
+    ${daysHTML(t.days, TRIP_SLOTS, { showBy: true })}`;
+  $("#tripShop") && ($("#tripShop").onclick = () => shopFor({ trip_id: t.id }));
+  wireDays(t, { trip: t }, () => renderTrip(id, true));
+}
+
+function openTripSheet(trip = null) {
+  const today = new Date();
+  const start = trip?.start || isoDay(addDays(today, 14)), end = trip?.end || isoDay(addDays(today, 16));
+  const g0 = trip ? groupById(trip.group_id) : groups()[0];
+  openSheet({
+    title: trip ? "Editar viagem" : "Nova viagem", submit: trip ? "Guardar" : "Criar",
+    body: `<label class="field"><span class="field-label">Nome</span><input name="name" maxlength="60" placeholder="ex.: Férias no Algarve" value="${esc(trip?.name || "")}"></label>
+      ${trip ? "" : `<label class="field"><span class="field-label">Grupo</span><select name="group">${groups().map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join("")}</select></label>`}
+      <div class="row2">
+        <label class="field"><span class="field-label">Início</span><input name="start" type="date" value="${start}"></label>
+        <label class="field"><span class="field-label">Fim</span><input name="end" type="date" value="${end}"></label>
+      </div>
+      <label class="field"><span class="field-label">Pessoas</span><input name="people" type="number" inputmode="numeric" min="1" max="100" value="${trip?.people || Math.max(2, g0?.members.length || 2)}"></label>
+      ${trip ? `<button type="button" class="danger-link" id="delTrip">${I.trash}Apagar viagem</button>` : ""}`,
+    onMount: (el, hide) => {
+      $("#delTrip", el) && ($("#delTrip", el).onclick = async () => {
+        if (!confirm(`Apagar “${trip.name}” e as refeições planeadas?`)) return;
+        await api(`/trips/${trip.id}`, { method: "DELETE" }); hide(); planState.mode = "trips"; location.hash = "/plan";
+      });
+    },
+    onSubmit: async form => {
+      const body = { name: form.name.value.trim(), start: form.start.value, end: form.end.value, people: parseInt(form.people.value, 10) || 2 };
+      if (!body.name) { toast("Dá um nome à viagem."); return false; }
+      if (trip) { await api(`/trips/${trip.id}`, { method: "PATCH", body }); renderTrip(trip.id, true); }
+      else { const t = await api("/trips", { method: "POST", body: { ...body, group_id: form.group.value } }); location.hash = `/trip/${t.id}`; }
+    },
+  });
+}
+
+function openServingsSheet(entry, done) {
+  let n = entry.servings || entry.recipe?.servings || 2;
+  openSheet({
+    title: "Pessoas", submit: "Guardar",
+    body: `<p class="meta sheet-lead center"><b>${esc(entry.recipe?.title || "")}</b><br>${esc(dayLabel(entry.day))} · ${SLOT_NAMES[entry.slot] || ""}</p>
+      <div class="big-stepper"><button type="button" data-d="-1" aria-label="Menos">${I.minus}</button><output id="servN">${n}</output><button type="button" data-d="1" aria-label="Mais">${I.plus}</button></div>
+      <p class="meta center">as quantidades e a lista de compras ajustam-se</p>`,
+    onMount: el => el.querySelectorAll("[data-d]").forEach(b => b.onclick = () => { n = Math.max(1, Math.min(100, n + +b.dataset.d)); $("#servN", el).textContent = n; haptic(4); }),
+    onSubmit: async () => { await api(`/plan/${entry.id}`, { method: "PATCH", body: { servings: n } }); done?.(); },
+  });
+}
+
+/** Add a recipe to a plan: from a day slot (personal week or a trip) or from a recipe page. */
+async function openPlanSheet({ recipe = null, day = null, slot = "jantar", servings = null, trip = null, done = null } = {}) {
+  let trips = [];
+  if (recipe && !trip && groups().length) { try { trips = (await api("/trips")).filter(t => t.end >= isoDay(new Date())); } catch {} }
+  const weekDays = Array.from({ length: 14 }, (_, i) => isoDay(addDays(mondayOf(new Date()), i))).filter(d => d >= isoDay(new Date()) || d === day);
+  let target = trip ? `trip:${trip.id}` : "me";
+  let chosen = recipe;
+  const daysFor = t => t === "me" ? weekDays : (() => { const tr = trip || trips.find(x => `trip:${x.id}` === t); const out = []; for (let d = dateObj(tr.start); isoDay(d) <= tr.end; d = addDays(d, 1)) out.push(isoDay(d)); return out; })();
+  const slotsFor = t => t === "me" ? WEEK_SLOTS : TRIP_SLOTS;
+  const tripOf = t => trip || trips.find(x => `trip:${x.id}` === t);
+  openSheet({
+    title: recipe ? "Pôr no plano" : "Adicionar refeição", submit: "Adicionar",
+    body: `
+      ${recipe ? `<div class="picked">${thumb(recipe)}<b>${esc(recipe.title)}</b></div>` : `
+        <div class="search-wrap glass">${I.search}<input class="search" id="planQ" placeholder="Procurar receita" autocomplete="off"></div>
+        <div class="recipe-pick" id="planPick"></div>`}
+      ${recipe && trips.length ? `<label class="field"><span class="field-label">Plano</span><select name="target"><option value="me">Pessoal (esta semana e a próxima)</option>${trips.map(t => `<option value="trip:${esc(t.id)}">${esc(t.name)} · ${rangeLabel(t.start, t.end)}</option>`).join("")}</select></label>` : ""}
+      <div class="row2">
+        <label class="field"><span class="field-label">Dia</span><select name="day"></select></label>
+        <label class="field"><span class="field-label">Refeição</span><select name="slot"></select></label>
+      </div>
+      <label class="field"><span class="field-label">Pessoas</span><input name="servings" type="number" inputmode="numeric" min="1" max="100" value="${servings || trip?.people || recipe?.servings || 2}"></label>`,
+    onMount: el => {
+      const fillSelects = () => {
+        const ds = daysFor(target);
+        el.querySelector("[name=day]").innerHTML = ds.map(d => `<option value="${d}" ${d === day ? "selected" : ""}>${esc(dayLabel(d))}</option>`).join("");
+        el.querySelector("[name=slot]").innerHTML = slotsFor(target).map(k => `<option value="${k}" ${k === slot ? "selected" : ""}>${SLOT_NAMES[k]}</option>`).join("");
+        const tr = tripOf(target); if (tr && !el.querySelector("[name=servings]").dataset.touched) el.querySelector("[name=servings]").value = tr.people;
+      };
+      fillSelects();
+      el.querySelector("[name=target]") && (el.querySelector("[name=target]").onchange = e => { target = e.target.value; fillSelects(); });
+      el.querySelector("[name=servings]").oninput = e => { e.target.dataset.touched = "1"; };
+      if (recipe) return;
+      const tr = tripOf(target);
+      const pool = () => state.recipes.filter(r => !tr || r.shared_group_ids.includes(tr.group_id) || r.is_owner);
+      const draw = () => {
+        const q = ($("#planQ", el).value || "").toLowerCase();
+        const list = pool().filter(r => !q || r.title.toLowerCase().includes(q)).slice(0, 24);
+        $("#planPick", el).innerHTML = list.map(r => `<label class="pick"><input type="radio" name="r" value="${esc(r.id)}" ${chosen?.id === r.id ? "checked" : ""}>${thumb(r)}<span>${esc(r.title)}</span></label>`).join("")
+          || `<p class="meta">Sem receitas${q ? " com esse nome" : ""}.</p>`;
+        el.querySelectorAll("[name=r]").forEach(i => i.onchange = () => {
+          chosen = state.recipes.find(r => r.id === i.value);
+          if (!tr && chosen?.servings && !el.querySelector("[name=servings]").dataset.touched) el.querySelector("[name=servings]").value = chosen.servings;
+        });
+      };
+      $("#planQ", el).oninput = draw;
+      draw();
+    },
+    onSubmit: async form => {
+      if (!chosen) { toast("Escolhe uma receita."); return false; }
+      const tr = tripOf(target);
+      await api("/plan", { method: "POST", body: { day: form.day.value, slot: form.slot.value, recipe_id: chosen.id,
+        servings: parseInt(form.servings.value, 10) || null, scope: "me", trip_id: tr?.id || null } });
+      haptic();
+      if (done) return done();
+      toast(tr ? `Na viagem: ${dayLabel(form.day.value)}` : `No plano: ${dayLabel(form.day.value)}`, { action: "Ver", onAction: () => {
+        if (tr) location.hash = `/trip/${tr.id}`;
+        else { planState.mode = "me"; planState.week = isoDay(mondayOf(dateObj(form.day.value))); location.hash = "/plan"; }
+      } });
     },
   });
 }

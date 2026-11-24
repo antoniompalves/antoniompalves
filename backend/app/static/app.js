@@ -123,6 +123,8 @@ const I = {
   lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>',
   logout: '<svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg>',
   vote: '<svg viewBox="0 0 24 24"><path d="M5 12.5 9.5 17 19 7.5"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>',
+  mic: '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>',
+  home: '<svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5H9v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg>',
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg>',
 };
 const EUR = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
@@ -157,7 +159,7 @@ const photo = (r, cls) => r.thumbnail_url
 // ---------------------------------------------------------------- routing + screen transitions
 const view = $("#view"), title = $("#title");
 const currentRoute = () => location.hash.slice(1) || "/";
-const depth = r => (/^\/(r|event|list)\//.test(r) ? 1 : 0);
+const depth = r => (/^\/(r|event|list|trip)\//.test(r) || r === "/pantry" ? 1 : 0);
 let lastRoute = null;
 
 /** Push/pop feel: deeper screens arrive from the right, going back arrives from the left
@@ -177,14 +179,14 @@ function enterScreen(direction) {
   s.set(0); s.to(1);
 }
 
-const TABS = ["library", "group", "lists", "settings"];
+const TABS = ["library", "plan", "group", "lists", "settings"];
 function route() {
   const h = currentRoute();
   const dir = lastRoute === null ? 0 : Math.sign(depth(h) - depth(lastRoute));
   lastRoute = h;
   if (!state.me) return renderAuth();
   if (h.startsWith("/join/")) return joinFromLink(h.slice(6));
-  const tab = h.startsWith("/r/") || h === "/" ? "library" : h.startsWith("/event/") ? "group" : h.startsWith("/list/") ? "lists" : h.slice(1);
+  const tab = h.startsWith("/r/") || h === "/" ? "library" : h.startsWith("/event/") ? "group" : h.startsWith("/list/") || h === "/pantry" ? "lists" : h.startsWith("/trip/") ? "plan" : h.slice(1);
   document.querySelectorAll(".tabbar button").forEach(b => {
     const on = b.dataset.tab === tab;
     b.classList.toggle("active", on);
@@ -193,6 +195,7 @@ function route() {
   // The lens slides between tabs (springy CSS curve; instant with reduced motion)
   $(".tabbar .lens").style.transform = `translateX(${Math.max(0, TABS.indexOf(tab)) * 100}%)`;
   document.body.classList.toggle("route-detail", h.startsWith("/r/"));
+  document.body.dataset.tab = tab;
   document.body.classList.toggle("route-sub", depth(h) === 1);
   document.body.classList.remove("scrolled");
   window.scrollTo(0, 0);
@@ -201,6 +204,9 @@ function route() {
   else if (h === "/group") renderGroup();
   else if (h.startsWith("/event/")) renderEvent(h.slice(7));
   else if (h === "/lists") renderLists();
+  else if (h === "/plan") renderPlan();
+  else if (h.startsWith("/trip/")) renderTrip(h.slice(6));
+  else if (h === "/pantry") renderPantry();
   else if (h.startsWith("/list/")) renderList(h.slice(6));
   else if (h === "/settings") renderSettings();
   else renderLibrary();
@@ -296,11 +302,10 @@ function card(r) {
   const t = totalTime(r);
   return `<article class="card" data-id="${esc(r.id)}" role="link" tabindex="0" aria-label="${esc(r.title)}">
     ${photo(r, "photo")}
-    <span class="tag glass-photo">${esc(platformName(r.source_platform))}</span>
-    ${r.favorite ? `<span class="fav glass-photo" aria-label="Favorito">${I.heart}</span>` : ""}
+    <div class="top"><span class="tag glass-photo">${esc(platformName(r.source_platform))}</span>
+    <span class="badges">${r.stats?.cooks ? `<span class="badge-cook glass-photo" aria-label="Feita ${r.stats.cooks} vezes">${I.check}${r.stats.cooks}</span>` : ""}${r.favorite ? `<span class="fav glass-photo" aria-label="Favorito">${I.heart}</span>` : ""}${!r.is_owner && r.owner ? `<span class="by" title="Trazida por ${esc(r.owner.name)}">${avatar(r.owner, "sm")}</span>` : ""}</span></div>
     <div class="caption glass-photo"><h3>${esc(r.title)}</h3>
-      <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.facts && r.facts.price_coverage >= 0.6 && costText(r.facts.cost) ? `<span>${costText(r.facts.cost)}</span>` : ""}${r.stats?.cooks ? `<span>${I.check}${r.stats.cooks}×</span>` : r.servings ? `<span>${r.servings} ${r.servings === 1 ? "dose" : "doses"}</span>` : ""}
-        ${!r.is_owner && r.owner ? `<span class="by">${avatar(r.owner, "xs")}</span>` : ""}</div>
+      <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.facts && r.facts.price_coverage >= 0.6 && costText(r.facts.cost) ? `<span>${costText(r.facts.cost)}</span>` : r.servings ? `<span>${r.servings} ${r.servings === 1 ? "dose" : "doses"}</span>` : ""}</div>
     </div></article>`;
 }
 
@@ -310,7 +315,9 @@ async function renderDetail(id) {
   try { r = await api(`/recipes/${id}`); } catch (e) { view.innerHTML = `<div class="empty glass"><p>${esc(e.message)}</p></div>`; return; }
   state.recipes = state.recipes.map(x => x.id === id ? r : x);
   const checked = new Set(store.get(`checked:${id}`, []));
-  let current = r;
+  let current = r, scale = 1;
+  // US recipes (cups, oz, lb) default to metric; the choice is remembered
+  let units = store.get("units", null) || (r.metric?.some(Boolean) && r.ingredients.some(i => /\b(cups?|oz|lbs?|pounds?|sticks?|ounces?)\b/i.test(i.unit || "")) ? "metric" : "original");
   let social = null;
 
   const bar = () => {
@@ -440,8 +447,9 @@ async function renderDetail(id) {
         <div class="stat"><b>${n?.calories ?? "–"}</b><span>kcal</span></div>
       </div>
       <div class="detail-actions">
-        <button class="btn-primary" id="cookBtn">${I.play}Começar a cozinhar</button>
+        <button class="btn-primary" id="cookBtn">${I.play}Cozinhar</button>
         <button class="icon-glass glass" id="cookedTop" aria-label="Já fiz isto">${I.camera}</button>
+        <button class="icon-glass glass" id="planBtn" aria-label="Pôr no plano semanal">${I.calendar}</button>
         <button class="icon-glass glass" id="groBtn" aria-label="Adicionar a uma lista de compras">${I.cart}</button>
       </div>
       ${sharedLine()}
@@ -452,14 +460,23 @@ async function renderDetail(id) {
           ${current.servings ? `<div class="stepper"><button data-s="-1" aria-label="Menos doses">${I.minus}</button>
             <output aria-live="polite">${current.servings} ${current.servings === 1 ? "dose" : "doses"}</output><button data-s="1" aria-label="Mais doses">${I.plus}</button></div>` : ""}
         </div>
+        ${scale !== 1 && r.servings ? `<p class="scale-note">${I.sparkle}<span>Escalado de ${r.servings} para ${current.servings} ${current.servings === 1 ? "dose" : "doses"}. Os tempos de cozedura mudam menos do que as quantidades: confirma mais cedo.</span></p>`
+          : scale !== 1 ? `<p class="scale-note">${I.sparkle}<span>Quantidades ×${String(scale).replace(".", ",")}. Os tempos de cozedura mudam menos do que as quantidades.</span></p>` : ""}
+        <div class="ing-tools">
+          <div class="mini-seg" role="group" aria-label="Escala">${[[0.5, "½×"], [1, "1×"], [2, "2×"], [3, "3×"]].map(([f, l]) =>
+            `<button data-f="${f}" class="${Math.abs((scale || 1) - f) < 0.01 ? "on" : ""}" aria-pressed="${Math.abs((scale || 1) - f) < 0.01}">${l}</button>`).join("")}</div>
+          ${current.metric?.some(Boolean) ? `<div class="mini-seg" role="group" aria-label="Medidas">
+            <button data-units="original" class="${units === "original" ? "on" : ""}">Originais</button>
+            <button data-units="metric" class="${units === "metric" ? "on" : ""}">g / ml</button></div>` : ""}
+        </div>
         ${groupsIng.map(g => `${g.name ? `<div class="group">${esc(g.name)}</div>` : ""}
           ${g.items.map(([i, ing]) => `<label class="ing ${checked.has(i) ? "done" : ""}">
             <input type="checkbox" data-i="${i}" ${checked.has(i) ? "checked" : ""}>
-            <span class="txt">${ingText(ing)}</span></label>`).join("")}`).join("")}
+            <span class="txt">${ingText(units === "metric" && current.metric?.[i] ? { ...ing, ...current.metric[i] } : ing)}</span></label>`).join("")}`).join("")}
       </section>
       <section class="section glass">
         <div class="section-head"><h3>Passos</h3><span class="meta">${current.steps.length} ${current.steps.length === 1 ? "passo" : "passos"}${totalTime(r) ? ` · ${fmtMin(totalTime(r))}` : ""}</span></div>
-        ${current.steps.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><p>${esc(s.text)}</p></div>`).join("")}
+        ${current.steps.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><p>${timers.linkify(s.text, r.title)}</p></div>`).join("")}
       </section>
       <div id="factsArea"></div>
       <div id="socialArea">${socialHTML()}</div>
@@ -477,14 +494,24 @@ async function renderDetail(id) {
       const i = +cb.dataset.i; cb.checked ? checked.add(i) : checked.delete(i);
       cb.closest(".ing").classList.toggle("done", cb.checked); store.set(`checked:${id}`, [...checked]);
     });
-    view.querySelectorAll("[data-s]").forEach(b => b.onclick = async () => {
+    const rescale = async (q, f) => {
+      try {
+        current = f === 1 ? r : await api(`/recipes/${id}/scaled?${q}`);
+        scale = f === 1 ? 1 : current.scale; const y = scrollY; draw(); scrollTo(0, y);
+      } catch (e) { toast(e.message); }
+    };
+    view.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
       const s = Math.max(1, current.servings + +b.dataset.s);
-      try { current = s === r.servings ? r : await api(`/recipes/${id}/scaled?servings=${s}`); const y = scrollY; draw(); scrollTo(0, y); }
-      catch (e) { toast(e.message); }
+      rescale(`servings=${s}`, s === r.servings ? 1 : s / r.servings);
+    });
+    view.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { const f = +b.dataset.f; rescale(`factor=${f}`, f); });
+    view.querySelectorAll("[data-units]").forEach(b => b.onclick = () => {
+      units = b.dataset.units; store.set("units", units); const y = scrollY; draw(); scrollTo(0, y);
     });
     $("#cookBtn").onclick = () => cookMode(current, () => openCookSheet(r, loadSocial));
     $("#cookedTop").onclick = () => openCookSheet(r, loadSocial);
     $("#groBtn").onclick = () => openAddToListSheet(r, current.servings);
+    $("#planBtn").onclick = () => openPlanSheet({ recipe: r, servings: current.servings });
     $("#shareBtn") && ($("#shareBtn").onclick = () => openShareSheet(r, updated => { r = { ...r, ...updated }; const y = scrollY; draw(); scrollTo(0, y); }));
     $("#colInput").onchange = async e => {
       const cols = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
@@ -507,6 +534,14 @@ async function renderDetail(id) {
 }
 let detailRefresh = null;
 
+/** Ingredients a step mentions ("Bate as gemas com o pecorino" -> gemas de ovo, queijo pecorino). */
+function stepIngredients(text, ingredients) {
+  const n = s => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const t = ` ${n(text).replace(/[^a-z0-9 ]+/g, " ")} `;
+  const stop = new Set(["de", "do", "da", "dos", "das", "com", "sem", "em", "para", "fresco", "fresca", "picado", "picada", "moida", "ralado", "q", "b"]);
+  return ingredients.filter(ing => n(ing.name).split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !stop.has(w))
+    .some(w => t.includes(` ${w} `) || t.includes(` ${w.replace(/s$/, "")} `) || t.includes(` ${w}s `)));
+}
 const withDe = (unit, name) => unit ? `de ${name}` : name;
 const ingLine = i => [i.quantity, i.unit, withDe(i.unit, i.name)].filter(Boolean).join(" ");
 const ingText = i => `${i.quantity || i.unit ? `<span class="qty">${esc([i.quantity, i.unit].filter(Boolean).join(" "))}</span> ` : ""}${esc(withDe(i.unit, i.name))}${i.note ? `<span class="note">, ${esc(i.note)}</span>` : ""}`;
@@ -530,12 +565,19 @@ async function cookMode(r, onFinish) {
   el.className = "cook"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", `Modo cozinha: ${r.title}`);
   const bg = r.thumbnail_url ? `<div class="cook-bg" style="background-image:url('${esc(r.thumbnail_url)}')"></div>` : placeholder(r.id, "cook-bg");
   el.innerHTML = `${bg}
-    <div class="cook-head"><span class="title" id="cm-count"></span><button class="close glass-photo" id="cm-done" aria-label="Fechar modo cozinha">${I.x}</button></div>
+    <div class="cook-head">
+      <div class="cook-title"><span class="title" id="cm-count"></span>${r.servings ? `<span class="cook-serv">${I.users}${r.servings}</span>` : ""}</div>
+      ${handsFree.canListen || handsFree.canSpeak ? `<button class="hf-btn glass-photo" id="cm-hf" aria-pressed="false">${I.mic}<span>Mãos livres</span></button>` : ""}
+      <button class="close glass-photo" id="cm-done" aria-label="Fechar modo cozinha">${I.x}</button></div>
     <div class="progress" aria-hidden="true"><i></i></div>
-    <div class="pager" aria-live="polite"><div class="track">${steps.map((s, i) =>
-      `<div class="page" aria-hidden="${i !== 0}"><div class="step-card glass-photo"><p class="eyebrow">Passo ${i + 1} de ${steps.length}</p><p>${esc(s.text)}</p></div></div>`).join("")}</div></div>
+    <div class="hf-hint" id="cm-heard" aria-live="polite" hidden></div>
+    <div class="pager" aria-live="polite"><div class="track">${steps.map((s, i) => {
+      const used = stepIngredients(s.text, r.ingredients);
+      return `<div class="page" aria-hidden="${i !== 0}"><div class="step-card glass-photo"><p class="eyebrow">Passo ${i + 1} de ${steps.length}</p><p>${timers.linkify(s.text, r.title)}</p>
+        ${used.length ? `<div class="need"><span class="eyebrow">O que precisas</span><div class="need-chips">${used.map(ing => `<span>${esc(ingLine(ing))}</span>`).join("")}</div></div>` : ""}
+      </div></div>`; }).join("")}</div></div>
     <div class="nav"><button class="back-btn glass-photo" id="cm-prev">Anterior</button><button class="next-btn" id="cm-next"></button></div>`;
-  document.body.append(el); document.body.classList.add("sheet-open");
+  document.body.append(el); document.body.classList.add("sheet-open", "cooking");
   $("#app").inert = true;
   const track = $(".track", el), pager = $(".pager", el);
   const W = () => pager.clientWidth, H = () => innerHeight;
@@ -563,7 +605,8 @@ async function cookMode(r, onFinish) {
   };
   const close = (velocity = 0) => {
     lock?.release?.().catch(() => {});
-    ySpring.onRest = y => { if (y >= H()) { el.remove(); document.body.classList.remove("sheet-open"); $("#app").inert = false; removeEventListener("keydown", onKey); removeEventListener("resize", onResize); } };
+    if (hf) { hf.stop(); hf = null; }
+    ySpring.onRest = y => { if (y >= H()) { el.remove(); document.body.classList.remove("sheet-open", "cooking"); $("#app").inert = false; removeEventListener("keydown", onKey); removeEventListener("resize", onResize); } };
     ySpring.to(H(), { velocity, damping: 1, response: 0.36 });
   };
 
@@ -597,6 +640,38 @@ async function cookMode(r, onFinish) {
     },
   });
 
+  // ---- hands-free: voice commands + steps read aloud
+  let hf = null;
+  const stepSpeech = i => `Passo ${i + 1}. ${steps[i].text}`;
+  const heard = $("#cm-heard", el);
+  const setHint = (txt, on = true) => { heard.hidden = !txt; heard.innerHTML = txt; heard.classList.toggle("listening", on); };
+  const toggleHF = () => {
+    const btn = $("#cm-hf", el);
+    if (hf) { hf.stop(); hf = null; btn.setAttribute("aria-pressed", "false"); btn.classList.remove("on"); setHint(""); return; }
+    btn.setAttribute("aria-pressed", "true"); btn.classList.add("on");
+    hf = handsFree.session({
+      onCommand: c => {
+        haptic(6);
+        if (c.type === "next") { if (page < steps.length - 1) { goTo(page + 1); hf?.say(stepSpeech(page)); } else hf?.say("Este é o último passo. Bom apetite!"); }
+        else if (c.type === "prev") { goTo(page - 1); hf?.say(stepSpeech(page)); }
+        else if (c.type === "repeat") hf?.say(stepSpeech(page));
+        else if (c.type === "ingredients") {
+          const used = stepIngredients(steps[page].text, r.ingredients);
+          hf?.say(used.length ? `Neste passo precisas de: ${used.map(ingLine).join(", ")}.` : `Ingredientes: ${r.ingredients.map(ingLine).join(", ")}.`);
+        }
+        else if (c.type === "timer") { timers.start(c.secs, r.title); hf?.say(`Temporizador de ${c.secs >= 60 ? `${Math.round(c.secs / 60)} minutos` : `${c.secs} segundos`} iniciado.`); }
+        else if (c.type === "stop") toggleHF();
+        else if (c.type === "close") close();
+      },
+      onHeard: t => setHint(`${I.mic}<span>Ouvi: “${esc(t)}”</span>`),
+      onState: on => { if (hf) setHint(on ? `${I.mic}<span>A ouvir… diz “seguinte”, “repete” ou “temporizador de 5 minutos”</span>` : `${I.mic}<span>A falar…</span>`, on); },
+      onDenied: () => { toast("Sem acesso ao microfone. Os passos continuam a ser lidos em voz alta."); },
+    });
+    if (!handsFree.canListen) setHint(`${I.mic}<span>Este browser não reconhece voz: os passos são lidos em voz alta.</span>`, false);
+    hf.say(stepSpeech(page));
+  };
+  $("#cm-hf", el) && ($("#cm-hf", el).onclick = toggleHF);
+
   const onKey = e => {
     if (e.key === "ArrowRight") goTo(page + 1);
     else if (e.key === "ArrowLeft") goTo(page - 1);
@@ -604,9 +679,9 @@ async function cookMode(r, onFinish) {
   };
   addEventListener("keydown", onKey);
   $("#cm-done", el).onclick = () => close();
-  $("#cm-prev", el).onclick = () => goTo(page - 1);
+  $("#cm-prev", el).onclick = () => { goTo(page - 1); hf?.say(stepSpeech(page)); };
   $("#cm-next", el).onclick = () => {
-    if (page < steps.length - 1) return goTo(page + 1);
+    if (page < steps.length - 1) { goTo(page + 1); hf?.say(stepSpeech(page)); return; }
     close();
     if (onFinish) toast("Bom apetite! Regista como correu.", { action: "Já fiz isto", onAction: onFinish });
   };
@@ -747,6 +822,17 @@ addEventListener("scroll", () => {
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible" && state.me) { await Promise.all([loadRecipes(), loadMe()]).catch(() => {}); if (currentRoute() === "/") renderResults(); }
 });
+
+// ---------------------------------------------------------------- themes
+const THEMES = [["quente", "Cozinha quente", "#e2531d"], ["salvia", "Sálvia", "#4e7d5b"], ["rosa", "Rosa", "#c2496b"],
+                ["mel", "Mel", "#c98a12"], ["azul", "Azul", "#2f6fb3"], ["meianoite", "Meia-noite", "#1b1f2a"]];
+function applyTheme(t) {
+  t = THEMES.some(x => x[0] === t) ? t : "quente";
+  if (t === "quente") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  const dark = t === "meianoite" || matchMedia("(prefers-color-scheme: dark)").matches;
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || (dark ? "#120d0a" : "#f7efe6")));
+}
+applyTheme(store.get("theme", "quente"));
 
 // ---------------------------------------------------------------- boot (after social.js has loaded)
 async function boot() {

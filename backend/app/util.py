@@ -28,10 +28,25 @@ def fmt_qty(val: Fraction) -> str:
     return f"{float(val):.2f}".rstrip("0").rstrip(".").replace(".", ",")
 
 
-def scale_quantity(q: Optional[str], factor: Fraction) -> Optional[str]:
-    """Scale '1 1/2', '3/4', '200', '2.5'. Leaves ranges/words ('a pinch') untouched."""
+METRIC_UNITS = {"g", "gr", "grama", "gramas", "kg", "ml", "l", "lt", "litro", "litros", "cl", "dl"}
+
+
+def scale_quantity(q: Optional[str], factor: Fraction, unit: Optional[str] = None) -> Optional[str]:
+    """Scale '1 1/2', '3/4', '200', '2.5'. Leaves ranges/words ('a pinch') untouched.
+    Grams/ml round to readable values (333,3 g -> 335 g); counts keep kitchen fractions (1 1/2)."""
     val = parse_qty(q)
-    return q if val is None else fmt_qty(val * factor)
+    if val is None:
+        return q
+    out = val * factor
+    if (unit or "").strip().lower().rstrip(".") in METRIC_UNITS and out.denominator != 1:
+        v = float(out)
+        v = round(v / 5) * 5 if v >= 100 else round(v) if v >= 10 else round(v, 1)
+        return (f"{v:.1f}".rstrip("0").rstrip(".")).replace(".", ",")
+    if out.denominator not in (1, 2, 3, 4, 8) and out > 0:
+        # 7/3 eggs -> "2 1/3"; awkward fractions snap to the nearest quarter
+        quarters = round(float(out) * 4) / 4 or 0.25
+        out = Fraction(quarters).limit_denominator(4)
+    return fmt_qty(out)
 
 
 def add_quantities(a: Optional[str], b: Optional[str]) -> Optional[str]:

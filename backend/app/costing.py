@@ -68,7 +68,15 @@ UNITS = [  # (regex on normalised unit text, canonical)
     (r"^(lata|latas|can|cans|frasco|frascos)$", "can"), (r"^(pacote|pacotes|embalagem|embalagens|saqueta|saquetas|cubo|cubos)$", "pack"),
     (r"^(molho|molhos|ramo|ramos|bunch|punhado|punhados|handful)$", "bunch"), (r"^(raminho|raminhos|folha|folhas|sprig|leaves|pe|pes)$", "leaf"),
     (r"^(un|und|unid|unidade|unidades|unit|units|peca|pecas|bola|bolas|lombo|lombos|posta|postas|file|filete|filetes)$", "unit"),
+    # US / imperial units (TikTok and YouTube recipes from the US)
+    (r"^(oz|onca|oncas|ounce|ounces)$", "oz"), (r"^(lb|lbs|pound|pounds|libra|libras)$", "lb"),
+    (r"^(fl oz|floz|fluid ounce|fluid ounces|onca liquida|oncas liquidas)$", "floz"),
+    (r"^(pint|pints|pt)$", "pint"), (r"^(quart|quarts|qt)$", "quart"), (r"^(stick|sticks|barra|barras)$", "stick"),
 ]
+OZ_G, LB_G, FLOZ_ML, PINT_ML, QUART_ML, STICK_BUTTER_G = 28.35, 453.6, 29.57, 473.2, 946.4, 113.0
+# Shown in ml when converting to metric (everything else in grams)
+LIQUIDS = {"leite", "natas", "azeite", "óleo", "óleo de sésamo", "vinagre", "vinho branco", "vinho tinto", "caldo de legumes",
+           "molho de soja", "água", "leite de coco", "molho teriyaki", "baunilha"}
 CAN_G = {"tomate pelado": 400, "grão-de-bico": 260, "feijão": 260, "milho doce": 285, "atum em lata": 80, "leite de coco": 400,
          "concentrado de tomate": 70, "sardinhas": 85, "azeitonas": 150}
 PACK_G = {"caldo de legumes": 10, "fermento de padeiro": 11, "fermento em pó": 16, "gelatina": 2, "natas": 200, "bacon": 150,
@@ -151,6 +159,14 @@ def grams_for(item: dict, qty: Optional[float], unit: Optional[str]) -> tuple[Op
     if u in ("l", "dl", "cl", "ml"):
         ml = qty * {"l": 1000, "dl": 100, "cl": 10, "ml": 1}[u]
         return ml * dens, "high"
+    if u == "oz":
+        return qty * OZ_G, "high"
+    if u == "lb":
+        return qty * LB_G, "high"
+    if u in ("floz", "pint", "quart"):
+        return qty * {"floz": FLOZ_ML, "pint": PINT_ML, "quart": QUART_ML}[u] * dens, "medium"
+    if u == "stick":
+        return qty * (STICK_BUTTER_G if key == "manteiga" else 100), "medium"
     if u == "cup":
         return qty * (por.get("cup", 236.6 * dens) * CUP_ML / 236.6), "medium"
     if u == "tbsp":
@@ -278,3 +294,72 @@ def search(q: str, limit: int = 12) -> list[dict]:
 
 def median_recent(values: list[float]) -> Optional[float]:
     return statistics.median(values) if values else None
+
+
+# ----------------------------------------------------------------------------- metric conversion
+CONVERTIBLE = {"cup", "tbsp", "dsp", "tsp", "oz", "lb", "floz", "pint", "quart", "stick"}
+VOLUME_ML = {"cup": CUP_ML, "tbsp": TBSP_ML, "dsp": 10.0, "tsp": TSP_ML, "floz": FLOZ_ML, "pint": PINT_ML, "quart": QUART_ML}
+
+
+def nice(v: float) -> str:
+    """Readable metric numbers: 2,5 · 45 · 335 · 1,25 (Portuguese decimal comma)."""
+    if v >= 100:
+        v = round(v / 5) * 5
+    elif v >= 10:
+        v = round(v)
+    else:
+        v = round(v, 1)
+    s = f"{v:.2f}".rstrip("0").rstrip(".")
+    return s.replace(".", ",")
+
+
+def fmt_metric(amount_: float, unit: str) -> tuple[str, str]:
+    if unit == "g" and amount_ >= 1000:
+        return nice(amount_ / 1000), "kg"
+    if unit == "ml" and amount_ >= 1000:
+        return nice(amount_ / 1000), "l"
+    return nice(amount_), unit
+
+
+def to_metric(ing: dict, overrides: Optional[dict] = None) -> Optional[dict]:
+    """Metric version of a line in cups/spoons/oz/lb, or None when it's already metric or a count.
+    Solids use the ingredient's measured density (1 chávena de farinha -> 127 g); liquids go to ml."""
+    u = canon_unit(ing.get("unit"))
+    qty = amount(ing.get("quantity"))
+    if u not in CONVERTIBLE or qty is None:
+        return None
+    key, _ = match_key(ing.get("name") or "", overrides)
+    item = reference()["by_key"].get(key) if key else None
+    liquid = key in LIQUIDS if key else u in ("floz", "pint", "quart")
+    if liquid or (not item and u in VOLUME_ML):
+        if u in VOLUME_ML:
+            ml = qty * VOLUME_ML[u]
+        else:  # weight unit for a liquid: rare, keep grams
+            return dict(zip(("quantity", "unit"), fmt_metric(qty * (OZ_G if u == "oz" else LB_G), "g")))
+        q, un = fmt_metric(ml, "ml")
+        return {"quantity": q, "unit": un}
+    if item:
+        grams, _ = grams_for(item, qty, ing.get("unit"))
+        if grams:
+            q, un = fmt_metric(grams, "g")
+            return {"quantity": q, "unit": un}
+    if u in ("oz", "lb", "stick"):
+        q, un = fmt_metric(qty * {"oz": OZ_G, "lb": LB_G, "stick": STICK_BUTTER_G}[u], "g")
+        return {"quantity": q, "unit": un}
+    return None
+
+
+def aisle_of(name: str, overrides: Optional[dict] = None) -> str:
+    key, _ = match_key(name, overrides)
+    item = reference()["by_key"].get(key) if key else None
+    return (item or {}).get("aisle") or "Outros"
+
+
+AISLE_ORDER = ["Frutas e legumes", "Talho", "Peixaria", "Charcutaria e queijos", "Laticínios e ovos", "Padaria",
+               "Mercearia", "Temperos e especiarias", "Congelados", "Outros"]
+
+
+def is_free(name: str, overrides: Optional[dict] = None) -> bool:
+    key, how = match_key(name, overrides)
+    item = reference()["by_key"].get(key) if key else None
+    return how == "user-none" or bool(item and item.get("free"))
