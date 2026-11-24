@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>RecipeBox</title>
-  <meta name="theme-color" content="#c2410c">
+  <meta name="theme-color" content="#fbf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161412" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,39 +16,49 @@
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1 id="title">Recipes</h1>
-    <button id="addBtn" class="icon-btn" aria-label="Import recipe">＋</button>
-  </header>
+  <div id="app">
+    <header class="topbar material">
+      <div id="title" class="large-title">Recipes</div>
+      <button id="addBtn" class="icon-btn" aria-label="Import recipe" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </header>
 
-  <main id="view"></main>
+    <main id="view"></main>
 
-  <nav class="tabbar">
-    <button data-tab="library" class="active"><span>📖</span>Recipes</button>
-    <button data-tab="groceries"><span>🛒</span>Groceries</button>
-    <button data-tab="settings"><span>⚙️</span>Settings</button>
-  </nav>
+    <nav class="tabbar material" aria-label="Sections">
+      <button data-tab="library" class="active"><span aria-hidden="true">📖</span>Recipes</button>
+      <button data-tab="groceries"><span aria-hidden="true">🛒</span>Groceries</button>
+      <button data-tab="settings"><span aria-hidden="true">⚙️</span>Settings</button>
+    </nav>
+  </div>
 
-  <dialog id="importDialog">
-    <form method="dialog" id="importForm">
-      <h2>Import recipe</h2>
-      <label>Link (TikTok, Instagram, YouTube, Pinterest, blog)
+  <!-- Bottom sheet: enters from the bottom, leaves to the bottom, follows the finger. -->
+  <div id="scrim" class="scrim" hidden></div>
+  <section id="importSheet" class="sheet material-thick" role="dialog" aria-modal="true" aria-labelledby="importTitle" hidden>
+    <div class="grabber" aria-hidden="true"></div>
+    <form id="importForm" novalidate>
+      <div class="sheet-head">
+        <button type="button" class="plain" data-close>Cancel</button>
+        <h2 id="importTitle">Import Recipe</h2>
+        <button type="submit" class="plain strong" id="importGo" disabled>Import</button>
+      </div>
+      <label class="field">Link
         <div class="row">
-          <input id="importUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://…">
+          <input id="importUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
+                 placeholder="TikTok, Instagram, YouTube, Pinterest or blog URL" aria-describedby="urlHint">
           <button type="button" id="pasteBtn" class="secondary">Paste</button>
         </div>
+        <span id="urlHint" class="hint" aria-live="polite"></span>
       </label>
-      <label>…or paste a caption / recipe text
+      <label class="field">Or paste a caption / recipe text
         <textarea id="importText" rows="5"></textarea>
       </label>
-      <div class="row end">
-        <button value="cancel" class="secondary" formnovalidate>Cancel</button>
-        <button value="ok" id="importGo">Import</button>
-      </div>
     </form>
-  </dialog>
+  </section>
 
   <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/motion.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>
