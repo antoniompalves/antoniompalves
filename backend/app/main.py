@@ -21,6 +21,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import social
 from .auth import make_auth
+from .notify import Notifier
 from .models import ImportJob, ImportRequest
 from .pipeline import now, run_job
 from .realtime import broker
@@ -28,7 +29,7 @@ from .sources import extract_urls
 from .store import Store
 from .util import scale_quantity  # noqa: F401  (re-exported for tests/back-compat)
 
-def create_app(db_path: Optional[str] = None, runner=run_job) -> FastAPI:
+def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=Notifier, weekly: bool = True) -> FastAPI:
     app = FastAPI(title="RecipeBox")
     store = Store(db_path)
     current_user, signup, login, logout = make_auth(store)
@@ -61,8 +62,12 @@ def create_app(db_path: Optional[str] = None, runner=run_job) -> FastAPI:
     app.post("/auth/login")(login)
     app.post("/auth/logout", status_code=204)(logout)
 
-    router = social.make_router(store, current_user)
+    notifier = notifier_factory(store)
+    router = social.make_router(store, current_user, notifier)
     app.include_router(router)
+    app.include_router(notifier.router(current_user))
+    if weekly:
+        notifier.start_weekly_scheduler(router.compute_summary)
 
 
     def _start_import(req: ImportRequest, bg: BackgroundTasks, user: dict) -> ImportJob:
@@ -75,8 +80,12 @@ def create_app(db_path: Optional[str] = None, runner=run_job) -> FastAPI:
         def on_saved(recipe):
             router.share_on_import(user["id"], recipe, req.group_id)
             broker.publish([user["id"]], {"kind": "import", "id": job.id})
+            notifier.on_import_done(user["id"], recipe.id, recipe.title)
 
-        bg.add_task(runner, store, job, req.text, on_saved)
+        def on_failed(error):
+            notifier.on_import_failed(user["id"], error)
+
+        bg.add_task(runner, store, job, req.text, on_saved, on_failed)
         return job
 
 
@@ -103,6 +112,7 @@ def create_app(db_path: Optional[str] = None, runner=run_job) -> FastAPI:
         return job
 
     app.state.store = store
+    app.state.notifier = notifier
     return app
 
 

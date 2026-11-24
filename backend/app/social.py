@@ -100,7 +100,7 @@ class RecipePatchIn(BaseModel):
 
 
 # --------------------------------------------------------------------------- router
-def make_router(store: Store, current_user) -> APIRouter:
+def make_router(store: Store, current_user, notifier=None) -> APIRouter:
     r = APIRouter()
     U = Depends(current_user)
 
@@ -157,6 +157,8 @@ def make_router(store: Store, current_user) -> APIRouter:
             store.x("INSERT INTO activity(id, group_id, user_id, type, recipe_id, data, created_at) VALUES (?,?,?,?,?,?,?)",
                     (uuid.uuid4().hex, gid, uid, type_, rid, json.dumps(data or {}, ensure_ascii=False), stamp))
             broker.publish(members(gid), {"kind": "activity", "group_id": gid})
+            if notifier:
+                notifier.on_activity(gid, uid, type_, rid, data or {})
 
     # ---------- recipe views (personal state + social stats merged in)
     def views(uid: str, recs: list[Recipe]) -> list[dict]:
@@ -472,6 +474,9 @@ def make_router(store: Store, current_user) -> APIRouter:
     @r.get("/groups/{gid}/summary")
     def summary(gid: str, days: int = 7, user=U) -> dict:
         require_member(user["id"], gid)
+        return compute_summary(gid, days)
+
+    def compute_summary(gid: str, days: int = 7) -> dict:
         since = ago(days)
         acts = store.q("SELECT * FROM activity WHERE group_id=? AND created_at > ?", (gid, since))
         by_type: dict[str, int] = {}
@@ -775,4 +780,5 @@ def make_router(store: Store, current_user) -> APIRouter:
                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
     r.share_on_import = share_on_import  # used by the import pipeline
+    r.compute_summary = compute_summary  # used by the weekly push digest
     return r

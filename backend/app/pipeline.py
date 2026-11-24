@@ -68,7 +68,8 @@ def import_recipe(
 
 
 def run_job(store: Store, job: ImportJob, text: Optional[str] = None,
-            on_saved: Callable[[Recipe], None] = lambda r: None, **kw) -> None:
+            on_saved: Callable[[Recipe], None] = lambda r: None,
+            on_failed: Callable[[str], None] = lambda e: None, **kw) -> None:
     def status(s: str) -> None:
         job.status = s
         store.save_job(job)
@@ -81,4 +82,5 @@ def run_job(store: Store, job: ImportJob, text: Optional[str] = None,
     except Exception as e:
         log.exception("import failed")
         job.error = str(e)
+        on_failed(job.error)
         status("failed")

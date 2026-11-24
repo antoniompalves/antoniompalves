@@ -24,15 +24,15 @@ def fake_extract(mat):
     )
 
 
-def fake_runner(store, job, text, on_saved):
+def fake_runner(store, job, text, on_saved, on_failed=lambda e: None):
     gather = lambda url: sources.SourceMaterial(url=url, platform="tiktok", caption=url.rsplit("/", 1)[-1])
-    run_job(store, job, text, on_saved, gather=gather, extract=fake_extract)
+    run_job(store, job, text, on_saved, on_failed, gather=gather, extract=fake_extract)
 
 
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     monkeypatch.setattr("app.social.UPLOAD_DIR", str(tmp_path / "uploads"))
-    app = create_app(str(tmp_path / "t.db"), runner=fake_runner)
+    app = create_app(str(tmp_path / "t.db"), runner=fake_runner, weekly=False)
     c = TestClient(app)
 
     class Env:

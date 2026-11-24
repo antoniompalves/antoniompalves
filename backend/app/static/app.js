@@ -123,6 +123,7 @@ const I = {
   lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>',
   logout: '<svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg>',
   vote: '<svg viewBox="0 0 24 24"><path d="M5 12.5 9.5 17 19 7.5"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>',
+  bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg>',
 };
 /** Initial-letter avatar in the person's colour. */
 const avatar = (u, cls = "") => u ? `<span class="av ${cls}" style="background:${esc(u.color || "#e2531d")}" title="${esc(u.name)}">${esc((u.name || "?").trim().charAt(0).toUpperCase())}</span>` : "";
@@ -708,6 +709,8 @@ function updateBadge() {
   const n = groups().reduce((a, g) => a + (g.unseen || 0), 0);
   const b = $('.tabbar [data-tab="group"] .badge');
   if (b) { b.textContent = n > 9 ? "9+" : n; b.hidden = !n; }
+  // Home Screen icon badge (iOS 16.4+ web apps, Chromium)
+  try { n ? navigator.setAppBadge?.(n) : navigator.clearAppBadge?.(); } catch {}
 }
 window.addEventListener("hashchange", route);
 // iOS Safari only applies :active (our press-down feedback) when a touchstart listener exists.
@@ -730,7 +733,7 @@ async function boot() {
   const sharedUrl = qs.get("url"), sharedText = qs.get("text");
   if (sharedUrl || sharedText) history.replaceState(null, "", "/" + location.hash);
   if (store.get("session", "")) {
-    try { await Promise.all([loadMe(), loadRecipes()]); connectStream(); }
+    try { await Promise.all([loadMe(), loadRecipes()]); connectStream(); syncPush(); }
     catch (e) { if (e.message !== "unauthorized") toast(e.message); }
   }
   route();

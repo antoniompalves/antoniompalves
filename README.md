@@ -70,6 +70,13 @@ imported them; others can favourite them, file them in their own collections, co
 | **Voltava a fazer?** | Yes/no rating per person; group ranking of favourites and most-cooked this month |
 | **Atividade + resumo semanal** | Group feed, unread badge on the Grupo tab, weekly summary (new recipes, cooks, top recipe, most active) |
 
+**Push notifications** (Web Push, VAPID; no third-party push service account needed): new group recipes and
+variations, someone cooked a recipe, new dinner poll and its result, new members, your import finished or failed,
+and a weekly summary on Sundays at 18:00 (Lisbon). Each person picks which kinds they want in Definições; nobody is
+notified about their own actions. On iPhone/iPad this needs iOS/iPadOS 16.4+ **and the app added to the Home Screen**
+(Safari → Partilhar → Adicionar ao ecrã principal). Set `VAPID_SUBJECT` to a contact (`mailto:you@example.com`);
+the VAPID keys are generated once and stored in the database. `WEEKLY_DIGEST=0` turns the Sunday summary off.
+
 Live updates use Server-Sent Events (`GET /stream`). Photos are stored in `UPLOAD_DIR` (default: `uploads/` next
 to the database) under unguessable names.
 

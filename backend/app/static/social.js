@@ -326,6 +326,7 @@ async function renderGroup(silent = false) {
       <button class="pill-btn" id="inviteBtn">${I.plus}Convidar</button>
     </div>
 
+    <div id="pushNudge"></div>
     <section class="section glass summary">
       <div class="section-head"><h3>Esta semana</h3><span class="meta">últimos 7 dias</span></div>
       <div class="sum-grid">
@@ -366,6 +367,7 @@ async function renderGroup(silent = false) {
   $("#newEvent").onclick = () => openEventSheet(g);
   view.querySelectorAll("[data-href]").forEach(x => x.onclick = () => location.hash = x.dataset.href);
   if (g.unseen) { api(`/groups/${g.id}/seen`, { method: "POST" }).then(loadMe).catch(() => {}); }
+  pushNudge();
 }
 
 const thumb = rec => rec?.thumbnail_url
@@ -641,6 +643,8 @@ function renderSettings() {
       <button class="btn-glass glass" id="logout">${I.logout}Sair</button>
     </section>
 
+    <section class="section glass" id="pushSec"><div class="section-head"><h3>Notificações</h3></div><p class="meta">A verificar…</p></section>
+
     <section class="section glass"><div class="section-head"><h3>Os meus grupos</h3></div>
       ${groups().map(g => `<div class="group-row">
         <span class="faces">${g.members.slice(0, 3).map(m => avatar(m, "xs")).join("")}</span>
@@ -671,7 +675,9 @@ function renderSettings() {
     </section>
     <section class="section glass"><div class="section-head"><h3>Android</h3></div>
       <p class="meta">Instala a partir do menu do Chrome (<b>Adicionar ao ecrã principal</b>). O RecipeBox passa a aparecer diretamente na folha de partilha.</p></section>`;
-  $("#logout").onclick = async () => { await api("/auth/logout", { method: "POST" }).catch(() => {}); signOut(); };
+  $("#logout").onclick = async () => { await disablePush().catch(() => {}); await api("/auth/logout", { method: "POST" }).catch(() => {}); signOut(); };
+  const drawPush = async () => { const sec = $("#pushSec"); if (!sec) return; sec.innerHTML = await pushSettingsHTML(); wirePushSettings(sec, drawPush); };
+  drawPush();
   $("#createGroup").onclick = openCreateGroupSheet;
   $("#joinGroup").onclick = openJoinSheet;
   $("#copyTok").onclick = () => navigator.clipboard.writeText(store.get("session", "")).then(() => toast("Token copiado"));
@@ -680,5 +686,113 @@ function renderSettings() {
     const g = groupById(b.dataset.leave);
     if (!confirm(`Sair de “${g.name}”? As tuas receitas deixam de estar visíveis para o grupo.`)) return;
     await api(`/groups/${g.id}/leave`, { method: "POST" }); await Promise.all([loadMe(), loadRecipes()]); renderSettings(); toast(`Saíste de ${g.name}`);
+  });
+}
+
+// ---------------------------------------------------------------- push notifications
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+
+/** 'needs-install' | 'unsupported' | 'denied' | 'on' | 'off' */
+async function pushState() {
+  if (isIOS && !isStandalone()) return "needs-install"; // iOS: only Home Screen web apps get push (16.4+)
+  if (!pushSupported()) return "unsupported";
+  if (Notification.permission === "denied") return "denied";
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = await reg?.pushManager.getSubscription();
+  return sub && Notification.permission === "granted" ? "on" : "off";
+}
+
+const b64ToBytes = s => Uint8Array.from(atob((s + "=".repeat((4 - s.length % 4) % 4)).replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+
+async function registerSubscription(sub) {
+  await api("/push/subscribe", { method: "POST", body: { ...sub, user_agent: navigator.userAgent.slice(0, 300) } });
+}
+
+/** Must run from a tap (iOS requires a user gesture for the permission prompt). */
+async function enablePush() {
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") { toast(perm === "denied" ? "Notificações bloqueadas no sistema" : "Notificações não ativadas"); return false; }
+  const reg = await navigator.serviceWorker.ready;
+  const cfg = await api("/push/config");
+  let sub = await reg.pushManager.getSubscription();
+  if (sub && store.get("vapidKey", "") !== cfg.public_key) { await sub.unsubscribe().catch(() => {}); sub = null; } // server keys changed
+  try {
+    sub = sub || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(cfg.public_key) });
+  } catch {
+    throw new Error("Este browser não conseguiu ativar as notificações. Experimenta abrir a app a partir do ecrã principal.");
+  }
+  store.set("vapidKey", cfg.public_key);
+  await registerSubscription(sub.toJSON());
+  haptic(12);
+  return true;
+}
+
+async function disablePush() {
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = await reg?.pushManager.getSubscription();
+  if (sub) { await api("/push/unsubscribe", { method: "POST", body: { endpoint: sub.endpoint } }).catch(() => {}); await sub.unsubscribe(); }
+}
+
+/** Keep the server in sync when the app opens (subscriptions can rotate or be pruned). */
+async function syncPush() {
+  if (!state.me || !pushSupported() || Notification.permission !== "granted") return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await registerSubscription(sub.toJSON());
+  } catch {}
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", e => {
+    if (e.data?.type === "navigate") { const u = new URL(e.data.url); location.hash = u.hash || "#/"; }
+    if (e.data?.type === "resubscribe" && state.me) registerSubscription(e.data.subscription).catch(() => {});
+  });
+}
+
+async function pushSettingsHTML() {
+  const st = await pushState();
+  const head = `<div class="section-head"><h3>Notificações</h3>${I.bell}</div>`;
+  if (st === "needs-install") return head + `<p class="meta">No iPhone, as notificações só funcionam com a app no ecrã principal: no Safari, toca em <b>Partilhar</b> → <b>Adicionar ao ecrã principal</b> e abre o RecipeBox a partir do ícone.</p>`;
+  if (st === "unsupported") return head + `<p class="meta">Este browser não suporta notificações. No iPhone precisas do iOS 16.4 ou mais recente.</p>`;
+  if (st === "denied") return head + `<p class="meta">Bloqueaste as notificações. Para as voltares a ativar: <b>Definições do telemóvel</b> → <b>Notificações</b> → <b>RecipeBox</b>.</p>`;
+  if (st === "off") return head + `<p class="meta">Fica a saber quando há um jantar para votar, quando alguém faz uma receita tua ou quando uma importação fica pronta.</p>
+    <button class="btn-primary wide" id="pushOn">${I.bell}Ativar notificações</button>`;
+  let cfg = { prefs: {}, kinds: [] };
+  try { cfg = await api("/push/config"); } catch {}
+  return head + `<div class="switches">${cfg.kinds.map(k => `
+      <label class="switch-row"><span>${esc(k.label)}</span>
+        <input type="checkbox" role="switch" data-pref="${esc(k.kind)}" ${cfg.prefs[k.kind] ? "checked" : ""}></label>`).join("")}</div>
+    <div class="row-actions" style="margin-top:.75rem"><button class="btn-glass glass" id="pushTest">${I.bell}Enviar teste</button>
+      <button class="btn-glass glass" id="pushOff">Desativar aqui</button></div>`;
+}
+
+function wirePushSettings(root, rerender) {
+  $("#pushOn", root) && ($("#pushOn", root).onclick = async () => {
+    try { if (await enablePush()) { toast("Notificações ativadas"); rerender(); } } catch (e) { toast(e.message || "Não foi possível ativar"); }
+  });
+  $("#pushOff", root) && ($("#pushOff", root).onclick = async () => { await disablePush(); toast("Notificações desativadas neste dispositivo"); rerender(); });
+  $("#pushTest", root) && ($("#pushTest", root).onclick = async () => {
+    try { await api("/push/test", { method: "POST" }); toast("Notificação de teste enviada"); } catch (e) { toast(e.message); }
+  });
+  root.querySelectorAll("[data-pref]").forEach(cb => cb.onchange = () =>
+    api("/push/prefs", { method: "PUT", body: { [cb.dataset.pref]: cb.checked } }).catch(e => toast(e.message)));
+}
+
+/** Gentle, dismissible nudge in the Grupo tab: ask at the moment it's clearly useful. */
+async function pushNudge() {
+  const slot = $("#pushNudge");
+  if (!slot || store.get("pushNudgeDismissed", false)) return;
+  const st = await pushState();
+  if (st !== "off" && st !== "needs-install") return;
+  slot.innerHTML = `<div class="nudge glass">${I.bell}
+    <div><b>Não percas o próximo jantar</b><span class="meta">${st === "off" ? "Recebe um aviso quando houver votação ou quando alguém fizer uma receita tua." : "Adiciona o RecipeBox ao ecrã principal para receberes notificações."}</span></div>
+    ${st === "off" ? `<button class="pill-btn" id="nudgeOn">Ativar</button>` : ""}
+    <button class="mini" id="nudgeX" aria-label="Fechar">${I.x}</button></div>`;
+  $("#nudgeX").onclick = () => { store.set("pushNudgeDismissed", true); slot.innerHTML = ""; };
+  $("#nudgeOn") && ($("#nudgeOn").onclick = async () => {
+    try { if (await enablePush()) { slot.innerHTML = ""; toast("Notificações ativadas"); } } catch (e) { toast(e.message || "Não foi possível ativar"); }
   });
 }
