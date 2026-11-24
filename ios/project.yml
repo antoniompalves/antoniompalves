@@ -1,0 +1,50 @@
+name: RecipeBox
+options:
+  bundleIdPrefix: com.example.recipebox
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    DEVELOPMENT_TEAM: ""   # set your team id
+targets:
+  RecipeBox:
+    type: application
+    platform: iOS
+    sources: [RecipeBox, Shared]
+    info:
+      path: RecipeBox/Info.plist
+      properties:
+        CFBundleDisplayName: RecipeBox
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        UILaunchScreen: {}
+        CFBundleURLTypes:
+          - CFBundleURLSchemes: [recipebox]
+    entitlements:
+      path: RecipeBox/RecipeBox.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.example.recipebox]
+    dependencies:
+      - target: ShareExtension
+  ShareExtension:
+    type: app-extension
+    platform: iOS
+    sources: [ShareExtension, Shared]
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Save to RecipeBox
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+    entitlements:
+      path: ShareExtension/ShareExtension.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.example.recipebox]
