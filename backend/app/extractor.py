@@ -45,7 +45,9 @@ def _language_rule(lang: str) -> str:
         f"- Write every text field (title, description, ingredient names and notes, groups, steps, tags, "
         f"inferred_fields, cuisine, meal_type) in {lang}, translating if the source is in another language. "
         f"Use natural, idiomatic culinary vocabulary for that locale (for pt-PT: 'colher de sopa', 'dente de alho', "
-        f"'natas', 'forno pré-aquecido'; never Brazilian forms). Keep the creator's amounts; keep units as given."
+        f"'natas', 'forno pré-aquecido'; never Brazilian forms). For pt-PT, write steps in the informal 'tu' imperative "
+        f"('Coze a massa', 'Junta o alho', 'Mexe bem'), never the formal 'você' form ('Coza', 'Junte'). "
+        f"Keep the creator's amounts; keep units as given."
     )
 
 
@@ -114,7 +116,7 @@ def extract_recipe(
     if response.stop_reason == "refusal":
         raise ExtractionError("O modelo recusou processar este conteúdo.")
     if response.stop_reason == "max_tokens":
-        raise ExtractionError("A receita ficou incompleta. Tente novamente.")
+        raise ExtractionError("A receita ficou incompleta. Tenta novamente.")
     draft = response.parsed_output
     if draft is None:
         raise ExtractionError("O modelo não devolveu uma receita estruturada.")

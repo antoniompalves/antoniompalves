@@ -25,10 +25,11 @@ def import_recipe(
     on_status: Callable[[str], None] = lambda s: None,
     gather=sources.gather,
     extract=extract_recipe,
+    owner_id: Optional[str] = None,
 ) -> Recipe:
     if url:
         url = url.strip()
-        existing = store.find_by_source(url)
+        existing = store.find_by_source(url, owner_id)
         if existing:
             return existing
         on_status("fetching")
@@ -62,17 +63,19 @@ def import_recipe(
         video_url=mat.video_url,
         created_at=now(),
     )
-    store.save_recipe(recipe)
+    store.save_recipe(recipe, owner_id)
     return recipe
 
 
-def run_job(store: Store, job: ImportJob, text: Optional[str] = None, **kw) -> None:
+def run_job(store: Store, job: ImportJob, text: Optional[str] = None,
+            on_saved: Callable[[Recipe], None] = lambda r: None, **kw) -> None:
     def status(s: str) -> None:
         job.status = s
         store.save_job(job)
 
     try:
-        recipe = import_recipe(store, url=job.url, text=text, on_status=status, **kw)
+        recipe = import_recipe(store, url=job.url, text=text, on_status=status, owner_id=job.owner_id, **kw)
+        on_saved(recipe)
         job.recipe_id = recipe.id
         status("done")
     except Exception as e:

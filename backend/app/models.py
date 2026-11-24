@@ -68,6 +68,7 @@ class Recipe(RecipeDraft):
 class ImportRequest(BaseModel):
     url: Optional[str] = None
     text: Optional[str] = Field(None, description="Pasted caption / recipe text instead of a URL")
+    group_id: Optional[str] = Field(None, description="Share the imported recipe with this group")
 
 
 class ImportJob(BaseModel):
@@ -77,6 +78,8 @@ class ImportJob(BaseModel):
     recipe_id: Optional[str] = None
     error: Optional[str] = None
     created_at: str
+    owner_id: Optional[str] = None
+    group_id: Optional[str] = None
 
 
 class RecipePatch(BaseModel):

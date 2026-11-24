@@ -34,7 +34,6 @@ There's no magic API. TikTok and Instagram don't offer a "get recipe" endpoint. 
 cd backend
 pip install -r requirements.txt          # optional: pip install faster-whisper (audio transcription)
 export ANTHROPIC_API_KEY=...             # required for extraction
-export API_TOKEN=some-secret             # optional bearer auth for the app
 export YTDLP_COOKIES_FILE=cookies.txt    # optional, Instagram often needs a logged-in cookie jar
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
@@ -50,10 +49,34 @@ Endpoints: `POST /imports` (`url` or pasted `text`), `GET /imports/{id}`, `GET /
 `GET|PATCH|DELETE /recipes/{id}`, `GET /recipes/{id}/scaled?servings=N`, `GET /grocery-list?ids=a,b`.
 
 Environment variables: `RECIPE_MODEL` (default `claude-opus-5-5`), `RECIPE_EFFORT` (default `medium`),
-`RECIPE_LANGUAGE` (default `European Portuguese (pt-PT)`; set to `source` to keep each post's own language),
+`RECIPE_LANGUAGE` (default `European Portuguese (pt-PT)`, informal *tu*; set to `source` to keep each post's own language),
+`SIGNUP_CODE` (optional code that allows sign-up without an invite), `UPLOAD_DIR` (where cook photos are stored),
 `EXTRACT_FRAMES` (default `1`), `MAX_VIDEO_SECONDS` (default `1200`), `WHISPER_MODEL` (default `small`).
 
 Tests: `python -m pytest -q` (these use a fake extractor, so they make no API calls).
+
+## Groups and accounts
+
+RecipeBox is built for groups of friends. Each person has an account; recipes are **private by default**
+and can be shared with one or more groups (at import time or later). Shared recipes stay owned by whoever
+imported them; others can favourite them, file them in their own collections, cook them and add variations.
+
+| Feature | What it does |
+|---|---|
+| **Já fiz isto** | Log that you cooked a recipe, with a photo and a note; shows on the recipe and in the group feed |
+| **Variações** | Your own version of a group recipe (e.g. gluten-free) side by side with the original, which stays intact |
+| **Jantares** | Dinner poll: pick 2–4 group recipes, everyone votes, the organiser closes it and a shopping list scaled to the guest count is created |
+| **Compras partilhadas** | Personal or group shopping lists, updated live on everyone's phone; tap *Eu trago* to claim an item |
+| **Voltava a fazer?** | Yes/no rating per person; group ranking of favourites and most-cooked this month |
+| **Atividade + resumo semanal** | Group feed, unread badge on the Grupo tab, weekly summary (new recipes, cooks, top recipe, most active) |
+
+Live updates use Server-Sent Events (`GET /stream`). Photos are stored in `UPLOAD_DIR` (default: `uploads/` next
+to the database) under unguessable names.
+
+**Sign-up rules.** The first account can be created freely on a fresh install (it also inherits recipes imported
+before accounts existed). After that, sign-up needs a **group invite link** (`/#/join/<code>`, shared from the Grupo
+tab) or the server's `SIGNUP_CODE` if you set one. Passwords are hashed with scrypt; sessions are bearer tokens.
+The iOS Shortcut uses your personal token (Definições → copy token).
 
 ## Web app (no App Store, no sideloading)
 
@@ -66,12 +89,12 @@ Any Docker host works (Render, Railway, Fly.io, a VPS with Caddy):
 ```bash
 cd backend
 docker build -t recipebox .
-docker run -p 8000:8000 -v recipebox-data:/data -e ANTHROPIC_API_KEY=... -e API_TOKEN=pick-a-secret recipebox
+docker run -p 8000:8000 -v recipebox-data:/data -e ANTHROPIC_API_KEY=... recipebox
 ```
-Always set `API_TOKEN` on a public server, or anyone can spend your Anthropic credits.
+Sign-up is invite-only after the first account, so strangers can't spend your Anthropic credits.
 
 **2. Install it on your iPhone.** Open the URL in Safari, tap Share → **Add to Home Screen**,
-then enter the token in the app's Settings tab.
+then create your account and invite your friends from the Grupo tab.
 
 **3. Save straight from TikTok or Instagram.** iOS doesn't let web apps appear in the share
 sheet, so set up a one-time **Shortcut** instead (the Settings tab shows these steps with your server URL filled in):

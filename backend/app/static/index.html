@@ -37,7 +37,10 @@
       <button data-tab="library" class="active">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5.5A1.5 1.5 0 0 1 4 16.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h4.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
         <span>Receitas</span></button>
-      <button data-tab="groceries">
+      <button data-tab="group">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.2c1.6.6 2.7 2.2 3 4.8"/></svg>
+        <span>Grupo</span><i class="badge" hidden></i></button>
+      <button data-tab="lists">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L20.5 8H6.1"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>
         <span>Compras</span></button>
       <button data-tab="settings">
@@ -63,13 +66,16 @@
         <div class="input-wrap">
           <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>
           <input id="importUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
-                 placeholder="Cole uma ligação" aria-describedby="urlHint">
+                 placeholder="Cola uma ligação" aria-describedby="urlHint">
           <button type="button" id="pasteBtn" class="pill-btn">Colar</button>
         </div>
         <span id="urlHint" class="hint" aria-live="polite"></span>
       </label>
-      <label class="field"><span class="field-label">Ou cole uma legenda ou o texto da receita</span>
-        <textarea id="importText" rows="4" placeholder="“Massa com manteiga de alho 🍜 precisa de: 200 g de massa, 4 dentes de alho…”"></textarea>
+      <label class="field" id="importShareRow"><span class="field-label">Partilhar com</span>
+        <select id="importShare"></select>
+      </label>
+      <label class="field"><span class="field-label">Ou cola uma legenda ou o texto da receita</span>
+        <textarea id="importText" rows="4" placeholder="“Massa com manteiga de alho 🍜 precisas de: 200 g de massa, 4 dentes de alho…”"></textarea>
       </label>
     </form>
   </section>
@@ -77,5 +83,6 @@
   <div id="toast" class="glass-dark" role="status" aria-live="polite"></div>
   <script src="/static/motion.js"></script>
   <script src="/static/app.js"></script>
+  <script src="/static/social.js"></script>
 </body>
 </html>
