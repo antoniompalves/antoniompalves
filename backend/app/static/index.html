@@ -4,60 +4,77 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>RecipeBox</title>
-  <meta name="theme-color" content="#fbf8f3" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#161412" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f7efe6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#120d0a" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RecipeBox">
   <link rel="manifest" href="/static/manifest.webmanifest">
   <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/icon-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Apple devices use SF Pro via -apple-system; Inter is the fallback elsewhere -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
+  <div class="ambient" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
   <div id="app">
-    <header class="topbar material">
-      <div id="title" class="large-title">Recipes</div>
-      <button id="addBtn" class="icon-btn" aria-label="Import recipe" aria-haspopup="dialog">
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <header class="topbar">
+      <div id="title"></div>
+      <button id="addBtn" class="fab" aria-label="Import recipe" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </header>
 
     <main id="view"></main>
 
-    <nav class="tabbar material" aria-label="Sections">
-      <button data-tab="library" class="active"><span aria-hidden="true">📖</span>Recipes</button>
-      <button data-tab="groceries"><span aria-hidden="true">🛒</span>Groceries</button>
-      <button data-tab="settings"><span aria-hidden="true">⚙️</span>Settings</button>
+    <nav class="tabbar glass" aria-label="Sections">
+      <span class="lens" aria-hidden="true"></span>
+      <button data-tab="library" class="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5.5A1.5 1.5 0 0 1 4 16.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h4.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
+        <span>Recipes</span></button>
+      <button data-tab="groceries">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L20.5 8H6.1"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>
+        <span>Groceries</span></button>
+      <button data-tab="settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span>Settings</span></button>
     </nav>
   </div>
 
   <!-- Bottom sheet: enters from the bottom, leaves to the bottom, follows the finger. -->
   <div id="scrim" class="scrim" hidden></div>
-  <section id="importSheet" class="sheet material-thick" role="dialog" aria-modal="true" aria-labelledby="importTitle" hidden>
+  <section id="importSheet" class="sheet glass glass-thick" role="dialog" aria-modal="true" aria-labelledby="importTitle" hidden>
     <div class="grabber" aria-hidden="true"></div>
     <form id="importForm" novalidate>
       <div class="sheet-head">
-        <button type="button" class="plain" data-close>Cancel</button>
+        <button type="button" class="text-btn" data-close>Cancel</button>
         <h2 id="importTitle">Import Recipe</h2>
-        <button type="submit" class="plain strong" id="importGo" disabled>Import</button>
+        <button type="submit" class="text-btn strong" id="importGo" disabled>Import</button>
       </div>
-      <label class="field">Link
-        <div class="row">
+      <div class="sources" aria-hidden="true">
+        <span>TikTok</span><span>Instagram</span><span>YouTube</span><span>Pinterest</span><span>Blogs</span>
+      </div>
+      <label class="field"><span class="field-label">Link</span>
+        <div class="input-wrap">
+          <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>
           <input id="importUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
-                 placeholder="TikTok, Instagram, YouTube, Pinterest or blog URL" aria-describedby="urlHint">
-          <button type="button" id="pasteBtn" class="secondary">Paste</button>
+                 placeholder="Paste a link" aria-describedby="urlHint">
+          <button type="button" id="pasteBtn" class="pill-btn">Paste</button>
         </div>
         <span id="urlHint" class="hint" aria-live="polite"></span>
       </label>
-      <label class="field">Or paste a caption / recipe text
-        <textarea id="importText" rows="5"></textarea>
+      <label class="field"><span class="field-label">Or paste a caption or recipe text</span>
+        <textarea id="importText" rows="4" placeholder="“Garlic butter noodles 🍜 you need: 200g noodles, 4 cloves garlic…”"></textarea>
       </label>
     </form>
   </section>
 
-  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="glass-dark" role="status" aria-live="polite"></div>
   <script src="/static/motion.js"></script>
   <script src="/static/app.js"></script>
 </body>

@@ -87,6 +87,39 @@ const savePending = () => store.set("pending", state.pending);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const shortUrl = u => { try { const x = new URL(u); return x.hostname.replace(/^www\./, "") + x.pathname.slice(0, 24); } catch { return u; } };
 
+// ---------------------------------------------------------------- icons (SF Symbols-style line icons)
+const I = {
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>',
+  clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+  heart: '<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+  back: '<svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg>',
+  play: '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/></svg>',
+  cart: '<svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L20.5 8H6.1"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>',
+  share: '<svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  minus: '<svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>',
+  x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  fork: '<svg viewBox="0 0 24 24"><path d="M7 3v8a2 2 0 0 0 4 0V3M9 11v10M17 3c-2 0-3 2.5-3 6s1 4 3 4v8"/></svg>',
+  sparkle: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.5l-1.8-5L5 9.7l5.2-1.8zM18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>',
+  check: '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  link: '<svg viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>',
+  warn: '<svg viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4zM12 10v4M12 17.2v.1"/></svg>',
+  copy: '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
+};
+const PLATFORM = { tiktok: "TikTok", instagram: "Instagram", youtube: "YouTube", pinterest: "Pinterest", facebook: "Facebook", x: "X", web: "Web", text: "Pasted" };
+const platformName = p => PLATFORM[p] || p;
+
+/** Deterministic warm gradient for recipes without a thumbnail. */
+function placeholder(seed, extraClass = "") {
+  let h = 0; for (const c of String(seed)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const a = 8 + (h % 40), b = (a + 25 + (h >> 8) % 30) % 360;
+  return `<div class="ph ${extraClass}" style="background:linear-gradient(150deg,hsl(${a} 85% 68%),hsl(${b} 75% 48%))">${I.fork}</div>`;
+}
+const photo = (r, cls) => r.thumbnail_url
+  ? `<img class="${cls}" loading="lazy" referrerpolicy="no-referrer" src="${esc(r.thumbnail_url)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph-fallback'}))">`
+  : placeholder(r.id || r.title);
+
 // ---------------------------------------------------------------- routing + screen transitions
 const view = $("#view"), title = $("#title");
 const currentRoute = () => location.hash.slice(1) || "/";
@@ -110,15 +143,21 @@ function enterScreen(direction) {
   s.set(0); s.to(1);
 }
 
+const TABS = ["library", "groceries", "settings"];
 function route() {
   const h = currentRoute();
   const dir = lastRoute === null ? 0 : Math.sign(depth(h) - depth(lastRoute));
   lastRoute = h;
+  const tab = h.startsWith("/r/") || h === "/" ? "library" : h.slice(1);
   document.querySelectorAll(".tabbar button").forEach(b => {
-    const on = (b.dataset.tab === "library" && (h === "/" || h.startsWith("/r/"))) || h === "/" + b.dataset.tab;
+    const on = b.dataset.tab === tab;
     b.classList.toggle("active", on);
     on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
   });
+  // The lens slides between tabs (springy CSS curve; instant with reduced motion)
+  $(".tabbar .lens").style.transform = `translateX(${Math.max(0, TABS.indexOf(tab)) * 100}%)`;
+  document.body.classList.toggle("route-detail", h.startsWith("/r/"));
+  document.body.classList.remove("scrolled");
   window.scrollTo(0, 0);
   if (h.startsWith("/r/")) renderDetail(h.slice(3));
   else if (h === "/groceries") renderGroceries();
@@ -126,6 +165,8 @@ function route() {
   else renderLibrary();
   enterScreen(dir);
 }
+
+const largeTitle = (text, sub) => { title.innerHTML = `<h1 class="large-title">${esc(text)}</h1>${sub ? `<p class="subtitle">${esc(sub)}</p>` : ""}`; };
 
 // ---------------------------------------------------------------- library
 function filteredRecipes() {
@@ -137,22 +178,23 @@ function filteredRecipes() {
 }
 
 function renderLibrary() {
-  title.textContent = "Recipes";
+  const n = state.recipes.length;
+  largeTitle("Recipes", n ? `${n} saved recipe${n === 1 ? "" : "s"}` : "Your cookbook from social media");
   const cols = [...new Set(state.recipes.flatMap(r => r.collections))].sort();
   const favs = state.recipes.some(r => r.favorite);
   view.innerHTML = `
-    <input class="search" type="search" enterkeyhint="search" aria-label="Search recipes" placeholder="Search recipes or ingredients" value="${esc(state.query)}">
+    ${n ? `<div class="search-wrap glass">${I.search}<input class="search" type="search" enterkeyhint="search" aria-label="Search recipes" placeholder="Search recipes or ingredients" value="${esc(state.query)}"></div>` : ""}
     ${cols.length || favs ? `<div class="chips" role="toolbar" aria-label="Collections">
-      <button class="chip ${!state.collection ? "on" : ""}" data-col="">All</button>
-      ${favs ? `<button class="chip ${state.collection === "♥" ? "on" : ""}" data-col="♥">♥ Favorites</button>` : ""}
-      ${cols.map(c => `<button class="chip ${state.collection === c ? "on" : ""}" data-col="${esc(c)}">${esc(c)}</button>`).join("")}
+      <button class="chip glass ${!state.collection ? "on" : ""}" data-col="">All</button>
+      ${favs ? `<button class="chip glass ${state.collection === "♥" ? "on" : ""}" data-col="♥">${I.heart}Favorites</button>` : ""}
+      ${cols.map(c => `<button class="chip glass ${state.collection === c ? "on" : ""}" data-col="${esc(c)}">${esc(c)}</button>`).join("")}
     </div>` : ""}
     <div id="pendingList">${pendingHTML()}</div>
     <div id="results"></div>`;
   renderResults();
 
   // Search filters locally on every keystroke: no debounce, no round trip on the input path.
-  $(".search", view).addEventListener("input", e => { state.query = e.target.value; renderResults(); });
+  $(".search", view)?.addEventListener("input", e => { state.query = e.target.value; renderResults(); });
   view.querySelectorAll("[data-col]").forEach(b => b.onclick = () => {
     state.collection = b.dataset.col || null;
     view.querySelectorAll("[data-col]").forEach(x => x.classList.toggle("on", x === b));
@@ -161,16 +203,17 @@ function renderLibrary() {
   view.addEventListener("click", e => {
     const d = e.target.closest("[data-dismiss]");
     if (d) { state.pending = state.pending.filter(p => p.id !== d.dataset.dismiss); savePending(); $("#pendingList").innerHTML = pendingHTML(); }
+    if (e.target.closest("[data-import]")) sheet.show();
   });
 }
 
 function pendingHTML() {
   return state.pending.map(p => `
-    <div class="pending ${p.status === "failed" ? "failed" : ""}">
-      ${p.status === "failed" ? "⚠️" : `<div class="spinner" aria-hidden="true"></div>`}
-      <div style="flex:1;min-width:0"><div class="mono">${esc(p.label)}</div>
+    <div class="pending glass ${p.status === "failed" ? "failed" : ""}">
+      <div class="thumb-spin">${p.status === "failed" ? I.warn : `<div class="spinner" aria-hidden="true"></div>`}</div>
+      <div style="flex:1;min-width:0"><div class="mono" style="font-weight:600">${esc(p.label)}</div>
         <div class="status">${p.status === "failed" ? esc(p.error || "Import failed") : statusLabel(p.status)}</div></div>
-      ${p.status === "failed" ? `<button class="plain" data-dismiss="${esc(p.id)}">Dismiss</button>` : ""}
+      ${p.status === "failed" ? `<button class="text-btn" data-dismiss="${esc(p.id)}">Dismiss</button>` : ""}
     </div>`).join("");
 }
 
@@ -181,11 +224,12 @@ function renderResults() {
   if (list.length) {
     el.innerHTML = `<div class="grid">${list.map(card).join("")}</div>`;
   } else if (state.recipes.length) {
-    el.innerHTML = `<div class="empty"><p>No recipes match “${esc(state.query || state.collection)}”.</p></div>`;
+    el.innerHTML = `<div class="empty glass"><h3>No matches</h3><p>Nothing matches “${esc(state.query || state.collection)}”. Try an ingredient like “garlic”.</p></div>`;
   } else if (!state.pending.length) {
-    el.innerHTML = `<div class="empty"><div class="big">🍳</div><p><b>No recipes yet</b></p>
-      <p>Tap ＋ and paste a TikTok, Reel, YouTube or blog link.<br>To save straight from the share sheet,
-      set up the Shortcut in <a href="#/settings">Settings</a>.</p></div>`;
+    el.innerHTML = `<div class="empty glass"><div class="art">${I.fork}</div><h3>Save your first recipe</h3>
+      <p>Share a TikTok, Reel, YouTube video or blog post and get a clean recipe with ingredients and steps.</p>
+      <button class="btn-primary" data-import>${I.plus}Import a recipe</button>
+      <p class="meta" style="justify-content:center;margin-top:1rem;display:flex">Save straight from the share sheet: <a href="#/settings">set up the Shortcut</a></p></div>`;
   } else el.innerHTML = "";
   el.querySelectorAll(".card").forEach(c => {
     c.onclick = () => location.hash = `/r/${c.dataset.id}`;
@@ -194,25 +238,44 @@ function renderResults() {
 }
 
 const statusLabel = s => ({ queued: "Queued…", fetching: "Reading the post…", extracting: "Writing the recipe…" }[s] || "Working…");
+const totalTime = r => r.total_minutes || ((r.prep_minutes || 0) + (r.cook_minutes || 0)) || null;
+const fmtMin = m => m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ""}` : `${m}m`;
 
 function card(r) {
-  const time = r.total_minutes || ((r.prep_minutes || 0) + (r.cook_minutes || 0)) || null;
+  const t = totalTime(r);
   return `<article class="card" data-id="${esc(r.id)}" role="link" tabindex="0" aria-label="${esc(r.title)}">
-    ${r.thumbnail_url ? `<img class="thumb" loading="lazy" referrerpolicy="no-referrer" src="${esc(r.thumbnail_url)}" alt=""
-        onerror="this.outerHTML='<div class=&quot;thumb ph&quot;>🍽️</div>'">` : `<div class="thumb ph" aria-hidden="true">🍽️</div>`}
-    <div class="body"><h3>${esc(r.title)}</h3>
-      <div class="meta"><span class="badge">${esc(r.source_platform)}</span>${time ? `<span>⏱ ${time}m</span>` : ""}${r.favorite ? "<span aria-label='Favorite'>♥</span>" : ""}</div>
+    ${photo(r, "photo")}
+    <span class="tag glass-photo">${esc(platformName(r.source_platform))}</span>
+    ${r.favorite ? `<span class="fav glass-photo" aria-label="Favorite">${I.heart}</span>` : ""}
+    <div class="caption glass-photo"><h3>${esc(r.title)}</h3>
+      <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.servings ? `<span>Serves ${r.servings}</span>` : ""}</div>
     </div></article>`;
 }
 
 // ---------------------------------------------------------------- detail
 async function renderDetail(id) {
   let r = state.recipes.find(x => x.id === id);
-  if (!r) { try { r = await api(`/recipes/${id}`); } catch (e) { view.innerHTML = `<p class="empty">${esc(e.message)}</p>`; return; } }
-  title.innerHTML = `<button class="back" id="backBtn">‹ Recipes</button>`;
-  $("#backBtn").onclick = () => (history.length > 1 ? history.back() : (location.hash = "/"));
+  if (!r) { try { r = await api(`/recipes/${id}`); } catch (e) { view.innerHTML = `<div class="empty glass"><p>${esc(e.message)}</p></div>`; return; } }
   const checked = new Set(store.get(`checked:${id}`, []));
   let current = r;
+
+  const bar = () => {
+    title.innerHTML = `<div style="display:flex;align-items:center;gap:.5rem">
+      <button class="bar-btn glass-photo" id="backBtn" aria-label="Back">${I.back}</button>
+      <div class="nav-title">${esc(r.title)}</div>
+      <button class="bar-btn glass-photo" id="shareTop" aria-label="Share">${I.share}</button>
+      <button class="bar-btn glass-photo" id="favTop" aria-label="Favorite" aria-pressed="${r.favorite}">${I.heart}</button></div>`;
+    $("#backBtn").onclick = () => (history.length > 1 ? history.back() : (location.hash = "/"));
+    $("#favTop").onclick = toggleFav;
+    $("#shareTop").onclick = share;
+  };
+  const toggleFav = async () => {
+    r = await patch(id, { favorite: !r.favorite }); current = { ...current, favorite: r.favorite };
+    bar(); haptic(); toast(r.favorite ? "Added to Favorites" : "Removed from Favorites");
+  };
+  const share = () => navigator.share
+    ? navigator.share({ title: r.title, text: shareText(current), url: r.source_url }).catch(() => {})
+    : navigator.clipboard.writeText(shareText(current)).then(() => toast("Recipe copied"));
 
   const draw = () => {
     const groups = [];
@@ -222,38 +285,51 @@ async function renderDetail(id) {
       g.items.push([i, ing]);
     });
     const n = current.nutrition_estimate;
+    const author = r.author || platformName(r.source_platform);
+    const onList = state.grocery.includes(id);
     view.innerHTML = `<div class="detail">
-      ${r.thumbnail_url ? `<img class="hero" referrerpolicy="no-referrer" src="${esc(r.thumbnail_url)}" alt="" onerror="this.remove()">` : ""}
-      <h2>${esc(r.title)}</h2>
-      ${r.description ? `<p class="meta" style="margin:0 0 .5rem">${esc(r.description)}</p>` : ""}
-      <div class="meta">
-        ${r.prep_minutes ? `<span>Prep ${r.prep_minutes}m</span>` : ""}${r.cook_minutes ? `<span>Cook ${r.cook_minutes}m</span>` : ""}
-        ${n?.calories ? `<span>~${n.calories} kcal/serving</span>` : ""}${r.cuisine ? `<span>${esc(r.cuisine)}</span>` : ""}
+      <div class="hero">
+        ${r.thumbnail_url ? `<img src="${esc(r.thumbnail_url)}" referrerpolicy="no-referrer" alt="" onerror="this.remove()">` : placeholder(r.id)}
+        <div class="hero-text">
+          <h2>${esc(r.title)}</h2>
+          <a class="source glass-photo" href="${esc(r.source_url)}" target="_blank" rel="noopener">
+            <span class="av">${esc(author.replace(/^@/, "").charAt(0).toUpperCase())}</span>${esc(author)} · ${esc(platformName(r.source_platform))}</a>
+        </div>
       </div>
-      <p class="meta"><a href="${esc(r.source_url)}" target="_blank" rel="noopener">↗ ${esc(r.author || r.source_platform)}</a></p>
-      ${r.confidence < 0.7 ? `<p class="warn">✨ Some details were estimated${r.inferred_fields.length ? ` (${esc(r.inferred_fields.join(", "))})` : ""}. Double-check before cooking.</p>` : ""}
-      <div class="actions">
-        <button id="cookBtn">▶ Cook Mode</button>
-        <button class="secondary" id="favBtn" aria-pressed="${r.favorite}">${r.favorite ? "♥ Favorited" : "♡ Favorite"}</button>
-        <button class="secondary" id="groBtn" aria-pressed="${state.grocery.includes(id)}">${state.grocery.includes(id) ? "✓ On List" : "＋ Groceries"}</button>
+      <div class="stats glass">
+        <div class="stat"><b>${r.prep_minutes ? fmtMin(r.prep_minutes) : "–"}</b><span>Prep</span></div>
+        <div class="stat"><b>${r.cook_minutes ? fmtMin(r.cook_minutes) : "–"}</b><span>Cook</span></div>
+        <div class="stat"><b>${current.servings || "–"}</b><span>Serves</span></div>
+        <div class="stat"><b>${n?.calories ?? "–"}</b><span>kcal</span></div>
       </div>
-      <div class="section"><p class="eyebrow">Ingredients</p>
-        ${current.servings ? `<div class="stepper"><button class="secondary" data-s="-1" aria-label="Fewer servings">−</button>
-          <span aria-live="polite"><b>${current.servings}</b> servings</span><button class="secondary" data-s="1" aria-label="More servings">＋</button></div>` : ""}
+      <div class="detail-actions">
+        <button class="btn-primary" id="cookBtn">${I.play}Start Cooking</button>
+        <button class="icon-glass glass" id="groBtn" aria-label="${onList ? "Remove from" : "Add to"} grocery list" aria-pressed="${onList}">${onList ? I.check : I.cart}</button>
+      </div>
+      ${r.confidence < 0.7 ? `<div class="notice glass">${I.sparkle}<span>Some details were estimated by AI${r.inferred_fields.length ? ` (${esc(r.inferred_fields.join(", "))})` : ""}. Double-check before cooking.</span></div>` : ""}
+      ${r.description ? `<p class="desc">${esc(r.description)}</p>` : ""}
+      <section class="section glass">
+        <div class="section-head"><h3>Ingredients</h3>
+          ${current.servings ? `<div class="stepper"><button data-s="-1" aria-label="Fewer servings">${I.minus}</button>
+            <output aria-live="polite">${current.servings} servings</output><button data-s="1" aria-label="More servings">${I.plus}</button></div>` : ""}
+        </div>
         ${groups.map(g => `${g.name ? `<div class="group">${esc(g.name)}</div>` : ""}
           ${g.items.map(([i, ing]) => `<label class="ing ${checked.has(i) ? "done" : ""}">
             <input type="checkbox" data-i="${i}" ${checked.has(i) ? "checked" : ""}>
-            <span>${ingText(ing)}</span></label>`).join("")}`).join("")}
-      </div>
-      <div class="section"><p class="eyebrow">Steps</p>
-        ${current.steps.map((s, i) => `<div class="step"><b>${i + 1}</b><div>${esc(s.text)}</div></div>`).join("")}
-      </div>
-      ${r.tags.length ? `<p class="meta">${r.tags.map(t => `<span class="badge">#${esc(t)}</span>`).join("")}</p>` : ""}
-      <div class="section"><p class="eyebrow">Collections</p>
+            <span class="txt">${ingText(ing)}</span></label>`).join("")}`).join("")}
+      </section>
+      <section class="section glass">
+        <div class="section-head"><h3>Steps</h3><span class="meta">${current.steps.length} steps${totalTime(r) ? ` · ${fmtMin(totalTime(r))}` : ""}</span></div>
+        ${current.steps.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><p>${esc(s.text)}</p></div>`).join("")}
+      </section>
+      ${n && (n.protein_g || n.carbs_g || n.fat_g) ? `<section class="section glass"><div class="section-head"><h3>Nutrition</h3><span class="meta">per serving, estimated</span></div>
+        <div class="nutrition"><div><b>${n.protein_g ?? "–"}g</b><span>Protein</span></div><div><b>${n.carbs_g ?? "–"}g</b><span>Carbs</span></div><div><b>${n.fat_g ?? "–"}g</b><span>Fat</span></div></div></section>` : ""}
+      <section class="section glass">
+        <div class="section-head"><h3>Collections</h3></div>
         <input id="colInput" placeholder="e.g. Dinner, Meal prep" value="${esc(r.collections.join(", "))}" aria-label="Collections, comma separated">
-      </div>
-      <div class="actions"><button class="secondary" id="shareBtn">Share</button>
-        <button class="danger" id="delBtn">Delete</button></div>
+        ${r.tags.length ? `<div class="tags" style="margin-top:.8rem">${r.tags.map(t => `<span class="glass">#${esc(t)}</span>`).join("")}</div>` : ""}
+      </section>
+      <button class="danger-link" id="delBtn">${I.trash}Delete Recipe</button>
     </div>`;
 
     view.querySelectorAll("[data-i]").forEach(cb => cb.onchange = () => {
@@ -266,18 +342,16 @@ async function renderDetail(id) {
       catch (e) { toast(e.message); }
     });
     $("#cookBtn").onclick = () => cookMode(current);
-    $("#favBtn").onclick = async () => { r = await patch(id, { favorite: !r.favorite }); current = { ...current, favorite: r.favorite }; const y = scrollY; draw(); scrollTo(0, y); };
     $("#groBtn").onclick = () => {
-      state.grocery = state.grocery.includes(id) ? state.grocery.filter(x => x !== id) : [...state.grocery, id];
+      const adding = !state.grocery.includes(id);
+      state.grocery = adding ? [...state.grocery, id] : state.grocery.filter(x => x !== id);
       store.set("grocery", state.grocery); const y = scrollY; draw(); scrollTo(0, y);
+      toast(adding ? "Added to Groceries" : "Removed from Groceries"); haptic();
     };
     $("#colInput").onchange = async e => {
       const cols = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
       r = await patch(id, { collections: cols }); toast("Collections saved");
     };
-    $("#shareBtn").onclick = () => navigator.share
-      ? navigator.share({ title: r.title, text: shareText(current), url: r.source_url }).catch(() => {})
-      : navigator.clipboard.writeText(shareText(current)).then(() => toast("Copied recipe"));
     $("#delBtn").onclick = async () => {
       // Irreversible, so this is the one place a confirmation earns its keep.
       if (!confirm(`Delete “${r.title}”? This can't be undone.`)) return;
@@ -285,10 +359,11 @@ async function renderDetail(id) {
       state.recipes = state.recipes.filter(x => x.id !== id); location.hash = "/";
     };
   };
+  bar();
   draw();
 }
 
-const ingText = i => `${i.quantity || i.unit ? `<b>${esc([i.quantity, i.unit].filter(Boolean).join(" "))}</b> ` : ""}${esc(i.name)}${i.note ? `<span style="color:var(--muted)">, ${esc(i.note)}</span>` : ""}`;
+const ingText = i => `${i.quantity || i.unit ? `<span class="qty">${esc([i.quantity, i.unit].filter(Boolean).join(" "))}</span> ` : ""}${esc(i.name)}${i.note ? `<span class="note">, ${esc(i.note)}</span>` : ""}`;
 const shareText = r => `${r.title}\n\nIngredients:\n${r.ingredients.map(i => "• " + [i.quantity, i.unit, i.name].filter(Boolean).join(" ")).join("\n")}\n\nSteps:\n${r.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}\n\nSource: ${r.source_url}`;
 
 async function patch(id, body) {
@@ -298,8 +373,8 @@ async function patch(id, body) {
 }
 
 // ---------------------------------------------------------------- cook mode
-/** Full-screen sheet that rises from the bottom. Swipe sideways between steps (momentum
-    picks the page), pull down to dismiss. Both gestures are interruptible springs. */
+/** Full-screen sheet that rises from the bottom over a blurred photo of the dish.
+    Swipe sideways between steps (momentum picks the page), pull down to dismiss. */
 async function cookMode(r) {
   const steps = r.steps.length ? r.steps : [{ text: "No steps" }];
   let page = 0, lock = null;
@@ -307,11 +382,13 @@ async function cookMode(r) {
 
   const el = document.createElement("div");
   el.className = "cook"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", `Cook mode: ${r.title}`);
-  el.innerHTML = `<div class="cook-head"><span class="meta" id="cm-count"></span><button class="plain strong" id="cm-done">Done</button></div>
+  const bg = r.thumbnail_url ? `<div class="cook-bg" style="background-image:url('${esc(r.thumbnail_url)}')"></div>` : placeholder(r.id, "cook-bg");
+  el.innerHTML = `${bg}
+    <div class="cook-head"><span class="title" id="cm-count"></span><button class="close glass-photo" id="cm-done" aria-label="Close cook mode">${I.x}</button></div>
+    <div class="progress" aria-hidden="true"><i></i></div>
     <div class="pager" aria-live="polite"><div class="track">${steps.map((s, i) =>
-      `<div class="page" aria-hidden="${i !== 0}"><div><div class="eyebrow">Step ${i + 1}</div>${esc(s.text)}</div></div>`).join("")}</div></div>
-    <div class="dots" aria-hidden="true">${steps.map(() => "<i></i>").join("")}</div>
-    <div class="nav"><button class="secondary" id="cm-prev">Back</button><button id="cm-next"></button></div>`;
+      `<div class="page" aria-hidden="${i !== 0}"><div class="step-card glass-photo"><p class="eyebrow">Step ${i + 1} of ${steps.length}</p><p>${esc(s.text)}</p></div></div>`).join("")}</div></div>
+    <div class="nav"><button class="back-btn glass-photo" id="cm-prev">Back</button><button class="next-btn" id="cm-next"></button></div>`;
   document.body.append(el); document.body.classList.add("sheet-open");
   $("#app").inert = true;
   const track = $(".track", el), pager = $(".pager", el);
@@ -325,11 +402,11 @@ async function cookMode(r) {
   const xSpring = new Spring({ value: 0, onUpdate: x => { track.style.transform = `translateX(${x}px)`; } });
 
   const sync = () => {
-    $("#cm-count", el).textContent = `Step ${page + 1} of ${steps.length}`;
-    el.querySelectorAll(".dots i").forEach((d, i) => d.classList.toggle("on", i === page));
+    $("#cm-count", el).textContent = r.title;
+    $(".progress i", el).style.width = `${((page + 1) / steps.length) * 100}%`;
     el.querySelectorAll(".page").forEach((p, i) => p.setAttribute("aria-hidden", String(i !== page)));
     $("#cm-prev", el).disabled = page === 0;
-    $("#cm-next", el).textContent = page === steps.length - 1 ? "Finish" : "Next";
+    $("#cm-next", el).textContent = page === steps.length - 1 ? "Finish" : "Next Step";
   };
   const goTo = (i, velocity = 0) => {
     const next = Math.max(0, Math.min(steps.length - 1, i));
@@ -394,26 +471,31 @@ async function cookMode(r) {
 
 // ---------------------------------------------------------------- groceries & settings
 async function renderGroceries() {
-  title.textContent = "Groceries";
+  largeTitle("Groceries", state.grocery.length ? `From ${state.grocery.length} recipe${state.grocery.length === 1 ? "" : "s"}` : "");
   if (!state.grocery.length) {
-    view.innerHTML = `<div class="empty"><div class="big">🛒</div><p>Open a recipe and tap <b>＋ Groceries</b>.</p></div>`; return;
+    view.innerHTML = `<div class="empty glass"><div class="art">${I.cart}</div><h3>Your list is empty</h3>
+      <p>Open a recipe and tap the cart button. Ingredients from several recipes are combined here.</p></div>`; return;
   }
-  view.innerHTML = `<p class="meta">Loading…</p>`;
+  view.innerHTML = `<div class="section glass"><p class="meta">Loading…</p></div>`;
   let items = [];
   try { items = await api(`/grocery-list?ids=${encodeURIComponent(state.grocery.join(","))}`); } catch (e) { toast(e.message); }
   const done = new Set(state.groceryDone);
   const key = it => `${it.name}|${it.unit || ""}`;
-  view.innerHTML = `<div class="section">${items.map(it => `<label class="ing ${done.has(key(it)) ? "done" : ""}">
+  view.innerHTML = `<section class="section glass">
+      <div class="section-head"><h3>${items.length} items</h3><span class="meta" id="leftCount"></span></div>
+      ${items.map(it => `<label class="ing ${done.has(key(it)) ? "done" : ""}">
       <input type="checkbox" data-k="${esc(key(it))}" ${done.has(key(it)) ? "checked" : ""}>
-      <span>${it.quantities.length ? `<b>${esc(it.quantities.join(" + "))}${it.unit ? " " + esc(it.unit) : ""}</b> ` : ""}${esc(it.name)}
-      <br><small class="caption">${esc(it.recipes.join(", "))}</small></span></label>`).join("")}</div>
-    <div class="actions"><button class="secondary" id="copyList">Copy List</button><button class="secondary" id="clearList">Clear</button></div>`;
+      <span class="txt">${it.quantities.length ? `<span class="qty">${esc(it.quantities.join(" + "))}${it.unit ? " " + esc(it.unit) : ""}</span> ` : ""}${esc(it.name)}
+      <br><small class="note">${esc(it.recipes.join(", "))}</small></span></label>`).join("")}</section>
+    <div class="row-actions"><button class="btn-glass glass" id="copyList">${I.copy}Copy List</button><button class="btn-glass glass" id="clearList">${I.trash}Clear</button></div>`;
+  const left = () => $("#leftCount").textContent = `${items.filter(it => !done.has(key(it))).length} left`;
+  left();
   view.querySelectorAll("[data-k]").forEach(cb => cb.onchange = () => {
     cb.checked ? done.add(cb.dataset.k) : done.delete(cb.dataset.k);
-    cb.closest(".ing").classList.toggle("done", cb.checked); store.set("groceryDone", [...done]);
+    cb.closest(".ing").classList.toggle("done", cb.checked); store.set("groceryDone", [...done]); left();
   });
   $("#copyList").onclick = () => navigator.clipboard.writeText(items.filter(it => !done.has(key(it)))
-    .map(it => `• ${[it.quantities.join(" + "), it.unit, it.name].filter(Boolean).join(" ")}`).join("\n")).then(() => toast("Copied"));
+    .map(it => `• ${[it.quantities.join(" + "), it.unit, it.name].filter(Boolean).join(" ")}`).join("\n")).then(() => toast("List copied"));
   $("#clearList").onclick = () => {
     // Undo instead of a confirmation dialog: forgiving, and doesn't train people to click through.
     const prev = [state.grocery, state.groceryDone];
@@ -425,39 +507,34 @@ async function renderGroceries() {
 }
 
 function renderSettings() {
-  title.textContent = "Settings";
+  largeTitle("Settings");
   const origin = location.origin;
   view.innerHTML = `
-    <div class="section"><p class="eyebrow">API Token</p>
-      <p class="meta">Only needed if the server sets <code>API_TOKEN</code>. It's saved on this device.</p>
-      <div class="row"><input id="tok" type="password" value="${esc(store.get("token", ""))}" placeholder="Token" aria-label="API token">
-        <button id="saveTok">Save</button></div>
-    </div>
-    <div class="section"><p class="eyebrow">Install on iPhone</p>
+    <section class="section glass"><div class="section-head"><h3>API Token</h3></div>
+      <p class="meta">Only needed if your server sets <code>API_TOKEN</code>. Stored on this device.</p>
+      <div class="settings-row" style="margin-top:.75rem"><input id="tok" type="password" value="${esc(store.get("token", ""))}" placeholder="Token" aria-label="API token">
+        <button class="btn-solid" id="saveTok">Save</button></div>
+    </section>
+    <section class="section glass"><div class="section-head"><h3>Install on iPhone</h3></div>
       <ol class="howto">
         <li>Open <code>${esc(origin)}</code> in <b>Safari</b>.</li>
         <li>Tap <b>Share</b> → <b>Add to Home Screen</b>.</li>
       </ol>
-    </div>
-    <div class="section"><p class="eyebrow">Save from the Share Sheet (iOS Shortcut)</p>
-      <p class="meta">iOS doesn't let web apps appear in the share sheet. A Shortcut can do it instead, and it only takes a minute to set up:</p>
+    </section>
+    <section class="section glass"><div class="section-head"><h3>Save from the Share Sheet</h3></div>
+      <p class="meta">iOS doesn't let web apps appear in the share sheet. A one-minute Shortcut does it instead:</p>
       <ol class="howto">
-        <li>Open the <b>Shortcuts</b> app → <b>＋</b> → name it <b>Save to RecipeBox</b>.</li>
-        <li>Tap the <b>ⓘ</b> → turn on <b>Show in Share Sheet</b>, and set it to receive <b>URLs</b> and <b>Text</b>.</li>
-        <li>Add the action <b>Get Contents of URL</b>:
-          <ul>
-            <li>URL: <code>${esc(origin)}/imports/shortcut</code></li>
-            <li>Method: <b>POST</b>, Request Body: <b>JSON</b></li>
-            <li>Add field <code>input</code> (Text) = <b>Shortcut Input</b></li>
-            ${store.get("token", "") ? `<li>Header <code>Authorization</code> = <code>Bearer &lt;your token&gt;</code></li>` : ""}
-          </ul></li>
-        <li>Add the action <b>Show Notification</b> with text <b>Contents of URL</b>.</li>
+        <li>Open <b>Shortcuts</b> → <b>＋</b> → name it <b>Save to RecipeBox</b>.</li>
+        <li>Tap <b>ⓘ</b> → turn on <b>Show in Share Sheet</b> (receives <b>URLs</b> and <b>Text</b>).</li>
+        <li>Add <b>Get Contents of URL</b>: <code>${esc(origin)}/imports/shortcut</code>, Method <b>POST</b>, Body <b>JSON</b>, field <code>input</code> = <b>Shortcut Input</b>${store.get("token", "") ? `, header <code>Authorization</code> = <code>Bearer &lt;token&gt;</code>` : ""}.</li>
+        <li>Add <b>Show Notification</b> with <b>Contents of URL</b>.</li>
       </ol>
-      <p class="meta">Now in TikTok, Instagram or YouTube, tap Share → <b>Save to RecipeBox</b>. The recipe appears here a few seconds later.</p>
-    </div>
-    <div class="section"><p class="eyebrow">Android</p><p class="meta">Install from Chrome's menu (<b>Add to Home screen</b>). RecipeBox then shows up in the share sheet directly.</p></div>`;
+      <p class="meta" style="margin-top:.5rem">Then in TikTok or Instagram: Share → <b>Save to RecipeBox</b>.</p>
+    </section>
+    <section class="section glass"><div class="section-head"><h3>Android</h3></div>
+      <p class="meta">Install from Chrome's menu (<b>Add to Home screen</b>). RecipeBox then appears in the share sheet directly.</p></section>`;
   $("#saveTok").onclick = async () => {
-    store.set("token", $("#tok").value.trim()); toast("Saved");
+    store.set("token", $("#tok").value.trim()); toast("Token saved");
     await loadRecipes().catch(() => {}); renderSettings();
   };
 }
@@ -471,11 +548,11 @@ const toastSpring = new Spring({ value: 0, damping: 1, response: 0.3, onUpdate: 
   toastEl.style.filter = p > 0.99 ? "none" : `blur(${(1 - p) * 6}px)`;
 } });
 function toast(msg, { action, onAction } = {}) {
-  toastEl.innerHTML = esc(msg) + (action ? ` <button class="plain strong" style="color:inherit;min-height:0;padding:0 0 0 .5rem">${esc(action)}</button>` : "");
+  toastEl.innerHTML = (action ? "" : I.check) + `<span>${esc(msg)}</span>` + (action ? `<button>${esc(action)}</button>` : "");
   toastEl.style.pointerEvents = action ? "auto" : "none";
   if (action) $("button", toastEl).onclick = () => { onAction(); toastSpring.to(0); };
   toastSpring.to(1);
-  clearTimeout(toastT); toastT = setTimeout(() => toastSpring.to(0), action ? 4500 : 2400);
+  clearTimeout(toastT); toastT = setTimeout(() => toastSpring.to(0), action ? 4500 : 2200);
 }
 
 // ---------------------------------------------------------------- import sheet
@@ -568,7 +645,11 @@ window.addEventListener("hashchange", route);
 // iOS Safari only applies :active (our press-down feedback) when a touchstart listener exists.
 document.addEventListener("touchstart", () => {}, { passive: true });
 // Scroll edge effect under the top bar, only while content is actually beneath it.
-addEventListener("scroll", () => document.body.classList.toggle("scrolled", scrollY > 4), { passive: true });
+addEventListener("scroll", () => {
+  const hero = document.body.classList.contains("route-detail") && $(".hero");
+  const threshold = hero ? hero.offsetHeight - 110 : 4;
+  document.body.classList.toggle("scrolled", scrollY > threshold);
+}, { passive: true });
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible") { await loadRecipes().catch(() => {}); if (currentRoute() === "/") renderResults(); }
 });
