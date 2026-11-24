@@ -248,6 +248,49 @@ const CATEGORIES = [
 ];
 const BIMBY_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10l-1.2 12.5a2 2 0 0 1-2 1.8h-3.6a2 2 0 0 1-2-1.8z"/><path d="M17 7h1.5a1.5 1.5 0 0 1 1.5 1.5V11a2 2 0 0 1-2 2h-1M6 21h12M9.5 18.3 9 21M14.5 18.3 15 21M8.5 2.5h7"/></svg>`;
 
+// The Bimby display for a step: time · temperature · speed (+ colher inversa, mode, accessory).
+function bimbyStrip(b, ctx = "") {
+  if (!b || !(b.time_seconds || b.temperature || b.speed || b.mode)) return "";
+  const t = b.time_seconds, time = !t ? "" : t >= 60 ? `${Math.floor(t / 60)} min${t % 60 ? ` ${t % 60} s` : ""}` : `${t} seg`;
+  const temp = !b.temperature ? "" : /varoma/i.test(b.temperature) ? "Varoma" : `${b.temperature} °C`;
+  const speed = !b.speed ? "" : b.speed === "colher" ? "colher" : b.speed === "turbo" ? "Turbo" : b.speed.replace(".", ",");
+  const cell = (val, label, extra = "") => `<span class="tm-cell ${extra}"><b>${val}</b><small>${label}</small></span>`;
+  return `<div class="tm-display" role="group" aria-label="Programa Bimby">
+    ${time ? `<button type="button" class="tm-cell tm-time timer-chip" data-secs="${t}" data-ctx="${esc(ctx)}" aria-label="Iniciar temporizador de ${time}"><b>${time}</b><small>tempo ▸</small></button>` : ""}
+    ${temp ? cell(temp, "temp.") : ""}
+    ${speed ? cell(`${b.reverse ? `<svg viewBox="0 0 24 24" aria-label="colher inversa"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4"/></svg>` : ""}${speed}`, b.reverse ? "inversa" : "vel.") : ""}
+    ${b.mode ? cell(esc(b.mode), "modo", "tm-wide") : ""}
+    ${b.accessory ? `<span class="tm-acc">${esc(b.accessory)}</span>` : ""}
+  </div>`;
+}
+
+function openBimbySheet(r) {
+  let model = store.get("bimbyModel", "TM6");
+  openSheet({
+    title: "Fazer na Bimby", submit: "Converter",
+    body: `<div class="bz-intro"><div class="bc-ico">${BIMBY_ICON}</div>
+        <p>A IA reescreve <b>${esc(r.title)}</b> para a Bimby: a ordem dos ingredientes no copo e cada passo com <b>tempo, temperatura e velocidade</b> exatos, incluindo colher inversa, vel. colher e Varoma.</p></div>
+      <p class="eyebrow">O teu modelo</p>
+      <div class="size-picker" role="radiogroup" aria-label="Modelo da Bimby">
+        ${["TM5", "TM6", "TM7"].map(m => `<button type="button" role="radio" aria-checked="${m === model}" class="size-opt ${m === model ? "on" : ""}" data-m="${m}">${m}</button>`).join("")}
+      </div>
+      <p class="meta">Fica guardada como uma receita nova, tua, ligada à original. O original não muda.</p>
+      <div class="bz-wait" hidden><div class="spinner" aria-hidden="true"></div><span>A adaptar para a Bimby… pode levar meio minuto.</span></div>`,
+    onMount: el => el.querySelectorAll("[data-m]").forEach(b => b.onclick = () => {
+      model = b.dataset.m; store.set("bimbyModel", model);
+      el.querySelectorAll("[data-m]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); });
+    }),
+    onSubmit: async (form, el) => {
+      $(".bz-wait", el).hidden = false;
+      try {
+        const out = await api(`/recipes/${r.id}/bimby`, { method: "POST", body: { model } });
+        await loadRecipes().catch(() => {});
+        location.hash = `/r/${out.id}`; toast("Versão Bimby pronta");
+      } finally { const w = $(".bz-wait", el); if (w) w.hidden = true; }
+    },
+  });
+}
+
 function weekNumber(d = new Date()) {
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
@@ -266,7 +309,7 @@ function homeHero() {
   const r = recipeOfWeek(), first = (state.me?.user?.name || state.me?.name || "").split(" ")[0];
   const n = state.recipes.length, gs = groups().length;
   const cooked = state.recipes.reduce((a, x) => a + (x.stats?.cooks || 0), 0);
-  return `<section class="home-hero" aria-label="Início">
+  return `<section class="home-hero" aria-label="Início"><i class="wave-layer" aria-hidden="true"></i>
     ${r ? `<div class="hh-bg" style="background-image:url('${esc(r.thumbnail_url)}')" aria-hidden="true"></div>` : ""}
     <div class="hh-text">
       <p class="hh-greet">${greeting()}${first ? `, ${esc(first)}` : ""}</p>
@@ -537,7 +580,7 @@ async function renderDetail(id) {
     const n = current.nutrition_estimate;
     const author = r.author || platformName(r.source_platform);
     view.innerHTML = `<div class="detail">
-      <div class="hero">
+      <div class="hero"><i class="wave-layer" aria-hidden="true"></i>
         ${r.thumbnail_url ? `<img src="${esc(r.thumbnail_url)}" referrerpolicy="no-referrer" alt="" onerror="this.remove()">` : placeholder(r.id)}
         <div class="hero-text">
           <h2>${esc(r.title)}</h2>
@@ -581,8 +624,12 @@ async function renderDetail(id) {
       </section>
       <section class="section glass">
         <div class="section-head"><h3>Passos</h3><span class="meta">${current.steps.length} ${current.steps.length === 1 ? "passo" : "passos"}${totalTime(r) ? ` · ${fmtMin(totalTime(r))}` : ""}</span></div>
-        ${current.steps.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><p>${timers.linkify(s.text, r.title)}</p></div>`).join("")}
+        ${current.steps.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><div class="step-body"><p>${bimbyStrip(s.bimby) ? esc(s.text).replace(/ (°C|seg|min)\b/g, "&nbsp;$1") : timers.linkify(s.text, r.title)}</p>${bimbyStrip(s.bimby, r.title)}</div></div>`).join("")}
       </section>
+      ${r.converted_from ? `<a class="bimby-origin glass" href="#/r/${esc(r.converted_from)}">${BIMBY_ICON}<span>Versão Bimby convertida com IA · <b>ver a receita original</b></span></a>`
+        : isBimby(r) ? "" : `<section class="section glass bimby-cta"><div class="bc-ico">${BIMBY_ICON}</div>
+          <div><h4>fazer na bimby</h4><p class="meta">Passos exatos com tempo, temperatura e velocidade, colher inversa e Varoma.</p></div>
+          <button class="btn-outline" id="bimbyBtn">converter</button></section>`}
       <div id="factsArea"></div>
       <div id="socialArea">${socialHTML()}</div>
       ${n && (n.protein_g || n.carbs_g || n.fat_g) ? `<section class="section glass"><div class="section-head"><h3>Informação nutricional</h3><span class="meta">por dose, estimativa</span></div>
@@ -595,6 +642,7 @@ async function renderDetail(id) {
       ${r.is_owner ? `<button class="danger-link" id="delBtn">${I.trash}Eliminar receita</button>` : ""}
     </div>`;
 
+    $("#bimbyBtn") && ($("#bimbyBtn").onclick = () => openBimbySheet(r));
     view.querySelectorAll("[data-i]").forEach(cb => cb.onchange = () => {
       const i = +cb.dataset.i; cb.checked ? checked.add(i) : checked.delete(i);
       cb.closest(".ing").classList.toggle("done", cb.checked); store.set(`checked:${id}`, [...checked]);
@@ -678,7 +726,7 @@ async function cookMode(r, onFinish) {
     <div class="hf-hint" id="cm-heard" aria-live="polite" hidden></div>
     <div class="pager" aria-live="polite"><div class="track">${steps.map((s, i) => {
       const used = stepIngredients(s.text, r.ingredients);
-      return `<div class="page" aria-hidden="${i !== 0}"><div class="step-card glass-photo"><p class="eyebrow">Passo ${i + 1} de ${steps.length}</p><p>${timers.linkify(s.text, r.title)}</p>
+      return `<div class="page" aria-hidden="${i !== 0}"><div class="step-card glass-photo"><p class="eyebrow">Passo ${i + 1} de ${steps.length}</p><p>${bimbyStrip(s.bimby) ? esc(s.text).replace(/ (°C|seg|min)\b/g, "&nbsp;$1") : timers.linkify(s.text, r.title)}</p>${bimbyStrip(s.bimby, r.title)}
         ${used.length ? `<div class="need"><span class="eyebrow">O que precisas</span><div class="need-chips">${used.map(ing => `<span>${esc(ingLine(ing))}</span>`).join("")}</div></div>` : ""}
       </div></div>`; }).join("")}</div></div>
     <div class="nav"><button class="back-btn glass-photo" id="cm-prev">Anterior</button><button class="next-btn" id="cm-next"></button></div>`;
@@ -928,7 +976,7 @@ const cupMenu = (() => {
   const items = [["library", "receitas", "レシピ"], ["plan", "plano", "献立"], ["group", "grupo", "仲間"], ["lists", "compras", "買い物"], ["settings", "definições", "設定"]];
   const el = document.createElement("nav");
   el.id = "cupMenu"; el.className = "cup-menu"; el.setAttribute("aria-label", "Menu"); el.hidden = true;
-  el.innerHTML = `<ul>${items.map(([t, pt, jp]) => `<li><a href="#${t === "library" ? "/" : "/" + t}" data-mtab="${t}"><span class="mi-pt">${pt}</span><i class="badge" hidden></i></a></li>`).join("")}</ul>
+  el.innerHTML = `<i class="wave-layer" aria-hidden="true"></i><ul>${items.map(([t, pt, jp]) => `<li><a href="#${t === "library" ? "/" : "/" + t}" data-mtab="${t}"><span class="mi-pt">${pt}</span><i class="badge" hidden></i></a></li>`).join("")}</ul>
     <button class="cm-import" type="button">${I.plus}importar receita</button>
     <div class="cm-logo">${LOGO()}<small>a refeição</small></div>`;
   document.body.append(el);

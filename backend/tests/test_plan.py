@@ -130,3 +130,32 @@ def test_bimby_detection():
     assert is_bimby("Risotto na Bimby", ["Sirva."], [])
     assert is_bimby("Bolo", ["Misture tudo."], ["thermomix"])
     assert not is_bimby("Bacalhau à Brás", ["Frite a batata.", "Junte os ovos a 180 °C."], [])
+
+
+def test_bimby_conversion(env, monkeypatch):
+    from app import bimby
+    from app.models import BimbySetting, Ingredient, Step
+    c = env.client
+    ana, rui, g = setup_group(env)
+    rid = import_recipe(env, ana, "Carbonara")
+    seen = {}
+
+    def fake(rec, model="TM6", client=None):
+        seen["model"], seen["title"] = model, rec.title
+        return bimby.BimbyConversion(
+            title="Esparguete à carbonara", servings=2, total_minutes=25,
+            ingredients=[Ingredient(quantity="200", unit="g", name="esparguete")],
+            steps=[Step(text="Coloca o queijo no copo e rala 10 seg/vel. 10.", bimby=BimbySetting(time_seconds=10, speed="10")),
+                   Step(text="Programa 12 min/100 °C/colher inversa/vel. colher.", bimby=BimbySetting(time_seconds=720, temperature="100", speed="colher", reverse=True)),
+                   Step(text="Serve logo.")],
+            notes=["Cozinha a massa no cesto."])
+    monkeypatch.setattr(bimby, "convert", fake)
+    r = c.post(f"/recipes/{rid}/bimby", json={"model": "TM5"}, headers=ana)
+    assert r.status_code == 201, r.text
+    new = c.get(f"/recipes/{r.json()['id']}", headers=ana).json()
+    assert seen["model"] == "TM5" and new["title"].endswith("(Bimby)")
+    assert new["tags"][:2] == ["bimby", "tm5"] and new["converted_from"] == rid
+    assert new["steps"][1]["bimby"]["reverse"] is True and new["steps"][2]["bimby"] is None
+    # personal: not visible to another member until shared
+    assert c.get(f"/recipes/{r.json()['id']}", headers=rui).status_code == 404
+    assert c.post(f"/recipes/{rid}/bimby", json={"model": "TM9"}, headers=ana).status_code == 422

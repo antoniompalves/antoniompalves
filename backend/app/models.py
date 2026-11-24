@@ -14,8 +14,19 @@ class Ingredient(BaseModel):
     group: Optional[str] = Field(None, description="Section such as 'Sauce' or 'Marinade'")
 
 
+class BimbySetting(BaseModel):
+    """Machine settings for one Bimby/Thermomix step, as shown on the display."""
+    time_seconds: Optional[int] = Field(None, description="Programmed time in seconds, e.g. 300")
+    temperature: Optional[str] = Field(None, description="'37'..'160' in °C, 'Varoma', or null for no heat")
+    speed: Optional[str] = Field(None, description="'colher' (stirring speed), '0.5'..'10', 'turbo', or a range like '5-10' (progressive)")
+    reverse: bool = Field(False, description="True for colher inversa (reverse blade rotation)")
+    mode: Optional[str] = Field(None, description="Built-in mode if used: amassar, turbo, espiga, cozedura lenta, sous-vide, fermentar, alta temperatura, aquecer, pesar")
+    accessory: Optional[str] = Field(None, description="borboleta, cesto, Varoma, tabuleiro Varoma, copo fechado sem copo medida, espátula")
+
+
 class Step(BaseModel):
     text: str
+    bimby: Optional[BimbySetting] = None
     timestamp_seconds: Optional[int] = Field(
         None, description="Where in the video this step happens, if known"
     )
@@ -63,6 +74,7 @@ class Recipe(RecipeDraft):
     created_at: str
     collections: list[str] = Field(default_factory=list)
     favorite: bool = False
+    converted_from: Optional[str] = None  # id of the recipe this Bimby version was made from
 
 
 class ImportRequest(BaseModel):

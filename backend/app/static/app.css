@@ -1443,3 +1443,171 @@ body.cooking .menu-btn, body.auth-mode .menu-btn, body.auth-mode .top-brand { di
 :root[data-theme="umami"] .card .photo, :root[data-theme="umami"] .card .ph-fallback { left: 16%; top: 17%; width: 68%; }
 :root[data-theme="umami"] .hero img, :root[data-theme="umami"] .hero .ph { width: min(50vw, 15.5rem); top: 9%; }
 @media (min-width: 768px) { :root[data-theme="umami"] .hero img, :root[data-theme="umami"] .hero .ph { width: min(30vw, 19rem); } }
+
+
+/* =====================================================================
+   Seigaiha (青海波), the classic way: overlapping scales, three concentric arcs each,
+   lower rows covering the ones above. Drawn as a mask so the colour follows the theme:
+   set --wave on any surface; the base is whatever is underneath.
+   ===================================================================== */
+:root { --seigaiha: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' width='100' height='50'><rect width='100' height='50' fill='black'/><circle cx='0' cy='0' r='50' fill='black'/><circle cx='0' cy='0' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='0' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='0' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='50' fill='black'/><circle cx='100' cy='0' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='50' fill='black'/><circle cx='50' cy='25' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='50' fill='black'/><circle cx='0' cy='50' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='50' fill='black'/><circle cx='100' cy='50' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='50' fill='black'/><circle cx='50' cy='75' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='23.5' stroke='white' stroke-width='3.6' fill='none'/></svg>"); --wave-size: 56px 28px; }
+.wave-layer { position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
+  background: var(--wave, rgb(255 255 255 / .08));
+  -webkit-mask: var(--seigaiha) 0 0 / var(--wave-size) repeat; mask: var(--seigaiha) 0 0 / var(--wave-size) repeat; }
+.home-hero { --wave: rgb(255 255 255 / .07); }
+.hero { --wave: rgb(255 255 255 / .16); }
+.hero .wave-layer { z-index: -3; }
+.cup-menu { --wave: rgb(255 255 255 / .1); }
+.cup-menu .wave-layer { z-index: 0; -webkit-mask-position: 0 100%; mask-position: 0 100%;
+  -webkit-mask-image: var(--seigaiha), linear-gradient(transparent 35%, #000); -webkit-mask-composite: source-in;
+  mask-image: var(--seigaiha), linear-gradient(transparent 35%, #000); mask-composite: intersect; mask-size: var(--wave-size), 100% 100%; -webkit-mask-size: var(--wave-size), 100% 100%; mask-repeat: repeat, no-repeat; -webkit-mask-repeat: repeat, no-repeat; }
+.cup-menu > :not(.wave-layer) { position: relative; z-index: 1; }
+/* the detail photo hides the waves until a theme stages the dish in a bowl */
+:root:not([data-theme="umami"]) .hero .wave-layer { display: none; }
+/* theme colours */
+:root[data-theme="washi"] .home-hero { --wave: rgb(244 239 229 / .1); background-image: none; }
+:root[data-theme="washi"] .cup-menu { --wave: rgb(255 240 225 / .12); background-image: none; }
+:root[data-theme="umami"] .home-hero { --wave: rgb(255 255 255 / .06); background-image: radial-gradient(circle at 88% 30%, #e3202c 0 24%, transparent 24.3%); }
+:root[data-theme="umami"] .hero { --wave: rgb(255 255 255 / .14); background-image: radial-gradient(circle at 10% 18%, #a90f19 0 20%, transparent 20.3%); }
+:root[data-theme="umami"] .cup-menu { --wave: rgb(255 255 255 / .12); background-image: none; }
+:root[data-theme="umami"] .card::before { background: color-mix(in srgb, var(--ink) 7%, transparent);
+  -webkit-mask: var(--seigaiha) 0 0 / 44px 22px repeat, linear-gradient(#000 35%, transparent) no-repeat; -webkit-mask-composite: source-in;
+  mask: var(--seigaiha) 0 0 / 44px 22px repeat, linear-gradient(#000 35%, transparent) 0 0 / 100% 100% no-repeat; mask-composite: intersect; }
+@media (max-width: 767px) { :root[data-theme="umami"] .home-hero { background-image: radial-gradient(circle at 96% 50%, #e3202c 0 30%, transparent 30.3%); } }
+
+/* =====================================================================
+   Harmony: one control language for segments, search and tabs, tied to the lettering.
+   Same height, same radius family, same type; the selected state is a raised surface,
+   and the tab underline is the title's rule (accent, 2px).
+   ===================================================================== */
+:root { --ctl-h: 2.75rem; --ctl-r: 14px; }
+.seg { border-radius: var(--ctl-r); padding: .25rem; gap: .25rem; }
+.seg button { height: calc(var(--ctl-h) - .5rem); border-radius: calc(var(--ctl-r) - .25rem); font-size: .9375rem; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-2); }
+.seg button.on { background: var(--bg); color: var(--ink); box-shadow: 0 1px 0 rgb(255 255 255 / .8) inset, 0 4px 12px -4px rgb(40 20 10 / .25); }
+.seg button.on svg { color: var(--accent); }
+.search-wrap { border-radius: var(--ctl-r); }
+.search-wrap input.search { height: var(--ctl-h); font-size: .9375rem; }
+/* categories: text tabs with the lettering's rule */
+.chips.cats { gap: 1.5rem; padding: .1rem 1.25rem .5rem; }
+.chips.cats .chip { background: none; box-shadow: none; border-radius: 0; padding: 0 .05rem; height: 2.4rem; font-size: .9375rem; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--ink-3); position: relative; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.chips.cats .chip::before { display: none !important; }
+.chips.cats .chip.on { color: var(--ink); background: none; box-shadow: none; }
+.chips.cats .chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: .2rem; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; transition: transform .4s var(--ease-soft); }
+.chips.cats .chip.on::after { transform: none; }
+.chips.cats .chip svg { color: currentColor; }
+.home-main .chips.cats { padding: 0; }
+/* the title rule and the tab underline are the same mark */
+.jt b::after { height: 2px; background: var(--accent); }
+/* buttons share the control radius; the primary keeps its weight but not a pill */
+.btn-primary { border-radius: var(--ctl-r); font-weight: 650; letter-spacing: -0.01em; }
+.hh-ghost, .cm-import { border-radius: var(--ctl-r); }
+:root[data-theme="umami"] { --ctl-r: 16px; }
+:root[data-theme="umami"] .seg button.on { background: var(--bg); color: var(--ink); box-shadow: var(--neo-sm); }
+:root[data-theme="umami"] .chips.cats .chip::after { left: 0; right: 0; height: 2px; border-radius: 2px; background: var(--accent); }
+:root[data-theme="umami"] .btn-primary { border-radius: var(--ctl-r); }
+:root[data-theme="washi"] { --ctl-r: 6px; }
+:root[data-theme="washi"] .jt b::after { background: linear-gradient(90deg, var(--kin), #e3c77d 40%, var(--kin) 70%, #8c6a22); }
+:root[data-theme="washi"] .chips.cats .chip::after { background: var(--kin); }
+
+/* Stats block: breathing room inside each column, labels never touch the edges */
+.stats { padding: 1rem .5rem .95rem; }
+.stat { min-width: 0; padding: 0 .45rem; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.stat b { font-size: 1.0625rem; line-height: 1.15; white-space: nowrap; }
+.stat span { display: block; max-width: 100%; font-size: .625rem; letter-spacing: .04em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat + .stat::after { top: 14%; bottom: 14%; }
+@media (max-width: 380px) { .stat span { letter-spacing: .02em; } .stat { padding: 0 .25rem; } }
+/* inner padding: captions, tags and summaries keep at least ~12px from their edges */
+.card .caption { padding: .7rem .8rem .75rem; }
+.tags span { padding: .35rem .85rem; }
+.week-sum { padding: .75rem .5rem; }
+.week-sum div { padding: 0 .4rem; min-width: 0; gap: .2rem; }
+.week-sum span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* every heading outside a card speaks the same lettering */
+.block-head h3 { font-family: var(--letter); font-weight: 300; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; font-size: 1.5rem; letter-spacing: -0.03em; text-transform: lowercase; }
+
+
+/* =====================================================================
+   Bimby display on each step (time · temperature · speed), like the machine's screen
+   ===================================================================== */
+.step-body { flex: 1; min-width: 0; }
+.tm-display { display: flex; flex-wrap: wrap; align-items: stretch; gap: .4rem; margin-top: .6rem; padding: .45rem; border-radius: 16px;
+  background: #1c1a19; color: #f5efe6; box-shadow: inset 0 1px 0 rgb(255 255 255 / .08), 0 8px 18px -12px rgb(0 0 0 / .6); width: fit-content; max-width: 100%; }
+.tm-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem; min-width: 4.2rem; padding: .4rem .7rem;
+  border-radius: 11px; background: rgb(255 255 255 / .06); font: inherit; color: inherit; border: 0; }
+.tm-cell b { font-size: .9375rem; font-weight: 700; letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }
+.tm-cell b svg { width: .95rem; height: .95rem; color: #6fd3a0; }
+.tm-cell small { font-size: .625rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .6; }
+.tm-display .tm-time { background: #2fa36b; color: #fff; cursor: pointer; }
+.tm-display .tm-time:hover { background: #33b376; }
+.tm-display .tm-time small { opacity: .85; }
+.tm-display .timer-chip svg { display: none; }
+.tm-wide { min-width: 5.5rem; }
+.tm-acc { align-self: center; font-size: .75rem; font-weight: 600; padding: .3rem .6rem; border-radius: 999px; background: rgb(255 255 255 / .1); }
+.cook .tm-display { margin-top: 1rem; background: rgb(0 0 0 / .35); }
+.cook .tm-cell b { font-size: 1.15rem; }
+
+.bimby-cta { display: flex; align-items: center; gap: .9rem; }
+.bimby-cta > div:nth-child(2) { flex: 1; min-width: 0; }
+.bimby-cta h4 { margin: 0 0 .15rem; font-family: var(--letter); font-weight: 400; font-size: 1.25rem; letter-spacing: -0.02em; }
+.bimby-cta .meta { display: block; margin: 0; }
+.bc-ico { width: 2.9rem; height: 2.9rem; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--accent-soft); color: var(--accent); }
+.bc-ico svg { width: 1.5rem; height: 1.5rem; }
+.bimby-origin { display: flex; align-items: center; gap: .6rem; padding: .85rem 1rem; border-radius: var(--r-lg); color: var(--ink-2); font-size: .875rem; }
+.bimby-origin svg { color: var(--accent); width: 1.2rem; height: 1.2rem; }
+.bimby-origin b { color: var(--accent); font-weight: 650; }
+.bz-intro { display: flex; gap: .9rem; align-items: flex-start; }
+.bz-intro p { margin: 0; line-height: 1.5; }
+.bz-wait { display: flex; align-items: center; gap: .8rem; padding: .8rem 1rem; border-radius: 14px; background: var(--accent-soft); font-weight: 600; }
+.bz-wait[hidden] { display: none; }
+
+/* =====================================================================
+   Button language (after the reference): thin-outline pills, lowercase labels,
+   sizes as circles (S · M · L), counters as outlined pills; one filled action per screen.
+   ===================================================================== */
+:root { --ctl-r: 999px; --line: color-mix(in srgb, var(--ink) 55%, transparent); }
+html:root .btn-outline, html:root[data-theme] .btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; height: 2.75rem; padding: 0 1.5rem; border-radius: 999px; border: 1.5px solid var(--line); background: transparent; color: var(--ink); font-size: .9375rem; font-weight: 500; text-transform: lowercase; letter-spacing: .01em; flex: none; transition: background-color .2s, transform .15s; }
+html:root .btn-outline:hover, html:root[data-theme] .btn-outline:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+html:root .btn-outline:active, html:root[data-theme] .btn-outline:active, html:root .btn-primary:active, html:root[data-theme] .btn-primary:active, html:root .size-opt:active, html:root[data-theme] .size-opt:active { transform: scale(.97); }
+html:root .btn-primary, html:root[data-theme] .btn-primary { border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 500; text-transform: lowercase; letter-spacing: .01em; box-shadow: 0 10px 22px -14px rgb(0 0 0 / .6); border: 1.5px solid var(--ink); }
+html:root .hh-actions .btn-primary, html:root[data-theme] .hh-actions .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+html:root .hh-ghost, html:root[data-theme] .hh-ghost, html:root .cm-import, html:root[data-theme] .cm-import { border-radius: 999px; background: transparent; box-shadow: none; border: 1.5px solid rgb(255 255 255 / .7); font-weight: 500; text-transform: lowercase; }
+html:root .detail-actions > button:not(.btn-primary), html:root[data-theme] .detail-actions > button:not(.btn-primary) { background: transparent; border: 1.5px solid var(--line); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html:root .detail-actions > button:not(.btn-primary)::before, html:root[data-theme] .detail-actions > button:not(.btn-primary)::before { display: none; }
+html:root .size-picker, html:root[data-theme] .size-picker { display: flex; gap: .7rem; align-items: center; }
+html:root .size-opt, html:root[data-theme] .size-opt { width: 3.3rem; height: 3.3rem; border-radius: 50%; border: 1.5px solid var(--line); background: transparent; color: var(--ink); font-weight: 600; font-size: .875rem; display: grid; place-items: center; transition: background-color .2s, color .2s; }
+html:root .size-opt.on, html:root[data-theme] .size-opt.on { background: color-mix(in srgb, var(--ink) 55%, var(--bg)); border-color: color-mix(in srgb, var(--ink) 55%, var(--bg)); color: var(--bg); }
+html:root .mini-seg, html:root[data-theme] .mini-seg { background: transparent; box-shadow: none; padding: 0; gap: .5rem; }
+html:root .mini-seg button, html:root[data-theme] .mini-seg button { width: 2.6rem; min-width: 2.6rem; height: 2.6rem; padding: 0; border-radius: 50%; border: 1.5px solid var(--line); background: transparent; color: var(--ink); box-shadow: none; }
+html:root .mini-seg button.on, html:root[data-theme] .mini-seg button.on { background: color-mix(in srgb, var(--ink) 55%, var(--bg)); border-color: transparent; color: var(--bg); box-shadow: none; }
+html:root .stepper, html:root[data-theme] .stepper { background: transparent; box-shadow: none; border: 1.5px solid var(--line); padding: .15rem .3rem; }
+html:root .stepper button, html:root[data-theme] .stepper button, html:root .stepper output, html:root[data-theme] .stepper output { color: var(--ink); box-shadow: none; }
+html:root .seg, html:root[data-theme] .seg { background: transparent; box-shadow: none; padding: 0; gap: .5rem; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html:root .seg::before, html:root[data-theme] .seg::before { display: none; }
+html:root .seg button, html:root[data-theme] .seg button { border-radius: 999px; border: 1.5px solid var(--line); height: 2.6rem; font-weight: 500; }
+html:root .seg button.on, html:root[data-theme] .seg button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); box-shadow: none; }
+html:root .seg button.on svg, html:root[data-theme] .seg button.on svg { color: currentColor; }
+html:root .search-wrap, html:root[data-theme] .search-wrap { border-radius: 999px; }
+html:root .chip:not(.cats .chip), html:root[data-theme] .chip:not(.cats .chip) { border-radius: 999px; }
+html:root .menu-btn, html:root[data-theme] .menu-btn { border-radius: 50%; border: 1.5px solid currentColor; background: transparent; box-shadow: none; }
+html:root .fab, html:root[data-theme] .fab { border-radius: 50%; }
+/* dark surfaces flip the outline to light */
+.home-hero, .cup-menu, .cook { --line: rgb(255 255 255 / .7); }
+.stat { padding: 0 .2rem; }
+.stat span { letter-spacing: .02em; font-size: .6rem; }
+/* rows that scroll sideways bleed to the screen edge instead of being clipped by the gutter */
+html:root .seg, html:root[data-theme] .seg { margin-left: -1.25rem; margin-right: -1.25rem; padding: .1rem 1.25rem; overflow-x: auto; }
+html:root .seg button, html:root[data-theme] .seg button { flex: 0 0 auto; }
+@media (max-width: 767px) { .home-main .chips.cats { padding: .1rem 1.25rem .5rem; } }
+@media (min-width: 768px) { html:root .seg, html:root[data-theme] .seg { margin-left: 0; margin-right: 0; padding: .1rem 0; } }
+
+/* Labels sit in the optical centre of every control */
+button, .btn-primary, .btn-outline, .chip, .seg button, .size-opt, .mini-seg button, .hh-ghost, .cm-import, .tm-cell, .text-btn, .tag, .badge-cook {
+  line-height: 1; }
+html:root .stepper, html:root[data-theme] .stepper { display: inline-flex; align-items: center; }
+html:root .stepper output, html:root[data-theme] .stepper output { display: inline-flex; align-items: center; justify-content: center; height: 2rem; line-height: 1; }
+html:root .stepper button, html:root[data-theme] .stepper button { display: inline-flex; align-items: center; justify-content: center; }
+.btn-primary, .btn-outline, .hh-ghost, .cm-import, .seg button, .chip { display: inline-flex; align-items: center; justify-content: center; }
+@supports (text-box: trim-both cap alphabetic) {
+  :is(.btn-primary, .btn-outline, .seg button, .size-opt, .mini-seg button, .stepper output, .chip, .hh-ghost, .cm-import) { text-box: trim-both cap alphabetic; }
+}

@@ -51,6 +51,10 @@ class CookIn(BaseModel):
     photo: Optional[str] = Field(None, description="data:image/...;base64,...")
 
 
+class BimbyIn(BaseModel):
+    model: Literal["TM5", "TM6", "TM7"] = "TM6"
+
+
 class VariationIn(BaseModel):
     title: str = Field(min_length=1, max_length=80)
     body: str = Field(min_length=1, max_length=4000)
@@ -291,6 +295,29 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
     @r.get("/recipes/{rid}")
     def get_recipe(rid: str, user=U) -> dict:
         return views(user["id"], [get_visible(user["id"], rid)])[0]
+
+    @r.post("/recipes/{rid}/bimby", status_code=201)
+    def to_bimby(rid: str, body: BimbyIn, user=U) -> dict:
+        """AI conversion into exact Bimby steps. Saved as a new personal recipe linked to the original."""
+        from . import bimby
+        from .extractor import ExtractionError
+        uid = user["id"]
+        rec = get_visible(uid, rid)
+        try:
+            conv = bimby.convert(rec, body.model)
+        except ExtractionError as e:
+            raise HTTPException(502, str(e))
+        except Exception:
+            raise HTTPException(502, "Não foi possível falar com a IA agora. Tenta daqui a pouco.")
+        tags = ["bimby", body.model.lower(), *[t for t in rec.tags if t.lower() not in ("bimby", "thermomix")]]
+        new = rec.model_copy(update={
+            "id": uuid.uuid4().hex, "title": f"{conv.title} (Bimby)", "servings": conv.servings or rec.servings,
+            "total_minutes": conv.total_minutes or rec.total_minutes, "prep_minutes": None, "cook_minutes": None,
+            "ingredients": conv.ingredients, "steps": conv.steps, "tags": tags[:8], "converted_from": rec.id,
+            "description": " ".join(conv.notes[:3]) or rec.description, "inferred_fields": ["bimby"],
+            "created_at": now(), "collections": [], "favorite": False})
+        store.save_recipe(new, uid)
+        return {"id": new.id, "notes": conv.notes}
 
     @r.patch("/recipes/{rid}")
     def patch_recipe(rid: str, body: RecipePatchIn, user=U) -> dict:
