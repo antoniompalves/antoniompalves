@@ -1450,7 +1450,7 @@ body.cooking .menu-btn, body.auth-mode .menu-btn, body.auth-mode .top-brand { di
    lower rows covering the ones above. Drawn as a mask so the colour follows the theme:
    set --wave on any surface; the base is whatever is underneath.
    ===================================================================== */
-:root { --seigaiha: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' width='100' height='50'><rect width='100' height='50' fill='black'/><circle cx='0' cy='0' r='50' fill='black'/><circle cx='0' cy='0' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='0' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='0' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='50' fill='black'/><circle cx='100' cy='0' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='50' fill='black'/><circle cx='50' cy='25' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='50' fill='black'/><circle cx='0' cy='50' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='50' fill='black'/><circle cx='100' cy='50' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='50' fill='black'/><circle cx='50' cy='75' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='23.5' stroke='white' stroke-width='3.6' fill='none'/></svg>"); --wave-size: 56px 28px; }
+:root { --seigaiha: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' width='100' height='50'><filter id='a' x='0' y='0' width='1' height='1'><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1 0 0 0 0'/></filter><g filter='url(%23a)'><rect width='100' height='50' fill='black'/><circle cx='0' cy='0' r='50' fill='black'/><circle cx='0' cy='0' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='0' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='0' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='50' fill='black'/><circle cx='100' cy='0' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='0' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='50' fill='black'/><circle cx='50' cy='25' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='25' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='50' fill='black'/><circle cx='0' cy='50' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='0' cy='50' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='50' fill='black'/><circle cx='100' cy='50' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='100' cy='50' r='23.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='50' fill='black'/><circle cx='50' cy='75' r='47.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='35.5' stroke='white' stroke-width='3.6' fill='none'/><circle cx='50' cy='75' r='23.5' stroke='white' stroke-width='3.6' fill='none'/></g></svg>"); --wave-size: 56px 28px; }
 .wave-layer { position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
   background: var(--wave, rgb(255 255 255 / .08));
   -webkit-mask: var(--seigaiha) 0 0 / var(--wave-size) repeat; mask: var(--seigaiha) 0 0 / var(--wave-size) repeat; }
@@ -1610,4 +1610,124 @@ html:root .stepper button, html:root[data-theme] .stepper button { display: inli
 .btn-primary, .btn-outline, .hh-ghost, .cm-import, .seg button, .chip { display: inline-flex; align-items: center; justify-content: center; }
 @supports (text-box: trim-both cap alphabetic) {
   :is(.btn-primary, .btn-outline, .seg button, .size-opt, .mini-seg button, .stepper output, .chip, .hh-ghost, .cm-import) { text-box: trim-both cap alphabetic; }
+}
+
+
+/* No carved (inset) surfaces anywhere: fields are flat with a thin outline, like the buttons */
+html:root .search-wrap, html:root[data-theme] .search-wrap { background: color-mix(in srgb, var(--bg) 70%, #fff); box-shadow: none; border: 1.5px solid color-mix(in srgb, var(--ink) 22%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; }
+html:root .search-wrap::before, html:root[data-theme] .search-wrap::before { display: none; }
+html:root .search-wrap:focus-within, html:root[data-theme] .search-wrap:focus-within { border-color: var(--ink); }
+html:root .search-wrap input.search, html:root[data-theme] .search-wrap input.search { background: transparent; box-shadow: none; border: 0; }
+html:root input:not([type=checkbox]):not([type=radio]):not(.search), html:root[data-theme] input:not([type=checkbox]):not([type=radio]):not(.search), html:root textarea, html:root[data-theme] textarea, html:root select, html:root[data-theme] select { box-shadow: none; background-color: color-mix(in srgb, var(--bg) 70%, #fff); border: 1.5px solid color-mix(in srgb, var(--ink) 22%, transparent); border-radius: 14px; }
+html:root input:not([type=checkbox]):not([type=radio]):not(.search):focus, html:root[data-theme] input:not([type=checkbox]):not([type=radio]):not(.search):focus, html:root textarea:focus, html:root[data-theme] textarea:focus, html:root select:focus, html:root[data-theme] select:focus { border-color: var(--ink); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+html:root .ing input, html:root[data-theme] .ing input, html:root .ing-check input, html:root[data-theme] .ing-check input, html:root .litem input, html:root[data-theme] .litem input { box-shadow: none; background: transparent; border: 1.5px solid var(--line); }
+html:root .ing input:checked, html:root[data-theme] .ing input:checked, html:root .ing-check input:checked, html:root[data-theme] .ing-check input:checked, html:root .litem input:checked, html:root[data-theme] .litem input:checked { background: var(--accent); border-color: var(--accent); box-shadow: none; }
+html:root .card:active, html:root[data-theme] .card:active { box-shadow: var(--neo, 0 14px 30px -12px rgb(73 38 12 / .45)); transform: scale(.98); }
+html:root body.menu-open .menu-btn, html:root[data-theme] body.menu-open .menu-btn, html:root .stepper button:active, html:root[data-theme] .stepper button:active, html:root .chip:active, html:root[data-theme] .chip:active, html:root .chip.on, html:root[data-theme] .chip.on, html:root .fab:active, html:root[data-theme] .fab:active, html:root .btn-primary:active, html:root[data-theme] .btn-primary:active { box-shadow: none; }
+@media (prefers-color-scheme: dark) {
+  html:root .search-wrap, html:root[data-theme] .search-wrap,
+  html:root input:not([type=checkbox]):not([type=radio]):not(.search), html:root[data-theme] input:not([type=checkbox]):not([type=radio]):not(.search),
+  html:root textarea, html:root[data-theme] textarea, html:root select, html:root[data-theme] select { background-color: rgb(255 255 255 / .05); border-color: rgb(255 255 255 / .18); }
+}
+:root[data-theme="meianoite"] .search-wrap, :root[data-theme="meianoite"] input:not([type=checkbox]):not([type=radio]):not(.search) { background-color: rgb(255 255 255 / .05); border-color: rgb(255 255 255 / .18); }
+:root[data-theme="umami"] { --neo-in: 0 0 0 0 transparent; }
+
+.home-hero { --wave: rgb(255 255 255 / .1); }
+.cup-menu { --wave: rgb(255 255 255 / .14); }
+:root[data-theme="umami"] .home-hero { --wave: rgb(255 255 255 / .09); }
+:root[data-theme="umami"] .hero { --wave: rgb(255 255 255 / .2); }
+:root[data-theme="umami"] .cup-menu { --wave: rgb(255 255 255 / .16); }
+:root[data-theme="washi"] .home-hero { --wave: rgb(244 239 229 / .13); }
+:root[data-theme="gohan"] .home-hero { --wave: rgb(255 90 69 / .12); }
+:root[data-theme="umami"] .card::before { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+
+/* =====================================================================
+   Concentric corners (Apple): inner radius = outer radius − inset.
+   Cards: R 24px, inset 8px → every chip on a card is 32px tall with a 16px radius,
+   so its curve runs parallel to the card's corner. Same rule for captions,
+   the Bimby display and grouped rows.
+   ===================================================================== */
+:root { --card-r: 24px; --card-in: 8px; }
+:root[data-theme="washi"] { --card-r: 8px; --card-in: 6px; }
+html:root .card, html:root[data-theme] .card { border-radius: var(--card-r); }
+html:root .card .top, html:root[data-theme] .card .top { top: var(--card-in); left: var(--card-in); right: var(--card-in); align-items: center; }
+html:root .card .top :is(.tag, .badge-cook, .fav), html:root[data-theme] .card .top :is(.tag, .badge-cook, .fav) {
+  height: calc(2 * (var(--card-r) - var(--card-in))); min-height: 2rem; max-height: 2rem; border-radius: max(2px, calc(var(--card-r) - var(--card-in)));
+  display: inline-flex; align-items: center; gap: .3rem; padding: 0 .75rem; font-size: .75rem; line-height: 1; }
+html:root .card .top .fav, html:root[data-theme] .card .top .fav { width: 2rem; padding: 0; justify-content: center; }
+html:root .card .top .badges, html:root[data-theme] .card .top .badges { display: inline-flex; align-items: center; gap: .3rem; }
+html:root .card .top .by .avatar, html:root[data-theme] .card .top .by .avatar,
+html:root .card .top .by > *, html:root[data-theme] .card .top .by > * { width: 2rem; height: 2rem; border-radius: 50%; }
+html:root .card .caption, html:root[data-theme] .card .caption { left: var(--card-in); right: var(--card-in); bottom: var(--card-in); border-radius: max(2px, calc(var(--card-r) - var(--card-in))); }
+html:root[data-theme="umami"] .card::before { border-radius: var(--card-r) var(--card-r) 0 0; }
+/* Bimby display: 16px outer, 6px inset → 10px cells */
+.tm-display { border-radius: 16px; padding: 6px; gap: 6px; }
+.tm-cell { border-radius: 10px; }
+.tm-acc { border-radius: 10px; }
+/* sections: 24px outer with ~18px padding; anything flush to the padding edge uses 6px+ less */
+.stats { border-radius: var(--card-r); }
+.share-line, .bimby-origin { border-radius: var(--card-r); }
+.home-side .hs-meals a { border-radius: calc(var(--card-r) - 10px); }
+
+/* =====================================================================
+   Type system. Two voices only:
+   · Fraunces (light, high optical size) — titles and moments: page titles, recipe names,
+     greetings, hero lines. Always weight 300–400, tight tracking.
+   · System sans (SF on Apple, Inter elsewhere) — the interface. Weights 400 / 500 / 600 only,
+     tracking tuned per size the way iOS does (bigger = tighter, tiny caps = looser).
+   ===================================================================== */
+:root { --w-regular: 400; --w-medium: 500; --w-semibold: 600; }
+html { font-feature-settings: "kern", "calt"; }
+body { letter-spacing: -0.011em; }
+b, strong { font-weight: var(--w-semibold); }
+.meta, .subtitle, small { letter-spacing: -0.003em; }
+.eyebrow { font-weight: var(--w-semibold); letter-spacing: .07em; font-size: .6875rem; }
+/* no heavy sans weights anywhere */
+.large-title, .hero h2, .home-hero h2 { font-weight: 400; }
+.stat b, .week-sum b, .tm-cell b, .section-head + .stat b { font-weight: var(--w-semibold); letter-spacing: -0.02em; }
+.hs-meals b, .meal-main b, .litem b, .group-row b, .rank-row b, .option b, .feed b, .list-card b, .trip-card b { font-weight: var(--w-semibold); letter-spacing: -0.012em; }
+.card .caption h3 { font-weight: var(--w-semibold); letter-spacing: -0.015em; font-size: .9375rem; line-height: 1.22; }
+.btn-primary, .btn-outline, .seg button, .chip, .hh-ghost, .cm-import, .size-opt, .mini-seg button, .text-btn { font-weight: var(--w-medium); letter-spacing: -0.005em; }
+.text-btn.strong { font-weight: var(--w-semibold); }
+.tabbar button { font-weight: var(--w-medium); }
+.step p, .ing .txt, .sheet-body p { letter-spacing: -0.014em; }
+.stat span, .tm-cell small, .week-sum span { font-weight: var(--w-medium); }
+
+/* serif voice: page titles that aren't lettering (group names, list names, trips) */
+.large-title { font-family: var(--letter); font-weight: 300; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; letter-spacing: -0.035em; font-size: 2.3rem; line-height: 1.04; }
+/* recipe names on the photo */
+.hero h2 { font-family: var(--letter); font-weight: 400; font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; letter-spacing: -0.03em; font-size: 2.35rem; line-height: 1.02; }
+.nav-title { font-weight: var(--w-semibold); letter-spacing: -0.02em; }
+/* hero: one serif line in every theme; the accent word in italic */
+html:root .home-hero h2, html:root[data-theme] .home-hero h2 { font-family: var(--letter); font-weight: 400; text-transform: none; letter-spacing: -0.035em;
+  font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0; line-height: 1.02; }
+html:root .home-hero h2 em, html:root[data-theme] .home-hero h2 em { font-style: italic; font-weight: 400; }
+html:root .hh-greet, html:root[data-theme] .hh-greet { font-family: var(--letter); font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+.hh-sub { letter-spacing: -0.012em; }
+.hh-stats { font-variant-numeric: tabular-nums; letter-spacing: -0.005em; }
+.hh-stats b { font-weight: var(--w-semibold); }
+@media (max-width: 767px) { html:root[data-theme="umami"] .home-hero h2 { font-size: 1.85rem; } }
+/* numbers line up */
+.stat b, .week-sum b, .tm-cell b, .stepper output, .hh-stats, .meta { font-variant-numeric: tabular-nums; }
+
+
+/* Interface face: Zen Kaku Gothic New (400 / 500 / 700). Open, calm, a little Japanese. */
+:root { --font: "Zen Kaku Gothic New", -apple-system, BlinkMacSystemFont, "Hiragino Sans", system-ui, sans-serif;
+  --jp: "Zen Kaku Gothic New", "Hiragino Sans", sans-serif; --w-semibold: 700; }
+html { font-family: var(--font); }
+button, input, textarea, select { font-family: inherit; }
+body { letter-spacing: 0; }
+.meta, .subtitle, small, .step p, .ing .txt, .sheet-body p, .hh-sub { letter-spacing: 0; }
+.btn-primary, .btn-outline, .seg button, .chip, .hh-ghost, .cm-import, .size-opt, .mini-seg button, .text-btn { letter-spacing: .01em; }
+.hs-meals b, .meal-main b, .litem b, .group-row b, .rank-row b, .option b, .feed b, .list-card b, .trip-card b, .card .caption h3, .nav-title { letter-spacing: -0.005em; }
+.stat b, .week-sum b, .tm-cell b { letter-spacing: -0.01em; }
+.eyebrow { letter-spacing: .1em; }
+:root[data-theme="umami"] .card::before { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+html:root[data-theme] .card .top :is(.tag, .badge-cook, .fav) { background: color-mix(in srgb, var(--bg) 88%, var(--ink)); }
+html:root[data-theme="gohan"] .card .top :is(.tag, .badge-cook, .fav), html:root[data-theme="quente"] .card .top :is(.tag, .badge-cook, .fav),
+html:root[data-theme="washi"] .card .top :is(.tag, .badge-cook, .fav) { background: rgb(20 14 10 / .38); color: #fff; }
+@media (max-width: 767px) {
+  html:root[data-theme="umami"] .home-hero h2 { font-size: 1.7rem; position: relative; z-index: 1; }
+  html:root[data-theme="umami"] .hh-text { position: relative; z-index: 1; min-width: 0; }
+  html:root[data-theme="umami"] .hh-week { width: 128%; margin-right: -2.4rem; }
 }
