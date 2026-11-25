@@ -32,6 +32,8 @@ from .util import scale_quantity  # noqa: F401  (re-exported for tests/back-comp
 
 def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=Notifier, weekly: bool = True) -> FastAPI:
     docs = os.getenv("ENABLE_DOCS") == "1"  # API docs off in production unless asked for
+    from concurrent.futures import ThreadPoolExecutor
+    import_pool = ThreadPoolExecutor(max_workers=int(os.getenv("IMPORT_WORKERS", "2")), thread_name_prefix="import")
     app = FastAPI(title="Gohan", docs_url="/docs" if docs else None, redoc_url=None, openapi_url="/openapi.json" if docs else None)
     store = Store(db_path)
     current_user, signup, login, logout = make_auth(store)
@@ -123,7 +125,12 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
         def on_failed(error):
             notifier.on_import_failed(user["id"], error)
 
-        bg.add_task(runner, store, job, req.text, on_saved, on_failed)
+        # Imports run on their own worker threads, not as response background tasks: behind Passenger/LiteSpeed
+        # (WSGI) a background task keeps the HTTP response open until it finishes, so the phone would wait.
+        if runner is run_job:
+            import_pool.submit(runner, store, job, req.text, on_saved, on_failed)
+        else:  # test doubles complete synchronously
+            runner(store, job, req.text, on_saved, on_failed)
         return job
 
 

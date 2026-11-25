@@ -70,6 +70,23 @@ def import_recipe(
     return recipe
 
 
+def friendly_error(e: Exception, url: str) -> str:
+    """Turn network/site errors into something a person can act on (pt-PT)."""
+    msg = str(e)
+    low = msg.lower()
+    site = "Instagram" if "instagram" in url else "TikTok" if "tiktok" in url else "Facebook" if "facebook" in url else "o site"
+    if "accounts/login" in low or "login required" in low or "429" in low or "rate-limit" in low or "rate limit" in low:
+        return (f"{site} pediu sessão iniciada e não deixou ler a publicação. Abre o Reel, copia a legenda "
+                "(⋯ → Copiar) e cola-a no campo de texto da importação.")
+    if "private" in low or "not available" in low or "404" in low:
+        return "A publicação não está disponível (pode ser privada ou ter sido apagada)."
+    if "timed out" in low or "timeout" in low:
+        return "O site demorou demasiado a responder. Tenta outra vez daqui a pouco."
+    if "anthropic" in low or "api_key" in low or "authentication" in low or "401" in low:
+        return "A ligação à IA falhou. Confirma a ANTHROPIC_API_KEY no servidor."
+    return msg if any(ch in msg for ch in "ãçõéáí") else "Não foi possível importar esta receita. Tenta outra vez ou cola o texto."
+
+
 def run_job(store: Store, job: ImportJob, text: Optional[str] = None,
             on_saved: Callable[[Recipe], None] = lambda r: None,
             on_failed: Callable[[str], None] = lambda e: None, **kw) -> None:
@@ -84,6 +101,6 @@ def run_job(store: Store, job: ImportJob, text: Optional[str] = None,
         status("done")
     except Exception as e:
         log.exception("import failed")
-        job.error = str(e)
+        job.error = friendly_error(e, job.url or "")
         on_failed(job.error)
         status("failed")
