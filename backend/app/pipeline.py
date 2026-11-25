@@ -84,7 +84,10 @@ def friendly_error(e: Exception, url: str) -> str:
         return "O site demorou demasiado a responder. Tenta outra vez daqui a pouco."
     if "anthropic" in low or "api_key" in low or "authentication" in low or "401" in low:
         return "A ligação à IA falhou. Confirma a ANTHROPIC_API_KEY no servidor."
-    return msg if any(ch in msg for ch in "ãçõéáí") else "Não foi possível importar esta receita. Tenta outra vez ou cola o texto."
+    if any(ch in msg for ch in "ãçõéáí"):
+        return msg
+    detail = " ".join(msg.split())[:160] or type(e).__name__
+    return f"Não foi possível importar esta receita. Tenta outra vez ou cola o texto. (Detalhe: {type(e).__name__}: {detail})"
 
 
 def run_job(store: Store, job: ImportJob, text: Optional[str] = None,

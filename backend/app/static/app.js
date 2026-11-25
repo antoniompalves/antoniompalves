@@ -23,6 +23,8 @@ const state = {
   pending: store.get("pending", []),     // [{id, label, status, error}]
 };
 const groups = () => state.me?.groups || [];
+const prefs = () => ({ bimby: "auto", bimby_model: "TM6", ...(state.me?.prefs || {}) });
+const noBimby = () => prefs().bimby === "no";
 const groupById = id => groups().find(g => g.id === id);
 const me = () => state.me?.user;
 
@@ -230,6 +232,7 @@ const largeTitle = (text, sub) => {
 function filteredRecipes() {
   const q = state.query.trim().toLowerCase();
   return state.recipes.filter(r =>
+    (!noBimby() || !isBimby(r)) &&
     (state.scope === "all" || (state.scope === "mine" ? r.is_owner : r.shared_group_ids.includes(state.scope))) &&
     (q || !state.collection || (state.collection === "♥" ? r.favorite : r.collections.includes(state.collection))) &&
     (q || !state.category || CATEGORIES.find(c => c[0] === state.category)?.[2](r)) &&
@@ -273,7 +276,7 @@ function bimbyStrip(b, ctx = "") {
 }
 
 function openBimbySheet(r) {
-  let model = store.get("bimbyModel", "TM6");
+  let model = prefs().bimby_model || "TM6";
   openSheet({
     title: "Fazer na Bimby", submit: "Converter",
     body: `<div class="bz-intro"><div class="bc-ico">${BIMBY_ICON}</div>
@@ -285,13 +288,16 @@ function openBimbySheet(r) {
       <p class="meta">Fica guardada como uma receita nova, tua, ligada à original. O original não muda.</p>
       <div class="bz-wait" hidden><div class="spinner" aria-hidden="true"></div><span>A adaptar para a Bimby… pode levar meio minuto.</span></div>`,
     onMount: el => el.querySelectorAll("[data-m]").forEach(b => b.onclick = () => {
-      model = b.dataset.m; store.set("bimbyModel", model);
+      model = b.dataset.m;
       el.querySelectorAll("[data-m]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); });
     }),
     onSubmit: async (form, el) => {
       $(".bz-wait", el).hidden = false;
       try {
         const out = await api(`/recipes/${r.id}/bimby`, { method: "POST", body: { model } });
+        if (model !== prefs().bimby_model || prefs().bimby !== "yes") {
+          state.me.prefs = await api("/me/prefs", { method: "PUT", body: { bimby: "yes", bimby_model: model } }).catch(() => state.me.prefs);
+        }
         await loadRecipes().catch(() => {});
         location.hash = `/r/${out.id}`; toast("Versão Bimby pronta");
       } finally { const w = $(".bz-wait", el); if (w) w.hidden = true; }
@@ -378,7 +384,7 @@ function renderLibrary() {
   const favs = state.recipes.some(r => r.favorite);
   if (state.scope !== "all" && state.scope !== "mine" && !groupById(state.scope)) state.scope = "all";
   const scopes = [["all", "Todas"], ["mine", "Minhas"], ...groups().map(g => [g.id, g.name])];
-  const cats = CATEGORIES.filter(([k, , f]) => k === "bimby" || state.recipes.some(f));
+  const cats = CATEGORIES.filter(([k, , f]) => k === "bimby" ? !noBimby() : state.recipes.some(f));
   if (state.category && !cats.some(c => c[0] === state.category)) state.category = null;
   view.innerHTML = `
     ${n ? homeHero() : ""}
@@ -477,7 +483,7 @@ function shelfHTML(key, title, sub, items, more) {
 }
 const SHELF_CATS = ["festas", "rapidas", "pratos", "entradas", "asiaticas", "vegetarianas", "sobremesas", "bimby"];
 function categoryShelvesHTML(list) {
-  return SHELF_CATS.map(k => {
+  return SHELF_CATS.filter(k => k !== "bimby" || !noBimby()).map(k => {
     const c = CATEGORIES.find(x => x[0] === k); if (!c) return "";
     const items = list.filter(c[2]);
     if (items.length < 3) return "";
@@ -809,7 +815,7 @@ async function renderDetail(id) {
         ${current.steps.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><div class="step-body"><p>${bimbyStrip(s.bimby) ? esc(s.text).replace(/ (°C|seg|min)\b/g, "&nbsp;$1") : timers.linkify(s.text, r.title)}</p>${bimbyStrip(s.bimby, r.title)}</div></div>`).join("")}
       </section>
       ${r.converted_from ? `<a class="bimby-origin glass" href="#/r/${esc(r.converted_from)}">${BIMBY_ICON}<span>Versão Bimby convertida com IA · <b>ver a receita original</b></span></a>`
-        : isBimby(r) ? "" : `<section class="section glass bimby-cta"><div class="bc-ico">${BIMBY_ICON}</div>
+        : isBimby(r) || noBimby() ? "" : `<section class="section glass bimby-cta"><div class="bc-ico">${BIMBY_ICON}</div>
           <div><h4>fazer na bimby</h4><p class="meta">Passos exatos com tempo, temperatura e velocidade, colher inversa e Varoma.</p></div>
           <button class="btn-outline" id="bimbyBtn">converter</button></section>`}
       <div id="factsArea"></div>

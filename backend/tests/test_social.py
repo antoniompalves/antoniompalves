@@ -229,3 +229,12 @@ def test_demo_holiday_recipes(tmp_path):
     assert art.status_code == 200 and art.headers["content-type"].startswith("image/svg")
     with_cost = [x for x in recs if x.get("facts") and x["facts"].get("price_coverage", 0) >= 0.6]
     assert len(with_cost) >= 30, len(with_cost)
+
+
+def test_account_prefs_bimby(env):
+    h = env.signup("Ana")
+    c = env.client
+    assert c.get("/me", headers=h).json()["prefs"] == {"bimby": "auto", "bimby_model": "TM6"}
+    assert c.put("/me/prefs", json={"bimby": "no", "bimby_model": "TM9"}, headers=h).json() == {"bimby": "no", "bimby_model": "TM6"}
+    c.put("/me/prefs", json={"bimby": "yes", "bimby_model": "TM7"}, headers=h)
+    assert c.get("/me", headers=h).json()["prefs"] == {"bimby": "yes", "bimby_model": "TM7"}

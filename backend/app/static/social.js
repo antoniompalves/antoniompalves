@@ -705,6 +705,18 @@ function renderSettings() {
       </div>
     </section>
 
+    <section class="section glass" id="bimbySec"><div class="section-head"><h3>Bimby</h3>${BIMBY_ICON}</div>
+      <div class="seg glass" role="radiogroup" aria-label="Tens Bimby?">
+        <button role="radio" data-bim="yes" class="${prefs().bimby !== "no" ? "on" : ""}" aria-checked="${prefs().bimby !== "no"}">Tenho Bimby</button>
+        <button role="radio" data-bim="no" class="${prefs().bimby === "no" ? "on" : ""}" aria-checked="${prefs().bimby === "no"}">Não tenho</button></div>
+      <div id="bimModel" ${prefs().bimby === "no" ? "hidden" : ""}>
+        <p class="eyebrow" style="margin:1rem 0 .6rem">O meu modelo</p>
+        <div class="size-picker" role="radiogroup" aria-label="Modelo da Bimby">
+          ${["TM5", "TM6", "TM7"].map(m => `<button type="button" role="radio" class="size-opt ${prefs().bimby_model === m ? "on" : ""}" aria-checked="${prefs().bimby_model === m}" data-bmodel="${m}">${m}</button>`).join("")}</div>
+        <p class="meta" style="margin:.7rem 0 0">O conversor usa os tempos, temperaturas e modos do teu modelo.</p></div>
+      <p class="meta" id="bimNo" style="margin:.8rem 0 0" ${prefs().bimby === "no" ? "" : "hidden"}>As receitas Bimby e o conversor ficam escondidos. Podes voltar a ativá-los aqui.</p>
+    </section>
+
     <section class="section glass"><div class="section-head"><h3>Receitas prontas</h3></div>
       <p class="meta" style="margin:0 0 .8rem">Adiciona conjuntos de receitas (Natal, dia a dia, verão, vegetarianas, asiáticas, doces). Podes apagar as que não quiseres.</p>
       <button class="btn-outline" data-starter>Escolher receitas</button></section>
@@ -742,6 +754,19 @@ function renderSettings() {
     <section class="section glass"><div class="section-head"><h3>Android</h3></div>
       <p class="meta">Instala a partir do menu do Chrome (<b>Adicionar ao ecrã principal</b>). O Gohan passa a aparecer diretamente na folha de partilha.</p></section>`;
   view.querySelectorAll("[data-starter]").forEach(b => b.onclick = () => openStarterSheet());
+  const savePrefs = async body => {
+    try { state.me.prefs = await api("/me/prefs", { method: "PUT", body }); haptic(6); } catch (e) { toast(e.message); }
+  };
+  view.querySelectorAll("[data-bim]").forEach(b => b.onclick = async () => {
+    view.querySelectorAll("[data-bim]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); });
+    $("#bimModel").hidden = b.dataset.bim === "no"; $("#bimNo").hidden = b.dataset.bim !== "no";
+    await savePrefs({ bimby: b.dataset.bim });
+    toast(b.dataset.bim === "no" ? "Receitas Bimby escondidas" : "Receitas Bimby visíveis");
+  });
+  view.querySelectorAll("[data-bmodel]").forEach(b => b.onclick = () => {
+    view.querySelectorAll("[data-bmodel]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); });
+    savePrefs({ bimby: "yes", bimby_model: b.dataset.bmodel });
+  });
   view.querySelectorAll("[data-ts]").forEach(b => b.onclick = () => {
     store.set("textSize", b.dataset.ts); applyTextSize(b.dataset.ts); haptic(6);
     view.querySelectorAll("[data-ts]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); });

@@ -526,9 +526,26 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
         g["recipe_count"] = store.one("SELECT COUNT(*) c FROM recipe_shares WHERE group_id=?", (gid,))["c"]
         return g
 
+    # Personal preferences kept on the account (follow the person across devices)
+    PREF_DEFAULTS = {"bimby": "auto", "bimby_model": "TM6"}   # bimby: auto | yes | no
+
+    def get_prefs(uid: str) -> dict:
+        row = store.one("SELECT value FROM kv WHERE key=?", (f"prefs:{uid}",))
+        return {**PREF_DEFAULTS, **(loads(row["value"], {}) if row else {})}
+
     @r.get("/me")
     def me(user=U) -> dict:
-        return {"user": user, "groups": [group_view(g, user["id"]) for g in my_groups(user["id"])]}
+        return {"user": user, "groups": [group_view(g, user["id"]) for g in my_groups(user["id"])], "prefs": get_prefs(user["id"])}
+
+    @r.put("/me/prefs")
+    def set_prefs(body: dict, user=U) -> dict:
+        cur = get_prefs(user["id"])
+        if body.get("bimby") in ("auto", "yes", "no"):
+            cur["bimby"] = body["bimby"]
+        if body.get("bimby_model") in ("TM5", "TM6", "TM7"):
+            cur["bimby_model"] = body["bimby_model"]
+        store.x("INSERT OR REPLACE INTO kv(key, value) VALUES (?, ?)", (f"prefs:{user['id']}", json.dumps(cur)))
+        return cur
 
     @r.post("/groups", status_code=201)
     def create_group(body: GroupIn, user=U) -> dict:

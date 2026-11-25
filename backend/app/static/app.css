@@ -2127,3 +2127,16 @@ html:root .text-btn:hover, html:root[data-theme] .text-btn:hover { background: c
 html:root .text-btn:active, html:root[data-theme] .text-btn:active { background: color-mix(in srgb, var(--ink) 13%, transparent); background-image: none; }
 html:root .sheet-head .text-btn, html:root[data-theme] .sheet-head .text-btn { padding: 0 .75rem; margin: 0 -.5rem; }
 html:root .sheet-head [type=submit]:hover, html:root[data-theme] .sheet-head [type=submit]:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+
+/* Recipe hero (Umami): the height follows the content, so the title sits right under the dish */
+html:root[data-theme="umami"] .hero { height: auto; display: flex; flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 4.2rem) 0 4.9rem; }
+html:root[data-theme="umami"] .hero img, html:root[data-theme="umami"] .hero .ph {
+  position: relative; inset: auto; left: auto; top: auto; transform: none; margin: 0 auto; z-index: 0; flex: none; }
+html:root[data-theme="umami"] .hero-text { position: relative; left: auto; right: auto; bottom: auto; margin: 1.5rem 1.25rem 0; z-index: 1; }
+@media (min-width: 768px) { html:root[data-theme="umami"] .hero { padding-top: calc(env(safe-area-inset-top) + 5.5rem); } html:root[data-theme="umami"] .hero-text { margin: 1.75rem 2rem 0; } }
+#bimbySec .section-head > svg { width: 1.3rem; height: 1.3rem; color: var(--accent); }
+#bimbySec .seg { margin: 0; }
+[hidden] { display: none !important; }
+html:root #bimbySec .seg, html:root[data-theme] #bimbySec .seg { margin: 0; padding: 0; overflow: visible; }
