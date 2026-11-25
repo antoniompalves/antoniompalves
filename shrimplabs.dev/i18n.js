@@ -25,7 +25,7 @@ window.I18N_EN = {
   "pc3.v": "8 items",
   "pc4.t": "Revenue",
 
-  "about.title": "We're<br>Shrimp<br>Labs <span class=\"beans\" aria-hidden=\"true\"><i></i><i></i></span>",
+  "about.title": "We're<br>Shrimp<br>Labs <img class=\"mini-shrimp\" src=\"assets/shrimp.svg\" alt=\"\">",
   "about.lead": "We build web apps that take the busywork off businesses' plates, so they can focus on what they do best.",
   "about.p": "Every app is fast, works on phones and is made to be used every day by real people. We work closely with each client, from the first sketch to launch.",
   "about.cta": "Talk to us",

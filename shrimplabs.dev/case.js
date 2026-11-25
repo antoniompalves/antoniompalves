@@ -20,11 +20,10 @@
   $("next").href = `case.html?p=${next.id}`;
   $("c-nextlink").href = `case.html?p=${next.id}`;
 
-  SL.floaters($("floaters"), [
-    ["p", 72, 6, 12, "#f8f2ea", "#d6c8b8", 10],
-    ["s", 80, 50, 16, "#f7eee6", "#d8c7b7", 35],
-    ["p", 6, 60, 10, "#f5ede4", "#d4c4b2", -15],
-    ["s", 14, 4, 9, "#f3ebe2", "#d3c3b1", -40]
+  SL.swim($("floaters"), [
+    ["cream", 16, 82, 62, 0.9],
+    ["peach", 10, 14, 20, 0.6],
+    ["cream", 7, 70, 14, 0.35]
   ]);
 
   function render(lang) {

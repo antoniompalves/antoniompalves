@@ -1,19 +1,20 @@
 (() => {
   const P = window.PROJECTS;
 
-  // ---------- Hero floating shapes ----------
-  SL.floaters(document.getElementById("floaters"), [
-    // [type, left%, top%, size(vw), light, dark, rotation]
-    ["s", 4, 8, 15, "#f6efe7", "#d9cbbb", -20],
-    ["p", 70, 4, 11, "#f8f2ea", "#d6c8b8", 10],
-    ["s", 78, 52, 19, "#f7eee6", "#d8c7b7", 35],
-    ["p", 12, 66, 13, "#f5ede4", "#d4c4b2", -15],
-    ["s", 44, 72, 10, "#ffd9cf", "#e0604c", 160],
-    ["p", 88, 26, 7, "#ffe2da", "#e7907f", 40],
-    ["s", 30, -4, 9, "#f3ebe2", "#d3c3b1", 80],
-    ["p", 52, 30, 5, "#f7f0e8", "#d8cab9", 0],
-    ["p", -2, 34, 8, "#f4ece3", "#d6c6b4", 60]
+  // ---------- Hero swimming shrimp ----------
+  // [palette, size (vw), start x %, start y %, depth 0..1]
+  SL.swim(document.getElementById("floaters"), [
+    ["cream", 22, 12, 22, 1],
+    ["peach", 15, 84, 70, 0.8],
+    ["coral", 12, 72, 18, 0.7],
+    ["cream", 10, 22, 80, 0.5],
+    ["peach", 8, 50, 8, 0.35],
+    ["coral", 7, 92, 40, 0.3],
+    ["cream", 6, 40, 92, 0.2]
   ]);
+
+  // Big shrimp in the "about" panel
+  document.getElementById("panel-shrimp").innerHTML = makeShrimp("coral", { id: "panel" });
 
   // ---------- Work: sliding rows of project names ----------
   const rows = document.getElementById("rows");

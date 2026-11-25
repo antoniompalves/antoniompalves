@@ -47,38 +47,95 @@ window.SL = (() => {
     apply();
   }
 
-  // Soft clay-like shrimp and pebbles floating behind a section
-  let gid = 0;
-  function shrimp(light, dark) {
-    const id = "sg" + gid++;
-    return `<svg viewBox="0 0 64 64"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${light}"/><stop offset="1" stop-color="${dark}"/></linearGradient></defs>
-      <path d="M46 14c-9-6-24-3-30 8-6 11-1 24 10 28 6 2 12 0 15-4" stroke="url(#${id})" stroke-width="9" stroke-linecap="round" fill="none"/>
-      <path d="M41 46l9 2-3 7z" fill="${dark}"/>
-      <path d="M48 13c5-4 9-5 13-4M47 16c6-1 10 0 13 3" stroke="${dark}" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-      <circle cx="44" cy="17" r="2.4" fill="#2a2522"/></svg>`;
-  }
-  function pebble(light, dark) {
-    const id = "sg" + gid++;
-    return `<svg viewBox="0 0 100 80"><defs><radialGradient id="${id}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="${light}"/><stop offset="1" stop-color="${dark}"/></radialGradient></defs>
-      <path d="M12 44C6 22 30 6 54 8s40 18 36 38-30 30-52 26S16 58 12 44z" fill="url(#${id})"/></svg>`;
-  }
-  function floaters(container, shapes) {
-    shapes.forEach(([t, x, y, s, l, d, r], i) => {
+  // ---------- Swimming shrimp ----------
+  // configs: [palette, size (vw), start x %, start y %, depth 0..1]
+  // Shrimp wander slowly head-first, paddle their legs, and when the cursor
+  // gets close they flick their tail and dart away backwards, like real shrimp.
+  function swim(container, configs) {
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const fish = configs.map(([pal, size, x, y, depth], i) => {
       const el = document.createElement("div");
-      el.className = "floater";
-      el.style.cssText = `left:${x}%;top:${y}%;width:${s}vw;min-width:${s * 5}px;--r0:${r}deg;--r1:${r + (i % 2 ? 10 : -10)}deg;--dx:${(i % 3 - 1) * 24}px;--dy:${i % 2 ? -28 : 22}px;--d:${11 + i * 1.7}s`;
-      el.dataset.depth = (0.4 + (i % 4) * 0.25).toFixed(2);
-      el.innerHTML = t === "s" ? shrimp(l, d) : pebble(l, d);
+      el.className = "swimmer";
+      el.style.width = `max(${size}vw, ${size * 6}px)`;
+      el.style.setProperty("--depth", depth);
+      el.style.zIndex = Math.round(depth * 10);
+      el.innerHTML = window.makeShrimp(pal);
+      el.style.setProperty("--speed", (0.7 + depth * 0.5).toFixed(2));
       container.appendChild(el);
+      return {
+        el, depth, x, y, px: 0, py: 0,
+        h: (i * 137) % 360 * Math.PI / 180,    // heading
+        phase: i * 1.7, dvx: 0, dvy: 0, cool: 0, shown: 0
+      };
     });
-    const host = container.parentElement;
-    host.addEventListener("mousemove", (e) => {
-      const cx = e.clientX / innerWidth - 0.5, cy = e.clientY / innerHeight - 0.5;
-      container.querySelectorAll(".floater").forEach((f) => {
-        const k = f.dataset.depth * 30;
-        f.style.transform = `translate(${-cx * k}px, ${-cy * k}px)`;
+
+    let W = 0, H = 0, mx = -9999, my = -9999, running = false, t = 0;
+    const size = () => {
+      const r = container.getBoundingClientRect();
+      W = r.width; H = r.height;
+      fish.forEach((s) => { if (!s.shown) { s.px = s.x / 100 * W; s.py = s.y / 100 * H; s.shown = 1; } });
+    };
+    size();
+    addEventListener("resize", size);
+    addEventListener("mousemove", (e) => {
+      const r = container.getBoundingClientRect();
+      mx = e.clientX - r.left; my = e.clientY - r.top;
+    });
+
+    // Face the direction of travel: mirror when going left, tilt at most ±22°
+    const draw = (s) => {
+      const vx = Math.cos(s.h), vy = Math.sin(s.h) * 0.45;
+      const dir = vx < 0 ? -1 : 1;
+      const tilt = Math.max(-22, Math.min(22, Math.atan2(vy, Math.abs(vx)) * 180 / Math.PI));
+      s.el.style.transform = `translate(${s.px}px, ${s.py}px) translate(-50%, -50%) scaleX(${dir}) rotate(${tilt}deg)`;
+    };
+
+    function flick(s) {
+      s.el.classList.remove("flick"); void s.el.offsetWidth; s.el.classList.add("flick");
+      setTimeout(() => s.el.classList.remove("flick"), 450);
+    }
+
+    function step() {
+      if (!running) return;
+      t += 1;
+      fish.forEach((s) => {
+        const w = s.el.offsetWidth;
+        const cruise = 0.25 + s.depth * 0.45;
+        // gentle wandering
+        s.h += Math.sin(t * 0.008 + s.phase) * 0.006 + Math.sin(t * 0.021 + s.phase * 2) * 0.003;
+        // steer back inside the box
+        const m = w * 0.3;
+        if (s.px < -m || s.px > W + m || s.py < -m * 0.5 || s.py > H + m * 0.5) {
+          const target = Math.atan2(H / 2 - s.py, W / 2 - s.px);
+          let d = target - s.h; d = Math.atan2(Math.sin(d), Math.cos(d));
+          s.h += d * 0.03;
+        }
+        // cursor: tail-flick escape
+        s.cool = Math.max(0, s.cool - 1);
+        const dx = s.px - mx, dy = s.py - my, dist = Math.hypot(dx, dy);
+        if (dist < w * 0.75 + 60 && !s.cool) {
+          const k = 9 + s.depth * 5;
+          s.dvx = dx / dist * k; s.dvy = dy / dist * k;
+          s.cool = 70; flick(s);
+        } else if (!s.cool && Math.random() < 0.0012) {
+          // spontaneous little backward flick
+          s.dvx = -Math.cos(s.h) * 5; s.dvy = -Math.sin(s.h) * 5;
+          s.cool = 90; flick(s);
+        }
+        s.dvx *= 0.94; s.dvy *= 0.94;
+        s.px += Math.cos(s.h) * cruise + s.dvx;
+        s.py += Math.sin(s.h) * cruise * 0.45 + s.dvy;
+        draw(s);
       });
-    });
+      requestAnimationFrame(step);
+    }
+
+    fish.forEach(draw);
+    if (reduce) return;
+    new IntersectionObserver(([e]) => {
+      const was = running; running = e.isIntersecting;
+      if (running && !was) requestAnimationFrame(step);
+    }).observe(container);
   }
 
   function reveal(selector) {
@@ -96,7 +153,7 @@ window.SL = (() => {
   }
 
   return {
-    init, setLang, floaters, reveal, img,
+    init, setLang, swim, reveal, img,
     onLang(fn) { listeners.push(fn); },
     get lang() { return lang; },
     META
