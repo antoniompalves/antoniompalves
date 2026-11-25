@@ -1,0 +1,338 @@
+{
+ "Bacalhau cozido com todos": {
+  "image": "/static/demo/bacalhau-cozido-com-todos.jpg",
+  "source": "https://unsplash.com/photos/VgIzq6027MQ",
+  "photographer": "Meg von Haartman",
+  "match": "approximate"
+ },
+ "Polvo à lagareiro": {
+  "image": "/static/demo/polvo-a-lagareiro.jpg",
+  "source": "https://unsplash.com/photos/octopus-dish-with-potato-lQ1nICyM4cA",
+  "photographer": "Nikita Tikhomirov",
+  "match": "exact"
+ },
+ "Bacalhau com natas": {
+  "image": "/static/demo/bacalhau-com-natas.jpg",
+  "source": "https://unsplash.com/photos/a-close-up-of-a-casserole-dish-on-a-table-0cDIWP0Kpec",
+  "photographer": "Rafael Rodrigues",
+  "match": "approximate"
+ },
+ "Peru assado recheado": {
+  "image": "/static/demo/peru-assado-recheado.jpg",
+  "source": "https://unsplash.com/photos/a-golden-brown-roasted-turkey-on-a-roasting-rack-kEwZW6V6yLM",
+  "photographer": "Lois Spencer Carter",
+  "match": "exact"
+ },
+ "Cabrito assado no forno": {
+  "image": "/static/demo/cabrito-assado-no-forno.jpg",
+  "source": "https://unsplash.com/photos/rack-of-lamb-with-rosemary-and-salt-pLV9EjVGEbI",
+  "photographer": "Diego Arenas de Rodrigo",
+  "match": "approximate"
+ },
+ "Roupa-velha": {
+  "image": "/static/demo/roupa-velha.jpg",
+  "source": "https://unsplash.com/photos/baked-dish-with-potatoes-eggs-and-olives-7AyseGersVI",
+  "photographer": "David Magalhães",
+  "match": "approximate"
+ },
+ "Lombo de porco assado com laranja": {
+  "image": "/static/demo/lombo-de-porco-assado-com-laranja.jpg",
+  "source": "https://unsplash.com/photos/a-wooden-cutting-board-topped-with-sliced-meat-next-to-a-bowl-of-corn-0swxYugPCm0",
+  "photographer": "Melissa De Mata",
+  "match": "approximate"
+ },
+ "Pastéis de bacalhau": {
+  "image": "/static/demo/pasteis-de-bacalhau.jpg",
+  "source": "https://unsplash.com/photos/a-white-plate-topped-with-four-fried-food-items-la8l6y8_AHg",
+  "photographer": "Div",
+  "match": "approximate"
+ },
+ "Caldo verde": {
+  "image": "/static/demo/caldo-verde.jpg",
+  "source": "https://unsplash.com/photos/a-bowl-of-soup-6Ia1PRfvciQ",
+  "photographer": "Green And Great",
+  "match": "approximate"
+ },
+ "Amêijoas à Bulhão Pato": {
+  "image": "/static/demo/ameijoas-a-bulhao-pato.jpg",
+  "source": "https://unsplash.com/photos/a-white-plate-topped-with-clams-and-parsley-D3O4wRPbIyE",
+  "photographer": "Paul Einerhand",
+  "match": "exact"
+ },
+ "Camarão ao alho": {
+  "image": "/static/demo/camarao-ao-alho.jpg",
+  "source": "https://unsplash.com/photos/shrimp-scampi-served-in-a-black-skillet-with-garlic-tGkeilOOfBg",
+  "photographer": "tommao wang",
+  "match": "exact"
+ },
+ "Bolo-rei": {
+  "image": "/static/demo/bolo-rei.jpg",
+  "source": "https://unsplash.com/photos/a-round-cake-topped-with-candied-fruit-and-powdered-sugar-plIiannXZiI",
+  "photographer": "Pasquale Farro",
+  "match": "exact"
+ },
+ "Rabanadas": {
+  "image": "/static/demo/rabanadas.jpg",
+  "source": "https://unsplash.com/photos/brown-bread-on-white-ceramic-plate-Q58N5cBKDZ8",
+  "photographer": "Crystal Jo",
+  "match": "exact"
+ },
+ "Sonhos de abóbora": {
+  "image": "/static/demo/sonhos-de-abobora.jpg",
+  "source": "https://unsplash.com/photos/two-powdered-donuts-sitting-on-top-of-a-paper-wrapper-wu9YiwFDWkQ",
+  "photographer": "Dominique Shaw",
+  "match": "approximate"
+ },
+ "Filhoses": {
+  "image": "/static/demo/filhoses.jpg",
+  "source": "https://unsplash.com/photos/a-couple-of-pastries-on-a-plate-next-to-a-bottle-of-milk-cFI5w2oJbRg",
+  "photographer": "Maryam Sicard",
+  "match": "approximate"
+ },
+ "Aletria": {
+  "image": "/static/demo/aletria.jpg",
+  "source": "https://unsplash.com/photos/a-bowl-of-food-sitting-on-top-of-a-table-eOXBQpOpQco",
+  "photographer": "Rimsha Noor",
+  "match": "approximate"
+ },
+ "Arroz-doce": {
+  "image": "/static/demo/arroz-doce.jpg",
+  "source": "https://unsplash.com/photos/a-bowl-of-creamy-rice-pudding-with-marigold-garland-9Gm-wNAaWzg",
+  "photographer": "Adil Murshed",
+  "match": "approximate"
+ },
+ "Leite-creme queimado": {
+  "image": "/static/demo/leite-creme-queimado.jpg",
+  "source": "https://unsplash.com/photos/creme-brulee-dessert-with-strawberry-6We0b1jY6ms",
+  "photographer": "Suryagayathri C.K",
+  "match": "exact"
+ },
+ "Toucinho do céu": {
+  "image": "/static/demo/toucinho-do-ceu.jpg",
+  "source": "https://unsplash.com/photos/rectangular-cake-with-nuts-on-top-on-a-white-plate-oyVe1GRV7K8",
+  "photographer": "Mohammad Fahim",
+  "match": "approximate"
+ },
+ "Gambas al ajillo": {
+  "image": "/static/demo/gambas-al-ajillo.jpg",
+  "source": "https://unsplash.com/photos/cooked-shrimp-with-garlic-and-herbs-in-a-white-dish-35W67XoBpUs",
+  "photographer": "Kris Tian",
+  "match": "exact"
+ },
+ "Croquetas de jamón": {
+  "image": "/static/demo/croquetas-de-jamon.jpg",
+  "source": "https://unsplash.com/photos/fried-food-on-white-ceramic-plate-8XDvZ_VTtjw",
+  "photographer": "Laura Munoz",
+  "match": "exact"
+ },
+ "Tortilla de patatas": {
+  "image": "/static/demo/tortilla-de-patatas.jpg",
+  "source": "https://unsplash.com/photos/a-close-up-of-a-piece-of-food-on-a-plate-z4CQtd07u5k",
+  "photographer": "blackieshoot",
+  "match": "exact"
+ },
+ "Pimientos del piquillo rellenos de bacalao": {
+  "image": "/static/demo/pimientos-del-piquillo-rellenos-de-bacalao.jpg",
+  "source": "https://unsplash.com/photos/a-white-plate-topped-with-stuffed-bell-peppers-myfDbaJr6vA",
+  "photographer": "Natalia Gusakova",
+  "match": "approximate"
+ },
+ "Sopa de marisco": {
+  "image": "/static/demo/sopa-de-marisco.jpg",
+  "source": "https://unsplash.com/photos/round-white-ceramic-bowl-with-seafoods-rmdo8r9iGfw",
+  "photographer": "Cloris Ying",
+  "match": "exact"
+ },
+ "Cordero asado": {
+  "image": "/static/demo/cordero-asado.jpg",
+  "source": "https://unsplash.com/photos/rack-of-lamb-served-with-rosemary-and-beer-CD85IchdZvE",
+  "photographer": "Diego Arenas de Rodrigo",
+  "match": "approximate"
+ },
+ "Turrón de chocolate crujiente": {
+  "image": "/static/demo/turron-de-chocolate-crujiente.jpg",
+  "source": "https://unsplash.com/photos/a-stack-of-chocolate-bars-with-nuts-on-top-XAJRdCq7a0w",
+  "photographer": "jesni rawther",
+  "match": "approximate"
+ },
+ "Polvorones": {
+  "image": "/static/demo/polvorones.jpg",
+  "source": "https://unsplash.com/photos/brown-cookies-on-white-ceramic-plate-IKAv1jMk8EA",
+  "photographer": "Adam Bartoszewicz",
+  "match": "approximate"
+ },
+ "Roscón de Reyes": {
+  "image": "/static/demo/roscon-de-reyes.jpg",
+  "source": "https://unsplash.com/photos/roscon-de-reyes-cake-with-holiday-sweets-A9M21gV--II",
+  "photographer": "Shayla Bruins",
+  "match": "exact"
+ },
+ "Sangria de cava": {
+  "image": "/static/demo/sangria-de-cava.jpg",
+  "source": "https://unsplash.com/photos/cocktail-glasses-with-berry-garnish-89dF9XXhoVI",
+  "photographer": "Heng Chiu",
+  "match": "approximate"
+ },
+ "Creme de castanhas": {
+  "image": "/static/demo/creme-de-castanhas.jpg",
+  "source": "https://unsplash.com/photos/JIjtV1gmfxo",
+  "photographer": "Olga Kudriavtseva",
+  "match": "approximate"
+ },
+ "Mousse de chocolate": {
+  "image": "/static/demo/mousse-de-chocolate.jpg",
+  "source": "https://unsplash.com/photos/two-bowls-of-chocolate-pudding-with-raspberries-on-the-side-YxjIO0LmDO0",
+  "photographer": "American Heritage Chocolate",
+  "match": "exact"
+ },
+ "Arroz de pato": {
+  "image": "/static/demo/arroz-de-pato.jpg",
+  "source": "https://unsplash.com/photos/sliced-roasted-duck-with-rice-and-pickled-vegetables-i6Z4TdUcgf8",
+  "photographer": "Eric Wang",
+  "match": "approximate"
+ },
+ "Bitoque": {
+  "image": "/static/demo/bitoque.jpg",
+  "source": "https://unsplash.com/photos/a-white-plate-topped-with-meat-eggs-and-vegetables-mPiJhA-iaAk",
+  "photographer": "Huzaifa Bukhari",
+  "match": "exact"
+ },
+ "Frango assado com limão e tomilho": {
+  "image": "/static/demo/frango-assado-com-limao-e-tomilho.jpg",
+  "source": "https://unsplash.com/photos/chicken-on-black-round-plate-BhnZwPW_tIc",
+  "photographer": "Anshu A",
+  "match": "exact"
+ },
+ "Massa à bolonhesa": {
+  "image": "/static/demo/massa-a-bolonhesa.jpg",
+  "source": "https://unsplash.com/photos/spaghetti-on-white-ceramic-plate-sA3wymYqyaI",
+  "photographer": "Homescreenify",
+  "match": "exact"
+ },
+ "Caril de grão e espinafres": {
+  "image": "/static/demo/caril-de-grao-e-espinafres.jpg",
+  "source": "https://unsplash.com/photos/cooked-food-on-white-ceramic-plate-ReySmTMcKEQ",
+  "photographer": "Álvaro Bernal",
+  "match": "exact"
+ },
+ "Salada de grão com atum": {
+  "image": "/static/demo/salada-de-grao-com-atum.jpg",
+  "source": "https://unsplash.com/photos/a-bowl-of-food-with-a-spoon-in-it-nFkC9zJv0pk",
+  "photographer": "Imad 786",
+  "match": "approximate"
+ },
+ "Gaspacho": {
+  "image": "/static/demo/gaspacho.jpg",
+  "source": "https://unsplash.com/photos/soup-in-white-green-and-purple-floral-ceramic-bowl-bvLE5xZDj0w",
+  "photographer": "Karolina Kołodziejczak",
+  "match": "approximate"
+ },
+ "Sardinhas assadas": {
+  "image": "/static/demo/sardinhas-assadas.jpg",
+  "source": "https://unsplash.com/photos/grilled-sardines-with-fresh-salad-and-boiled-potatoes-sxK4YtmLfHI",
+  "photographer": "Johan Mouchet",
+  "match": "exact"
+ },
+ "Paella valenciana": {
+  "image": "/static/demo/paella-valenciana.jpg",
+  "source": "https://unsplash.com/photos/cooked-food-on-black-plate-EufUgeuCa7Y",
+  "photographer": "Armando Brenlha",
+  "match": "approximate"
+ },
+ "Risotto de cogumelos": {
+  "image": "/static/demo/risotto-de-cogumelos.jpg",
+  "source": "https://unsplash.com/photos/mushroom-risotto-dinner-with-parmesan-gg_PV3EvCaM",
+  "photographer": "khloe arledge",
+  "match": "exact"
+ },
+ "Risotto de cogumelos na Bimby": {
+  "image": "/static/demo/risotto-de-cogumelos-na-bimby.jpg",
+  "source": "https://unsplash.com/photos/a-bowl-of-rice-with-mushrooms-and-parsley-MT_aSIwT-wU",
+  "photographer": "Corryn Burtenshaw",
+  "match": "exact"
+ },
+ "Bacalhau à Brás": {
+  "image": "/static/demo/bacalhau-a-bras.jpg",
+  "source": "https://unsplash.com/photos/a-plate-of-food-with-a-fork-and-knife-next-to-it-9Se8NZlyqtk",
+  "photographer": "Dextar Studio",
+  "match": "approximate"
+ },
+ "Tosta mista com ovo": {
+  "image": "/static/demo/tosta-mista-com-ovo.jpg",
+  "source": "https://unsplash.com/photos/sunny-side-up-egg-and-bread-on-plate-FQWtCUiE4GM",
+  "photographer": "Jonathan Pielmayer",
+  "match": "exact"
+ },
+ "Panquecas de aveia e banana": {
+  "image": "/static/demo/panquecas-de-aveia-e-banana.jpg",
+  "source": "https://unsplash.com/photos/baked-pancake-with-blueberry-and-slice-of-banan-qp7WA8AV2x0",
+  "photographer": "nikldn",
+  "match": "exact"
+ },
+ "Tacos de frango": {
+  "image": "/static/demo/tacos-de-frango.jpg",
+  "source": "https://unsplash.com/photos/a-plate-of-food-Zggo6DP_P88",
+  "photographer": "Federico Ramirez",
+  "match": "approximate"
+ },
+ "Salmão no forno com legumes": {
+  "image": "/static/demo/salmao-no-forno-com-legumes.jpg",
+  "source": "https://unsplash.com/photos/cooked-fish-and-vegtables-6hCfLFXDBwE",
+  "photographer": "Lazar Gugleta",
+  "match": "exact"
+ },
+ "Pizza margherita caseira": {
+  "image": "/static/demo/pizza-margherita-caseira.jpg",
+  "source": "https://unsplash.com/photos/round-cooked-pizza-x00CzBt4Dfk",
+  "photographer": "Aurélien Lemasson-Théobald",
+  "match": "exact"
+ },
+ "Pastéis de nata": {
+  "image": "/static/demo/pasteis-de-nata.jpg",
+  "source": "https://unsplash.com/photos/rows-of-golden-brown-portuguese-custard-tarts-JAPQ-xs9zOc",
+  "photographer": "Benjamin Chambon",
+  "match": "exact"
+ },
+ "Baba de camelo": {
+  "image": "/static/demo/baba-de-camelo.jpg",
+  "source": "https://unsplash.com/photos/two-glasses-of-dessert-with-chocolate-drizzle-7wvlU2YcKGI",
+  "photographer": "Sandie Clarke",
+  "match": "approximate"
+ },
+ "Tarta de queso": {
+  "image": "/static/demo/tarta-de-queso.jpg",
+  "source": "https://unsplash.com/photos/a-cheesecake-on-a-wooden-cutting-board-with-a-knife-Qv86wgHErmc",
+  "photographer": "Luna Hu",
+  "match": "exact"
+ },
+ "Pad thai de camarão": {
+  "image": "/static/demo/pad-thai-de-camarao.jpg",
+  "source": "https://unsplash.com/photos/cooked-shrimp-food-byTYXNHeVoU",
+  "photographer": "Alyssa Kowalski",
+  "match": "exact"
+ },
+ "Frango teriyaki com arroz": {
+  "image": "/static/demo/frango-teriyaki-com-arroz.jpg",
+  "source": "https://unsplash.com/photos/teriyaki-chicken-bowl-with-rice-vtTqQJ0hfZc",
+  "photographer": "Travis Palma",
+  "match": "exact"
+ },
+ "Ramen de miso": {
+  "image": "/static/demo/ramen-de-miso.jpg",
+  "source": "https://unsplash.com/photos/round-white-bowl-with-ramen-and-egg-rAyCBQTH7ws",
+  "photographer": "Michele Blackwell",
+  "match": "approximate"
+ },
+ "Caril verde tailandês": {
+  "image": "/static/demo/caril-verde-tailandes.jpg",
+  "source": "https://unsplash.com/photos/a-close-up-of-a-green-curry-with-mushrooms-and-chili-rhR7wf0aH28",
+  "photographer": "Diego Arenas de Rodrigo",
+  "match": "approximate"
+ },
+ "Bibimbap": {
+  "image": "/static/demo/bibimbap.jpg",
+  "source": "https://unsplash.com/photos/korean-bibimbap-with-side-dishes-is-served-SbHulgzS_eo",
+  "photographer": "Dmitry Pavlovsky",
+  "match": "exact"
+ }
+}

@@ -1,0 +1,60 @@
+# Fotos das receitas prontas
+
+Fotos do [Unsplash](https://unsplash.com), usadas ao abrigo da [Licença Unsplash](https://unsplash.com/license) (uso gratuito, incluindo comercial; atribuição não obrigatória mas indicada aqui).
+
+- Bacalhau cozido com todos: foto de Meg von Haartman — https://unsplash.com/photos/VgIzq6027MQ
+- Polvo à lagareiro: foto de Nikita Tikhomirov — https://unsplash.com/photos/octopus-dish-with-potato-lQ1nICyM4cA
+- Bacalhau com natas: foto de Rafael Rodrigues — https://unsplash.com/photos/a-close-up-of-a-casserole-dish-on-a-table-0cDIWP0Kpec
+- Peru assado recheado: foto de Lois Spencer Carter — https://unsplash.com/photos/a-golden-brown-roasted-turkey-on-a-roasting-rack-kEwZW6V6yLM
+- Cabrito assado no forno: foto de Diego Arenas de Rodrigo — https://unsplash.com/photos/rack-of-lamb-with-rosemary-and-salt-pLV9EjVGEbI
+- Roupa-velha: foto de David Magalhães — https://unsplash.com/photos/baked-dish-with-potatoes-eggs-and-olives-7AyseGersVI
+- Lombo de porco assado com laranja: foto de Melissa De Mata — https://unsplash.com/photos/a-wooden-cutting-board-topped-with-sliced-meat-next-to-a-bowl-of-corn-0swxYugPCm0
+- Pastéis de bacalhau: foto de Div — https://unsplash.com/photos/a-white-plate-topped-with-four-fried-food-items-la8l6y8_AHg
+- Caldo verde: foto de Green And Great — https://unsplash.com/photos/a-bowl-of-soup-6Ia1PRfvciQ
+- Amêijoas à Bulhão Pato: foto de Paul Einerhand — https://unsplash.com/photos/a-white-plate-topped-with-clams-and-parsley-D3O4wRPbIyE
+- Camarão ao alho: foto de tommao wang — https://unsplash.com/photos/shrimp-scampi-served-in-a-black-skillet-with-garlic-tGkeilOOfBg
+- Bolo-rei: foto de Pasquale Farro — https://unsplash.com/photos/a-round-cake-topped-with-candied-fruit-and-powdered-sugar-plIiannXZiI
+- Rabanadas: foto de Crystal Jo — https://unsplash.com/photos/brown-bread-on-white-ceramic-plate-Q58N5cBKDZ8
+- Sonhos de abóbora: foto de Dominique Shaw — https://unsplash.com/photos/two-powdered-donuts-sitting-on-top-of-a-paper-wrapper-wu9YiwFDWkQ
+- Filhoses: foto de Maryam Sicard — https://unsplash.com/photos/a-couple-of-pastries-on-a-plate-next-to-a-bottle-of-milk-cFI5w2oJbRg
+- Aletria: foto de Rimsha Noor — https://unsplash.com/photos/a-bowl-of-food-sitting-on-top-of-a-table-eOXBQpOpQco
+- Arroz-doce: foto de Adil Murshed — https://unsplash.com/photos/a-bowl-of-creamy-rice-pudding-with-marigold-garland-9Gm-wNAaWzg
+- Leite-creme queimado: foto de Suryagayathri C.K — https://unsplash.com/photos/creme-brulee-dessert-with-strawberry-6We0b1jY6ms
+- Toucinho do céu: foto de Mohammad Fahim — https://unsplash.com/photos/rectangular-cake-with-nuts-on-top-on-a-white-plate-oyVe1GRV7K8
+- Gambas al ajillo: foto de Kris Tian — https://unsplash.com/photos/cooked-shrimp-with-garlic-and-herbs-in-a-white-dish-35W67XoBpUs
+- Croquetas de jamón: foto de Laura Munoz — https://unsplash.com/photos/fried-food-on-white-ceramic-plate-8XDvZ_VTtjw
+- Tortilla de patatas: foto de blackieshoot — https://unsplash.com/photos/a-close-up-of-a-piece-of-food-on-a-plate-z4CQtd07u5k
+- Pimientos del piquillo rellenos de bacalao: foto de Natalia Gusakova — https://unsplash.com/photos/a-white-plate-topped-with-stuffed-bell-peppers-myfDbaJr6vA
+- Sopa de marisco: foto de Cloris Ying — https://unsplash.com/photos/round-white-ceramic-bowl-with-seafoods-rmdo8r9iGfw
+- Cordero asado: foto de Diego Arenas de Rodrigo — https://unsplash.com/photos/rack-of-lamb-served-with-rosemary-and-beer-CD85IchdZvE
+- Turrón de chocolate crujiente: foto de jesni rawther — https://unsplash.com/photos/a-stack-of-chocolate-bars-with-nuts-on-top-XAJRdCq7a0w
+- Polvorones: foto de Adam Bartoszewicz — https://unsplash.com/photos/brown-cookies-on-white-ceramic-plate-IKAv1jMk8EA
+- Roscón de Reyes: foto de Shayla Bruins — https://unsplash.com/photos/roscon-de-reyes-cake-with-holiday-sweets-A9M21gV--II
+- Sangria de cava: foto de Heng Chiu — https://unsplash.com/photos/cocktail-glasses-with-berry-garnish-89dF9XXhoVI
+- Creme de castanhas: foto de Olga Kudriavtseva — https://unsplash.com/photos/JIjtV1gmfxo
+- Mousse de chocolate: foto de American Heritage Chocolate — https://unsplash.com/photos/two-bowls-of-chocolate-pudding-with-raspberries-on-the-side-YxjIO0LmDO0
+- Arroz de pato: foto de Eric Wang — https://unsplash.com/photos/sliced-roasted-duck-with-rice-and-pickled-vegetables-i6Z4TdUcgf8
+- Bitoque: foto de Huzaifa Bukhari — https://unsplash.com/photos/a-white-plate-topped-with-meat-eggs-and-vegetables-mPiJhA-iaAk
+- Frango assado com limão e tomilho: foto de Anshu A — https://unsplash.com/photos/chicken-on-black-round-plate-BhnZwPW_tIc
+- Massa à bolonhesa: foto de Homescreenify — https://unsplash.com/photos/spaghetti-on-white-ceramic-plate-sA3wymYqyaI
+- Caril de grão e espinafres: foto de Álvaro Bernal — https://unsplash.com/photos/cooked-food-on-white-ceramic-plate-ReySmTMcKEQ
+- Salada de grão com atum: foto de Imad 786 — https://unsplash.com/photos/a-bowl-of-food-with-a-spoon-in-it-nFkC9zJv0pk
+- Gaspacho: foto de Karolina Kołodziejczak — https://unsplash.com/photos/soup-in-white-green-and-purple-floral-ceramic-bowl-bvLE5xZDj0w
+- Sardinhas assadas: foto de Johan Mouchet — https://unsplash.com/photos/grilled-sardines-with-fresh-salad-and-boiled-potatoes-sxK4YtmLfHI
+- Paella valenciana: foto de Armando Brenlha — https://unsplash.com/photos/cooked-food-on-black-plate-EufUgeuCa7Y
+- Risotto de cogumelos: foto de khloe arledge — https://unsplash.com/photos/mushroom-risotto-dinner-with-parmesan-gg_PV3EvCaM
+- Risotto de cogumelos na Bimby: foto de Corryn Burtenshaw — https://unsplash.com/photos/a-bowl-of-rice-with-mushrooms-and-parsley-MT_aSIwT-wU
+- Bacalhau à Brás: foto de Dextar Studio — https://unsplash.com/photos/a-plate-of-food-with-a-fork-and-knife-next-to-it-9Se8NZlyqtk
+- Tosta mista com ovo: foto de Jonathan Pielmayer — https://unsplash.com/photos/sunny-side-up-egg-and-bread-on-plate-FQWtCUiE4GM
+- Panquecas de aveia e banana: foto de nikldn — https://unsplash.com/photos/baked-pancake-with-blueberry-and-slice-of-banan-qp7WA8AV2x0
+- Tacos de frango: foto de Federico Ramirez — https://unsplash.com/photos/a-plate-of-food-Zggo6DP_P88
+- Salmão no forno com legumes: foto de Lazar Gugleta — https://unsplash.com/photos/cooked-fish-and-vegtables-6hCfLFXDBwE
+- Pizza margherita caseira: foto de Aurélien Lemasson-Théobald — https://unsplash.com/photos/round-cooked-pizza-x00CzBt4Dfk
+- Pastéis de nata: foto de Benjamin Chambon — https://unsplash.com/photos/rows-of-golden-brown-portuguese-custard-tarts-JAPQ-xs9zOc
+- Baba de camelo: foto de Sandie Clarke — https://unsplash.com/photos/two-glasses-of-dessert-with-chocolate-drizzle-7wvlU2YcKGI
+- Tarta de queso: foto de Luna Hu — https://unsplash.com/photos/a-cheesecake-on-a-wooden-cutting-board-with-a-knife-Qv86wgHErmc
+- Pad thai de camarão: foto de Alyssa Kowalski — https://unsplash.com/photos/cooked-shrimp-food-byTYXNHeVoU
+- Frango teriyaki com arroz: foto de Travis Palma — https://unsplash.com/photos/teriyaki-chicken-bowl-with-rice-vtTqQJ0hfZc
+- Ramen de miso: foto de Michele Blackwell — https://unsplash.com/photos/round-white-bowl-with-ramen-and-egg-rAyCBQTH7ws
+- Caril verde tailandês: foto de Diego Arenas de Rodrigo — https://unsplash.com/photos/a-close-up-of-a-green-curry-with-mushrooms-and-chili-rhR7wf0aH28
+- Bibimbap: foto de Dmitry Pavlovsky — https://unsplash.com/photos/korean-bibimbap-with-side-dishes-is-served-SbHulgzS_eo

@@ -222,8 +222,10 @@ def test_demo_holiday_recipes(tmp_path):
     titles = {x["title"] for x in recs}
     assert "Bacalhau cozido com todos" in titles and "Gambas al ajillo" in titles
     assert sum(1 for x in recs if "bimby" in x["tags"]) == 3
-    assert all(x["thumbnail_url"].startswith("/art/") for x in recs)
-    art = c.get(recs[0]["thumbnail_url"])
+    assert all(x["thumbnail_url"].startswith("/static/demo/") for x in recs)  # every demo recipe has a photo
+    pic = c.get(recs[0]["thumbnail_url"])
+    assert pic.status_code == 200 and pic.headers["content-type"] == "image/jpeg"
+    art = c.get("/art/x.svg?e=%F0%9F%8D%B2&h=20")
     assert art.status_code == 200 and art.headers["content-type"].startswith("image/svg")
     with_cost = [x for x in recs if x.get("facts") and x["facts"].get("price_coverage", 0) >= 0.6]
     assert len(with_cost) >= 30, len(with_cost)
