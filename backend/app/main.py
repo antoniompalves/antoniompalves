@@ -31,7 +31,8 @@ from .store import Store
 from .util import scale_quantity  # noqa: F401  (re-exported for tests/back-compat)
 
 def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=Notifier, weekly: bool = True) -> FastAPI:
-    app = FastAPI(title="Gohan")
+    docs = os.getenv("ENABLE_DOCS") == "1"  # API docs off in production unless asked for
+    app = FastAPI(title="Gohan", docs_url="/docs" if docs else None, redoc_url=None, openapi_url="/openapi.json" if docs else None)
     store = Store(db_path)
     current_user, signup, login, logout = make_auth(store)
     U = Depends(current_user)

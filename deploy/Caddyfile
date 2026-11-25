@@ -1,0 +1,34 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Long-lived realtime stream (shared lists, group feed): never buffer it
+	@stream path /stream
+	reverse_proxy @stream gohan:8000 {
+		flush_interval -1
+		transport http {
+			read_timeout 0
+		}
+	}
+
+	# Recipe imports can take a minute (video + AI); photo uploads up to ~12 MB
+	request_body {
+		max_size 20MB
+	}
+	reverse_proxy gohan:8000 {
+		transport http {
+			read_timeout 180s
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(self), microphone=(self), geolocation=()"
+		-Server
+	}
+}

@@ -1,0 +1,43 @@
+# Gohan on one server: the app + Caddy (automatic HTTPS from Let's Encrypt).
+# HTTPS is required: the app installs on iPhone as a web app and push notifications only work over https.
+name: gohan
+
+services:
+  gohan:
+    build: ../backend
+    image: gohan:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RECIPES_DB: /data/recipes.db
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - gohan-data:/data
+    expose:
+      - "8000"
+    logging:
+      driver: local
+      options: { max-size: "10m", max-file: "3" }
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on:
+      gohan:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?Define DOMAIN em deploy/.env}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  gohan-data:
+  caddy-data:
+  caddy-config:

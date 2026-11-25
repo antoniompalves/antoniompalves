@@ -1026,15 +1026,15 @@ document.addEventListener("visibilitychange", async () => {
 });
 
 // ---------------------------------------------------------------- themes
-const THEMES = [["gohan", "Gohan", "#d7261e"], ["quente", "Cozinha quente", "#e2531d"], ["salvia", "Sálvia", "#4e7d5b"], ["rosa", "Rosa", "#c2496b"],
-                ["mel", "Mel", "#c98a12"], ["azul", "Azul", "#2f6fb3"], ["meianoite", "Meia-noite", "#1b1f2a"], ["washi", "Washi (proposta)", "#c8372d"], ["umami", "Umami (proposta)", "#e3202c"]];
+const THEMES = [["umami", "Umami", "#e3202c"], ["gohan", "Gohan", "#d7261e"], ["quente", "Cozinha quente", "#e2531d"], ["salvia", "Sálvia", "#4e7d5b"], ["rosa", "Rosa", "#c2496b"],
+                ["mel", "Mel", "#c98a12"], ["azul", "Azul", "#2f6fb3"], ["meianoite", "Meia-noite", "#1b1f2a"], ["washi", "Washi", "#c8372d"]];
 function applyTheme(t) {
-  t = THEMES.some(x => x[0] === t) ? t : "gohan";
+  t = THEMES.some(x => x[0] === t) ? t : "umami";
   if (t === "quente") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
   const dark = t === "meianoite" || matchMedia("(prefers-color-scheme: dark)").matches;
   document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || (dark ? "#120d0a" : "#f7efe6")));
 }
-applyTheme(store.get("theme", "gohan"));
+applyTheme(store.get("theme", "umami"));
 // Text size (Definições → Aparência): the app blocks pinch-zoom, so text scaling lives here.
 const TEXT_SIZES = { s: .9375, m: 1, l: 1.125, xl: 1.25 };
 function applyTextSize(k) { document.documentElement.style.setProperty("--text-scale", TEXT_SIZES[k] || 1); }

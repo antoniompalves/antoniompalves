@@ -674,7 +674,7 @@ function renderSettings() {
     </section>
 
     <section class="section glass"><div class="section-head"><h3>Aparência</h3></div>
-      <div class="themes">${THEMES.map(([k, label, color]) => `<button class="theme-opt ${store.get("theme", "gohan") === k ? "on" : ""}" data-theme-opt="${k}" aria-pressed="${store.get("theme", "gohan") === k}"><i style="background:${color}"></i>${label}</button>`).join("")}</div>
+      <div class="themes">${THEMES.map(([k, label, color]) => `<button class="theme-opt ${store.get("theme", "umami") === k ? "on" : ""}" data-theme-opt="${k}" aria-pressed="${store.get("theme", "umami") === k}"><i style="background:${color}"></i>${label}</button>`).join("")}</div>
       <p class="meta" style="margin-top:.6rem">Os temas claros seguem o modo escuro do sistema. Meia-noite é sempre escuro.</p>
       <p class="eyebrow" style="margin-top:1.1rem">Tamanho do texto</p>
       <div class="size-picker text-size" role="radiogroup" aria-label="Tamanho do texto">

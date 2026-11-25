@@ -1,5 +1,7 @@
 # Gohan (ご飯): save recipes from social media
 
+> **Instalar num servidor:** ver [`deploy/README.md`](deploy/README.md) (Docker + HTTPS automático).
+
 A ReciMe-style app. You share a TikTok, Instagram Reel, YouTube Short, Pinterest pin or
 recipe-blog link to the app, and it becomes a structured recipe in your library.
 
