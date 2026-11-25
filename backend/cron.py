@@ -2,6 +2,7 @@
 
   python cron.py weekly          # send the Sunday summary (runs only Sundays from 18:00, once a week)
   python cron.py weekly --force  # send it now
+  python cron.py demo <utilizador> # add ~30 holiday recipes (PT/ES) for that person, shared with their groups
   python cron.py backup          # consistent copy of the database + photos into gohan-data/backups (keeps 14)
 """
 import os
@@ -57,6 +58,11 @@ if __name__ == "__main__":
         weekly("--force" in sys.argv)
     elif cmd == "backup":
         backup()
+    elif cmd == "demo" and len(sys.argv) > 2:
+        from app.demo import seed
+        from app.store import Store
+        added, skipped = seed(Store(os.environ["RECIPES_DB"]), sys.argv[2])
+        print(f"demo: {added} receitas adicionadas, {skipped} já existiam")
     else:
         print(__doc__)
         sys.exit(1)

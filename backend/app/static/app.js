@@ -144,7 +144,7 @@ function timeAgo(iso) {
   if (s < 7 * 86400) return `há ${Math.floor(s / 86400)} dias`;
   return new Date(iso).toLocaleDateString("pt-PT", { day: "numeric", month: "short" });
 }
-const PLATFORM = { tiktok: "TikTok", instagram: "Instagram", youtube: "YouTube", pinterest: "Pinterest", facebook: "Facebook", x: "X", web: "Web", text: "Texto colado" };
+const PLATFORM = { gohan: "Gohan", tiktok: "TikTok", instagram: "Instagram", youtube: "YouTube", pinterest: "Pinterest", facebook: "Facebook", x: "X", web: "Web", text: "Texto colado" };
 const platformName = p => PLATFORM[p] || p;
 
 /** Deterministic warm gradient for recipes without a thumbnail. */
@@ -216,7 +216,7 @@ function route() {
 
 // Lettering after u-gohan: lowercase high-contrast serif, a heavy rule beneath, a small Japanese caption.
 const JP = {"Receitas": "レシピ", "Plano": "献立", "Grupo": "仲間", "Compras": "買い物", "Definições": "設定", "Despensa": "食品庫", "Ingredientes": "材料", "Passos": "作り方", "Informação nutricional": "栄養", "As minhas coleções": "コレクション", "Voltava a fazer?": "また作る？", "Feita pelo grupo": "みんなの一皿", "Variações": "アレンジ", "Esta semana": "今週", "Jantares": "夕食会", "Ranking do grupo": "ランキング", "Atividade": "最近", "Listas": "リスト", "Comprados": "購入済み", "Aparência": "テーマ", "Notificações": "お知らせ", "Os meus grupos": "グループ", "Custo e nutrição": "費用と栄養", "Básicos": "基本", "Próximas": "これから", "Anteriores": "これまで", "Instalar no iPhone": "インストール", "Android": "アンドロイド"};
-const CAT_TITLES = {"": ["receitas recentes", "新着"], "bimby": ["bimby", "調理機"], "pequeno": ["pequeno-almoço", "朝ご飯"], "pratos": ["pratos principais", "主菜"], "sobremesas": ["sobremesas", "甘味"], "lanches": ["lanches", "軽食"], "bebidas": ["bebidas", "飲み物"]};
+const CAT_TITLES = {"festas": ["natal e ano novo", ""], "entradas": ["entradas", ""], "": ["receitas recentes", "新着"], "bimby": ["bimby", "調理機"], "pequeno": ["pequeno-almoço", "朝ご飯"], "pratos": ["pratos principais", "主菜"], "sobremesas": ["sobremesas", "甘味"], "lanches": ["lanches", "軽食"], "bebidas": ["bebidas", "飲み物"]};
 const lettering = (text, _jp, tag = "h1", cls = "") => `<${tag} class="jt ${cls}"><b>${esc(text.toLowerCase())}</b></${tag}>`;
 const largeTitle = (text, sub) => {
   title.innerHTML = JP[text] ? `${lettering(text, JP[text], "h1", "jt-large")}${sub ? `<p class="subtitle">${esc(sub)}</p>` : ""}`
@@ -240,6 +240,8 @@ const isBimby = r => r.tags.some(t => /^(bimby|thermomix)$/i.test(t)) || BIMBY_R
   (r.steps.length > 0 && r.steps.filter(s => BIMBY_RE.test(s.text)).length >= Math.min(2, r.steps.length));
 const CATEGORIES = [
   ["bimby", "Bimby", r => isBimby(r)],
+  ["festas", "Natal e Ano Novo", r => r.tags.some(t => /^(natal|consoada|passagem-de-ano|ano-novo|reveillon)$/i.test(t))],
+  ["entradas", "Entradas", r => /starter|appetizer|entrada/i.test(r.meal_type || "") || r.tags.some(t => /^(entrada|petisco|tapa)s?$/i.test(t))],
   ["pequeno", "Pequeno-almoço", r => /breakfast|brunch/i.test(r.meal_type || "")],
   ["pratos", "Pratos principais", r => /lunch|dinner|main/i.test(r.meal_type || "")],
   ["sobremesas", "Sobremesas", r => /dessert/i.test(r.meal_type || "") || r.tags.some(t => /sobremesa|doce|bolo/i.test(t))],
@@ -584,8 +586,9 @@ async function renderDetail(id) {
         ${r.thumbnail_url ? `<img src="${esc(r.thumbnail_url)}" referrerpolicy="no-referrer" alt="" onerror="this.remove()">` : placeholder(r.id)}
         <div class="hero-text">
           <h2>${esc(r.title)}</h2>
-          <a class="source glass-photo" href="${esc(r.source_url)}" target="_blank" rel="noopener">
-            <span class="av">${esc(author.replace(/^@/, "").charAt(0).toUpperCase())}</span>${esc(author)} · ${esc(platformName(r.source_platform))}</a>
+          ${r.source_url ? `<a class="source glass-photo" href="${esc(r.source_url)}" target="_blank" rel="noopener">
+            <span class="av">${esc(author.replace(/^@/, "").charAt(0).toUpperCase())}</span>${esc(author)} · ${esc(platformName(r.source_platform))}</a>`
+            : `<span class="source glass-photo"><span class="av">${esc(author.charAt(0).toUpperCase())}</span>Receita ${esc(author)}${r.cuisine ? ` · cozinha ${esc(r.cuisine.toLowerCase())}` : ""}</span>`}
         </div>
       </div>
       <div class="stats glass">

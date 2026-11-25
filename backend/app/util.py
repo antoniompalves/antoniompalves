@@ -78,7 +78,7 @@ def item_key(name: str, unit: Optional[str]) -> tuple[str, str]:
 
 # Portuguese titles use sentence case ("Arroz de pato à moda de Braga"), not Title Case.
 KEEP_CAPS = {"Brás", "Gomes", "Sá", "Bulhão", "Pato", "Porto", "Lisboa", "Braga", "Alentejo", "Minho", "Algarve", "Madeira",
-             "Açores", "Coimbra", "Aveiro", "Bimby", "Thermomix", "Nutella", "Oreo", "Kinder", "Bairrada", "Setúbal", "Viseu", "Tomar"}
+             "Açores", "Reyes", "Reis", "Natal", "Coimbra", "Aveiro", "Bimby", "Thermomix", "Nutella", "Oreo", "Kinder", "Bairrada", "Setúbal", "Viseu", "Tomar"}
 
 
 def sentence_case(title: str) -> str:

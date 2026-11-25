@@ -113,6 +113,23 @@ def amount(q: Optional[str]) -> Optional[float]:
 GENERIC_NOTES = re.compile(r"\b(fresc[oa]s?|picad[oa]s?|ralad[oa]s?|moid[oa]s?|cortad[oa]s?|em cubos|em rodelas|q ?b|grande|grandes|medio|media|medias|medios|pequen[oa]s?|maduros?|maduras?|frio|fria|quente|derretid[oa]|amolecid[oa]|a gosto|opcional|bem|sem|com|para|de|do|da|dos|das|e)\b")
 
 
+# Ingredients missing from the reference that are close enough to one that is there
+CLOSE_ENOUGH = {"cabrito": "borrego", "leitão": "carne de porco", "pato": "frango", "peru": "frango"}
+
+# How much of an ingredient actually ends up in the dish
+FRYING_ABSORBED = 0.12      # deep-frying oil: about 12% is absorbed
+BROTH_CUBE_PER_G = 0.02     # "800 g de caldo": prepared broth, about 1 cube (10 g) per 500 ml
+
+
+def effective_grams(item_key: str, grams: float, ing: dict) -> float:
+    text = f"{ing.get('name') or ''} {ing.get('note') or ''}".lower()
+    if "fritar" in text and item_key in ("óleo", "azeite", "banha", "óleo vegetal"):
+        return grams * FRYING_ABSORBED
+    if item_key.startswith("caldo") and grams > 60:
+        return grams * BROTH_CUBE_PER_G
+    return grams
+
+
 def match_key(name: str, overrides: Optional[dict] = None) -> tuple[Optional[str], str]:
     """Return (reference key, how) for an ingredient name."""
     ref = reference()
@@ -121,6 +138,9 @@ def match_key(name: str, overrides: Optional[dict] = None) -> tuple[Optional[str
         return overrides[n], "user" if overrides[n] else "user-none"
     if n in ref["alias"]:
         return ref["alias"][n], "exact"
+    for word, key in CLOSE_ENOUGH.items():  # same family of meat/fish, close price and nutrition
+        if f" {word} " in f" {n} " and key in ref["by_key"]:
+            return key, "contains"
     s = sing_phrase(n)
     if s in ref["alias"]:
         return ref["alias"][s], "exact"
@@ -237,6 +257,7 @@ def compute(ingredients: Iterable[dict], servings: Optional[int], overrides: Opt
             line["confidence"] = "low"
             lines.append(line)
             continue
+        grams = effective_grams(key, grams, ing)
         n = item.get("nutrition") or {}
         f = grams / 100
         line["grams"] = round(grams, 1)

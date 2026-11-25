@@ -201,3 +201,25 @@ def test_signup_code_in_the_single_field(env, monkeypatch):
     code = c.post("/groups", json={"name": "Amigos"}, headers=h).json()["invite_code"]
     ok = c.post("/auth/signup", json={"name": "Rui", "username": "rui", "password": "segredo123", "invite_code": code, "signup_code": code})
     assert ok.status_code == 201
+
+
+def test_demo_holiday_recipes(tmp_path):
+    from app.demo import RECIPES, seed
+    from app.main import create_app
+    from app.store import Store
+    db = str(tmp_path / "d.db")
+    c = TestClient(create_app(db, runner=fake_runner, weekly=False))
+    r = c.post("/auth/signup", json={"name": "Tony", "username": "tony", "password": "segredo123"})
+    h = {"Authorization": "Bearer " + r.json()["token"]}
+    gid = c.post("/groups", json={"name": "Amigos"}, headers=h).json()["id"]
+    added, skipped = seed(Store(db), "tony")
+    assert added == len(RECIPES) >= 30 and skipped == 0
+    assert seed(Store(db), "tony") == (0, len(RECIPES))  # idempotent
+    recs = c.get("/recipes?scope=all", headers=h).json()
+    assert len(recs) == len(RECIPES)
+    assert all(gid in x["shared_group_ids"] for x in recs)
+    titles = {x["title"] for x in recs}
+    assert "Bacalhau cozido com todos" in titles and "Gambas al ajillo" in titles
+    assert sum(1 for x in recs if "bimby" in x["tags"]) == 2
+    with_cost = [x for x in recs if x.get("facts") and x["facts"].get("price_coverage", 0) >= 0.6]
+    assert len(with_cost) >= 15, len(with_cost)
