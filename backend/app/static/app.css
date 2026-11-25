@@ -1900,3 +1900,32 @@ html:root button.chip, html:root[data-theme] button.chip, .pantry-chip { min-hei
 .slot-label, .slot small { color: var(--ink); opacity: .82; }
 .add-meal { color: var(--ink); } .add-meal svg { color: var(--accent-ink); }
 .slot-label, .slot small { opacity: .9; }
+
+
+/* Library header: left-aligned, follows the current filter, with a count */
+html:root .home-head, html:root[data-theme] .home-head { justify-content: space-between; align-items: flex-end; gap: 1rem; margin: .25rem 0 1rem !important; }
+.home-head .jt-left { align-items: flex-start; text-align: left; min-width: 0; }
+.home-head .jt-left b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.home-head .jt-left b::after { left: 0; right: auto; width: min(4.5rem, 60%); }
+.home-count { font-size: .875rem; color: var(--ink-2); white-space: nowrap; padding-bottom: .35rem; font-variant-numeric: tabular-nums; }
+
+/* Collections row: a quiet label instead of a second "Todas" */
+.chips.cols { align-items: center; }
+.chips-label { flex: none; font-size: .6875rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin-right: .25rem; }
+
+/* Selected chip check: a real check icon (the drawn border looked broken) */
+html:root .chip.on:not(.chip-bimby)::before, html:root[data-theme] .chip.on:not(.chip-bimby)::before {
+  content: ""; display: inline-block; position: static; flex: none; width: .95rem; height: .95rem; margin: 0 .1rem 0 0; padding: 0;
+  border: 0; border-radius: 0; transform: none; background: currentColor; box-shadow: none; inset: auto;
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>') center / contain no-repeat;
+          mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>') center / contain no-repeat; }
+html:root .chips.cats .chip.on::before, html:root[data-theme] .chips.cats .chip.on::before { display: none !important; }
+
+/* Category tabs: no square hover fill; the text darkens and the rule hints */
+html:root .chips.cats .chip:hover, html:root[data-theme] .chips.cats .chip:hover,
+html:root .chips.cats .chip:active, html:root[data-theme] .chips.cats .chip:active { background: none !important; background-image: none !important; box-shadow: none !important; color: var(--ink); }
+html:root .chips.cats .chip:hover::after, html:root[data-theme] .chips.cats .chip:hover::after { transform: scaleX(.35); }
+html:root .chips.cats .chip.on:hover::after, html:root[data-theme] .chips.cats .chip.on:hover::after { transform: none; }
+html:root .chips.cats .chip:focus-visible, html:root[data-theme] .chips.cats .chip:focus-visible { outline-offset: 2px; border-radius: 8px; }
+/* rounded hover for the pill chips (collections) */
+html:root .chips.cols .chip:hover, html:root[data-theme] .chips.cols .chip:hover { border-radius: 999px; }

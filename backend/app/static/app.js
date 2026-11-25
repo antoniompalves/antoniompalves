@@ -228,8 +228,8 @@ function filteredRecipes() {
   const q = state.query.trim().toLowerCase();
   return state.recipes.filter(r =>
     (state.scope === "all" || (state.scope === "mine" ? r.is_owner : r.shared_group_ids.includes(state.scope))) &&
-    (!state.collection || (state.collection === "♥" ? r.favorite : r.collections.includes(state.collection))) &&
-    (!state.category || CATEGORIES.find(c => c[0] === state.category)?.[2](r)) &&
+    (q || !state.collection || (state.collection === "♥" ? r.favorite : r.collections.includes(state.collection))) &&
+    (q || !state.category || CATEGORIES.find(c => c[0] === state.category)?.[2](r)) &&
     (!q || r.title.toLowerCase().includes(q) || r.tags.some(t => t.includes(q)) ||
       (r.cuisine || "").toLowerCase().includes(q) || r.ingredients.some(i => i.name.toLowerCase().includes(q))));
 }
@@ -366,12 +366,12 @@ function renderLibrary() {
     <div class="home-grid">
     ${n ? `<aside class="home-side glass" id="homeSide" aria-label="Esta semana"><span class="eyebrow">Esta semana</span><div class="spinner" aria-hidden="true"></div></aside>` : ""}
     <div class="home-main">
-    ${n ? `<div class="home-head" id="homeHead">${lettering(...CAT_TITLES[state.category || ""], "h2", "jt-center")}</div>` : ""}
+    ${n ? `<div class="home-head" id="homeHead"></div>` : ""}
     ${groups().length ? `<div class="seg glass" role="tablist" aria-label="Mostrar">${scopes.map(([k, label]) =>
       `<button role="tab" aria-selected="${state.scope === k}" class="${state.scope === k ? "on" : ""}" data-scope="${esc(k)}">${k.length > 8 ? I.users : ""}${esc(label)}</button>`).join("")}</div>` : ""}
     ${n ? `<div class="search-wrap glass">${I.search}<input class="search" type="search" enterkeyhint="search" aria-label="Pesquisar receitas" placeholder="Pesquisar receitas ou ingredientes" value="${esc(state.query)}"></div>` : ""}
-    ${cols.length || favs ? `<div class="chips" role="toolbar" aria-label="Coleções">
-      <button class="chip glass ${!state.collection ? "on" : ""}" data-col="">Todas</button>
+    ${cols.length || favs ? `<div class="chips cols" role="toolbar" aria-label="Coleções">
+      <span class="chips-label">Coleções</span>
       ${favs ? `<button class="chip glass ${state.collection === "♥" ? "on" : ""}" data-col="♥">${I.heart}Favoritos</button>` : ""}
       ${cols.map(c => `<button class="chip glass ${state.collection === c ? "on" : ""}" data-col="${esc(c)}">${esc(c)}</button>`).join("")}
     </div>` : ""}
@@ -387,7 +387,6 @@ function renderLibrary() {
   view.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => {
     state.category = b.dataset.cat || null;
     view.querySelectorAll("[data-cat]").forEach(x => x.classList.toggle("on", x === b));
-    const hh = $("#homeHead"); if (hh) hh.innerHTML = lettering(...CAT_TITLES[state.category || ""], "h2", "jt-center");
     renderResults();
   });
 
@@ -398,9 +397,10 @@ function renderLibrary() {
     view.querySelectorAll("[data-scope]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
     renderResults();
   });
+  // Collections toggle: tap again to show everything
   view.querySelectorAll("[data-col]").forEach(b => b.onclick = () => {
-    state.collection = b.dataset.col || null;
-    view.querySelectorAll("[data-col]").forEach(x => x.classList.toggle("on", x === b));
+    state.collection = state.collection === b.dataset.col ? null : b.dataset.col;
+    view.querySelectorAll("[data-col]").forEach(x => { x.classList.toggle("on", x.dataset.col === state.collection); x.setAttribute("aria-pressed", x.dataset.col === state.collection); });
     renderResults();
   });
   view.addEventListener("click", e => {
@@ -420,8 +420,20 @@ function pendingHTML() {
     </div>`).join("");
 }
 
+// The title above the grid says what you're looking at: search, collection, category or recent.
+function homeHeadHTML(count) {
+  const cat = CATEGORIES.find(c => c[0] === state.category);
+  const title = state.query.trim() ? `“${state.query.trim()}”`
+    : state.collection === "♥" ? "favoritos"
+    : state.collection ? state.collection
+    : cat ? cat[1] : "receitas recentes";
+  const extra = state.query.trim() ? " em todas" : state.collection && cat ? ` · ${cat[1].toLowerCase()}` : "";
+  return `${lettering(title, null, "h2", "jt-left")}<span class="home-count">${count} receita${count === 1 ? "" : "s"}${esc(extra)}</span>`;
+}
+
 function renderResults() {
   const list = filteredRecipes();
+  const hh = $("#homeHead"); if (hh) hh.innerHTML = homeHeadHTML(list.length);
   const el = $("#results");
   if (!el) return;
   if (list.length) {
