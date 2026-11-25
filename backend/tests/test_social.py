@@ -187,3 +187,17 @@ def test_broker_delivers_only_to_target_users():
         await asyncio.sleep(0.01)
         return s1[1].qsize(), s2[1].qsize()
     assert asyncio.run(run()) == (1, 0)
+
+
+def test_signup_code_in_the_single_field(env, monkeypatch):
+    monkeypatch.setenv("SIGNUP_CODE", "shrimp")
+    c = env.client
+    # the app sends the typed code as both invite_code and signup_code
+    r = c.post("/auth/signup", json={"name": "Tony", "username": "tony", "password": "segredo123", "invite_code": "shrimp", "signup_code": "shrimp"})
+    assert r.status_code == 201, r.text
+    bad = c.post("/auth/signup", json={"name": "X", "username": "xavier", "password": "segredo123", "invite_code": "errado", "signup_code": "errado"})
+    assert bad.status_code == 400 and "convite" in bad.json()["detail"]
+    h = {"Authorization": "Bearer " + r.json()["token"]}
+    code = c.post("/groups", json={"name": "Amigos"}, headers=h).json()["invite_code"]
+    ok = c.post("/auth/signup", json={"name": "Rui", "username": "rui", "password": "segredo123", "invite_code": code, "signup_code": code})
+    assert ok.status_code == 201

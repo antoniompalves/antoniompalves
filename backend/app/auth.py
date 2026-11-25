@@ -70,12 +70,15 @@ def make_auth(store):
     def signup(body: SignUp) -> dict:
         n_users = store.one("SELECT COUNT(*) c FROM users")["c"]
         group = None
-        if body.invite_code:
+        server_code = (os.getenv("SIGNUP_CODE") or "").strip()
+        # One field in the app takes either a group invite or the server's sign-up code.
+        typed = {c.strip() for c in (body.invite_code, body.signup_code) if c and c.strip()}
+        is_server_code = bool(server_code) and server_code in typed
+        if body.invite_code and not is_server_code:
             group = store.one("SELECT * FROM groups_ WHERE invite_code=?", (body.invite_code.strip(),))
             if not group:
-                raise HTTPException(400, "Convite inválido ou expirado.")
-        server_code = os.getenv("SIGNUP_CODE")
-        allowed = group is not None or (server_code and body.signup_code == server_code) or (not server_code and n_users == 0)
+                raise HTTPException(400, "Código inválido: não corresponde a um convite nem ao código de registo.")
+        allowed = group is not None or is_server_code or (not server_code and n_users == 0)
         if not allowed:
             raise HTTPException(403, "Para criar conta precisas de um convite de um grupo.")
         if store.one("SELECT 1 FROM users WHERE username=?", (body.username,)):
