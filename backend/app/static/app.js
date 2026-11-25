@@ -431,13 +431,50 @@ function homeHeadHTML(count) {
   return `${lettering(title, null, "h2", "jt-left")}<span class="home-count">${count} receita${count === 1 ? "" : "s"}${esc(extra)}</span>`;
 }
 
+// ---------------------------------------------------------------- home shelves
+const dayHash = (str) => { let h = new Date().toDateString().length * 7 + new Date().getDate(); for (const c of str) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+function suggestions(list) {
+  const m = new Date().getMonth();
+  const season = m === 10 || m === 11 || m === 0 ? (r => CATEGORIES.find(c => c[0] === "festas")[2](r))
+    : m >= 5 && m <= 8 ? (r => r.tags.some(t => /^ver(ã|a)o$/i.test(t)) || /salad|gaspacho|sardinha/i.test(r.title))
+    : (r => (totalTime(r) || 99) <= 40);
+  const fresh = list.filter(r => !r.stats?.cooks);
+  const pool = [...fresh.filter(season), ...fresh.filter(r => !season(r))];
+  const seasonal = pool.slice(0, Math.max(6, fresh.filter(season).length));
+  return seasonal.sort((a, b) => dayHash(a.id) - dayHash(b.id)).slice(0, 10);   // changes every day, stable during it
+}
+function shelfHTML(key, title, sub, items, more) {
+  if (!items.length) return "";
+  return `<section class="shelf" aria-label="${esc(title)}">
+    <div class="shelf-head"><div><h3 class="shelf-title">${esc(title)}</h3>${sub ? `<span class="meta">${esc(sub)}</span>` : ""}</div>
+      ${more ? `<button class="shelf-more" data-shelf="${key}">ver todas</button>` : ""}</div>
+    <div class="shelf-row">${items.map((r, i) => card(r, i)).join("")}</div></section>`;
+}
+function shelvesHTML(list) {
+  const mine = list.filter(r => r.is_owner).sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+  const voted = list.filter(r => (r.stats?.yes || 0) + (r.stats?.cooks || 0) > 0)
+    .sort((a, b) => (b.stats?.yes || 0) - (a.stats?.yes || 0) || (b.stats?.cooks || 0) - (a.stats?.cooks || 0)).slice(0, 10);
+  const m = new Date().getMonth();
+  const why = m === 10 || m === 11 || m === 0 ? "Para as festas, e que ainda não fizeste" : m >= 5 && m <= 8 ? "Frescas para o verão" : "Rápidas e que ainda não fizeste";
+  return shelfHTML("sug", "Sugestões", why, suggestions(list), false)
+    + shelfHTML("mine", "As tuas receitas", `${mine.length} guardada${mine.length === 1 ? "" : "s"} por ti`, mine.slice(0, 12), mine.length > 12 || groups().length > 0)
+    + (voted.length ? shelfHTML("top", "As mais votadas", "Quem fez votou “voltava a fazer”", voted, false)
+      : `<section class="shelf"><div class="shelf-head"><div><h3 class="shelf-title">As mais votadas</h3>
+          <span class="meta">Ainda sem votos. Depois de cozinhares, responde a “Voltava a fazer?” na receita.</span></div></div></section>`);
+}
+
 function renderResults() {
   const list = filteredRecipes();
   const hh = $("#homeHead"); if (hh) hh.innerHTML = homeHeadHTML(list.length);
   const el = $("#results");
   if (!el) return;
+  const browsing = !state.query.trim() && !state.category && !state.collection && state.scope === "all" && state.recipes.length >= 6;
   if (list.length) {
-    el.innerHTML = `<div class="grid">${list.map(card).join("")}</div>`;
+    el.innerHTML = (browsing ? shelvesHTML(list) + `<div class="shelf-head all-head"><h3 class="shelf-title">Todas as receitas</h3></div>` : "")
+      + `<div class="grid">${list.map(card).join("")}</div>`;
+    el.querySelectorAll("[data-shelf]").forEach(b => b.onclick = () => {
+      state.scope = "mine"; store.set("scope", "mine"); renderLibrary(); scrollTo({ top: 0 });
+    });
   } else if (state.category === "bimby" && !state.query) {
     el.innerHTML = `<div class="empty glass"><div class="art">${BIMBY_ICON}</div><h3>Ainda não tens receitas Bimby</h3>
       <p>Importa uma receita da Bimby (Cookidoo, blogues, TikTok ou Instagram). Reconhecemos os programas, como “5 min/100 °C/vel. 1”, a colher inversa e a Varoma, e a receita aparece aqui.</p>
@@ -464,7 +501,7 @@ function card(r, i = 0) {
   const t = totalTime(r);
   return `<article class="card" style="--n:${Math.min(i, 12)}" data-id="${esc(r.id)}" role="link" tabindex="0" aria-label="${esc(r.title)}">
     ${photo(r, "photo")}
-    <div class="top"><span class="tag glass-photo">${isBimby(r) ? `${BIMBY_ICON}Bimby` : esc(platformName(r.source_platform))}</span>
+    <div class="top">${isBimby(r) ? `<span class="tag glass-photo">${BIMBY_ICON}Bimby</span>` : r.source_platform === "gohan" ? "<span></span>" : `<span class="tag glass-photo">${esc(platformName(r.source_platform))}</span>`}
     <span class="badges">${r.stats?.cooks ? `<span class="badge-cook glass-photo" aria-label="Feita ${r.stats.cooks} vezes">${I.check}${r.stats.cooks}</span>` : ""}${r.favorite ? `<span class="fav glass-photo" aria-label="Favorito">${I.heart}</span>` : ""}${!r.is_owner && r.owner ? `<span class="by" title="Trazida por ${esc(r.owner.name)}">${avatar(r.owner, "sm")}</span>` : ""}</span></div>
     <div class="caption glass-photo"><h3>${esc(r.title)}</h3>
       <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.facts && r.facts.price_coverage >= 0.6 && costText(r.facts.cost) ? `<span>${costText(r.facts.cost)}</span>` : r.servings ? `<span>${r.servings} ${r.servings === 1 ? "dose" : "doses"}</span>` : ""}</div>

@@ -55,6 +55,23 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
                             headers={"Cache-Control": "no-cache"})
 
 
+    @app.get("/art/{name}.svg", include_in_schema=False)
+    def dish_art(name: str, e: str = "🍽️", h: int = 20):
+        """Illustrated plate for recipes without a photo (emoji on a plate over a warm colour)."""
+        from fastapi.responses import Response
+        from html import escape
+        h = max(0, min(360, h))
+        emoji = escape(e[:4])
+        svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+<defs><radialGradient id="b" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="hsl({h} 80% 72%)"/><stop offset="1" stop-color="hsl({(h + 18) % 360} 70% 52%)"/></radialGradient>
+<radialGradient id="p" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="#fffdf8"/><stop offset="1" stop-color="#efe6d8"/></radialGradient>
+<filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#3a1a08" flood-opacity=".35"/></filter></defs>
+<rect width="400" height="400" fill="url(#b)"/>
+<circle cx="200" cy="200" r="150" fill="url(#p)" filter="url(#s)"/>
+<circle cx="200" cy="200" r="112" fill="none" stroke="#e2d6c4" stroke-width="3"/>
+<text x="200" y="200" font-size="150" text-anchor="middle" dominant-baseline="central" font-family="Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif">{emoji}</text></svg>"""
+        return Response(svg, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=604800"})
+
     @app.get("/health")
     def health():
         return {"ok": True}

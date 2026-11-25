@@ -204,7 +204,8 @@ def test_signup_code_in_the_single_field(env, monkeypatch):
 
 
 def test_demo_holiday_recipes(tmp_path):
-    from app.demo import RECIPES, seed
+    from app.demo import RECIPES, YEAR, seed
+    RECIPES = RECIPES + YEAR
     from app.main import create_app
     from app.store import Store
     db = str(tmp_path / "d.db")
@@ -220,6 +221,9 @@ def test_demo_holiday_recipes(tmp_path):
     assert all(gid in x["shared_group_ids"] for x in recs)
     titles = {x["title"] for x in recs}
     assert "Bacalhau cozido com todos" in titles and "Gambas al ajillo" in titles
-    assert sum(1 for x in recs if "bimby" in x["tags"]) == 2
+    assert sum(1 for x in recs if "bimby" in x["tags"]) == 3
+    assert all(x["thumbnail_url"].startswith("/art/") for x in recs)
+    art = c.get(recs[0]["thumbnail_url"])
+    assert art.status_code == 200 and art.headers["content-type"].startswith("image/svg")
     with_cost = [x for x in recs if x.get("facts") and x["facts"].get("price_coverage", 0) >= 0.6]
-    assert len(with_cost) >= 15, len(with_cost)
+    assert len(with_cost) >= 30, len(with_cost)

@@ -321,7 +321,7 @@ def build(row) -> Recipe:
         tags=tags, confidence=1.0, source_url="", source_platform="gohan", author="Gohan",
         ingredients=[Ingredient(quantity=q or None, unit=u or None, name=n, note=no) for q, u, n, no in ings],
         steps=[Step(text=s) if isinstance(s, str) else Step(text=s[0], bimby=BimbySetting(**s[1])) for s in steps],
-        created_at=now(),
+        thumbnail_url=art_url(title), created_at=now(),
     )
 
 
@@ -335,7 +335,12 @@ def seed(store, username: str, share: bool = True) -> tuple[int, int]:
     have = {r["title"] for r in store.q("SELECT title FROM recipes WHERE owner_id=?", (uid,))}
     groups = [r["group_id"] for r in store.q("SELECT group_id FROM members WHERE user_id=?", (uid,))] if share else []
     added = 0
-    for row in RECIPES:
+    # illustrations for demo recipes loaded before they existed
+    for row in store.q("SELECT id FROM recipes WHERE owner_id=?", (uid,)):
+        r = store.get_recipe(row["id"])
+        if r and r.source_platform == "gohan" and not r.thumbnail_url:
+            store.save_recipe(r.model_copy(update={"thumbnail_url": art_url(r.title)}), uid)
+    for row in RECIPES + YEAR:
         rec = build(row)
         if rec.title in have:
             continue
@@ -346,4 +351,197 @@ def seed(store, username: str, share: bool = True) -> tuple[int, int]:
             store.x("INSERT OR IGNORE INTO recipe_shares(recipe_id, group_id, shared_by, shared_at) VALUES (?,?,?,?)",
                     (rec.id, gid, uid, now()))
         added += 1
-    return added, len(RECIPES) - added
+    return added, len(RECIPES) + len(YEAR) - added
+
+
+# ---------------------------------------------------------------------- the rest of the year
+DIA, RAP, VER, VEG, DOC = "Dia a dia", "Rápidas", "Verão", "Vegetarianas", "Doces"
+
+YEAR = [
+    ("Arroz de pato", "Arroz de forno com pato desfiado e rodelas de chouriço estaladiças.",
+     "Portuguesa", "dinner", 6, 30, 90, ["forno", "arroz"], DIA,
+     [("1", "", "pato", "cerca de 2 kg"), ("400", "g", "arroz carolino", None), ("1", "", "chouriço", "às rodelas"),
+      ("1", "", "cebola", None), ("2", "", "folhas de louro", None), ("1,5", "l", "água", None), ("", "", "sal e pimenta", "q.b.")],
+     ["Coze o pato com a cebola, o louro e sal na água durante 1 hora; desfia a carne e coa o caldo.",
+      "Coze o arroz em 1 litro do caldo durante 8 minutos.",
+      "Num tabuleiro, alterna arroz e pato e termina com as rodelas de chouriço.",
+      "Leva ao forno a 200 °C durante 20 minutos, até o chouriço ficar estaladiço."]),
+    ("Bitoque", "Bife com ovo estrelado, batatas fritas e molho de alho.",
+     "Portuguesa", "lunch", 2, 10, 20, ["rapida", "carne"], RAP,
+     [("2", "", "bifes de vaca", None), ("2", "", "ovos", None), ("4", "", "dentes de alho", "laminados"), ("30", "g", "manteiga", None),
+      ("50", "ml", "vinho branco", None), ("400", "g", "batata", "palitos"), ("", "", "sal e pimenta", "q.b.")],
+     ["Frita as batatas em óleo a 170 °C durante 8 minutos e escorre.",
+      "Tempera os bifes e frita-os na manteiga com o alho 2 minutos de cada lado.",
+      "Junta o vinho, deixa ferver 1 minuto e reserva o molho.",
+      "Estrela os ovos e serve sobre os bifes, com o molho e as batatas."]),
+    ("Frango assado com limão e tomilho", "O jantar de domingo: frango inteiro, batatas e limão.",
+     "Portuguesa", "dinner", 4, 15, 70, ["forno", "frango"], DIA,
+     [("1", "", "frango inteiro", "cerca de 1,6 kg"), ("2", "", "limões", None), ("6", "", "dentes de alho", None),
+      ("1", "", "ramo de tomilho", None), ("800", "g", "batata pequena", None), ("60", "ml", "azeite", None), ("", "", "sal e pimenta", "q.b.")],
+     ["Barra o frango com azeite, sal, pimenta e tomilho; recheia com um limão aos quartos e o alho.",
+      "Põe as batatas à volta com o segundo limão às rodelas.",
+      "Assa a 200 °C durante 1 hora e 10 minutos, regando a meio.",
+      "Deixa repousar 10 minutos antes de cortar."]),
+    ("Massa à bolonhesa", "Molho de carne cozinhado devagar, para dias de pressa ou de domingo.",
+     "Italiana", "dinner", 4, 15, 45, ["massa", "carne"], DIA,
+     [("400", "g", "esparguete", None), ("500", "g", "carne picada de vaca", None), ("1", "", "cebola", "picada"),
+      ("1", "", "cenoura", "picada"), ("2", "", "dentes de alho", None), ("400", "g", "tomate pelado", None),
+      ("100", "ml", "vinho tinto", None), ("40", "ml", "azeite", None), ("40", "g", "queijo parmesão", "ralado")],
+     ["Refoga a cebola, a cenoura e o alho no azeite durante 8 minutos.",
+      "Junta a carne e deixa alourar 5 minutos; rega com o vinho.",
+      "Adiciona o tomate e coze em lume brando durante 30 minutos.",
+      "Coze o esparguete em água com sal e serve com o molho e o parmesão."]),
+    ("Caril de grão e espinafres", "Caril vegetariano, cremoso com leite de coco.",
+     "Indiana", "dinner", 4, 10, 25, ["vegetariano", "rapida"], VEG,
+     [("800", "g", "grão-de-bico cozido", None), ("200", "g", "espinafres", None), ("400", "ml", "leite de coco", None),
+      ("1", "", "cebola", "picada"), ("2", "", "dentes de alho", None), ("1", "colher de sopa", "caril em pó", None),
+      ("400", "g", "tomate pelado", None), ("30", "ml", "azeite", None), ("250", "g", "arroz basmati", None)],
+     ["Refoga a cebola e o alho no azeite durante 5 minutos; junta o caril e mexe 1 minuto.",
+      "Adiciona o tomate e o grão e deixa cozinhar 10 minutos.",
+      "Junta o leite de coco e os espinafres e cozinha mais 5 minutos.",
+      "Serve com arroz basmati."]),
+    ("Salada de grão com atum", "Almoço fresco e rápido, ótimo para levar.",
+     "Portuguesa", "lunch", 2, 10, 0, ["rapida", "verao", "salada"], VER,
+     [("400", "g", "grão-de-bico cozido", None), ("2", "", "latas de atum", None), ("1", "", "cebola roxa", "picada"),
+      ("2", "", "ovos cozidos", None), ("1", "", "ramo de salsa", None), ("40", "ml", "azeite", None), ("20", "ml", "vinagre", None)],
+     ["Escorre e passa o grão por água.",
+      "Mistura o grão, o atum, a cebola e a salsa.",
+      "Tempera com azeite, vinagre, sal e pimenta e junta os ovos aos quartos."]),
+    ("Gaspacho", "Sopa fria andaluza para os dias de calor.",
+     "Espanhola", "starter", 4, 15, 0, ["verao", "vegetariano", "sopa"], VER,
+     [("1", "kg", "tomate maduro", None), ("1", "", "pepino", None), ("1", "", "pimento verde", None), ("1", "", "dente de alho", None),
+      ("50", "g", "pão", "de véspera"), ("80", "ml", "azeite", None), ("30", "ml", "vinagre de xerez", None), ("", "", "sal", "q.b.")],
+     ["Corta os legumes em pedaços e demolha o pão em água.",
+      "Tritura tudo com o azeite, o vinagre e sal até ficar liso.",
+      "Deixa no frio pelo menos 2 horas e serve com pepino picado."]),
+    ("Sardinhas assadas", "O sabor dos santos populares: sardinha na brasa com broa e pimentos.",
+     "Portuguesa", "dinner", 4, 10, 15, ["verao", "peixe"], VER,
+     [("1,2", "kg", "sardinhas", None), ("", "", "sal grosso", "q.b."), ("2", "", "pimentos", None), ("1", "", "broa de milho", None),
+      ("40", "ml", "azeite", None)],
+     ["Salpica as sardinhas com sal grosso 30 minutos antes.",
+      "Assa os pimentos na brasa, pela e tempera com azeite.",
+      "Grelha as sardinhas 3 minutos de cada lado.",
+      "Serve sobre fatias de broa, com os pimentos."]),
+    ("Paella valenciana", "Arroz de açafrão com frango e feijão-verde, feito na paellera.",
+     "Espanhola", "lunch", 6, 20, 40, ["arroz", "frango"], DIA,
+     [("600", "g", "frango", "em pedaços"), ("400", "g", "arroz carolino", None), ("200", "g", "feijão-verde", None),
+      ("2", "", "tomates", "ralados"), ("1", "g", "açafrão", None), ("1", "colher de chá", "colorau", None),
+      ("1,2", "l", "caldo de galinha", None), ("80", "ml", "azeite", None), ("", "", "sal", "q.b.")],
+     ["Aloura o frango no azeite durante 10 minutos.",
+      "Junta o feijão-verde e o tomate e refoga 5 minutos; adiciona o colorau.",
+      "Deita o caldo quente com o açafrão e deixa ferver 5 minutos.",
+      "Espalha o arroz por igual e coze 18 minutos sem mexer; deixa repousar 5 minutos tapado."]),
+    ("Risotto de cogumelos", "Cremoso, com parmesão e cogumelos salteados.",
+     "Italiana", "dinner", 4, 10, 25, ["vegetariano", "arroz"], VEG,
+     [("320", "g", "arroz arbório", None), ("400", "g", "cogumelos", "laminados"), ("1", "", "cebola", "picada"),
+      ("100", "ml", "vinho branco", None), ("1", "l", "caldo de legumes", "quente"), ("40", "g", "manteiga", None),
+      ("60", "g", "queijo parmesão", "ralado"), ("30", "ml", "azeite", None)],
+     ["Salteia os cogumelos em metade do azeite durante 5 minutos e reserva.",
+      "Refoga a cebola no restante azeite, junta o arroz e mexe 2 minutos; rega com o vinho.",
+      "Junta o caldo uma concha de cada vez, mexendo, durante 18 minutos.",
+      "Fora do lume, envolve a manteiga, o parmesão e os cogumelos."]),
+    ("Risotto de cogumelos na Bimby", "A versão sem mexer: a Bimby faz o trabalho todo.",
+     "Italiana", "dinner", 4, 5, 25, ["vegetariano", "bimby", "arroz"], VEG,
+     [("1", "", "cebola", "em quartos"), ("30", "g", "azeite", None), ("300", "g", "cogumelos", "laminados"), ("300", "g", "arroz arbório", None),
+      ("100", "g", "vinho branco", None), ("850", "g", "caldo de legumes", None), ("50", "g", "queijo parmesão", "ralado"), ("20", "g", "manteiga", None)],
+     [("Coloca a cebola no copo e pica 5 seg/vel. 5.", {"time_seconds": 5, "speed": "5"}),
+      ("Junta o azeite e refoga 3 min/120 °C/vel. 1.", {"time_seconds": 180, "temperature": "120", "speed": "1"}),
+      ("Adiciona os cogumelos e o arroz e programa 3 min/120 °C/colher inversa/vel. 1.", {"time_seconds": 180, "temperature": "120", "speed": "1", "reverse": True}),
+      ("Junta o vinho e o caldo e programa 17 min/100 °C/colher inversa/vel. colher.", {"time_seconds": 1020, "temperature": "100", "speed": "colher", "reverse": True}),
+      "Envolve o parmesão e a manteiga com a espátula e deixa repousar 2 minutos."]),
+    ("Bacalhau à Brás", "Bacalhau desfiado com batata palha e ovos, cremoso e com salsa e azeitonas.",
+     "Portuguesa", "dinner", 4, 15, 15, ["bacalhau", "rapida"], DIA,
+     [("400", "g", "bacalhau demolhado", "desfiado"), ("250", "g", "batata palha", None), ("6", "", "ovos", None),
+      ("2", "", "cebolas", "às meias-luas"), ("2", "", "dentes de alho", None), ("60", "ml", "azeite", None),
+      ("", "", "azeitonas pretas", "q.b."), ("1", "", "ramo de salsa", None)],
+     ["Refoga a cebola e o alho no azeite durante 8 minutos.",
+      "Junta o bacalhau e deixa cozinhar 3 minutos.",
+      "Envolve a batata palha e depois os ovos batidos, mexendo em lume brando até ficarem cremosos.",
+      "Serve com salsa e azeitonas."]),
+    ("Tosta mista com ovo", "Pequeno-almoço de fim de semana, estaladiça e derretida.",
+     "Portuguesa", "breakfast", 2, 5, 8, ["rapida", "pequeno-almoco"], RAP,
+     [("4", "", "fatias de pão de forma", None), ("4", "", "fatias de fiambre", None), ("4", "", "fatias de queijo flamengo", None),
+      ("2", "", "ovos", None), ("20", "g", "manteiga", None)],
+     ["Monta as tostas com fiambre e queijo e barra o exterior com manteiga.",
+      "Torra numa frigideira 3 minutos de cada lado, com peso por cima.",
+      "Estrela os ovos e põe por cima."]),
+    ("Panquecas de aveia e banana", "Sem açúcar, para o pequeno-almoço.",
+     "Americana", "breakfast", 2, 5, 10, ["rapida", "pequeno-almoco", "vegetariano"], RAP,
+     [("2", "", "bananas maduras", None), ("2", "", "ovos", None), ("80", "g", "flocos de aveia", None),
+      ("1", "colher de chá", "fermento em pó", None), ("", "", "canela", "q.b."), ("100", "g", "frutos vermelhos", "para servir")],
+     ["Tritura as bananas, os ovos, a aveia, o fermento e a canela.",
+      "Coze pequenas porções numa frigideira antiaderente 2 minutos de cada lado.",
+      "Serve com frutos vermelhos."]),
+    ("Tacos de frango", "Frango picante, guacamole e cebola em pickle, para jantar com amigos.",
+     "Mexicana", "dinner", 4, 20, 15, ["frango", "rapida"], DIA,
+     [("600", "g", "peito de frango", "em tiras"), ("12", "", "tortilhas de milho", None), ("2", "", "abacates", None),
+      ("1", "", "lima", None), ("1", "", "cebola roxa", None), ("1", "colher de chá", "cominhos", None),
+      ("1", "colher de chá", "colorau", None), ("1", "", "molho de coentros", None), ("30", "ml", "azeite", None)],
+     ["Tempera o frango com cominhos, colorau, sal e azeite e salteia 8 minutos.",
+      "Esmaga os abacates com sumo de lima e sal.",
+      "Corta a cebola fina e deixa 10 minutos em sumo de lima.",
+      "Aquece as tortilhas e monta com frango, guacamole, cebola e coentros."]),
+    ("Salmão no forno com legumes", "Tabuleiro único: salmão, batata-doce e brócolos.",
+     "Portuguesa", "dinner", 4, 10, 25, ["peixe", "forno", "rapida"], RAP,
+     [("4", "", "postas de salmão", None), ("600", "g", "batata-doce", "em cubos"), ("1", "", "brócolo", "em floretes"),
+      ("1", "", "limão", None), ("40", "ml", "azeite", None), ("2", "", "dentes de alho", None), ("", "", "sal e pimenta", "q.b.")],
+     ["Assa a batata-doce com metade do azeite a 210 °C durante 10 minutos.",
+      "Junta os brócolos e o salmão temperado com alho, limão e o restante azeite.",
+      "Assa mais 15 minutos."]),
+    ("Pizza margherita caseira", "Massa de véspera, tomate, mozzarela e manjericão.",
+     "Italiana", "dinner", 4, 30, 12, ["vegetariano", "forno"], VEG,
+     [("500", "g", "farinha", None), ("320", "ml", "água", None), ("5", "g", "fermento de padeiro seco", None), ("10", "g", "sal", None),
+      ("400", "g", "tomate pelado", "triturado"), ("250", "g", "mozzarela", None), ("1", "", "molho de manjericão", None), ("30", "ml", "azeite", None)],
+     ["Amassa a farinha, a água, o fermento e o sal e deixa levedar 24 horas no frigorífico.",
+      "Divide em 4 bolas e estende cada uma bem fina.",
+      "Cobre com tomate, mozzarela e um fio de azeite.",
+      "Coze no forno no máximo (250 °C) durante 10 a 12 minutos e junta o manjericão."]),
+    ("Pastéis de nata", "O doce português mais famoso, com massa folhada comprada.",
+     "Portuguesa", "dessert", 12, 25, 18, ["doce", "forno"], DOC,
+     [("1", "", "rolo de massa folhada", None), ("500", "ml", "leite", None), ("200", "g", "açúcar", None), ("100", "ml", "água", None),
+      ("40", "g", "farinha", None), ("6", "", "gemas", None), ("1", "", "casca de limão", None), ("1", "", "pau de canela", None)],
+     ["Enrola a massa folhada, corta em 12 rodelas e forra as formas, puxando com o polegar molhado.",
+      "Ferve o açúcar com a água, o limão e a canela durante 3 minutos.",
+      "Aquece o leite com a farinha, mexendo até engrossar; junta a calda e depois as gemas.",
+      "Enche as formas e coze a 250 °C durante 15 a 18 minutos, até a nata ganhar manchas escuras."]),
+    ("Baba de camelo", "Sobremesa portuguesa de leite condensado cozido, com apenas dois ingredientes.",
+     "Portuguesa", "dessert", 6, 15, 0, ["doce", "rapida"], DOC,
+     [("1", "", "lata de leite condensado cozido", None), ("6", "", "ovos", "claras e gemas separadas"), ("50", "g", "amêndoa", "palitada e torrada")],
+     ["Bate o leite condensado cozido com as gemas.",
+      "Bate as claras em castelo firme e envolve-as com cuidado.",
+      "Distribui por taças e deixa no frio 3 horas; decora com amêndoa."]),
+    ("Tarta de queso", "Cheesecake basca, queimada por fora e cremosa por dentro.",
+     "Espanhola", "dessert", 10, 10, 45, ["doce", "forno"], DOC,
+     [("1", "kg", "queijo creme", None), ("300", "g", "açúcar", None), ("5", "", "ovos", None), ("500", "ml", "natas", None),
+      ("30", "g", "farinha", None)],
+     ["Bate o queijo com o açúcar; junta os ovos um a um.",
+      "Adiciona as natas e por fim a farinha peneirada.",
+      "Deita numa forma forrada com papel vegetal amarrotado.",
+      "Coze a 220 °C durante 45 minutos, até ficar bem tostada por cima; deixa arrefecer completamente."]),
+]
+
+ART = [  # first match wins: (word in title, emoji, hue)
+    ("bacalhau", "🐟", 35), ("sardinha", "🐟", 200), ("salmão", "🐟", 15), ("polvo", "🐙", 350), ("camarão", "🦐", 18),
+    ("gambas", "🦐", 12), ("amêijoa", "🦪", 190), ("marisco", "🦀", 8), ("peru", "🦃", 28), ("pato", "🦆", 30),
+    ("frango", "🍗", 32), ("cabrito", "🍖", 20), ("cordero", "🍖", 22), ("lombo", "🍖", 15), ("bitoque", "🥩", 10),
+    ("bolonhesa", "🍝", 8), ("esparguete", "🍝", 40), ("pizza", "🍕", 12), ("tacos", "🌮", 42), ("paella", "🥘", 40),
+    ("risotto", "🍄", 30), ("caril", "🍛", 38), ("arroz-doce", "🍚", 45), ("arroz", "🍚", 30), ("gaspacho", "🍅", 5),
+    ("caldo", "🥬", 110), ("creme de castanhas", "🌰", 28), ("sopa", "🍲", 20), ("salada", "🥗", 100),
+    ("tortilla", "🥚", 48), ("croquetas", "🧆", 35), ("pimientos", "🫑", 5), ("pastéis de bacalhau", "🐟", 35),
+    ("tosta", "🥪", 40), ("panquecas", "🥞", 38), ("bolo-rei", "👑", 45), ("roscón", "👑", 40), ("rabanadas", "🍞", 35),
+    ("sonhos", "🍩", 30), ("filhoses", "🥨", 36), ("aletria", "🍜", 45), ("leite-creme", "🍮", 42), ("toucinho", "🍰", 40),
+    ("turrón", "🍫", 20), ("polvorones", "🍪", 38), ("mousse", "🍫", 18), ("pastéis de nata", "🥧", 42),
+    ("baba", "🍮", 32), ("tarta", "🍰", 30), ("sangria", "🥂", 345), ("roupa", "🥘", 30),
+]
+
+
+def art_url(title: str) -> str:
+    from urllib.parse import quote
+    t = title.lower()
+    for word, emoji, hue in ART:
+        if word in t:
+            break
+    else:
+        emoji, hue = "🍽️", 25
+    slug = "".join(ch if ch.isalnum() else "-" for ch in t)[:40]
+    return f"/art/{quote(slug)}.svg?e={quote(emoji)}&h={hue}"
