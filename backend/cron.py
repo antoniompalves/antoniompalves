@@ -9,7 +9,7 @@ import sys
 import tarfile
 import time
 
-import passenger_wsgi  # noqa: F401  (loads .env and the same defaults as the web app)
+import gohan_wsgi  # noqa: F401  (loads .env and the same defaults as the web app)
 
 
 def weekly(force: bool) -> None:

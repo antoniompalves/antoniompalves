@@ -18,7 +18,7 @@ um ficheiro: **não precisas de MySQL nem do phpMyAdmin**.
    inicial, **fora** de `public_html`).
 2. Dentro de `gohan` → **Upload** → `gohan-cpanel.zip` → clica no zip → **Extract** → aceita substituir o
    `passenger_wsgi.py` de exemplo.
-3. Confirma: dentro de `gohan` tens **diretamente** `app/`, `passenger_wsgi.py`, `requirements-cpanel.txt`
+3. Confirma: dentro de `gohan` tens **diretamente** `app/`, `gohan_wsgi.py`, `requirements-cpanel.txt`
    (não uma pasta `gohan/gohan`).
 4. Copia `env.example` para `.env` e edita: `ANTHROPIC_API_KEY`, `SIGNUP_CODE`, `VAPID_SUBJECT`.
    (Ativa *Settings → Show Hidden Files* para veres o `.env`.)
@@ -32,7 +32,7 @@ um ficheiro: **não precisas de MySQL nem do phpMyAdmin**.
 | Python version | **3.12** (ou 3.11; mínimo 3.10) |
 | Application root | `gohan` |
 | Application URL | `gohan.oteudominio.pt` |
-| Application startup file | `passenger_wsgi.py` |
+| Application startup file | **`gohan_wsgi.py`** (não `passenger_wsgi.py`) |
 | Application Entry point | `application` |
 | Passenger log file | `/home/OTEUUTILIZADOR/gohan-data/passenger.log` |
 
@@ -74,6 +74,7 @@ O resumo semanal só é enviado uma vez, ao domingo a partir das 18h. As cópias
 
 ## Se algo correr mal
 
+- `RecursionError` no `stderr.log`: o *startup file* está como `passenger_wsgi.py`; muda para `gohan_wsgi.py`, **Save**, **Restart**.
 - Página de erro do Passenger: vê `~/gohan-data/passenger.log` e `~/gohan/stderr.log`.
 - "No module named …": volta a carregar em **Run Pip Install** com `requirements-cpanel.txt` e **Restart**.
 - Mudaste o `.env`? Faz sempre **Restart**.
