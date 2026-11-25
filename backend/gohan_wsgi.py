@@ -33,8 +33,29 @@ os.environ.setdefault("RECIPES_DB", os.path.join(os.path.expanduser("~"), "gohan
 os.environ.setdefault("UPLOAD_DIR", os.path.join(os.path.dirname(os.environ["RECIPES_DB"]), "uploads"))
 os.makedirs(os.environ["UPLOAD_DIR"], exist_ok=True)
 
-from a2wsgi import ASGIMiddleware  # noqa: E402
+# Build the app lazily, inside the process that serves requests. LiteSpeed (and Passenger "smart"
+# spawning) import this file once and then fork workers: threads started at import (a2wsgi's event
+# loop, thread pools) and the open SQLite connection don't survive the fork, and every request would
+# hang without an error. So nothing is created until the first request, and again after a fork.
+_state = {"pid": None, "wsgi": None, "asgi": None}
 
-from app.main import app as asgi_app  # noqa: E402
 
-application = ASGIMiddleware(asgi_app)
+def _get():
+    if _state["pid"] != os.getpid():
+        from a2wsgi import ASGIMiddleware
+        import app.main as main
+
+        # first time in this process: the module's app; after a fork from a process that had one: a fresh app
+        asgi = main.app if _state["pid"] is None else main.create_app()
+        _state.update(pid=os.getpid(), asgi=asgi, wsgi=ASGIMiddleware(asgi))
+    return _state["wsgi"]
+
+
+def application(environ, start_response):
+    return _get()(environ, start_response)
+
+
+def asgi_app():
+    """The FastAPI app for this process (used by cron.py and diagnostics)."""
+    _get()
+    return _state["asgi"]
