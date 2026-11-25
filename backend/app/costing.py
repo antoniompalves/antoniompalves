@@ -230,8 +230,17 @@ def line_cost(item: dict, grams: float, qty: Optional[float], unit: Optional[str
     return tuple(grams / 1000 * price[k] for k in ("low", "typical", "high"))
 
 
+def custom_item(key: str, label: str, kcal: Optional[float], price: Optional[float], basis: str = "kg",
+                unit_g: Optional[float] = None) -> dict:
+    """An ingredient defined by the group (price and/or kcal per 100 g), shaped like a reference item."""
+    return {"key": key, "label": label, "aliases": [], "aisle": "Outros", "custom": True,
+            "nutrition": {"kcal": kcal} if kcal is not None else {}, "portions": {}, "density": None, "unit_g": unit_g,
+            "price": {"basis": basis, "low": price * .9, "typical": price, "high": price * 1.1, "n": 1, "stores": ["definido no grupo"]}
+            if price else None}
+
+
 def compute(ingredients: Iterable[dict], servings: Optional[int], overrides: Optional[dict] = None,
-            group_prices: Optional[dict] = None) -> dict:
+            group_prices: Optional[dict] = None, custom: Optional[dict] = None) -> dict:
     """ingredients: dicts with quantity/unit/name. Returns totals, per-serving values and per-line detail."""
     ref = reference()
     lines, totals = [], {"kcal": 0.0, "protein_g": 0.0, "carbs_g": 0.0, "fat_g": 0.0, "fiber_g": 0.0}
@@ -242,7 +251,7 @@ def compute(ingredients: Iterable[dict], servings: Optional[int], overrides: Opt
         key, how = match_key(name, overrides)
         qty = amount(ing.get("quantity"))
         line = {"index": idx, "name": name, "key": key, "match": how, "grams": None, "kcal": None, "cost": None, "confidence": "none"}
-        item = ref["by_key"].get(key) if key else None
+        item = (ref["by_key"].get(key) or (custom or {}).get(key)) if key else None
         if how == "user-none" or (item and item.get("free")):
             line.update(grams=0, kcal=0, cost=0, confidence="high", free=True)
             lines.append(line)

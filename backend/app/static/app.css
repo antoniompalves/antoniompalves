@@ -2140,3 +2140,16 @@ html:root[data-theme="umami"] .hero-text { position: relative; left: auto; right
 #bimbySec .seg { margin: 0; }
 [hidden] { display: none !important; }
 html:root #bimbySec .seg, html:root[data-theme] #bimbySec .seg { margin: 0; padding: 0; overflow: visible; }
+
+/* custom ingredient (price / kcal) */
+.custom-ing { border-radius: 16px; padding: .8rem .9rem; background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.custom-ing summary { cursor: pointer; font-size: .9375rem; list-style: none; display: flex; gap: .3rem; flex-wrap: wrap; }
+.custom-ing summary::-webkit-details-marker { display: none; }
+.custom-ing summary b { color: var(--accent-ink); }
+.custom-ing[open] summary { margin-bottom: .8rem; }
+.custom-grid { display: grid; grid-template-columns: 1fr auto; gap: .7rem; align-items: end; }
+.custom-grid .ci-unit, .custom-grid label:last-child { grid-column: 1 / -1; }
+.custom-grid .ci-basis button { width: 3rem; min-width: 3rem; }
+
+.fix-link { display: inline; padding: 0; min-height: 0; font: inherit; font-weight: 700; color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; background: none; }
+.fix-link:hover { background: none; }

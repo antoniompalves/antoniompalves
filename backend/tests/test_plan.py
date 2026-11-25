@@ -159,3 +159,26 @@ def test_bimby_conversion(env, monkeypatch):
     # personal: not visible to another member until shared
     assert c.get(f"/recipes/{r.json()['id']}", headers=rui).status_code == 404
     assert c.post(f"/recipes/{rid}/bimby", json={"model": "TM9"}, headers=ana).status_code == 422
+
+
+def test_custom_ingredient_price_and_kcal(env):
+    from app.models import Ingredient, Recipe
+    ana = env.signup("Ana")
+    c = env.client
+    store = c.app.state.store
+    uid = c.get("/me", headers=ana).json()["user"]["id"]
+    rec = Recipe(id="rx", is_recipe=True, title="Ovos com trufa", servings=2, confidence=1, source_url="", source_platform="web",
+                 created_at="2026-01-01", ingredients=[Ingredient(quantity="200", unit="g", name="trufa negra fresca")], steps=[])
+    store.save_recipe(rec, uid)
+    f = c.get("/recipes/rx/facts", headers=ana).json()
+    assert f["price_coverage"] == 0
+    assert c.put("/ingredients/custom", json={"name": "trufa negra fresca"}, headers=ana).status_code == 400
+    r = c.put("/ingredients/custom", json={"name": "trufa negra fresca", "kcal_per_100g": 400, "price": 30, "basis": "kg"}, headers=ana)
+    assert r.status_code == 200
+    f = c.get("/recipes/rx/facts", headers=ana).json()
+    assert f["price_coverage"] == 1 and round(f["total"]["cost"][1], 2) == 6.0 and round(f["total"]["kcal"]) == 800
+    assert c.get("/ingredients/custom?name=trufa negra fresca", headers=ana).json()["price"] == 30
+    assert c.get("/ingredients/search?q=trufa", headers=ana).json()[0]["custom"] is True
+    # brie is in the reference table now
+    from app import costing
+    assert costing.match_key("queijo brie", {})[0] == "queijo brie"

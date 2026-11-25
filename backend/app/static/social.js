@@ -921,7 +921,7 @@ function factsHTML(f, servings) {
         <i class="p" style="flex:${pctOf(macros.protein_g, 4)}"></i><i class="c" style="flex:${pctOf(macros.carbs_g, 4)}"></i><i class="f" style="flex:${pctOf(macros.fat_g, 9)}"></i></div>
       <div class="macro-legend"><span><i class="p"></i>Proteína <b>${Math.round(macros.protein_g)} g</b></span><span><i class="c"></i>Hidratos <b>${Math.round(macros.carbs_g)} g</b></span><span><i class="f"></i>Gordura <b>${Math.round(macros.fat_g)} g</b></span>${nutri && ps.fiber_g ? `<span>Fibra <b>${Math.round(ps.fiber_g)} g</b></span>` : ""}</div>` : ""}
     ${priced ? `<p class="meta">Total para ${n} ${n === 1 ? "dose" : "doses"}: <b>${eur(ps.cost[1] * n)}</b> (só a parte usada de cada ingrediente).</p>` : ""}
-    ${unmatched.length ? `<p class="warn-line">${I.warn}<span>${unmatched.length === 1 ? "1 ingrediente ficou" : `${unmatched.length} ingredientes ficaram`} de fora do cálculo: ${unmatched.map(l => esc(l.name)).join(", ")}.</span></p>` : ""}
+    ${unmatched.length ? `<p class="warn-line">${I.warn}<span>${unmatched.length === 1 ? "1 ingrediente ficou" : `${unmatched.length} ingredientes ficaram`} de fora do cálculo: ${unmatched.map(l => `<button type="button" class="fix-link" data-fix="${esc(l.name)}">${esc(l.name)}</button>`).join(", ")}. Toca para indicar o preço e as calorias.</span></p>` : ""}
     <button class="text-btn" id="factsMore">Ver por ingrediente</button>
     <div class="facts-lines" hidden>
       ${f.lines.filter(l => !l.free).map(l => `<div class="fline ${!l.key || l.grams == null ? "bad" : ""}">
@@ -940,6 +940,23 @@ function openFixSheet(name, done) {
     body: `<p class="meta sheet-lead">Como devemos contar “<b>${esc(name)}</b>” no custo e nas calorias?</p>
       <div class="search-wrap glass">${I.search}<input class="search" id="refQ" placeholder="Procurar ingrediente" value="${esc(name.split(",")[0])}" autocomplete="off"></div>
       <div class="choice-list" id="refList"></div>
+      <details class="custom-ing" id="customIng">
+        <summary>Não está na lista? <b>Define tu o preço e as calorias</b></summary>
+        <div class="custom-grid">
+          <label class="field"><span class="field-label">Preço (€)</span>
+            <input id="ciPrice" type="text" inputmode="decimal" placeholder="ex.: 2,49" autocomplete="off"></label>
+          <div class="field"><span class="field-label">Por</span>
+            <div class="mini-seg ci-basis" role="radiogroup" aria-label="Preço por">
+              <button type="button" role="radio" data-basis="kg" class="on" aria-checked="true">kg</button>
+              <button type="button" role="radio" data-basis="un" aria-checked="false">un.</button></div></div>
+          <label class="field ci-unit" hidden><span class="field-label">Peso de 1 unidade (g)</span>
+            <input id="ciUnit" type="text" inputmode="decimal" placeholder="ex.: 125" autocomplete="off"></label>
+          <label class="field"><span class="field-label">Calorias por 100 g</span>
+            <input id="ciKcal" type="text" inputmode="decimal" placeholder="ex.: 330" autocomplete="off"></label>
+        </div>
+        <p class="meta" style="margin:.4rem 0 .8rem">Vale para todas as receitas com “${esc(name)}”, tuas e do grupo. Vê o preço e as calorias no rótulo da embalagem.</p>
+        <button type="button" class="btn-primary wide" id="ciSave">Guardar preço e calorias</button>
+      </details>
       <button type="button" class="btn-glass glass wide" id="refNone">Não contar este ingrediente</button>`,
     onMount: (el, hide) => {
       const choose = async key => {
@@ -949,12 +966,34 @@ function openFixSheet(name, done) {
       const run = async () => {
         const items = await api(`/ingredients/search?q=${encodeURIComponent($("#refQ", el).value)}`).catch(() => []);
         $("#refList", el).innerHTML = items.map(it => `<button type="button" class="choice" data-k="${esc(it.key)}">
-          <span class="list-ico">${I.fork}</span><span><b>${esc(it.key)}</b><small>${esc(it.aisle || "")}${it.kcal != null ? ` · ${Math.round(it.kcal)} kcal/100 g` : ""}${it.price ? ` · ${eur(it.price)}/${it.basis === "un" ? "un" : "kg"}` : ""}</small></span></button>`).join("")
+          <span class="list-ico">${I.fork}</span><span><b>${esc(it.label || it.key)}</b><small>${esc(it.aisle || "")}${it.kcal != null ? ` · ${Math.round(it.kcal)} kcal/100 g` : ""}${it.price ? ` · ${eur(it.price)}/${it.basis === "un" ? "un" : "kg"}` : ""}</small></span></button>`).join("")
           || `<p class="meta">Sem resultados. Experimenta um nome mais simples (ex.: “queijo”).</p>`;
         el.querySelectorAll("[data-k]").forEach(b => b.onclick = () => choose(b.dataset.k));
+        if (!items.length) $("#customIng", el).open = true;
       };
       let t; $("#refQ", el).oninput = () => { clearTimeout(t); t = setTimeout(run, 150); };
       $("#refNone", el).onclick = () => choose(null);
+      // custom price / kcal
+      let basis = "kg";
+      const num = v => { const x = parseFloat(String(v).replace(",", ".")); return x > 0 ? x : null; };
+      const setBasis = b => { basis = b; el.querySelectorAll("[data-basis]").forEach(x => { x.classList.toggle("on", x.dataset.basis === b); x.setAttribute("aria-checked", x.dataset.basis === b); }); $(".ci-unit", el).hidden = b !== "un"; };
+      el.querySelectorAll("[data-basis]").forEach(b => b.onclick = () => setBasis(b.dataset.basis));
+      api(`/ingredients/custom?name=${encodeURIComponent(name)}`).then(c => {
+        if (!c || !c.key) return;
+        $("#customIng", el).open = true;
+        if (c.price) $("#ciPrice", el).value = String(c.price).replace(".", ",");
+        if (c.kcal != null) $("#ciKcal", el).value = String(Math.round(c.kcal));
+        if (c.unit_g) $("#ciUnit", el).value = String(c.unit_g);
+        setBasis(c.basis || "kg");
+      }).catch(() => {});
+      $("#ciSave", el).onclick = async () => {
+        const price = num($("#ciPrice", el).value), kcal = num($("#ciKcal", el).value), unit_g = num($("#ciUnit", el).value);
+        if (!price && !kcal) return toast("Indica o preço, as calorias, ou os dois");
+        try {
+          await api("/ingredients/custom", { method: "PUT", body: { name, price, basis, unit_g: basis === "un" ? unit_g : null, kcal_per_100g: kcal } });
+          hide(); toast("Guardado: passa a contar no custo e nas calorias"); haptic(); done?.();
+        } catch (e) { toast(e.message); }
+      };
       run();
     },
   });

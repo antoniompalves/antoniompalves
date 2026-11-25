@@ -140,6 +140,14 @@ class TripPatch(BaseModel):
     people: Optional[int] = Field(None, ge=1, le=100)
 
 
+class CustomIngredientIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    kcal_per_100g: Optional[float] = Field(None, ge=0, le=950)
+    price: Optional[float] = Field(None, gt=0, le=1000)
+    basis: Literal["kg", "un"] = "kg"
+    unit_g: Optional[float] = Field(None, gt=0, le=5000)
+
+
 class MapIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     key: Optional[str] = None  # None = "not an ingredient to count" (e.g. "água da cozedura")
@@ -237,9 +245,16 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
             by.setdefault(x["ref_key"], []).append(x["price_per_kg"])
         return {k: costing.median_recent(v) for k, v in by.items()}
 
+    store.x("""CREATE TABLE IF NOT EXISTS custom_ingredients (key TEXT PRIMARY KEY, label TEXT, kcal REAL, price REAL,
+               basis TEXT, unit_g REAL, updated_by TEXT, updated_at TEXT)""")
+
+    def customs() -> dict:
+        return {x["key"]: costing.custom_item(x["key"], x["label"], x["kcal"], x["price"], x["basis"] or "kg", x["unit_g"])
+                for x in store.q("SELECT * FROM custom_ingredients")}
+
     def facts_for(rec: Recipe, uid: str, ov=None, pp=None) -> dict:
         return costing.compute([i.model_dump() for i in rec.ingredients], rec.servings,
-                               ov if ov is not None else overrides(), pp if pp is not None else paid_prices(uid))
+                               ov if ov is not None else overrides(), pp if pp is not None else paid_prices(uid), customs())
 
     def brief(f: dict) -> dict:
         return {"cost": f["per_serving"]["cost"], "kcal": f["per_serving"]["kcal"], "coverage": f["coverage"], "price_coverage": f["price_coverage"]}
@@ -859,10 +874,11 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
             d["aisles"] = costing.AISLE_ORDER
             est = [0.0, 0.0, 0.0]
             known = 0
+            cust = customs()
             for x in items:
                 if x["checked"]:
                     continue
-                f = costing.compute([{"name": x["name"], "quantity": x["quantity"], "unit": x["unit"]}], None, ov, pp)
+                f = costing.compute([{"name": x["name"], "quantity": x["quantity"], "unit": x["unit"]}], None, ov, pp, cust)
                 c = f["total"]["cost"]
                 x["estimate"] = c[1] if any(c) else None
                 if any(c):
@@ -1214,11 +1230,37 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
 
     @r.get("/ingredients/search")
     def ingredient_search(q: str = "", user=U) -> list[dict]:
-        return costing.search(q)
+        nq = costing.norm(q)
+        mine = [{"key": k, "label": c["label"], "aisle": "Definido por ti", "kcal": (c["nutrition"] or {}).get("kcal"),
+                 "price": (c["price"] or {}).get("typical"), "basis": (c["price"] or {}).get("basis"), "custom": True}
+                for k, c in customs().items() if not nq or nq in costing.norm(c["label"])]
+        return mine[:4] + costing.search(q)
+
+    @r.get("/ingredients/custom")
+    def get_custom(name: str, user=U) -> dict:
+        row = store.one("SELECT * FROM custom_ingredients WHERE key=?", ("custom:" + costing.norm(name),))
+        return dict(row) if row else {}
+
+    @r.put("/ingredients/custom")
+    def set_custom(body: CustomIngredientIn, user=U) -> dict:
+        """Price and/or kcal for an ingredient the reference table doesn't have; counts in every recipe using that name."""
+        if body.kcal_per_100g is None and body.price is None:
+            raise HTTPException(400, "Indica o preço, as calorias, ou os dois.")
+        n = costing.norm(body.name)
+        key = "custom:" + n
+        store.xs([
+            ("INSERT OR REPLACE INTO custom_ingredients(key, label, kcal, price, basis, unit_g, updated_by, updated_at) VALUES (?,?,?,?,?,?,?,?)",
+             (key, body.name.strip(), body.kcal_per_100g, body.price, body.basis, body.unit_g, user["id"], now())),
+            ("INSERT OR REPLACE INTO ingredient_map(name_norm, ref_key, updated_by, updated_at) VALUES (?,?,?,?)",
+             (n, key, user["id"], now())),
+        ])
+        for g in my_groups(user["id"]):
+            broker.publish(members(g), {"kind": "recipe", "id": "*"})
+        return {"ok": True, "key": key}
 
     @r.put("/ingredient-map")
     def set_mapping(body: MapIn, user=U) -> dict:
-        if body.key and body.key not in costing.reference()["by_key"]:
+        if body.key and body.key not in costing.reference()["by_key"] and body.key not in customs():
             raise HTTPException(400, "Ingrediente de referência desconhecido.")
         store.x("INSERT OR REPLACE INTO ingredient_map(name_norm, ref_key, updated_by, updated_at) VALUES (?,?,?,?)",
                 (costing.norm(body.name), body.key, user["id"], now()))
