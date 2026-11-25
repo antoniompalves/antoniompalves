@@ -51,7 +51,7 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
         import hashlib
         h = hashlib.sha1()
         for name in sorted(os.listdir(STATIC)):
-            if name.endswith((".js", ".css", ".html")):
+            if name.endswith((".js", ".css", ".html", ".png", ".svg", ".webmanifest")):
                 st = os.stat(os.path.join(STATIC, name))
                 h.update(f"{name}:{st.st_size}:{int(st.st_mtime)}".encode())
         return h.hexdigest()[:10]
@@ -63,9 +63,19 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
         with open(os.path.join(STATIC, "index.html"), encoding="utf-8") as f:
             html = f.read()
         tag = build_tag()
-        html = re.sub(r'(/static/[\w.-]+\.(?:js|css))"', rf'\1?v={tag}"', html)
+        html = re.sub(r'(/static/[\w.-]+\.(?:js|css|png|svg|webmanifest))"', rf'\1?v={tag}"', html)
         return HTMLResponse(html, headers={"Cache-Control": "no-cache, must-revalidate"})
 
+
+    # Browsers and iOS ask for these at the root, whatever the page says
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return FileResponse(os.path.join(STATIC, "favicon-48.png"), media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
+    @app.get("/apple-touch-icon.png", include_in_schema=False)
+    @app.get("/apple-touch-icon-precomposed.png", include_in_schema=False)
+    def touch_icon():
+        return FileResponse(os.path.join(STATIC, "apple-touch-icon.png"), media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
     @app.get("/sw.js", include_in_schema=False)
     def service_worker():
