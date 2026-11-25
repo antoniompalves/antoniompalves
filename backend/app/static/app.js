@@ -333,6 +333,18 @@ function homeHero() {
   </section>`;
 }
 
+function collectionsPanelHTML() {
+  const cols = [...new Set(state.recipes.flatMap(r => r.collections))].sort((a, b) => a.localeCompare(b, "pt"));
+  const favN = state.recipes.filter(r => r.favorite).length;
+  if (!cols.length && !favN) return "";
+  const row = (key, label, n, icon = "") => `<button class="hs-col ${(state.collection || "") === key ? "on" : ""}" data-col="${esc(key)}" aria-pressed="${(state.collection || "") === key}">
+      ${icon}<span>${esc(label)}</span><em>${n}</em></button>`;
+  return `<span class="eyebrow hs-col-title">Coleções</span><div class="hs-cols">
+    ${row("", "Todas as receitas", state.recipes.length)}
+    ${favN ? row("♥", "Favoritos", favN, I.heart) : ""}
+    ${cols.map(c => row(c, c, state.recipes.filter(r => r.collections.includes(c)).length)).join("")}</div>`;
+}
+
 async function homeSide() {
   const el = $("#homeSide"); if (!el) return;
   const today = new Date(); today.setHours(12, 0, 0, 0);
@@ -352,7 +364,8 @@ async function homeSide() {
     <a class="hs-link" href="#/plan">${I.calendar}${next.length ? "Ver o plano" : "Planear a semana"}</a>
     ${open.length ? `<span class="eyebrow" style="margin-top:1rem">Compras</span>${open.map(l => `<a class="hs-list" href="#/list/${esc(l.id)}">
         <span><b>${esc(l.title)}</b><small>${l.done} de ${l.total}</small></span>
-        <span class="hs-bar"><i style="width:${Math.round(100 * l.done / l.total)}%"></i></span></a>`).join("")}` : ""}`;
+        <span class="hs-bar"><i style="width:${Math.round(100 * l.done / l.total)}%"></i></span></a>`).join("")}` : ""}
+    ${collectionsPanelHTML()}`;
 }
 
 function renderLibrary() {
@@ -373,11 +386,12 @@ function renderLibrary() {
     ${groups().length ? `<div class="seg glass" role="tablist" aria-label="Mostrar">${scopes.map(([k, label]) =>
       `<button role="tab" aria-selected="${state.scope === k}" class="${state.scope === k ? "on" : ""}" data-scope="${esc(k)}">${k.length > 8 ? I.users : ""}${esc(label)}</button>`).join("")}</div>` : ""}
     ${n ? `<div class="search-wrap glass">${I.search}<input class="search" type="search" enterkeyhint="search" aria-label="Pesquisar receitas" placeholder="Pesquisar receitas ou ingredientes" value="${esc(state.query)}"></div>` : ""}
-    ${cols.length || favs ? `<div class="chips cols" role="toolbar" aria-label="Coleções">
-      <span class="chips-label">Coleções</span>
-      ${favs ? `<button class="chip glass ${state.collection === "♥" ? "on" : ""}" data-col="♥">${I.heart}Favoritos</button>` : ""}
-      ${cols.map(c => `<button class="chip glass ${state.collection === c ? "on" : ""}" data-col="${esc(c)}">${esc(c)}</button>`).join("")}
-    </div>` : ""}
+    ${cols.length || favs ? `<label class="col-select"><span>Coleção</span>
+      <select id="colSelect" aria-label="Coleção">
+        <option value="">Todas</option>
+        ${favs ? `<option value="♥" ${state.collection === "♥" ? "selected" : ""}>Favoritos</option>` : ""}
+        ${cols.map(c => `<option value="${esc(c)}" ${state.collection === c ? "selected" : ""}>${esc(c)}</option>`).join("")}
+      </select></label>` : ""}
     ${n ? `<div class="chips cats" role="toolbar" aria-label="Categorias">
       <button class="chip glass ${!state.category ? "on" : ""}" data-cat="">Todas</button>
       ${cats.map(([k, label]) => `<button class="chip glass ${state.category === k ? "on" : ""} ${k === "bimby" ? "chip-bimby" : ""}" data-cat="${k}">${k === "bimby" ? BIMBY_ICON : ""}${label}</button>`).join("")}
@@ -400,12 +414,15 @@ function renderLibrary() {
     view.querySelectorAll("[data-scope]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
     renderResults();
   });
-  // Collections toggle: tap again to show everything
-  view.querySelectorAll("[data-col]").forEach(b => b.onclick = () => {
-    state.collection = state.collection === b.dataset.col ? null : b.dataset.col;
-    view.querySelectorAll("[data-col]").forEach(x => { x.classList.toggle("on", x.dataset.col === state.collection); x.setAttribute("aria-pressed", x.dataset.col === state.collection); });
+  // Collections: list in the side panel (iPad/desktop) and a select on phones; both stay in sync
+  const setCollection = v => {
+    state.collection = v || null;
+    const sel = $("#colSelect"); if (sel) sel.value = state.collection || "";
+    view.querySelectorAll("[data-col]").forEach(x => { const on = (x.dataset.col || null) === state.collection; x.classList.toggle("on", on); x.setAttribute("aria-pressed", on); });
     renderResults();
-  });
+  };
+  $("#colSelect") && ($("#colSelect").onchange = e => setCollection(e.target.value));
+  view.addEventListener("click", e => { const b = e.target.closest("[data-col]"); if (b) setCollection(state.collection === (b.dataset.col || null) ? null : b.dataset.col); });
   view.addEventListener("click", e => {
     const d = e.target.closest("[data-dismiss]");
     if (d) { state.pending = state.pending.filter(p => p.id !== d.dataset.dismiss); savePending(); $("#pendingList").innerHTML = pendingHTML(); }

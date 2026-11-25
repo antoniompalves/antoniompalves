@@ -2003,3 +2003,44 @@ html:root .shelf-row.fade-r, html:root[data-theme] .shelf-row.fade-r { --fr: tra
 .shelf { background: linear-gradient(180deg, color-mix(in srgb, var(--tint) 14%, transparent), color-mix(in srgb, var(--tint) 5%, transparent));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 16%, transparent); }
 .shelf-head .meta { color: color-mix(in srgb, var(--tint) 35%, var(--ink-2)); }
+
+
+/* Collections: side-panel list (iPad/desktop) + compact select on phones */
+.col-select { display: flex; align-items: center; gap: .6rem; }
+.col-select span { font-size: .6875rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); flex: none; }
+.col-select select { flex: 1; min-height: 2.75rem; border-radius: 999px; padding: 0 2.4rem 0 1rem; font-size: .9375rem; }
+@media (min-width: 768px) { .col-select { display: none; } }
+.hs-col-title { margin-top: 1rem; }
+.hs-cols { display: flex; flex-direction: column; gap: .15rem; margin: .35rem -.45rem 0; }
+.hs-col { display: flex; align-items: center; gap: .55rem; min-height: 2.6rem; padding: 0 .65rem; border-radius: 12px; color: var(--ink); text-align: left; font-size: .9375rem; font-weight: 500; }
+.hs-col span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-col em { font-style: normal; font-size: .8125rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.hs-col svg { width: 1rem; height: 1rem; color: var(--accent); }
+.hs-col:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.hs-col.on { background: color-mix(in srgb, var(--accent) 16%, transparent); font-weight: 700; }
+.hs-col.on em { color: var(--ink); }
+/* category tabs: one line that scrolls, never two rows */
+@media (min-width: 768px) {
+  html:root .home-main .chips.cats, html:root[data-theme] .home-main .chips.cats { flex-wrap: nowrap; overflow-x: auto; padding-bottom: .35rem; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent); }
+}
+
+/* Category colour lives on the cards, not on the shelf area */
+html:root .shelf, html:root[data-theme] .shelf { background: none; box-shadow: none; padding-top: .25rem; margin-left: 0; margin-right: 0; }
+.shelf-head .meta { color: var(--ink-2); }
+html:root .shelf .card, html:root[data-theme] .shelf .card {
+  background: linear-gradient(170deg, color-mix(in srgb, var(--tint) 22%, var(--bg)), color-mix(in srgb, var(--tint) 9%, var(--bg))); }
+@media (prefers-color-scheme: dark) {
+  html:root .shelf .card, html:root[data-theme] .shelf .card {
+    background: linear-gradient(170deg, color-mix(in srgb, var(--tint) 30%, var(--bg)), color-mix(in srgb, var(--tint) 12%, var(--bg))); }
+}
+html:root .shelf .card::before, html:root[data-theme] .shelf .card::before { background: color-mix(in srgb, var(--tint) 30%, transparent); }
+html:root .shelf .card .top :is(.tag, .badge-cook, .fav), html:root[data-theme] .shelf .card .top :is(.tag, .badge-cook, .fav) { background: color-mix(in srgb, var(--tint) 18%, var(--bg)); }
+@media (max-width: 767px) { html:root .shelf-row, html:root[data-theme] .shelf-row { margin: 0 -1.25rem; padding: 1rem 1.25rem 2rem; scroll-padding: 0 1.25rem; } .shelf-head { padding: 0; } }
+@media (min-width: 768px) { .shelf-head { padding: 0; } html:root .shelf-row, html:root[data-theme] .shelf-row { margin: 0 -1rem; padding: 1rem 1rem 2rem; } }
+/* the side panel scrolls on its own if collections are long */
+@media (min-width: 768px) { .home-side { max-height: calc(100dvh - 7rem); overflow-y: auto; scrollbar-width: thin; } }
+html:root .shelf .card::before, html:root[data-theme] .shelf .card::before { background: color-mix(in srgb, var(--tint) 18%, transparent); }
+@media (prefers-color-scheme: light) {
+  html:root .shelf .card, html:root[data-theme] .shelf .card { background: linear-gradient(170deg, color-mix(in srgb, var(--tint) 20%, #fffaf3), color-mix(in srgb, var(--tint) 8%, #fffaf3)); }
+}
