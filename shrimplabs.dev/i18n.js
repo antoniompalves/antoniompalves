@@ -14,7 +14,7 @@ window.I18N_EN = {
   "hero.l3": "your",
   "hero.l4": "business",
 
-  "intro": "Every business works its own way.<br>That's why we build apps that adapt to you,<br>not the other way around.",
+  "intro": "We listen to how you work,<br>find what's eating your time<br>and build the right tool.",
   "work.more": "See apps",
   "top": "Top",
 
