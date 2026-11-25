@@ -602,7 +602,8 @@ const peek = (() => {
     const stats = [t && `${I.clock}${fmtMin(t)}`, r.servings && `${r.servings} ${r.servings === 1 ? "dose" : "doses"}`,
       kcal && `${kcal} kcal/dose`, cost && `${cost}/dose`].filter(Boolean);
     const who = [r.stats?.cooks ? `Feita ${r.stats.cooks}×` : "", r.stats?.yes ? `${r.stats.yes} voltava${r.stats.yes === 1 ? "" : "m"} a fazer` : ""].filter(Boolean).join(" · ");
-    return `<div class="peek-head">${r.cuisine ? `<span class="eyebrow">${esc(r.cuisine)}${isBimby(r) ? " · Bimby" : ""}</span>` : ""}
+    return `${r.thumbnail_url ? `<div class="peek-photo"><img src="${esc(r.thumbnail_url)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>` : ""}
+      <div class="peek-head">${r.cuisine ? `<span class="eyebrow">${esc(r.cuisine)}${isBimby(r) ? " · Bimby" : ""}</span>` : ""}
         <h4>${esc(r.title)}</h4>${r.description ? `<p>${esc(r.description)}</p>` : ""}</div>
       ${stats.length ? `<div class="peek-stats">${stats.map(x => `<span>${x}</span>`).join("")}</div>` : ""}
       ${n ? `<div class="peek-ing"><span class="eyebrow">${n} ingredientes</span>

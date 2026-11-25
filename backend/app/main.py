@@ -43,9 +43,26 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
     app.mount("/uploads", StaticFiles(directory=social.UPLOAD_DIR), name="uploads")
 
 
+    # Every build gets its own asset URLs (?v=<hash of the files>), so phones never keep an old app.js/app.css
+    # from the browser's or the host's cache.
+    def build_tag() -> str:
+        import hashlib
+        h = hashlib.sha1()
+        for name in sorted(os.listdir(STATIC)):
+            if name.endswith((".js", ".css", ".html")):
+                st = os.stat(os.path.join(STATIC, name))
+                h.update(f"{name}:{st.st_size}:{int(st.st_mtime)}".encode())
+        return h.hexdigest()[:10]
+
     @app.get("/", include_in_schema=False)
     def index():
-        return FileResponse(os.path.join(STATIC, "index.html"), headers={"Cache-Control": "no-cache"})
+        import re
+        from fastapi.responses import HTMLResponse
+        with open(os.path.join(STATIC, "index.html"), encoding="utf-8") as f:
+            html = f.read()
+        tag = build_tag()
+        html = re.sub(r'(/static/[\w.-]+\.(?:js|css))"', rf'\1?v={tag}"', html)
+        return HTMLResponse(html, headers={"Cache-Control": "no-cache, must-revalidate"})
 
 
     @app.get("/sw.js", include_in_schema=False)
