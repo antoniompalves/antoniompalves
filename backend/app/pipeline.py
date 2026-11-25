@@ -33,7 +33,10 @@ def import_recipe(
         if existing:
             return existing
         on_status("fetching")
-        mat = gather(url)
+        try:
+            mat = gather(url, on_status=on_status)
+        except TypeError:  # test doubles with the old signature
+            mat = gather(url)
     elif text:
         mat = sources.SourceMaterial(url="", platform="text", caption=text)
         # A pasted caption may include a blog link; follow it like we do for videos.

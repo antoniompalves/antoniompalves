@@ -581,7 +581,7 @@ function renderResults() {
   });
 }
 
-const statusLabel = s => ({ queued: "Em fila…", fetching: "A ler a publicação…", extracting: "A escrever a receita…" }[s] || "A processar…");
+const statusLabel = s => ({ queued: "Em fila…", fetching: "A ler a publicação…", watching: "A ver o vídeo…", extracting: "A escrever a receita…" }[s] || "A processar…");
 const totalTime = r => r.total_minutes || ((r.prep_minutes || 0) + (r.cook_minutes || 0)) || null;
 const fmtMin = m => m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`;
 

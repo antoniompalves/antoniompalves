@@ -172,7 +172,7 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
                 idle = (datetime.now(timezone.utc) - datetime.fromisoformat(last)).total_seconds()
             except ValueError:
                 idle = 0
-            limit = 150 if job.status == "queued" else 420
+            limit = 150 if job.status == "queued" else 300
             if idle > limit:
                 job.status, job.error = "failed", ("A importação foi interrompida no servidor (demorou demasiado ou o processo "
                                                    "foi reiniciado). Tenta outra vez, ou cola a legenda no campo de texto.")

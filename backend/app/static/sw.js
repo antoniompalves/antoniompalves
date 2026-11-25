@@ -1,5 +1,5 @@
 // Caches the app shell so it opens instantly; API calls always go to the network.
-const SHELL = "gohan-v70";
+const SHELL = "gohan-v71";
 const ASSETS = ["/", "/static/app.js", "/static/motion.js", "/static/social.js", "/static/timers.js", "/static/handsfree.js", "/static/app.css", "/static/manifest.webmanifest", "/static/icon.svg"];
 self.addEventListener("install", e => e.waitUntil(caches.open(SHELL).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", e => e.waitUntil(

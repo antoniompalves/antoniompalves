@@ -29,6 +29,9 @@ _load_env(os.path.join(HERE, ".env"))
 # Shared-hosting defaults: no long-lived stream or background scheduler (cron does the weekly summary)
 os.environ.setdefault("REALTIME", "poll")
 os.environ.setdefault("WEEKLY_DIGEST", "0")
+os.environ.setdefault("MEDIA_MODE", "light")          # skip the video when the caption has the recipe
+os.environ.setdefault("MEDIA_BUDGET_SECONDS", "75")   # never spend more than this on video frames
+os.environ.setdefault("FRAME_COUNT", "4")
 os.environ.setdefault("RECIPES_DB", os.path.join(os.path.expanduser("~"), "gohan-data", "recipes.db"))
 os.environ.setdefault("UPLOAD_DIR", os.path.join(os.path.dirname(os.environ["RECIPES_DB"]), "uploads"))
 os.makedirs(os.environ["UPLOAD_DIR"], exist_ok=True)

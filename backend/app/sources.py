@@ -181,6 +181,8 @@ def _ytdlp_info(url: str) -> dict[str, Any]:
         "writesubtitles": True,
         "writeautomaticsub": True,
         "noplaylist": True,
+        "socket_timeout": 20,
+        "retries": 2,
     }
     cookies = os.getenv("YTDLP_COOKIES_FILE")  # Instagram often needs a logged-in cookie jar
     if cookies:
@@ -233,9 +235,12 @@ def _download_media(url: str, workdir: str) -> Optional[str]:
         "quiet": True,
         "no_warnings": True,
         "outtmpl": os.path.join(workdir, "media.%(ext)s"),
-        "format": "best[height<=720]/best",
+        # frames are read at 512 px: a small rendition is plenty and downloads fast on shared hosting
+        "format": "best[height<=480]/worst[height>=240]/best[height<=720]/best",
         "noplaylist": True,
-        "max_filesize": 200 * 1024 * 1024,
+        "max_filesize": int(os.getenv("MAX_VIDEO_MB", "60")) * 1024 * 1024,
+        "socket_timeout": 20,
+        "retries": 2,
     }
     if ffmpeg_bin():
         opts["ffmpeg_location"] = ffmpeg_bin()
@@ -304,7 +309,30 @@ def keyframes(media_path: str, count: int = 6) -> list[str]:
     return frames
 
 
-def fetch_video(url: str, platform: str, with_media: bool = True) -> SourceMaterial:
+RECIPE_HINT = re.compile(r"(ingredientes|ingredients|ingredientes:|\b\d+\s*(g|gr|kg|ml|l|chávenas?|cups?|colheres?|tbsp|tsp|c\.\s?sopa)\b)", re.I)
+
+
+def caption_has_recipe(text: str) -> bool:
+    """A caption that already lists ingredients with amounts doesn't need the video."""
+    if not text or len(text) < 60:
+        return False
+    return len(RECIPE_HINT.findall(text)) >= 3
+
+
+def _media_material(url: str, mat: "SourceMaterial") -> None:
+    workdir = tempfile.mkdtemp(prefix="recipe-")
+    try:
+        path = _download_media(url, workdir)
+        if path:
+            if not mat.transcript:
+                mat.transcript = transcribe(path)
+            if os.getenv("EXTRACT_FRAMES", "1") == "1":
+                mat.frames_jpeg_b64 = keyframes(path, count=int(os.getenv("FRAME_COUNT", "6")))
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
+def fetch_video(url: str, platform: str, with_media: bool = True, on_status=None) -> SourceMaterial:
     info = _ytdlp_info(url)
     mat = SourceMaterial(
         url=info.get("webpage_url") or url,
@@ -317,19 +345,26 @@ def fetch_video(url: str, platform: str, with_media: bool = True) -> SourceMater
         duration_seconds=int(info["duration"]) if info.get("duration") else None,
         transcript=_subtitle_text(info),
     )
+    light = os.getenv("MEDIA_MODE", "full") == "light"
+    if light and caption_has_recipe(mat.caption or ""):
+        with_media = False  # the caption is the recipe: skip the slow video work
     if with_media and (info.get("duration") or 0) <= int(os.getenv("MAX_VIDEO_SECONDS", "1200")):
-        workdir = tempfile.mkdtemp(prefix="recipe-")
+        if on_status:
+            on_status("watching")
+        # Best effort, with a time budget: a slow host must not keep the import waiting for minutes.
+        from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+        budget = int(os.getenv("MEDIA_BUDGET_SECONDS", "90"))
+        pool = ThreadPoolExecutor(max_workers=1)
+        fut = pool.submit(_media_material, url, mat)
         try:
-            path = _download_media(url, workdir)
-            if path:
-                if not mat.transcript:
-                    mat.transcript = transcribe(path)
-                if os.getenv("EXTRACT_FRAMES", "1") == "1":
-                    mat.frames_jpeg_b64 = keyframes(path)
+            fut.result(timeout=budget)
+        except FutureTimeout:
+            log.warning("media took longer than %ss for %s; continuing with caption only", budget, url)
+            mat.frames_jpeg_b64 = []
         except Exception as e:  # media download is best-effort
             log.warning("media download failed for %s: %s", url, e)
         finally:
-            shutil.rmtree(workdir, ignore_errors=True)
+            pool.shutdown(wait=False)
     return mat
 
 
@@ -339,11 +374,11 @@ def fetch_video(url: str, platform: str, with_media: bool = True) -> SourceMater
 SKIP_LINK_HOSTS = ("instagram.com", "tiktok.com", "linktr.ee", "amazon.", "amzn.", "ltk.")
 
 
-def gather(url: str, with_media: bool = True) -> SourceMaterial:
+def gather(url: str, with_media: bool = True, on_status=None) -> SourceMaterial:
     platform = detect_platform(url)
     if platform in VIDEO_PLATFORMS:
         try:
-            mat = fetch_video(url, platform, with_media=with_media)
+            mat = fetch_video(url, platform, with_media=with_media, on_status=on_status)
         except Exception as e:
             log.warning("yt-dlp failed for %s (%s); falling back to page meta", url, e)
             mat = fetch_web(url)
