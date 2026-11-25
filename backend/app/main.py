@@ -164,6 +164,19 @@ def create_app(db_path: Optional[str] = None, runner=run_job, notifier_factory=N
         job = store.get_job(jid)
         if not job or (job.owner_id and job.owner_id != user["id"]):
             raise HTTPException(404, "Não encontrado.")
+        # On shared hosting the process can be stopped mid-import; a job nobody has touched for a while is dead.
+        if job.status not in ("done", "failed"):
+            from datetime import datetime, timezone
+            last = job.updated_at or job.created_at
+            try:
+                idle = (datetime.now(timezone.utc) - datetime.fromisoformat(last)).total_seconds()
+            except ValueError:
+                idle = 0
+            limit = 150 if job.status == "queued" else 420
+            if idle > limit:
+                job.status, job.error = "failed", ("A importação foi interrompida no servidor (demorou demasiado ou o processo "
+                                                   "foi reiniciado). Tenta outra vez, ou cola a legenda no campo de texto.")
+                store.save_job(job)
         return job
 
     app.state.store = store

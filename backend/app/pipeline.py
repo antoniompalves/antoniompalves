@@ -95,7 +95,10 @@ def run_job(store: Store, job: ImportJob, text: Optional[str] = None,
             on_failed: Callable[[str], None] = lambda e: None, **kw) -> None:
     def status(s: str) -> None:
         job.status = s
+        job.updated_at = now()
         store.save_job(job)
+
+    status("queued")  # a worker picked it up
 
     try:
         recipe = import_recipe(store, url=job.url, text=text, on_status=status, owner_id=job.owner_id, **kw)

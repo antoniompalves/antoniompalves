@@ -98,6 +98,7 @@ class ImportJob(BaseModel):
     created_at: str
     owner_id: Optional[str] = None
     group_id: Optional[str] = None
+    updated_at: Optional[str] = None  # heartbeat: last time the worker touched this job
 
 
 class RecipePatch(BaseModel):

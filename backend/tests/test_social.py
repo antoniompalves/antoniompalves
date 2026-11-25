@@ -238,3 +238,17 @@ def test_account_prefs_bimby(env):
     assert c.put("/me/prefs", json={"bimby": "no", "bimby_model": "TM9"}, headers=h).json() == {"bimby": "no", "bimby_model": "TM6"}
     c.put("/me/prefs", json={"bimby": "yes", "bimby_model": "TM7"}, headers=h)
     assert c.get("/me", headers=h).json()["prefs"] == {"bimby": "yes", "bimby_model": "TM7"}
+
+
+def test_stale_import_is_reported(env):
+    from app.models import ImportJob
+    h = env.signup("Ana")
+    c = env.client
+    store = c.app.state.store
+    uid = c.get("/me", headers=h).json()["user"]["id"]
+    store.save_job(ImportJob(id="j1", status="queued", url="https://x", created_at="2020-01-01T00:00:00+00:00", owner_id=uid))
+    store.save_job(ImportJob(id="j2", status="extracting", url="https://x", created_at="2020-01-01T00:00:00+00:00",
+                             updated_at="2999-01-01T00:00:00+00:00", owner_id=uid))
+    j1 = c.get("/imports/j1", headers=h).json()
+    assert j1["status"] == "failed" and "interrompida" in j1["error"]
+    assert c.get("/imports/j2", headers=h).json()["status"] == "extracting"  # still alive

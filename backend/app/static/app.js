@@ -63,8 +63,10 @@ async function startImport(input) {
   const group_id = input.group_id || null;
   try {
     const job = await api("/imports", { method: "POST", body: url ? { url, group_id } : { text, group_id } });
+    // a new attempt replaces old error cards, so it's obvious something is happening
+    state.pending = state.pending.filter(p => p.status !== "failed");
     state.pending.unshift({ id: job.id, label: url ? shortUrl(url) : "Texto colado", status: job.status });
-    savePending(); haptic();
+    savePending(); haptic(); toast("A importar a receita…");
     if (currentRoute() === "/") renderLibrary(); else location.hash = "/";
     pollPending();
   } catch (e) { toast(e.message); }
