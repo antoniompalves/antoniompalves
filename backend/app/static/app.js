@@ -518,6 +518,14 @@ function renderResults() {
   if (list.length) {
     el.innerHTML = (browsing && fewOwn ? starterCardHTML() : "") + (browsing ? shelvesHTML(list) + `<div class="shelf-head all-head"><h3 class="shelf-title">Todas as receitas</h3></div>` : "")
       + `<div class="grid">${list.map(card).join("")}</div>`;
+    // fade only the edge that still hides cards
+    el.querySelectorAll(".shelf-row").forEach(row => {
+      const upd = () => {
+        row.classList.toggle("fade-l", row.scrollLeft > 4);
+        row.classList.toggle("fade-r", row.scrollLeft + row.clientWidth < row.scrollWidth - 4);
+      };
+      row.addEventListener("scroll", upd, { passive: true }); requestAnimationFrame(upd);
+    });
     el.querySelectorAll("[data-shelf]").forEach(b => b.onclick = () => {
       const k = b.dataset.shelf;
       if (k.startsWith("cat:")) state.category = k.slice(4);
