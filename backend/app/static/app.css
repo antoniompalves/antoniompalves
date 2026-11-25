@@ -1137,7 +1137,7 @@ body { overscroll-behavior: none; overflow-x: clip; }
   70% { transform: scale(1.03, .96); }
   100% { transform: none; }
 }
-.logo > g { animation: word-rise .8s .18s var(--ease-soft) both; }
+.logo .logo-word { animation: word-rise .8s .18s var(--ease-soft) both; }
 @keyframes word-rise { from { opacity: 0; transform: translateY(18px); filter: blur(4px); } }
 .top-brand:hover .logo-cup { animation: bowl-wobble .7s var(--ease-soft); }
 @keyframes bowl-wobble { 25% { transform: rotate(-6deg) scale(1.02, .98); } 55% { transform: rotate(4deg); } 80% { transform: rotate(-1.5deg); } }
@@ -1200,7 +1200,7 @@ body { overscroll-behavior: none; overflow-x: clip; }
 @keyframes drop-in { 0% { transform: scale(.6); } 60% { transform: scale(1.15, .9); } 100% { transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .logo-cup, .logo > g, .jt b, .jt b::after, .grid .card, .cup-menu.in, .cup-menu.in li, .cup-menu.in .cm-import, .cup-menu.in .cm-logo,
+  .logo-cup, .logo .logo-word, .jt b, .jt b::after, .grid .card, .cup-menu.in, .cup-menu.in li, .cup-menu.in .cm-import, .cup-menu.in .cm-logo,
   .home-hero, .hh-week, .ambient i, .top-brand:hover .logo-cup { animation: none !important; }
   .spinner::before { animation: broth-fill 3s linear infinite; }
 }
