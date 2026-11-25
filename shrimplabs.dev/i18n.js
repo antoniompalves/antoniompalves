@@ -1,0 +1,143 @@
+// English translations. Portuguese (pt-PT) is the default and lives in index.html.
+// Each key matches a data-i18n (or data-i18n-ph for placeholders) attribute.
+window.I18N_EN = {
+  "skip": "Skip to content",
+  "nav.work": "Work",
+  "nav.apps": "Apps",
+  "nav.process": "Process",
+  "nav.about": "About",
+  "nav.cta": "Let's talk",
+
+  "hero.eyebrow": "// a one-person web app studio",
+  "hero.l1": "What can",
+  "hero.l2": "we build",
+  "hero.sub": "Small studio. Sharp tools. I design and build web apps that take the busywork off your plate, so your business can focus on what it does best.",
+  "hero.browse": "Browse apps",
+  "hero.custom": "Request a custom app",
+  "hero.scroll": "scroll ↓",
+
+  "marquee": "<span>Bookings</span><i>✦</i><span>Inventory</span><i>✦</i><span>Clients</span><i>✦</i><span>Schedules</span><i>✦</i><span>Quotes</span><i>✦</i><span>Dashboards</span><i>✦</i><span>Recipes</span><i>✦</i><span>Teams</span><i>✦</i><span>Bookings</span><i>✦</i><span>Inventory</span><i>✦</i><span>Clients</span><i>✦</i><span>Schedules</span><i>✦</i><span>Quotes</span><i>✦</i><span>Dashboards</span><i>✦</i><span>Recipes</span><i>✦</i><span>Teams</span><i>✦</i>",
+
+  "work.title": "Selected work",
+  "work.count": "04 projects",
+
+  "c1.tags": "Sports club · Supabase",
+  "c1.m1": "Next match",
+  "c1.m1v": "Sat · 15:00",
+  "c1.m2": "Training",
+  "c1.m2v": "72 sessions",
+  "c1.m3": "Match sheets",
+  "c1.text": "A management app for a youth football club. Coaches plan training sessions, fill in match sheets and notes, and fixtures sync automatically so the whole staff works from the same calendar.",
+  "c1.chips": "<li>Fixtures sync</li><li>Match sheets</li><li>Training planner</li><li>Staff logins</li>",
+
+  "c2.tags": "Local business · Web app",
+  "c2.text": "A custom web app for Mimar that brings their day-to-day into one place: clients, appointments and services, available on any device.",
+  "c2.chips": "<li>Client records</li><li>Scheduling</li><li>Mobile-first</li>",
+
+  "c3.name": "Recipe App",
+  "c3.tags": "Food · Planner",
+  "c3.text": "Save recipes, scale portions and plan the week's meals. The shopping list builds itself from what you plan, so you don't have to write it.",
+  "c3.chips": "<li>Recipe library</li><li>Portion scaling</li><li>Meal plan</li><li>Auto shopping list</li>",
+
+  "c4.name": "Car Detail App",
+  "c4.tags": "Automotive · Bookings",
+  "c4.mock": "<div><i></i><b>Full detail · BMW 320d</b><em>09:00</em></div><div><i></i><b>Ceramic coat · Golf</b><em>11:30</em></div><div><i></i><b>Interior · Clio</b><em>15:00</em></div>",
+  "c4.text": "Built for car detailing businesses: service packages, bookings, the vehicles each job covers, and a clear view of the day's work.",
+  "c4.chips": "<li>Service packages</li><li>Bookings</li><li>Job tracking</li><li>Quotes</li>",
+
+  "shop.title": "Apps for your business",
+  "shop.tag": "ready-made · made to fit you",
+  "shop.lead": "Pick an app that's ready to go, and I'll set it up with your logo, colours, services and prices. No monthly subscription unless you want hosting and support.",
+  "f.all": "All",
+  "f.food": "Food & hospitality",
+  "f.services": "Services",
+  "f.ops": "Operations",
+
+  "p1.name": "Restaurant Manager",
+  "p1.desc": "Menu costing, food cost %, inventory, staff schedule and daily sales log.",
+  "p2.name": "Recipe & Menu Planner",
+  "p2.desc": "Recipe library, portion scaling, weekly plans and auto-generated shopping lists.",
+  "p3.name": "Detailing Studio",
+  "p3.desc": "Service packages, bookings, vehicle history, quotes and job status for car detailers.",
+  "p4.name": "Salon & Spa Book",
+  "p4.desc": "Appointments, client cards, services menu and a simple revenue overview.",
+  "p5.name": "Club Manager",
+  "p5.desc": "Teams, fixtures, training plans, match sheets and staff access for sports clubs.",
+  "p6.name": "Small Business CRM",
+  "p6.desc": "Clients, leads, follow-ups, quotes and invoices, all in one dashboard.",
+  "p7.name": "Project Board",
+  "p7.desc": "Kanban, timeline and task tracker for small teams. Works offline.",
+  "p8.name": "Something else?",
+  "p8.desc": "Tell me how your business works and I'll build the app around it.",
+  "from49": "from €49",
+  "from69": "from €69",
+  "from79": "from €79",
+  "from99": "from €99",
+  "quote": "custom quote",
+  "get": "Get it →",
+  "ask": "Ask →",
+
+  "t1.label": "01 / Ready-made",
+  "t1.title": "Ready to use",
+  "t1.text": "One of the apps above with your name, logo and colours. Ready in days.",
+  "t2.label": "02 / Customized",
+  "t2.title": "Fitted to you",
+  "t2.text": "A ready-made app adapted to your services, fields, workflow and language.",
+  "t3.label": "03 / Bespoke",
+  "t3.title": "Built from scratch",
+  "t3.text": "A new app for a process no off-the-shelf tool covers, with logins and a database.",
+
+  "proc.title": "How it works",
+  "proc.count": "4 steps",
+  "s1.t": "Chat",
+  "s1.p": "We talk about your business, what slows you down and what you want to achieve.",
+  "s2.t": "Proposal",
+  "s2.p": "You get a clear scope, price and timeline. No surprises.",
+  "s3.t": "Build",
+  "s3.p": "I build it and share previews along the way so you can steer it.",
+  "s4.t": "Launch",
+  "s4.p": "The app goes live on your domain, with a quick walkthrough and support after launch.",
+
+  "about.title": "Small like a shrimp.<br>Quick like one too.",
+  "about.lead": "Shrimp Labs is a one-person studio. When you work with me, you talk directly to the person designing and building your app, with no account managers and no hand-offs.",
+  "about.p": "My goal is simple: build useful tools that make running a business a little easier. Each app is fast, works on phones, and is made to be used every day by real people.",
+
+  "faq.title": "FAQ",
+  "faq.tag": "quick answers",
+  "q1": "Do I need to pay a monthly subscription?",
+  "a1": "No. Ready-made apps are a one-time purchase. Hosting, updates and support are available as an optional monthly plan.",
+  "q2": "Does it work on my phone?",
+  "a2": "Yes. Every app is designed mobile-first and works in any modern browser. You can also add it to your home screen like a native app.",
+  "q3": "Where is my data stored?",
+  "a3": "Simple apps can keep data on your device. Apps with several users or logins use a secure cloud database that only your business can access.",
+  "q4": "How long does it take?",
+  "a4": "A customized ready-made app usually takes a few days. A bespoke app usually takes 2 to 6 weeks, depending on scope.",
+  "q5": "Can the app be in Portuguese?",
+  "a5": "Yes. Apps can be delivered in Portuguese, English or both.",
+
+  "ct.eyebrow": "// got a process that eats your time?",
+  "ct.title": "Let's build<br>your app.",
+  "ct.name": "Name",
+  "ct.email": "Email",
+  "ct.biz": "Business",
+  "ct.bizph": "e.g. restaurant, salon, club",
+  "ct.interest": "Interested in",
+  "ct.msg": "What should it do?",
+  "ct.send": "Send message",
+  "o.custom": "Custom app"
+};
+
+window.I18N_META = {
+  pt: {
+    title: "Shrimp Labs — Web apps que simplificam o seu negócio",
+    rotate: ["a seguir?", "para si?", "juntos?", "esta semana?", "para lhe poupar tempo?"],
+    copy: "clique para copiar",
+    copied: "copiado ✓"
+  },
+  en: {
+    title: "Shrimp Labs — Web apps that simplify your business",
+    rotate: ["next?", "for you?", "together?", "this week?", "to save you time?"],
+    copy: "click to copy",
+    copied: "copied ✓"
+  }
+};

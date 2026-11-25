@@ -1,15 +1,17 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-PT">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shrimp Labs — Web apps that simplify your business</title>
-  <meta name="description" content="Shrimp Labs is a one-person web app studio. Ready-made and custom web apps that help small businesses reach their goals and simplify their processes.">
+  <title>Shrimp Labs — Web apps que simplificam o seu negócio</title>
+  <meta name="description" content="A Shrimp Labs é um estúdio de web apps de uma só pessoa. Apps prontas a usar e personalizadas que ajudam pequenos negócios a atingir objetivos e a simplificar processos.">
   <meta name="theme-color" content="#141414">
   <meta property="og:title" content="Shrimp Labs">
-  <meta property="og:description" content="Small studio. Sharp web apps. Ready-made and custom tools for businesses.">
+  <meta property="og:description" content="Estúdio pequeno. Ferramentas certeiras. Web apps prontas e à medida para negócios.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://shrimplabs.dev/">
+  <meta property="og:locale" content="pt_PT">
+  <meta property="og:locale:alternate" content="en_GB">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,52 +19,56 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="skip" href="#main" data-i18n="skip">Saltar para o conteúdo</a>
 
   <header class="nav">
-    <a href="#top" class="brand" aria-label="Shrimp Labs home">
+    <a href="#top" class="brand" aria-label="Shrimp Labs">
       <img src="assets/logo.svg" alt="" width="34" height="34">
       <span>Shrimp<b>Labs</b></span>
     </a>
-    <nav aria-label="Main">
-      <a href="#work">Work</a>
-      <a href="#shop">Apps</a>
-      <a href="#process">Process</a>
-      <a href="#about">About</a>
-      <a href="#contact" class="nav-cta">Let's talk</a>
+    <nav aria-label="Menu">
+      <a href="#work" data-i18n="nav.work">Trabalho</a>
+      <a href="#shop" data-i18n="nav.apps">Apps</a>
+      <a href="#process" data-i18n="nav.process">Processo</a>
+      <a href="#about" data-i18n="nav.about">Sobre</a>
+      <div class="lang" role="group" aria-label="Idioma / Language">
+        <button type="button" data-lang="pt" aria-pressed="true">PT</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a href="#contact" class="nav-cta" data-i18n="nav.cta">Vamos falar</a>
     </nav>
   </header>
 
   <main id="main">
     <!-- HERO -->
     <section class="hero" id="top">
-      <p class="eyebrow mono">// a one-person web app studio</p>
+      <p class="eyebrow mono" data-i18n="hero.eyebrow">// um estúdio de web apps de uma só pessoa</p>
       <h1 class="hero-title">
-        <span>What can</span>
-        <span>we build</span>
-        <span class="rotator" aria-live="polite"><span id="rotate">next?</span></span>
+        <span data-i18n="hero.l1">O que vamos</span>
+        <span data-i18n="hero.l2">construir</span>
+        <span class="rotator" aria-live="polite"><span id="rotate">a seguir?</span></span>
       </h1>
-      <p class="hero-sub">Small studio. Sharp tools. I design and build web apps that take the busywork off your plate, so your business can focus on what it does best.</p>
+      <p class="hero-sub" data-i18n="hero.sub">Estúdio pequeno. Ferramentas certeiras. Desenho e construo web apps que tiram o trabalho repetitivo das suas mãos, para que o seu negócio se foque no que faz melhor.</p>
       <div class="hero-actions">
-        <a href="#shop" class="btn btn-primary">Browse apps</a>
-        <a href="#contact" class="btn btn-ghost">Request a custom app</a>
+        <a href="#shop" class="btn btn-primary" data-i18n="hero.browse">Ver apps</a>
+        <a href="#contact" class="btn btn-ghost" data-i18n="hero.custom">Pedir uma app à medida</a>
       </div>
-      <a href="#work" class="scroll mono" aria-label="Scroll to work">scroll ↓</a>
+      <a href="#work" class="scroll mono" data-i18n="hero.scroll">descer ↓</a>
     </section>
 
     <!-- MARQUEE -->
     <div class="marquee" aria-hidden="true">
-      <div class="marquee-track">
-        <span>Bookings</span><i>✦</i><span>Inventory</span><i>✦</i><span>Clients</span><i>✦</i><span>Schedules</span><i>✦</i><span>Quotes</span><i>✦</i><span>Dashboards</span><i>✦</i><span>Recipes</span><i>✦</i><span>Teams</span><i>✦</i>
-        <span>Bookings</span><i>✦</i><span>Inventory</span><i>✦</i><span>Clients</span><i>✦</i><span>Schedules</span><i>✦</i><span>Quotes</span><i>✦</i><span>Dashboards</span><i>✦</i><span>Recipes</span><i>✦</i><span>Teams</span><i>✦</i>
+      <div class="marquee-track" data-i18n="marquee">
+        <span>Marcações</span><i>✦</i><span>Inventário</span><i>✦</i><span>Clientes</span><i>✦</i><span>Horários</span><i>✦</i><span>Orçamentos</span><i>✦</i><span>Dashboards</span><i>✦</i><span>Receitas</span><i>✦</i><span>Equipas</span><i>✦</i>
+        <span>Marcações</span><i>✦</i><span>Inventário</span><i>✦</i><span>Clientes</span><i>✦</i><span>Horários</span><i>✦</i><span>Orçamentos</span><i>✦</i><span>Dashboards</span><i>✦</i><span>Receitas</span><i>✦</i><span>Equipas</span><i>✦</i>
       </div>
     </div>
 
     <!-- WORK -->
     <section class="section" id="work">
       <div class="section-head">
-        <h2>Selected work</h2>
-        <p class="mono">04 projects</p>
+        <h2 data-i18n="work.title">Trabalho selecionado</h2>
+        <p class="mono" data-i18n="work.count">04 projetos</p>
       </div>
 
       <ul class="cases" id="cases">
@@ -70,21 +76,21 @@
           <button class="case-row" aria-expanded="false">
             <span class="case-num mono">01</span>
             <span class="case-name">Juventude da Estrada</span>
-            <span class="case-tags mono">Sports club · Supabase</span>
+            <span class="case-tags mono" data-i18n="c1.tags">Clube desportivo · Supabase</span>
             <span class="case-arrow">↗</span>
           </button>
           <div class="case-body">
             <div class="mock mock-club" aria-hidden="true">
               <div class="m-bar"></div>
               <div class="m-grid">
-                <div class="m-card"><b>Next match</b><span>Sat · 15:00</span></div>
-                <div class="m-card"><b>Training</b><span>72 sessions</span></div>
-                <div class="m-card wide"><b>Match sheets</b><span class="m-lines"></span></div>
+                <div class="m-card"><b data-i18n="c1.m1">Próximo jogo</b><span data-i18n="c1.m1v">Sáb · 15:00</span></div>
+                <div class="m-card"><b data-i18n="c1.m2">Treinos</b><span data-i18n="c1.m2v">72 sessões</span></div>
+                <div class="m-card wide"><b data-i18n="c1.m3">Fichas de jogo</b><span class="m-lines"></span></div>
               </div>
             </div>
             <div class="case-text">
-              <p>A management app for a youth football club. Coaches plan training sessions, fill in match sheets and notes, and fixtures sync automatically so the whole staff works from the same calendar.</p>
-              <ul class="chips"><li>Fixtures sync</li><li>Match sheets</li><li>Training planner</li><li>Staff logins</li></ul>
+              <p data-i18n="c1.text">Uma app de gestão para um clube de futebol de formação. Os treinadores planeiam treinos, preenchem fichas e notas de jogo, e o calendário de jogos sincroniza automaticamente para que toda a equipa técnica trabalhe com a mesma informação.</p>
+              <ul class="chips" data-i18n="c1.chips"><li>Sincronização de jogos</li><li>Fichas de jogo</li><li>Plano de treinos</li><li>Acessos da equipa</li></ul>
             </div>
           </div>
         </li>
@@ -93,7 +99,7 @@
           <button class="case-row" aria-expanded="false">
             <span class="case-num mono">02</span>
             <span class="case-name">Mimar</span>
-            <span class="case-tags mono">Local business · Web app</span>
+            <span class="case-tags mono" data-i18n="c2.tags">Negócio local · Web app</span>
             <span class="case-arrow">↗</span>
           </button>
           <div class="case-body">
@@ -105,8 +111,8 @@
               </div>
             </div>
             <div class="case-text">
-              <p>A custom web app for Mimar that brings their day-to-day into one place: clients, appointments and services, available on any device.</p>
-              <ul class="chips"><li>Client records</li><li>Scheduling</li><li>Mobile-first</li></ul>
+              <p data-i18n="c2.text">Uma web app à medida para a Mimar que reúne o dia a dia num só lugar: clientes, marcações e serviços, disponível em qualquer dispositivo.</p>
+              <ul class="chips" data-i18n="c2.chips"><li>Fichas de cliente</li><li>Agenda</li><li>Pensada para telemóvel</li></ul>
             </div>
           </div>
         </li>
@@ -114,8 +120,8 @@
         <li class="case" data-color="#ffd166">
           <button class="case-row" aria-expanded="false">
             <span class="case-num mono">03</span>
-            <span class="case-name">Recipe App</span>
-            <span class="case-tags mono">Food · Planner</span>
+            <span class="case-name" data-i18n="c3.name">App de Receitas</span>
+            <span class="case-tags mono" data-i18n="c3.tags">Alimentação · Planeamento</span>
             <span class="case-arrow">↗</span>
           </button>
           <div class="case-body">
@@ -127,8 +133,8 @@
               </div>
             </div>
             <div class="case-text">
-              <p>Save recipes, scale portions and plan the week's meals. The shopping list builds itself from what you plan, so you don't have to write it.</p>
-              <ul class="chips"><li>Recipe library</li><li>Portion scaling</li><li>Meal plan</li><li>Auto shopping list</li></ul>
+              <p data-i18n="c3.text">Guarde receitas, ajuste as doses e planeie as refeições da semana. A lista de compras faz-se sozinha a partir do que planeou, sem ter de a escrever.</p>
+              <ul class="chips" data-i18n="c3.chips"><li>Biblioteca de receitas</li><li>Ajuste de doses</li><li>Plano de refeições</li><li>Lista de compras automática</li></ul>
             </div>
           </div>
         </li>
@@ -136,22 +142,22 @@
         <li class="case" data-color="#7ad3ff">
           <button class="case-row" aria-expanded="false">
             <span class="case-num mono">04</span>
-            <span class="case-name">Car Detail App</span>
-            <span class="case-tags mono">Automotive · Bookings</span>
+            <span class="case-name" data-i18n="c4.name">App de Detailing Auto</span>
+            <span class="case-tags mono" data-i18n="c4.tags">Automóvel · Marcações</span>
             <span class="case-arrow">↗</span>
           </button>
           <div class="case-body">
             <div class="mock mock-car" aria-hidden="true">
               <div class="m-bar"></div>
-              <div class="m-list">
-                <div><i></i><b>Full detail · BMW 320d</b><em>09:00</em></div>
-                <div><i></i><b>Ceramic coat · Golf</b><em>11:30</em></div>
+              <div class="m-list" data-i18n="c4.mock">
+                <div><i></i><b>Detalhe completo · BMW 320d</b><em>09:00</em></div>
+                <div><i></i><b>Revestimento cerâmico · Golf</b><em>11:30</em></div>
                 <div><i></i><b>Interior · Clio</b><em>15:00</em></div>
               </div>
             </div>
             <div class="case-text">
-              <p>Built for car detailing businesses: service packages, bookings, the vehicles each job covers, and a clear view of the day's work.</p>
-              <ul class="chips"><li>Service packages</li><li>Bookings</li><li>Job tracking</li><li>Quotes</li></ul>
+              <p data-i18n="c4.text">Feita para negócios de detailing automóvel: pacotes de serviços, marcações, os veículos de cada trabalho e uma visão clara do dia.</p>
+              <ul class="chips" data-i18n="c4.chips"><li>Pacotes de serviços</li><li>Marcações</li><li>Acompanhamento de trabalhos</li><li>Orçamentos</li></ul>
             </div>
           </div>
         </li>
@@ -162,84 +168,84 @@
     <!-- SHOP -->
     <section class="section" id="shop">
       <div class="section-head">
-        <h2>Apps for your business</h2>
-        <p class="mono">ready-made · made to fit you</p>
+        <h2 data-i18n="shop.title">Apps para o seu negócio</h2>
+        <p class="mono" data-i18n="shop.tag">prontas a usar · feitas à sua medida</p>
       </div>
-      <p class="lead">Pick an app that's ready to go, and I'll set it up with your logo, colours, services and prices. No monthly subscription unless you want hosting and support.</p>
+      <p class="lead" data-i18n="shop.lead">Escolha uma app pronta a usar e eu configuro-a com o seu logótipo, cores, serviços e preços. Sem mensalidades, a não ser que queira alojamento e suporte.</p>
 
-      <div class="filters" role="tablist" aria-label="Filter apps">
-        <button class="filter active" data-filter="all" role="tab" aria-selected="true">All</button>
-        <button class="filter" data-filter="food" role="tab" aria-selected="false">Food &amp; hospitality</button>
-        <button class="filter" data-filter="services" role="tab" aria-selected="false">Services</button>
-        <button class="filter" data-filter="ops" role="tab" aria-selected="false">Operations</button>
+      <div class="filters" role="group" aria-label="Filtrar apps">
+        <button class="filter active" data-filter="all" aria-pressed="true" data-i18n="f.all">Todas</button>
+        <button class="filter" data-filter="food" aria-pressed="false" data-i18n="f.food">Restauração</button>
+        <button class="filter" data-filter="services" aria-pressed="false" data-i18n="f.services">Serviços</button>
+        <button class="filter" data-filter="ops" aria-pressed="false" data-i18n="f.ops">Gestão</button>
       </div>
 
       <div class="products" id="products">
         <article class="product" data-cat="food">
           <div class="p-icon">🍽️</div>
-          <h3>Restaurant Manager</h3>
-          <p>Menu costing, food cost %, inventory, staff schedule and daily sales log.</p>
-          <div class="p-foot"><span class="price mono">from €79</span><a href="#contact" data-product="Restaurant Manager">Get it →</a></div>
+          <h3 data-i18n="p1.name">Gestor de Restaurante</h3>
+          <p data-i18n="p1.desc">Custo de pratos, % de custo alimentar, inventário, horários da equipa e registo de vendas diário.</p>
+          <div class="p-foot"><span class="price mono" data-i18n="from79">desde 79 €</span><a href="#contact" data-product="restaurant" data-i18n="get">Quero →</a></div>
         </article>
         <article class="product" data-cat="food">
           <div class="p-icon">🥘</div>
-          <h3>Recipe &amp; Menu Planner</h3>
-          <p>Recipe library, portion scaling, weekly plans and auto-generated shopping lists.</p>
-          <div class="p-foot"><span class="price mono">from €49</span><a href="#contact" data-product="Recipe & Menu Planner">Get it →</a></div>
+          <h3 data-i18n="p2.name">Planeador de Receitas e Menus</h3>
+          <p data-i18n="p2.desc">Biblioteca de receitas, ajuste de doses, planos semanais e listas de compras automáticas.</p>
+          <div class="p-foot"><span class="price mono" data-i18n="from49">desde 49 €</span><a href="#contact" data-product="recipes" data-i18n="get">Quero →</a></div>
         </article>
         <article class="product" data-cat="services">
           <div class="p-icon">🚗</div>
-          <h3>Detailing Studio</h3>
-          <p>Service packages, bookings, vehicle history, quotes and job status for car detailers.</p>
-          <div class="p-foot"><span class="price mono">from €79</span><a href="#contact" data-product="Detailing Studio">Get it →</a></div>
+          <h3 data-i18n="p3.name">Estúdio de Detailing</h3>
+          <p data-i18n="p3.desc">Pacotes de serviços, marcações, histórico de veículos, orçamentos e estado dos trabalhos.</p>
+          <div class="p-foot"><span class="price mono" data-i18n="from79">desde 79 €</span><a href="#contact" data-product="detailing" data-i18n="get">Quero →</a></div>
         </article>
         <article class="product" data-cat="services">
           <div class="p-icon">💆</div>
-          <h3>Salon &amp; Spa Book</h3>
-          <p>Appointments, client cards, services menu and a simple revenue overview.</p>
-          <div class="p-foot"><span class="price mono">from €69</span><a href="#contact" data-product="Salon & Spa Book">Get it →</a></div>
+          <h3 data-i18n="p4.name">Agenda de Salão e Spa</h3>
+          <p data-i18n="p4.desc">Marcações, fichas de cliente, menu de serviços e uma visão simples da faturação.</p>
+          <div class="p-foot"><span class="price mono" data-i18n="from69">desde 69 €</span><a href="#contact" data-product="salon" data-i18n="get">Quero →</a></div>
         </article>
         <article class="product" data-cat="ops">
           <div class="p-icon">⚽</div>
-          <h3>Club Manager</h3>
-          <p>Teams, fixtures, training plans, match sheets and staff access for sports clubs.</p>
-          <div class="p-foot"><span class="price mono">from €99</span><a href="#contact" data-product="Club Manager">Get it →</a></div>
+          <h3 data-i18n="p5.name">Gestor de Clube</h3>
+          <p data-i18n="p5.desc">Equipas, jogos, planos de treino, fichas de jogo e acessos para a equipa técnica.</p>
+          <div class="p-foot"><span class="price mono" data-i18n="from99">desde 99 €</span><a href="#contact" data-product="club" data-i18n="get">Quero →</a></div>
         </article>
         <article class="product" data-cat="ops">
           <div class="p-icon">📇</div>
-          <h3>Small Business CRM</h3>
-          <p>Clients, leads, follow-ups, quotes and invoices, all in one dashboard.</p>
-          <div class="p-foot"><span class="price mono">from €69</span><a href="#contact" data-product="Small Business CRM">Get it →</a></div>
+          <h3 data-i18n="p6.name">CRM para Pequenos Negócios</h3>
+          <p data-i18n="p6.desc">Clientes, contactos, seguimentos, orçamentos e faturas num só painel.</p>
+          <div class="p-foot"><span class="price mono" data-i18n="from69">desde 69 €</span><a href="#contact" data-product="crm" data-i18n="get">Quero →</a></div>
         </article>
         <article class="product" data-cat="ops">
           <div class="p-icon">📋</div>
-          <h3>Project Board</h3>
-          <p>Kanban, timeline and task tracker for small teams. Works offline.</p>
-          <div class="p-foot"><span class="price mono">from €49</span><a href="#contact" data-product="Project Board">Get it →</a></div>
+          <h3 data-i18n="p7.name">Quadro de Projetos</h3>
+          <p data-i18n="p7.desc">Kanban, cronograma e gestor de tarefas para pequenas equipas. Funciona offline.</p>
+          <div class="p-foot"><span class="price mono" data-i18n="from49">desde 49 €</span><a href="#contact" data-product="projects" data-i18n="get">Quero →</a></div>
         </article>
         <article class="product product-custom" data-cat="all">
           <div class="p-icon">🦐</div>
-          <h3>Something else?</h3>
-          <p>Tell me how your business works and I'll build the app around it.</p>
-          <div class="p-foot"><span class="price mono">custom quote</span><a href="#contact" data-product="Custom app">Ask →</a></div>
+          <h3 data-i18n="p8.name">Outra coisa?</h3>
+          <p data-i18n="p8.desc">Explique-me como funciona o seu negócio e eu construo a app à volta disso.</p>
+          <div class="p-foot"><span class="price mono" data-i18n="quote">orçamento à medida</span><a href="#contact" data-product="custom" data-i18n="ask">Pedir →</a></div>
         </article>
       </div>
 
       <div class="tiers">
         <div class="tier">
-          <p class="mono tier-label">01 / Ready-made</p>
-          <h3>Ready to use</h3>
-          <p>One of the apps above with your name, logo and colours. Ready in days.</p>
+          <p class="mono tier-label" data-i18n="t1.label">01 / Pronta a usar</p>
+          <h3 data-i18n="t1.title">Pronta a usar</h3>
+          <p data-i18n="t1.text">Uma das apps acima com o seu nome, logótipo e cores. Pronta em poucos dias.</p>
         </div>
         <div class="tier tier-hl">
-          <p class="mono tier-label">02 / Customized</p>
-          <h3>Fitted to you</h3>
-          <p>A ready-made app adapted to your services, fields, workflow and language.</p>
+          <p class="mono tier-label" data-i18n="t2.label">02 / Personalizada</p>
+          <h3 data-i18n="t2.title">Ajustada a si</h3>
+          <p data-i18n="t2.text">Uma app pronta adaptada aos seus serviços, campos, forma de trabalhar e idioma.</p>
         </div>
         <div class="tier">
-          <p class="mono tier-label">03 / Bespoke</p>
-          <h3>Built from scratch</h3>
-          <p>A new app for a process no off-the-shelf tool covers, with logins and a database.</p>
+          <p class="mono tier-label" data-i18n="t3.label">03 / À medida</p>
+          <h3 data-i18n="t3.title">Feita de raiz</h3>
+          <p data-i18n="t3.text">Uma app nova para um processo que nenhuma ferramenta existente resolve, com logins e base de dados.</p>
         </div>
       </div>
     </section>
@@ -247,14 +253,14 @@
     <!-- PROCESS -->
     <section class="section" id="process">
       <div class="section-head">
-        <h2>How it works</h2>
-        <p class="mono">4 steps</p>
+        <h2 data-i18n="proc.title">Como funciona</h2>
+        <p class="mono" data-i18n="proc.count">4 passos</p>
       </div>
       <ol class="steps">
-        <li><span class="mono">01</span><h3>Chat</h3><p>We talk about your business, what slows you down and what you want to achieve.</p></li>
-        <li><span class="mono">02</span><h3>Proposal</h3><p>You get a clear scope, price and timeline. No surprises.</p></li>
-        <li><span class="mono">03</span><h3>Build</h3><p>I build it and share previews along the way so you can steer it.</p></li>
-        <li><span class="mono">04</span><h3>Launch</h3><p>The app goes live on your domain, with a quick walkthrough and support after launch.</p></li>
+        <li><span class="mono">01</span><h3 data-i18n="s1.t">Conversa</h3><p data-i18n="s1.p">Falamos sobre o seu negócio, o que o atrasa e o que quer alcançar.</p></li>
+        <li><span class="mono">02</span><h3 data-i18n="s2.t">Proposta</h3><p data-i18n="s2.p">Recebe um âmbito, preço e prazo claros. Sem surpresas.</p></li>
+        <li><span class="mono">03</span><h3 data-i18n="s3.t">Construção</h3><p data-i18n="s3.p">Construo a app e partilho versões pelo caminho para poder dar a sua opinião.</p></li>
+        <li><span class="mono">04</span><h3 data-i18n="s4.t">Lançamento</h3><p data-i18n="s4.p">A app fica online no seu domínio, com uma demonstração rápida e suporte depois do lançamento.</p></li>
       </ol>
     </section>
 
@@ -262,54 +268,54 @@
     <section class="section about" id="about">
       <div class="about-mark" aria-hidden="true"><img src="assets/logo.svg" alt=""></div>
       <div>
-        <h2>Small like a shrimp.<br>Quick like one too.</h2>
-        <p class="lead">Shrimp Labs is a one-person studio. When you work with me, you talk directly to the person designing and building your app, with no account managers and no hand-offs.</p>
-        <p>My goal is simple: build useful tools that make running a business a little easier. Each app is fast, works on phones, and is made to be used every day by real people.</p>
+        <h2 data-i18n="about.title">Pequeno como um camarão.<br>Rápido como um também.</h2>
+        <p class="lead" data-i18n="about.lead">A Shrimp Labs é um estúdio de uma só pessoa. Quando trabalha comigo, fala diretamente com quem desenha e constrói a sua app, sem gestores de conta nem intermediários.</p>
+        <p data-i18n="about.p">O meu objetivo é simples: criar ferramentas úteis que tornam a gestão de um negócio um pouco mais fácil. Cada app é rápida, funciona no telemóvel e é feita para ser usada todos os dias por pessoas reais.</p>
       </div>
     </section>
 
     <!-- FAQ -->
     <section class="section" id="faq">
       <div class="section-head">
-        <h2>FAQ</h2>
-        <p class="mono">quick answers</p>
+        <h2 data-i18n="faq.title">Perguntas frequentes</h2>
+        <p class="mono" data-i18n="faq.tag">respostas rápidas</p>
       </div>
       <div class="faq">
-        <details><summary>Do I need to pay a monthly subscription?</summary><p>No. Ready-made apps are a one-time purchase. Hosting, updates and support are available as an optional monthly plan.</p></details>
-        <details><summary>Does it work on my phone?</summary><p>Yes. Every app is designed mobile-first and works in any modern browser. You can also add it to your home screen like a native app.</p></details>
-        <details><summary>Where is my data stored?</summary><p>Simple apps can keep data on your device. Apps with several users or logins use a secure cloud database that only you can access.</p></details>
-        <details><summary>How long does it take?</summary><p>A customized ready-made app usually takes a few days. A bespoke app usually takes 2 to 6 weeks, depending on scope.</p></details>
-        <details><summary>Can the app be in Portuguese?</summary><p>Yes. Apps can be delivered in Portuguese, English or both.</p></details>
+        <details><summary data-i18n="q1">Tenho de pagar uma mensalidade?</summary><p data-i18n="a1">Não. As apps prontas a usar são uma compra única. Alojamento, atualizações e suporte estão disponíveis num plano mensal opcional.</p></details>
+        <details><summary data-i18n="q2">Funciona no meu telemóvel?</summary><p data-i18n="a2">Sim. Todas as apps são pensadas primeiro para telemóvel e funcionam em qualquer navegador moderno. Também as pode adicionar ao ecrã principal como uma app nativa.</p></details>
+        <details><summary data-i18n="q3">Onde ficam guardados os meus dados?</summary><p data-i18n="a3">As apps simples podem guardar os dados no seu dispositivo. As apps com vários utilizadores ou logins usam uma base de dados segura na cloud, a que só o seu negócio tem acesso.</p></details>
+        <details><summary data-i18n="q4">Quanto tempo demora?</summary><p data-i18n="a4">Uma app pronta personalizada demora normalmente poucos dias. Uma app à medida demora normalmente entre 2 e 6 semanas, dependendo do âmbito.</p></details>
+        <details><summary data-i18n="q5">A app pode estar em inglês?</summary><p data-i18n="a5">Sim. As apps podem ser entregues em português, inglês ou nos dois idiomas.</p></details>
       </div>
     </section>
 
     <!-- CONTACT -->
     <section class="section contact" id="contact">
-      <p class="eyebrow mono">// got a process that eats your time?</p>
-      <h2 class="contact-title">Let's build<br>your app.</h2>
+      <p class="eyebrow mono" data-i18n="ct.eyebrow">// tem um processo que lhe rouba tempo?</p>
+      <h2 class="contact-title" data-i18n="ct.title">Vamos criar<br>a sua app.</h2>
 
       <form class="form" id="form" action="mailto:hello@shrimplabs.dev" method="post" enctype="text/plain">
-        <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" required autocomplete="name"></div>
-        <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" required autocomplete="email"></div>
-        <div class="field"><label for="f-biz">Business</label><input id="f-biz" name="business" placeholder="e.g. restaurant, salon, club"></div>
-        <div class="field"><label for="f-app">Interested in</label>
+        <div class="field"><label for="f-name" data-i18n="ct.name">Nome</label><input id="f-name" name="name" required autocomplete="name"></div>
+        <div class="field"><label for="f-email" data-i18n="ct.email">Email</label><input id="f-email" name="email" type="email" required autocomplete="email"></div>
+        <div class="field"><label for="f-biz" data-i18n="ct.biz">Negócio</label><input id="f-biz" name="business" placeholder="ex.: restaurante, salão, clube" data-i18n-ph="ct.bizph"></div>
+        <div class="field"><label for="f-app" data-i18n="ct.interest">Interesse</label>
           <select id="f-app" name="interest">
-            <option>Custom app</option>
-            <option>Restaurant Manager</option>
-            <option>Recipe &amp; Menu Planner</option>
-            <option>Detailing Studio</option>
-            <option>Salon &amp; Spa Book</option>
-            <option>Club Manager</option>
-            <option>Small Business CRM</option>
-            <option>Project Board</option>
+            <option value="custom" data-i18n="o.custom">App à medida</option>
+            <option value="restaurant" data-i18n="p1.name">Gestor de Restaurante</option>
+            <option value="recipes" data-i18n="p2.name">Planeador de Receitas e Menus</option>
+            <option value="detailing" data-i18n="p3.name">Estúdio de Detailing</option>
+            <option value="salon" data-i18n="p4.name">Agenda de Salão e Spa</option>
+            <option value="club" data-i18n="p5.name">Gestor de Clube</option>
+            <option value="crm" data-i18n="p6.name">CRM para Pequenos Negócios</option>
+            <option value="projects" data-i18n="p7.name">Quadro de Projetos</option>
           </select>
         </div>
-        <div class="field full"><label for="f-msg">What should it do?</label><textarea id="f-msg" name="message" rows="4" required></textarea></div>
-        <button class="btn btn-primary" type="submit">Send message</button>
+        <div class="field full"><label for="f-msg" data-i18n="ct.msg">O que deve a app fazer?</label><textarea id="f-msg" name="message" rows="4" required></textarea></div>
+        <button class="btn btn-primary" type="submit" data-i18n="ct.send">Enviar mensagem</button>
       </form>
 
       <button class="copy-mail" id="copy" data-mail="hello@shrimplabs.dev">
-        <span class="mono">M :</span> <span class="mail">hello@shrimplabs.dev</span> <span class="copy-hint mono" id="copy-hint">click to copy</span>
+        <span class="mono">M :</span> <span class="mail">hello@shrimplabs.dev</span> <span class="copy-hint mono" id="copy-hint">clique para copiar</span>
       </button>
     </section>
   </main>
@@ -324,6 +330,7 @@
     <p class="mono">© <span id="year">2026</span> Shrimp Labs</p>
   </footer>
 
+  <script src="i18n.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
