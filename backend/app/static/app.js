@@ -217,7 +217,10 @@ function route() {
 // Lettering after u-gohan: lowercase high-contrast serif, a heavy rule beneath, a small Japanese caption.
 const JP = {"Receitas": "レシピ", "Plano": "献立", "Grupo": "仲間", "Compras": "買い物", "Definições": "設定", "Despensa": "食品庫", "Ingredientes": "材料", "Passos": "作り方", "Informação nutricional": "栄養", "As minhas coleções": "コレクション", "Voltava a fazer?": "また作る？", "Feita pelo grupo": "みんなの一皿", "Variações": "アレンジ", "Esta semana": "今週", "Jantares": "夕食会", "Ranking do grupo": "ランキング", "Atividade": "最近", "Listas": "リスト", "Comprados": "購入済み", "Aparência": "テーマ", "Notificações": "お知らせ", "Os meus grupos": "グループ", "Custo e nutrição": "費用と栄養", "Básicos": "基本", "Próximas": "これから", "Anteriores": "これまで", "Instalar no iPhone": "インストール", "Android": "アンドロイド"};
 const CAT_TITLES = {"festas": ["natal e ano novo", ""], "entradas": ["entradas", ""], "": ["receitas recentes", "新着"], "bimby": ["bimby", "調理機"], "pequeno": ["pequeno-almoço", "朝ご飯"], "pratos": ["pratos principais", "主菜"], "sobremesas": ["sobremesas", "甘味"], "lanches": ["lanches", "軽食"], "bebidas": ["bebidas", "飲み物"]};
-const lettering = (text, _jp, tag = "h1", cls = "") => `<${tag} class="jt ${cls}"><b>${esc(text.toLowerCase())}</b></${tag}>`;
+const lettering = (text, _jp, tag = "h1", cls = "", keepCase = false) => `<${tag} class="jt ${cls}"><b>${esc(keepCase ? text : text.toLowerCase())}</b></${tag}>`;
+// "Receitas Recentes", "Natal e Ano Novo": capitalised words, small linking words stay lowercase
+const SMALL = new Set(["a", "à", "o", "e", "de", "do", "da", "dos", "das", "com", "em", "no", "na", "para", "por", "y", "con"]);
+const titleCase = t => t.split(" ").map((w, i) => i && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 const largeTitle = (text, sub) => {
   title.innerHTML = JP[text] ? `${lettering(text, JP[text], "h1", "jt-large")}${sub ? `<p class="subtitle">${esc(sub)}</p>` : ""}`
     : `<h1 class="large-title">${esc(text)}</h1>${sub ? `<p class="subtitle">${esc(sub)}</p>` : ""}`;
@@ -449,7 +452,8 @@ function homeHeadHTML(count) {
     : state.collection ? state.collection
     : cat ? cat[1] : "receitas recentes";
   const extra = state.query.trim() ? " em todas" : state.collection && cat ? ` · ${cat[1].toLowerCase()}` : "";
-  return `${lettering(title, null, "h2", "jt-left")}<span class="home-count">${count} receita${count === 1 ? "" : "s"}${esc(extra)}</span>`;
+  const shown = state.query.trim() ? title : titleCase(title);
+  return `${lettering(shown, null, "h2", "jt-left", true)}<span class="home-count">${count} receita${count === 1 ? "" : "s"}${esc(extra)}</span>`;
 }
 
 // ---------------------------------------------------------------- home shelves

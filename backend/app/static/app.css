@@ -2044,3 +2044,53 @@ html:root .shelf .card::before, html:root[data-theme] .shelf .card::before { bac
 @media (prefers-color-scheme: light) {
   html:root .shelf .card, html:root[data-theme] .shelf .card { background: linear-gradient(170deg, color-mix(in srgb, var(--tint) 20%, #fffaf3), color-mix(in srgb, var(--tint) 8%, #fffaf3)); }
 }
+
+/* Display titles (Fraunces): +0.8pt everywhere, still following the text-size setting */
+html:root .jt b, html:root[data-theme] .jt b { font-size: calc(2.2000rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .home-head .jt b, html:root[data-theme] .home-head .jt b { font-size: calc(1.3750rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .hh-greet, html:root[data-theme] .hh-greet { font-size: calc(0.9000rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .home-hero h2, html:root[data-theme] .home-hero h2 { font-size: calc(1.7000rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .hh-week b, html:root[data-theme] .hh-week b { font-size: calc(1.0000rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .hh-week i, html:root[data-theme] .hh-week i { font-size: calc(1.0000rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .shelf-title, html:root[data-theme] .shelf-title { font-size: calc(1.5000rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .mi-pt, html:root[data-theme] .mi-pt { font-size: calc(1.7500rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .hero h2, html:root[data-theme] .hero h2 { font-size: calc(2.3500rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .section-head h3, html:root[data-theme] .section-head h3 { font-size: calc(1.3750rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .block-head h3, html:root[data-theme] .block-head h3 { font-size: calc(1.3750rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .bimby-cta h4, html:root[data-theme] .bimby-cta h4 { font-size: calc(1.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .day-head b, html:root[data-theme] .day-head b { font-size: calc(1.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+html:root .large-title, html:root[data-theme] .large-title { font-size: calc(1.8281rem + calc(0.8pt * var(--text-scale, 1))); }
+@media (min-width: 768px) and (max-width: 1023px) {
+  html:root .jt b, html:root[data-theme] .jt b { font-size: calc(2.2000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .home-head .jt b, html:root[data-theme] .home-head .jt b { font-size: calc(2.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .hh-greet, html:root[data-theme] .hh-greet { font-size: calc(1.1250rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .home-hero h2, html:root[data-theme] .home-hero h2 { font-size: calc(3.0000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .hh-week b, html:root[data-theme] .hh-week b { font-size: calc(1.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .hh-week i, html:root[data-theme] .hh-week i { font-size: calc(0.8750rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .shelf-title, html:root[data-theme] .shelf-title { font-size: calc(1.7500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .mi-pt, html:root[data-theme] .mi-pt { font-size: calc(2.0000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .hero h2, html:root[data-theme] .hero h2 { font-size: calc(2.3500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .section-head h3, html:root[data-theme] .section-head h3 { font-size: calc(1.5000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .block-head h3, html:root[data-theme] .block-head h3 { font-size: calc(1.5000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .bimby-cta h4, html:root[data-theme] .bimby-cta h4 { font-size: calc(1.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .day-head b, html:root[data-theme] .day-head b { font-size: calc(1.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .large-title, html:root[data-theme] .large-title { font-size: calc(2.1250rem + calc(0.8pt * var(--text-scale, 1))); }
+}
+@media (min-width: 1024px) {
+  html:root .jt b, html:root[data-theme] .jt b { font-size: calc(2.2000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .home-head .jt b, html:root[data-theme] .home-head .jt b { font-size: calc(2.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .hh-greet, html:root[data-theme] .hh-greet { font-size: calc(1.1250rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .home-hero h2, html:root[data-theme] .home-hero h2 { font-size: calc(3.0000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .hh-week b, html:root[data-theme] .hh-week b { font-size: calc(1.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .hh-week i, html:root[data-theme] .hh-week i { font-size: calc(0.8750rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .shelf-title, html:root[data-theme] .shelf-title { font-size: calc(1.7500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .mi-pt, html:root[data-theme] .mi-pt { font-size: calc(2.0000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .hero h2, html:root[data-theme] .hero h2 { font-size: calc(2.3500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .section-head h3, html:root[data-theme] .section-head h3 { font-size: calc(1.5000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .block-head h3, html:root[data-theme] .block-head h3 { font-size: calc(1.5000rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .bimby-cta h4, html:root[data-theme] .bimby-cta h4 { font-size: calc(1.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .day-head b, html:root[data-theme] .day-head b { font-size: calc(1.2500rem + calc(0.8pt * var(--text-scale, 1))); }
+  html:root .large-title, html:root[data-theme] .large-title { font-size: calc(2.1250rem + calc(0.8pt * var(--text-scale, 1))); }
+}
+
+.home-head .jt b { text-transform: none; }
