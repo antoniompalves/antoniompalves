@@ -70,3 +70,44 @@ def test_content_includes_frames_and_sources():
     content = build_content(mat)
     assert content[1]["type"] == "image"
     assert "<spoken_transcript>" in content[-2]["text"]
+
+
+def test_flat_schemas_convert_and_stay_simple():
+    """The API rejects complex schemas: outputs must have no optional/anyOf fields, and convert back cleanly."""
+    import json
+    from types import SimpleNamespace
+    from app import bimby, extractor
+    from app.models import Recipe
+    from app.schemas import XBimby, XBimbyStep, XDraft, XIngredient, XStep
+    from app.sources import SourceMaterial
+    for m in (XDraft, XBimby):
+        assert "anyOf" not in json.dumps(m.model_json_schema())
+
+    flat = XDraft(is_recipe=True, title="Bacalhau à Brás", description="", servings=4, prep_minutes=0, cook_minutes=15, total_minutes=0,
+                  cuisine="Portuguesa", meal_type="dinner", tags=["bacalhau"],
+                  ingredients=[XIngredient(quantity="400", unit="g", name="bacalhau", note="desfiado", group="")],
+                  steps=[XStep(text="Refoga a cebola.", video_second=-1), XStep(text="Junta os ovos.", video_second=42)],
+                  kcal_per_serving=520, confidence=.9, inferred_fields=[])
+    seen = {}
+
+    class FakeBeta:
+        class messages:
+            @staticmethod
+            def parse(**kw):
+                seen["fmt"] = kw["output_format"]
+                return SimpleNamespace(stop_reason="end_turn", parsed_output=flat if kw["output_format"] is XDraft else xb)
+    client = SimpleNamespace(beta=FakeBeta)
+    d = extractor.extract_recipe(SourceMaterial(url="https://x", platform="web", caption="..."), client=client)
+    assert seen["fmt"] is XDraft and d.description is None and d.prep_minutes is None and d.cook_minutes == 15
+    assert d.ingredients[0].group is None and d.steps[0].timestamp_seconds is None and d.steps[1].timestamp_seconds == 42
+    assert d.nutrition_estimate.calories == 520
+
+    xb = XBimby(title="Bacalhau à Brás", servings=4, total_minutes=25,
+                ingredients=[XIngredient(quantity="400", unit="g", name="bacalhau", note="", group="")],
+                steps=[XBimbyStep(text="Pica 5 seg/vel. 5.", uses_machine=True, time_seconds=5, temperature="", speed="5", reverse=False, mode="", accessory=""),
+                       XBimbyStep(text="Serve.", uses_machine=False, time_seconds=0, temperature="", speed="", reverse=False, mode="", accessory="")],
+                notes=["ok"])
+    rec = Recipe(**d.model_dump(), id="r", source_url="", source_platform="web", created_at="2026-01-01")
+    out = bimby.convert(rec, "TM6", client=client)
+    assert seen["fmt"] is XBimby and out.steps[0].bimby.speed == "5" and out.steps[0].bimby.temperature is None
+    assert out.steps[1].bimby is None and out.ingredients[0].note is None

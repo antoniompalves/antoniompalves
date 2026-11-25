@@ -8,6 +8,7 @@ from typing import Optional
 import anthropic
 
 from .models import RecipeDraft
+from .schemas import XDraft
 from .sources import SourceMaterial
 
 MODEL = os.getenv("RECIPE_MODEL", "claude-opus-5-5")
@@ -33,8 +34,8 @@ step in the usual format, e.g. "Programa 5 min/100 °C/vel. 1", plus "colher inv
 - Keep ingredient names short and put prep in note ("onion" + note "diced").
 - Use groups for multi-part recipes (e.g. "Dough", "Filling").
 - If a step clearly lines up with a part of the transcript and timing is known, set \
-timestamp_seconds; otherwise leave it null.
-- nutrition_estimate is a rough per-serving estimate; leave it null if you can't estimate.
+video_second; otherwise -1.
+- kcal_per_serving is a rough per-serving estimate; use 0 if you can't estimate. Use empty text or 0 for anything not stated.
 {language_rule}
 - Titles in sentence case, as Portuguese writes them ("Arroz de pato à moda de Braga"), never Title Case.
 - If the content is not a recipe at all, set is_recipe=false, give a short title and leave \
@@ -115,13 +116,14 @@ def extract_recipe(
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
         messages=[{"role": "user", "content": build_content(mat)}],
-        output_format=RecipeDraft,
+        output_format=XDraft,  # flat schema (the API rejects complex nested optionals)
     )
     if response.stop_reason == "refusal":
         raise ExtractionError("O modelo recusou processar este conteúdo.")
     if response.stop_reason == "max_tokens":
         raise ExtractionError("A receita ficou incompleta. Tenta novamente.")
-    draft = response.parsed_output
+    flat = response.parsed_output
+    draft = flat.to_draft() if flat is not None else None
     if draft is None:
         raise ExtractionError("O modelo não devolveu uma receita estruturada.")
     return draft

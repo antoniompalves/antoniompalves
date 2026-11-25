@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from .extractor import MODEL, ExtractionError
 from .models import Ingredient, Recipe, Step
+from .schemas import XBimby
 
 Model = Literal["TM5", "TM6", "TM7"]
 
@@ -45,8 +46,9 @@ If it exceeds the bowl, split into batches and say so in a step.
 - Ingredients: metric weights (g, ml as g for water/milk/broth), in the order they go in.
 - Each step: imperative, informal "tu" in European Portuguese (e.g. "Coloca", "Programa", "Retira"), \
 ending with the exact program written the Bimby way, e.g. "Programa 5 min/100 °C/colher inversa/vel. colher." \
-Fill the bimby object for every step that uses the machine (time in seconds, temperature as text, \
-speed, reverse, mode, accessory). Steps without the machine (plating, oven, resting) leave bimby null.
+For every step set uses_machine; when it uses the machine fill time_seconds, temperature, speed, reverse, \
+mode and accessory (empty text or 0 when not used). Steps without the machine (plating, oven, resting) have \
+uses_machine false.
 - notes: short practical tips (what changed from the original, tricks, what to watch).
 - Write everything in European Portuguese (pt-PT). Never use "você"."""
 
@@ -74,13 +76,15 @@ def convert(recipe: Recipe, model: Model = "TM6", client: Optional[anthropic.Ant
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
         messages=[{"role": "user", "content": f"Converte esta receita para a Bimby {model}:\n\n<recipe>\n{json.dumps(src, ensure_ascii=False)}\n</recipe>"}],
-        output_format=BimbyConversion,
+        output_format=XBimby,
     )
     if response.stop_reason == "refusal":
         raise ExtractionError("O modelo recusou converter esta receita.")
     if response.stop_reason == "max_tokens":
         raise ExtractionError("A conversão ficou incompleta. Tenta novamente.")
-    out = response.parsed_output
+    flat = response.parsed_output
+    out = BimbyConversion(title=flat.title, servings=flat.servings or None, total_minutes=flat.total_minutes or None,
+                          ingredients=flat.to_ingredients(), steps=flat.to_steps(), notes=flat.notes) if flat is not None else None
     if out is None or not out.steps:
         raise ExtractionError("Não foi possível converter esta receita.")
     return out
