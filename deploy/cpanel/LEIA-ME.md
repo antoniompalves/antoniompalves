@@ -14,10 +14,14 @@ um ficheiro: **não precisas de MySQL nem do phpMyAdmin**.
 
 ## 2. Carregar os ficheiros
 
-1. **File Manager** → pasta inicial (`/home/OTEUUTILIZADOR`) → **Upload** → `gohan-cpanel.zip`.
-2. Clica no zip → **Extract**. Fica a pasta `gohan/`, **fora** de `public_html`.
-3. Dentro de `gohan/`, copia `env.example` para `.env` e edita: `ANTHROPIC_API_KEY`, `SIGNUP_CODE`,
-   `VAPID_SUBJECT`. (Ativa *Settings → Show Hidden Files* para veres o `.env`.)
+1. **File Manager** → abre a pasta `gohan` (criada pelo *Setup Python App*; se não existir, cria-a na pasta
+   inicial, **fora** de `public_html`).
+2. Dentro de `gohan` → **Upload** → `gohan-cpanel.zip` → clica no zip → **Extract** → aceita substituir o
+   `passenger_wsgi.py` de exemplo.
+3. Confirma: dentro de `gohan` tens **diretamente** `app/`, `passenger_wsgi.py`, `requirements-cpanel.txt`
+   (não uma pasta `gohan/gohan`).
+4. Copia `env.example` para `.env` e edita: `ANTHROPIC_API_KEY`, `SIGNUP_CODE`, `VAPID_SUBJECT`.
+   (Ativa *Settings → Show Hidden Files* para veres o `.env`.)
 
 ## 3. Criar a aplicação Python
 
