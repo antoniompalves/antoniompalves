@@ -25,6 +25,9 @@ um ficheiro: **não precisas de MySQL nem do phpMyAdmin**.
 
 ## 3. Criar a aplicação Python
 
+> **Ordem importante:** extrai os ficheiros (passo 2) **antes** de criar a aplicação. Se o *startup file*
+> ainda não existir, o cPanel escreve lá uma app de exemplo ("It works!") e o Gohan não arranca.
+
 **Setup Python App → Create Application**:
 
 | Campo | Valor |
@@ -73,6 +76,16 @@ O resumo semanal só é enviado uma vez, ao domingo a partir das 18h. As cópias
   `YTDLP_COOKIES_FILE=/home/OTEUUTILIZADOR/gohan-data/cookies.txt` no `.env`, depois **Restart**.
 
 ## Se algo correr mal
+
+- **"It works! Python v3.x"** em todas as páginas: o cPanel pôs a app de exemplo no `gohan_wsgi.py`.
+  Volta a extrair o zip (substituir) e faz **Stop App → Start App**.
+- **"Index of /"**: o `.htaccess` da pasta pública perdeu o bloco `CLOUDLINUX PASSENGER CONFIGURATION`.
+  Recria a aplicação (o cPanel reescreve-o) ou repõe o bloco com `PassengerAppRoot`, `PassengerBaseURI "/"`
+  e `PassengerPython` (o caminho aparece na faixa azul do *Setup Python App*).
+- **Página fica a carregar sem erro**: usa o `gohan_wsgi.py` mais recente (cria a app só depois de o
+  LiteSpeed copiar o processo).
+- **"No such application" ao fazer Restart**: o registo do cPanel dessincronizou; *Destroy* e *Create* com
+  os mesmos valores (os ficheiros e `~/gohan-data` ficam).
 
 - `RecursionError` no `stderr.log`: o *startup file* está como `passenger_wsgi.py`; muda para `gohan_wsgi.py`, **Save**, **Restart**.
 - Página de erro do Passenger: vê `~/gohan-data/passenger.log` e `~/gohan/stderr.log`.
