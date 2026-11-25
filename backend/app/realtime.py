@@ -15,6 +15,7 @@ class Broker:
     def __init__(self):
         self._subs: dict[str, set[tuple[asyncio.AbstractEventLoop, asyncio.Queue]]] = defaultdict(set)
         self._lock = threading.Lock()
+        self.on_publish = None  # set in polling mode (shared hosting): records a revision per user
 
     def subscribe(self, user_id: str) -> tuple[asyncio.AbstractEventLoop, asyncio.Queue]:
         sub = (asyncio.get_running_loop(), asyncio.Queue(maxsize=200))
@@ -27,6 +28,11 @@ class Broker:
             self._subs[user_id].discard(sub)
 
     def publish(self, user_ids, event: dict) -> None:
+        if self.on_publish:
+            try:
+                self.on_publish(set(user_ids), event)
+            except Exception:
+                pass
         data = json.dumps(event)
         with self._lock:
             targets = [s for uid in set(user_ids) for s in self._subs.get(uid, ())]

@@ -14,7 +14,7 @@ from fractions import Fraction
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import costing
@@ -1209,8 +1209,26 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
         return {"ref_key": key, "price_per_kg": round(per_kg, 2)}
 
     # ---------- realtime stream
+    # Shared hosting (cPanel/Passenger) runs several short-lived processes: an in-memory stream can't
+    # reach them all and would hold a worker forever. There, clients poll a per-user revision instead.
+    poll_mode = os.getenv("REALTIME", "stream") == "poll"
+    store.x("CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT)")
+    if poll_mode:
+        def bump(user_ids, event):
+            stamp = now()
+            for uid in user_ids:
+                store.x("INSERT OR REPLACE INTO kv(key, value) VALUES (?, ?)", (f"rev:{uid}", stamp))
+        broker.on_publish = bump
+
+    @r.get("/rev")
+    def revision(user=U) -> dict:
+        row = store.one("SELECT value FROM kv WHERE key=?", (f"rev:{user['id']}",))
+        return {"rev": row["value"] if row else "", "mode": "poll" if poll_mode else "stream"}
+
     @r.get("/stream")
     async def stream(request: Request, user=U):
+        if poll_mode:
+            return Response(status_code=204)  # tells EventSource to stop; the client switches to polling
         sub = broker.subscribe(user["id"])
         _, queue = sub
 

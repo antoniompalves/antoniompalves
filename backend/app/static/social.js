@@ -265,11 +265,33 @@ async function joinFromLink(code) {
 let stream = null;
 const pendingRefresh = new Set();
 let refreshTimer = null;
+// Shared hosting answers /stream with 204: then we poll a per-user revision every 10 s while visible.
+let pollTimer = null, lastRev = null;
+function startPolling() {
+  stream?.close(); stream = null;
+  if (pollTimer) return;
+  const tick = async () => {
+    if (document.visibilityState !== "visible" || !store.get("session", "")) return;
+    try {
+      const { rev } = await api("/rev");
+      if (lastRev !== null && rev !== lastRev) {
+        const h = currentRoute(), id = h.split("/")[2];
+        ["activity", "event", "recipe", "list", "lists", "plan"].forEach(kind => pendingRefresh.add(JSON.stringify(id ? { kind, id } : { kind })));
+        flushRefresh();
+      }
+      lastRev = rev;
+    } catch {}
+  };
+  tick(); pollTimer = setInterval(tick, 10000);
+  document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && tick());
+}
 function connectStream() {
   stream?.close();
   const token = store.get("session", "");
-  if (!token || !window.EventSource) return;
+  if (!token) return;
+  if (!window.EventSource) return startPolling();
   stream = new EventSource(`/stream?token=${encodeURIComponent(token)}`);
+  stream.onerror = () => { if (stream && stream.readyState === EventSource.CLOSED) startPolling(); };
   stream.onmessage = e => {
     let ev; try { ev = JSON.parse(e.data); } catch { return; }
     pendingRefresh.add(JSON.stringify(ev));

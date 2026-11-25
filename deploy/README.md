@@ -1,5 +1,7 @@
 # Instalar o Gohan num servidor
 
+> **Tens cPanel (alojamento partilhado)?** Segue [`cpanel/LEIA-ME.md`](cpanel/LEIA-ME.md).
+
 O pacote corre a app e um proxy (Caddy) que trata do **HTTPS automático** com Let's Encrypt. O HTTPS é
 obrigatório: sem ele a app não se instala no ecrã principal do iPhone nem recebe notificações.
 

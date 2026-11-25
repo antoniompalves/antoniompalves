@@ -237,6 +237,8 @@ def _download_media(url: str, workdir: str) -> Optional[str]:
         "noplaylist": True,
         "max_filesize": 200 * 1024 * 1024,
     }
+    if ffmpeg_bin():
+        opts["ffmpeg_location"] = ffmpeg_bin()
     if os.getenv("YTDLP_COOKIES_FILE"):
         opts["cookiefile"] = os.environ["YTDLP_COOKIES_FILE"]
     with yt_dlp.YoutubeDL(opts) as ydl:
@@ -257,19 +259,34 @@ def transcribe(media_path: str) -> Optional[str]:
     return " ".join(s.text.strip() for s in segments).strip() or None
 
 
+def ffmpeg_bin() -> Optional[str]:
+    """ffmpeg from FFMPEG_BINARY, the PATH, or the static build shipped by imageio-ffmpeg."""
+    if os.getenv("FFMPEG_BINARY") and os.path.exists(os.environ["FFMPEG_BINARY"]):
+        return os.environ["FFMPEG_BINARY"]
+    if shutil.which("ffmpeg"):
+        return shutil.which("ffmpeg")
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return None
+
+
+def media_duration(ffmpeg: str, media_path: str) -> Optional[float]:
+    """Duration in seconds from ffmpeg's own banner (works without ffprobe)."""
+    try:
+        err = subprocess.run([ffmpeg, "-hide_banner", "-i", media_path], capture_output=True, text=True, timeout=30).stderr
+    except subprocess.SubprocessError:
+        return None
+    m = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", err)
+    return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3)) if m else None
+
+
 def keyframes(media_path: str, count: int = 6) -> list[str]:
     """Evenly spaced JPEG frames (base64) so the model can read on-screen text."""
-    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
-        return []
-    try:
-        dur = float(
-            subprocess.run(
-                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                 "-of", "default=nw=1:nk=1", media_path],
-                capture_output=True, text=True, timeout=30, check=True,
-            ).stdout.strip()
-        )
-    except (subprocess.SubprocessError, ValueError):
+    ffmpeg = ffmpeg_bin()
+    dur = media_duration(ffmpeg, media_path) if ffmpeg else None
+    if not dur:
         return []
     frames = []
     outdir = os.path.dirname(media_path)
@@ -277,7 +294,7 @@ def keyframes(media_path: str, count: int = 6) -> list[str]:
         t = dur * (i + 0.5) / count
         out = os.path.join(outdir, f"frame{i}.jpg")
         subprocess.run(
-            ["ffmpeg", "-v", "error", "-y", "-ss", f"{t:.2f}", "-i", media_path,
+            [ffmpeg, "-v", "error", "-y", "-ss", f"{t:.2f}", "-i", media_path,
              "-frames:v", "1", "-vf", "scale=512:-2", "-q:v", "4", out],
             capture_output=True, timeout=30,
         )

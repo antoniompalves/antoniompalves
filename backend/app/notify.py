@@ -165,6 +165,16 @@ class Notifier:
             sent += 1
         return sent
 
+    def run_weekly_if_due(self, summary_fn, force: bool = False) -> int:
+        """For cron: send this week's summary once (Sundays from 18:00 Lisbon, or now with force)."""
+        t = datetime.now(LISBON)
+        week = t.strftime("%G-W%V")
+        last = self.store.one("SELECT value FROM kv WHERE key='weekly_sent'")
+        if not force and (t.weekday() != 6 or t.hour < 18 or (last and last["value"] == week)):
+            return 0
+        self.store.x("INSERT OR REPLACE INTO kv(key, value) VALUES ('weekly_sent', ?)", (week,))
+        return self.weekly_digest(summary_fn)
+
     def start_weekly_scheduler(self, summary_fn) -> None:
         """Sundays at 18:00 Lisbon time; remembers the last run so restarts don't double-send."""
         if os.getenv("WEEKLY_DIGEST", "1") != "1":
