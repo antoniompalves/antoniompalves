@@ -2120,3 +2120,10 @@ html:root .large-title, html:root[data-theme] .large-title { font-size: calc(1.8
 .peek { padding-top: .7rem; }
 .peek-photo { margin: 0 -.4rem; border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 10; background: color-mix(in srgb, var(--ink) 6%, transparent); }
 .peek-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Text buttons: hover is a soft pill, never a bare rectangle */
+html:root .text-btn, html:root[data-theme] .text-btn { border-radius: 999px; padding-left: .7rem; padding-right: .7rem; transition: background-color .15s; }
+html:root .text-btn:hover, html:root[data-theme] .text-btn:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); background-image: none; }
+html:root .text-btn:active, html:root[data-theme] .text-btn:active { background: color-mix(in srgb, var(--ink) 13%, transparent); background-image: none; }
+html:root .sheet-head .text-btn, html:root[data-theme] .sheet-head .text-btn { padding: 0 .75rem; margin: 0 -.5rem; }
+html:root .sheet-head [type=submit]:hover, html:root[data-theme] .sheet-head [type=submit]:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
