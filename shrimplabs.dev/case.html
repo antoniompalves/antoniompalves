@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projeto | Shrimp Labs</title>
+  <meta name="theme-color" content="#e6e1da">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kurale&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="case-page">
+  <header class="nav">
+    <div class="brand-wrap">
+      <a href="index.html" class="brand">SHRIMP LABS</a>
+      <p class="case-pager"><a id="prev" data-i18n="case.prev">Anterior</a> <a id="next" data-i18n="case.next">Seguinte</a></p>
+    </div>
+    <nav aria-label="Menu">
+      <a href="index.html#work" data-i18n="nav.work">Trabalho</a>
+      <a href="index.html#about" data-i18n="nav.about">Sobre</a>
+      <a href="index.html#shop" data-i18n="nav.apps">Apps</a>
+      <a href="index.html#process" data-i18n="nav.process">Processo</a>
+      <a href="index.html#contact" class="nav-contact" data-i18n="nav.contact">Contacto</a>
+    </nav>
+    <button type="button" class="lang" id="lang" aria-label="Switch to English">EN</button>
+  </header>
+
+  <main>
+    <!-- Title screen -->
+    <section class="case-hero">
+      <div class="floaters" id="floaters" aria-hidden="true"></div>
+      <h1 class="case-title display" id="c-title"></h1>
+      <p class="case-count" id="c-count"></p>
+    </section>
+
+    <!-- 1. Description -->
+    <section class="case-block">
+      <p class="num-label">1. <span data-i18n="case.desc">Descrição</span></p>
+      <div class="case-desc">
+        <h2 id="c-headline"></h2>
+        <p id="c-text"></p>
+        <p class="pills"><span class="pill-ghost" id="c-type"></span><a class="pill" id="c-link" target="_blank" rel="noopener" hidden></a></p>
+      </div>
+    </section>
+
+    <!-- Main screen in a device frame -->
+    <section class="case-device">
+      <div class="device" id="c-hero"></div>
+    </section>
+
+    <!-- No. + overview -->
+    <section class="case-block case-no">
+      <p class="no"><small>NO.</small><span id="c-no"></span></p>
+      <div class="case-desc">
+        <p class="overview-label" data-i18n="case.overview">Visão geral</p>
+        <p id="c-overview"></p>
+      </div>
+    </section>
+
+    <!-- Full-bleed image -->
+    <section class="case-wide" id="c-wide"></section>
+
+    <!-- 2. Screens -->
+    <section class="case-block case-pages">
+      <p class="num-label">2. <span data-i18n="case.pages">Ecrãs</span></p>
+      <div class="pages" id="c-pages"></div>
+    </section>
+
+    <!-- 3. Features -->
+    <section class="case-block">
+      <p class="num-label">3. <span data-i18n="case.features">Funcionalidades</span></p>
+      <ul class="feature-list" id="c-features"></ul>
+    </section>
+
+    <!-- Next project + CTA (dark panel) -->
+    <div class="dark">
+      <a class="next-case" id="c-nextlink">
+        <span class="num-label" data-i18n="case.nextProject">Próximo projeto</span>
+        <span class="next-name display" id="c-nextname"></span>
+      </a>
+      <div class="case-cta">
+        <p class="lead" data-i18n="case.cta">Quer uma app assim para o seu negócio?</p>
+        <a href="index.html#contact" class="dot-link" data-i18n="case.ctaBtn">Falar connosco</a>
+      </div>
+      <footer class="footer">
+        <a href="index.html" class="foot-logo" aria-label="Shrimp Labs"><img src="assets/logo.svg" alt="" width="34" height="34"></a>
+        <div class="foot-left"><span>©<span id="year">2026</span></span><a href="index.html#faq">FAQ</a></div>
+        <ul class="social">
+          <li><a href="#" aria-label="Instagram">IG</a></li>
+          <li><a href="#" aria-label="LinkedIn">IN</a></li>
+          <li><a href="#" aria-label="GitHub">GH</a></li>
+        </ul>
+        <button class="copy-mail" id="copy" data-mail="hello@shrimplabs.dev"><b>M :</b> <span class="mail">hello@shrimplabs.dev</span> <span class="copy-hint" id="copy-hint">clique para copiar</span></button>
+        <a href="#" class="scroll-btn up" aria-label="Topo" onclick="scrollTo({top:0,behavior:'smooth'});return false;"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 20V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></a>
+      </footer>
+    </div>
+  </main>
+
+  <script src="i18n.js"></script>
+  <script src="common.js"></script>
+  <script src="case.js"></script>
+</body>
+</html>

@@ -1,53 +1,38 @@
-// English translations. Portuguese (pt-PT) is the default and lives in index.html.
+// English translations. Portuguese (pt-PT) is the default and lives in the HTML.
 // Each key matches a data-i18n (or data-i18n-ph for placeholders) attribute.
 window.I18N_EN = {
   "skip": "Skip to content",
+  "brand.sub": "Web app studio<br>for businesses",
   "nav.work": "Work",
+  "nav.about": "About",
   "nav.apps": "Apps",
   "nav.process": "Process",
-  "nav.about": "About",
-  "nav.cta": "Let's talk",
+  "nav.contact": "Contact",
 
-  "hero.eyebrow": "// a one-person web app studio",
-  "hero.l1": "What can",
-  "hero.l2": "we build",
-  "hero.sub": "Small studio. Sharp tools. I design and build web apps that take the busywork off your plate, so your business can focus on what it does best.",
-  "hero.browse": "Browse apps",
-  "hero.custom": "Request a custom app",
-  "hero.scroll": "scroll ↓",
+  "hero.l1": "What",
+  "hero.l2": "can we",
+  "hero.l3": "build",
+  "hero.l4": "next",
 
-  "marquee": "<span>Bookings</span><i>✦</i><span>Inventory</span><i>✦</i><span>Clients</span><i>✦</i><span>Schedules</span><i>✦</i><span>Quotes</span><i>✦</i><span>Dashboards</span><i>✦</i><span>Recipes</span><i>✦</i><span>Teams</span><i>✦</i><span>Bookings</span><i>✦</i><span>Inventory</span><i>✦</i><span>Clients</span><i>✦</i><span>Schedules</span><i>✦</i><span>Quotes</span><i>✦</i><span>Dashboards</span><i>✦</i><span>Recipes</span><i>✦</i><span>Teams</span><i>✦</i>",
+  "intro": "We approach every project with curiosity<br>and one clear goal: to make your<br>day-to-day simpler.",
+  "work.more": "See apps",
+  "top": "Top",
 
-  "work.title": "Selected work",
-  "work.count": "04 projects",
+  "pc1.t": "Next match",
+  "pc1.v": "Sat · 15:00",
+  "pc2.t": "Bookings today",
+  "pc3.t": "Shopping list",
+  "pc3.v": "8 items",
+  "pc4.t": "Revenue",
 
-  "c1.tags": "Sports club · Supabase",
-  "c1.m1": "Next match",
-  "c1.m1v": "Sat · 15:00",
-  "c1.m2": "Training",
-  "c1.m2v": "72 sessions",
-  "c1.m3": "Match sheets",
-  "c1.text": "A management app for a youth football club. Coaches plan training sessions, fill in match sheets and notes, and fixtures sync automatically so the whole staff works from the same calendar.",
-  "c1.chips": "<li>Fixtures sync</li><li>Match sheets</li><li>Training planner</li><li>Staff logins</li>",
+  "about.title": "We're<br>Shrimp<br>Labs <span class=\"beans\" aria-hidden=\"true\"><i></i><i></i></span>",
+  "about.lead": "We build web apps that take the busywork off businesses' plates, so they can focus on what they do best.",
+  "about.p": "Every app is fast, works on phones and is made to be used every day by real people. We work closely with each client, from the first sketch to launch.",
+  "about.cta": "Talk to us",
 
-  "c2.tags": "Local business · Web app",
-  "c2.text": "A custom web app for Mimar that brings their day-to-day into one place: clients, appointments and services, available on any device.",
-  "c2.chips": "<li>Client records</li><li>Scheduling</li><li>Mobile-first</li>",
-
-  "c3.name": "Recipe App",
-  "c3.tags": "Food · Planner",
-  "c3.text": "Save recipes, scale portions and plan the week's meals. The shopping list builds itself from what you plan, so you don't have to write it.",
-  "c3.chips": "<li>Recipe library</li><li>Portion scaling</li><li>Meal plan</li><li>Auto shopping list</li>",
-
-  "c4.name": "Car Detail App",
-  "c4.tags": "Automotive · Bookings",
-  "c4.mock": "<div><i></i><b>Full detail · BMW 320d</b><em>09:00</em></div><div><i></i><b>Ceramic coat · Golf</b><em>11:30</em></div><div><i></i><b>Interior · Clio</b><em>15:00</em></div>",
-  "c4.text": "Built for car detailing businesses: service packages, bookings, the vehicles each job covers, and a clear view of the day's work.",
-  "c4.chips": "<li>Service packages</li><li>Bookings</li><li>Job tracking</li><li>Quotes</li>",
-
-  "shop.title": "Apps for your business",
-  "shop.tag": "ready-made · made to fit you",
-  "shop.lead": "Pick an app that's ready to go, and I'll set it up with your logo, colours, services and prices. No monthly subscription unless you want hosting and support.",
+  "shop.label": "Apps",
+  "shop.title": "Apps for<br>your business",
+  "shop.lead": "Pick an app that's ready to go and we'll set it up with your logo, colours, services and prices. No monthly subscription unless you want hosting and support.",
   "f.all": "All",
   "f.food": "Food & hospitality",
   "f.services": "Services",
@@ -68,42 +53,35 @@ window.I18N_EN = {
   "p7.name": "Project Board",
   "p7.desc": "Kanban, timeline and task tracker for small teams. Works offline.",
   "p8.name": "Something else?",
-  "p8.desc": "Tell me how your business works and I'll build the app around it.",
+  "p8.desc": "Tell us how your business works and we'll build the app around it.",
   "from49": "from €49",
   "from69": "from €69",
   "from79": "from €79",
   "from99": "from €99",
   "quote": "custom quote",
-  "get": "Get it →",
-  "ask": "Ask →",
+  "get": "Get it",
+  "ask": "Ask",
 
-  "t1.label": "01 / Ready-made",
-  "t1.title": "Ready to use",
+  "t1.label": "01 — Ready-made",
   "t1.text": "One of the apps above with your name, logo and colours. Ready in days.",
-  "t2.label": "02 / Customized",
-  "t2.title": "Fitted to you",
+  "t2.label": "02 — Customized",
   "t2.text": "A ready-made app adapted to your services, fields, workflow and language.",
-  "t3.label": "03 / Bespoke",
-  "t3.title": "Built from scratch",
+  "t3.label": "03 — Bespoke",
   "t3.text": "A new app for a process no off-the-shelf tool covers, with logins and a database.",
 
-  "proc.title": "How it works",
-  "proc.count": "4 steps",
+  "proc.label": "Process",
+  "proc.title": "How it<br>works",
   "s1.t": "Chat",
   "s1.p": "We talk about your business, what slows you down and what you want to achieve.",
   "s2.t": "Proposal",
   "s2.p": "You get a clear scope, price and timeline. No surprises.",
   "s3.t": "Build",
-  "s3.p": "I build it and share previews along the way so you can steer it.",
+  "s3.p": "We build it and share previews along the way so you can steer it.",
   "s4.t": "Launch",
   "s4.p": "The app goes live on your domain, with a quick walkthrough and support after launch.",
 
-  "about.title": "Small like a shrimp.<br>Quick like one too.",
-  "about.lead": "Shrimp Labs is a one-person studio. When you work with me, you talk directly to the person designing and building your app, with no account managers and no hand-offs.",
-  "about.p": "My goal is simple: build useful tools that make running a business a little easier. Each app is fast, works on phones, and is made to be used every day by real people.",
-
-  "faq.title": "FAQ",
-  "faq.tag": "quick answers",
+  "faq.label": "FAQ",
+  "faq.title": "Questions",
   "q1": "Do I need to pay a monthly subscription?",
   "a1": "No. Ready-made apps are a one-time purchase. Hosting, updates and support are available as an optional monthly plan.",
   "q2": "Does it work on my phone?",
@@ -115,8 +93,9 @@ window.I18N_EN = {
   "q5": "Can the app be in Portuguese?",
   "a5": "Yes. Apps can be delivered in Portuguese, English or both.",
 
-  "ct.eyebrow": "// got a process that eats your time?",
-  "ct.title": "Let's build<br>your app.",
+  "ct.label": "Contact",
+  "ct.title": "Let's<br>talk",
+  "ct.lead": "Got a process that eats your time? Tell us how you work and we'll show you how an app can help.",
   "ct.name": "Name",
   "ct.email": "Email",
   "ct.biz": "Business",
@@ -124,20 +103,144 @@ window.I18N_EN = {
   "ct.interest": "Interested in",
   "ct.msg": "What should it do?",
   "ct.send": "Send message",
-  "o.custom": "Custom app"
+  "o.custom": "Custom app",
+
+  // Case page
+  "case.prev": "Prev",
+  "case.next": "Next",
+  "case.desc": "Description",
+  "case.overview": "Overview",
+  "case.pages": "Screens",
+  "case.features": "Features",
+  "case.nextProject": "Next project",
+  "case.cta": "Want an app like this?",
+  "case.ctaBtn": "Talk to us"
 };
 
 window.I18N_META = {
   pt: {
     title: "Shrimp Labs — Web apps que simplificam o seu negócio",
-    rotate: ["a seguir?", "para si?", "juntos?", "esta semana?", "para lhe poupar tempo?"],
     copy: "clique para copiar",
-    copied: "copiado ✓"
+    copied: "copiado ✓",
+    switchTo: "EN",
+    switchLabel: "Switch to English",
+    open: "Abrir a app"
   },
   en: {
     title: "Shrimp Labs — Web apps that simplify your business",
-    rotate: ["next?", "for you?", "together?", "this week?", "to save you time?"],
     copy: "click to copy",
-    copied: "copied ✓"
+    copied: "copied ✓",
+    switchTo: "PT",
+    switchLabel: "Mudar para português",
+    open: "Open the app"
   }
 };
+
+// ---------------------------------------------------------------------------
+// PROJECTS — edit texts here. Screenshots go in assets/work/ (see README there).
+// A missing image falls back to a coloured placeholder automatically.
+// `url`: live link to show an "Open the app" button (leave "" to hide it).
+// ---------------------------------------------------------------------------
+window.PROJECTS = [
+  {
+    id: "juventude",
+    title: "Juventude da Estrada",
+    color: "#c4553f",
+    year: "2025",
+    url: "",
+    thumb: "assets/work/juventude-thumb.jpg",
+    hero: "assets/work/juventude-1.jpg",
+    wide: "assets/work/juventude-wide.jpg",
+    pages: ["assets/work/juventude-2.jpg", "assets/work/juventude-3.jpg"],
+    pt: {
+      type: "Web app · Clube desportivo",
+      headline: "Um clube inteiro na mesma página",
+      text: "Uma app de gestão para um clube de futebol de formação. Os treinadores planeiam treinos, preenchem fichas e notas de jogo, e o calendário de jogos sincroniza automaticamente.",
+      overview: "Antes, a informação do clube estava espalhada por folhas, mensagens e papéis. Criámos um sítio único onde toda a equipa técnica consulta jogos, treinos e fichas, em qualquer dispositivo e sempre atualizado.",
+      features: ["Sincronização automática de jogos", "Fichas e notas de jogo", "Planeamento de treinos", "Acessos para a equipa técnica"]
+    },
+    en: {
+      type: "Web app · Sports club",
+      headline: "A whole club on the same page",
+      text: "A management app for a youth football club. Coaches plan training sessions, fill in match sheets and notes, and fixtures sync automatically.",
+      overview: "The club's information used to be scattered across sheets, messages and paper. We built one place where the whole coaching staff checks matches, training sessions and match sheets, on any device and always up to date.",
+      features: ["Automatic fixtures sync", "Match sheets and notes", "Training planner", "Staff logins"]
+    }
+  },
+  {
+    id: "mimar",
+    title: "Mimar",
+    color: "#d9a3a8",
+    year: "2025",
+    url: "",
+    thumb: "assets/work/mimar-thumb.jpg",
+    hero: "assets/work/mimar-1.jpg",
+    wide: "assets/work/mimar-wide.jpg",
+    pages: ["assets/work/mimar-2.jpg", "assets/work/mimar-3.jpg"],
+    pt: {
+      type: "Web app · Negócio local",
+      headline: "O dia a dia num só lugar",
+      text: "Uma web app à medida para a Mimar que reúne clientes, marcações e serviços, disponível em qualquer dispositivo.",
+      overview: "O objetivo era simples: menos tempo em tarefas administrativas e mais tempo com os clientes. A app foi desenhada à volta da forma como a Mimar já trabalhava.",
+      features: ["Fichas de cliente", "Agenda de marcações", "Menu de serviços", "Pensada para telemóvel"]
+    },
+    en: {
+      type: "Web app · Local business",
+      headline: "The day-to-day in one place",
+      text: "A custom web app for Mimar that brings together clients, appointments and services, available on any device.",
+      overview: "The goal was simple: less time on admin and more time with clients. The app was designed around the way Mimar already worked.",
+      features: ["Client records", "Appointment calendar", "Services menu", "Mobile-first"]
+    }
+  },
+  {
+    id: "recipes",
+    title: "Receitas",
+    titleEn: "Recipes",
+    color: "#d6a64a",
+    year: "2025",
+    url: "",
+    thumb: "assets/work/recipes-thumb.jpg",
+    hero: "assets/work/recipes-1.jpg",
+    wide: "assets/work/recipes-wide.jpg",
+    pages: ["assets/work/recipes-2.jpg", "assets/work/recipes-3.jpg"],
+    pt: {
+      type: "Web app · Alimentação",
+      headline: "Da receita à lista de compras",
+      text: "Guarde receitas, ajuste as doses e planeie as refeições da semana. A lista de compras faz-se sozinha a partir do que planeou.",
+      overview: "Uma app pensada para cozinhas com pouco tempo: encontrar uma receita, ajustá-la ao número de pessoas e saber exatamente o que comprar, tudo em poucos toques.",
+      features: ["Biblioteca de receitas", "Ajuste de doses", "Plano de refeições", "Lista de compras automática"]
+    },
+    en: {
+      type: "Web app · Food",
+      headline: "From recipe to shopping list",
+      text: "Save recipes, scale portions and plan the week's meals. The shopping list builds itself from what you plan.",
+      overview: "An app made for busy kitchens: find a recipe, scale it to the number of people and know exactly what to buy, all in a few taps.",
+      features: ["Recipe library", "Portion scaling", "Meal plan", "Auto shopping list"]
+    }
+  },
+  {
+    id: "detail",
+    title: "Car Detail",
+    color: "#5d8fa8",
+    year: "2025",
+    url: "",
+    thumb: "assets/work/detail-thumb.jpg",
+    hero: "assets/work/detail-1.jpg",
+    wide: "assets/work/detail-wide.jpg",
+    pages: ["assets/work/detail-2.jpg", "assets/work/detail-3.jpg"],
+    pt: {
+      type: "Web app · Automóvel",
+      headline: "Cada carro, cada trabalho, sob controlo",
+      text: "Feita para negócios de detailing automóvel: pacotes de serviços, marcações, os veículos de cada trabalho e uma visão clara do dia.",
+      overview: "Num negócio de detailing, o dia muda depressa. A app mostra o que está marcado, em que estado está cada carro e quanto vale cada trabalho, para que nada fique esquecido.",
+      features: ["Pacotes de serviços", "Marcações", "Estado dos trabalhos", "Orçamentos"]
+    },
+    en: {
+      type: "Web app · Automotive",
+      headline: "Every car, every job, under control",
+      text: "Built for car detailing businesses: service packages, bookings, the vehicles each job covers and a clear view of the day.",
+      overview: "In a detailing business the day changes fast. The app shows what's booked, the status of each car and what each job is worth, so nothing gets forgotten.",
+      features: ["Service packages", "Bookings", "Job status", "Quotes"]
+    }
+  }
+];
