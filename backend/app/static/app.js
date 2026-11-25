@@ -566,6 +566,7 @@ function renderResults() {
       <button class="btn-outline" data-starter style="margin-top:.6rem">Começar com receitas prontas</button>
       <p class="meta" style="margin-top:1rem;display:block">Guarda diretamente a partir da folha de partilha: <a href="#/settings">configura o Atalho</a></p></div>`;
   } else el.innerHTML = "";
+  peek.bind(el);
   el.querySelectorAll(".card").forEach(c => {
     c.onclick = () => location.hash = `/r/${c.dataset.id}`;
     c.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); c.click(); } };
@@ -586,6 +587,55 @@ function card(r, i = 0) {
       <div class="meta">${t ? `<span>${I.clock}${fmtMin(t)}</span>` : ""}${r.facts && r.facts.price_coverage >= 0.6 && costText(r.facts.cost) ? `<span>${costText(r.facts.cost)}</span>` : r.servings ? `<span>${r.servings} ${r.servings === 1 ? "dose" : "doses"}</span>` : ""}</div>
     </div></article>`;
 }
+
+// ---------------------------------------------------------------- hover preview (mouse / trackpad only)
+const peek = (() => {
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return { bind() {} };
+  const el = document.createElement("aside");
+  el.className = "peek glass glass-thick"; el.setAttribute("aria-hidden", "true"); el.hidden = true;
+  document.body.append(el);
+  let timer = null, current = null;
+  const html = r => {
+    const t = totalTime(r), f = r.facts, n = r.ingredients.length;
+    const kcal = f && f.coverage >= 0.6 && f.kcal ? Math.round(f.kcal) : r.nutrition_estimate?.calories;
+    const cost = f && f.price_coverage >= 0.6 ? costText(f.cost) : "";
+    const stats = [t && `${I.clock}${fmtMin(t)}`, r.servings && `${r.servings} ${r.servings === 1 ? "dose" : "doses"}`,
+      kcal && `${kcal} kcal/dose`, cost && `${cost}/dose`].filter(Boolean);
+    const who = [r.stats?.cooks ? `Feita ${r.stats.cooks}×` : "", r.stats?.yes ? `${r.stats.yes} voltava${r.stats.yes === 1 ? "" : "m"} a fazer` : ""].filter(Boolean).join(" · ");
+    return `<div class="peek-head">${r.cuisine ? `<span class="eyebrow">${esc(r.cuisine)}${isBimby(r) ? " · Bimby" : ""}</span>` : ""}
+        <h4>${esc(r.title)}</h4>${r.description ? `<p>${esc(r.description)}</p>` : ""}</div>
+      ${stats.length ? `<div class="peek-stats">${stats.map(x => `<span>${x}</span>`).join("")}</div>` : ""}
+      ${n ? `<div class="peek-ing"><span class="eyebrow">${n} ingredientes</span>
+        <ul>${r.ingredients.slice(0, 6).map(i => `<li>${esc(i.name)}</li>`).join("")}${n > 6 ? `<li class="more">+${n - 6}</li>` : ""}</ul></div>` : ""}
+      <div class="peek-foot">${who ? `<span>${esc(who)}</span>` : `<span>${r.steps.length} passos</span>`}${r.owner && !r.is_owner ? `<span>trazida por ${esc(r.owner.name.split(" ")[0])}</span>` : ""}</div>`;
+  };
+  function place(card) {
+    const r = card.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight, gap = 14;
+    let left = r.right + gap, side = "right";
+    if (left + w > innerWidth - 12) { left = r.left - w - gap; side = "left"; }
+    if (left < 12) { left = Math.max(12, r.left + (r.width - w) / 2); side = "below"; }
+    let top = side === "below" ? r.bottom + gap : r.top + r.height / 2 - h / 2;
+    top = Math.max(84, Math.min(top, innerHeight - h - 12));
+    el.style.left = `${left}px`; el.style.top = `${top}px`; el.dataset.side = side;
+  }
+  function show(card) {
+    const r = state.recipes.find(x => x.id === card.dataset.id); if (!r) return;
+    current = card; el.innerHTML = html(r); el.hidden = false; el.classList.remove("in");
+    place(card); requestAnimationFrame(() => el.classList.add("in"));
+  }
+  function hide() { clearTimeout(timer); current = null; el.classList.remove("in"); el.hidden = true; }
+  addEventListener("scroll", hide, { passive: true }); addEventListener("hashchange", hide);
+  document.addEventListener("scroll", e => { if (e.target.classList?.contains("shelf-row")) hide(); }, { capture: true, passive: true });
+  return {
+    bind(root) {
+      root.querySelectorAll(".card").forEach(card => {
+        card.addEventListener("mouseenter", () => { clearTimeout(timer); timer = setTimeout(() => show(card), 450); });
+        card.addEventListener("mouseleave", hide);
+        card.addEventListener("mousedown", hide);
+      });
+    },
+  };
+})();
 
 // ---------------------------------------------------------------- detail
 async function renderDetail(id) {
