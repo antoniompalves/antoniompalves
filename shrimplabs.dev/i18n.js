@@ -14,7 +14,7 @@ window.I18N_EN = {
   "hero.l3": "your",
   "hero.l4": "business",
 
-  "intro": "We approach every project with curiosity<br>and one clear goal: to make your<br>day-to-day simpler.",
+  "intro": "Every business works its own way.<br>That's why we build apps that adapt to you,<br>not the other way around.",
   "work.more": "See apps",
   "top": "Top",
 
