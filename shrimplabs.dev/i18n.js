@@ -9,10 +9,10 @@ window.I18N_EN = {
   "nav.process": "Process",
   "nav.contact": "Contact",
 
-  "hero.l1": "What",
-  "hero.l2": "can we",
-  "hero.l3": "build",
-  "hero.l4": "next",
+  "hero.l1": "Made",
+  "hero.l2": "to fit",
+  "hero.l3": "your",
+  "hero.l4": "business",
 
   "intro": "We approach every project with curiosity<br>and one clear goal: to make your<br>day-to-day simpler.",
   "work.more": "See apps",
