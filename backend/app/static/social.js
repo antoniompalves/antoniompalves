@@ -705,6 +705,10 @@ function renderSettings() {
       </div>
     </section>
 
+    <section class="section glass"><div class="section-head"><h3>Receitas prontas</h3></div>
+      <p class="meta" style="margin:0 0 .8rem">Adiciona conjuntos de receitas (Natal, dia a dia, verão, vegetarianas, asiáticas, doces). Podes apagar as que não quiseres.</p>
+      <button class="btn-outline" data-starter>Escolher receitas</button></section>
+
     <section class="section glass" id="pushSec"><div class="section-head"><h3>Notificações</h3></div><p class="meta">A verificar…</p></section>
 
     <section class="section glass"><div class="section-head"><h3>Os meus grupos</h3></div>
@@ -737,6 +741,7 @@ function renderSettings() {
     </section>
     <section class="section glass"><div class="section-head"><h3>Android</h3></div>
       <p class="meta">Instala a partir do menu do Chrome (<b>Adicionar ao ecrã principal</b>). O Gohan passa a aparecer diretamente na folha de partilha.</p></section>`;
+  view.querySelectorAll("[data-starter]").forEach(b => b.onclick = () => openStarterSheet());
   view.querySelectorAll("[data-ts]").forEach(b => b.onclick = () => {
     store.set("textSize", b.dataset.ts); applyTextSize(b.dataset.ts); haptic(6);
     view.querySelectorAll("[data-ts]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); });

@@ -51,6 +51,11 @@ class CookIn(BaseModel):
     photo: Optional[str] = Field(None, description="data:image/...;base64,...")
 
 
+class StarterIn(BaseModel):
+    packs: list[str] = Field(default_factory=list, max_length=10)
+    share: bool = True
+
+
 class BimbyIn(BaseModel):
     model: Literal["TM5", "TM6", "TM7"] = "TM6"
 
@@ -295,6 +300,24 @@ def make_router(store: Store, current_user, notifier=None) -> APIRouter:
     @r.get("/recipes/{rid}")
     def get_recipe(rid: str, user=U) -> dict:
         return views(user["id"], [get_visible(user["id"], rid)])[0]
+
+    @r.get("/starter")
+    def starter_packs(user=U) -> dict:
+        from .demo import pack_info
+        n = store.one("SELECT COUNT(*) c FROM recipes WHERE owner_id=?", (user["id"],))["c"]
+        return {"packs": pack_info(), "own_recipes": n}
+
+    @r.post("/starter")
+    def starter_load(body: StarterIn, user=U) -> dict:
+        from .demo import PACKS, seed_user
+        packs = [k for k in body.packs if k in PACKS]
+        if not packs:
+            raise HTTPException(400, "Escolhe pelo menos um conjunto de receitas.")
+        added, skipped = seed_user(store, user["id"], packs=packs, share=body.share)
+        if added and body.share:
+            for gid in my_groups(user["id"]):
+                broker.publish(members(gid), {"kind": "recipe", "id": ""})
+        return {"added": added, "skipped": skipped}
 
     @r.post("/recipes/{rid}/bimby", status_code=201)
     def to_bimby(rid: str, body: BimbyIn, user=U) -> dict:

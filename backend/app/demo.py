@@ -325,33 +325,12 @@ def build(row) -> Recipe:
     )
 
 
-def seed(store, username: str, share: bool = True) -> tuple[int, int]:
-    """Add the demo recipes for one person; returns (added, skipped)."""
-    import json
+def seed(store, username: str, share: bool = True, packs=None) -> tuple[int, int]:
+    """Add the demo recipes for one person (by username); returns (added, skipped)."""
     user = store.one("SELECT id FROM users WHERE username=?", (username,))
     if not user:
         raise SystemExit(f"Não existe o utilizador '{username}'. Cria a conta primeiro.")
-    uid = user["id"]
-    have = {r["title"] for r in store.q("SELECT title FROM recipes WHERE owner_id=?", (uid,))}
-    groups = [r["group_id"] for r in store.q("SELECT group_id FROM members WHERE user_id=?", (uid,))] if share else []
-    added = 0
-    # illustrations for demo recipes loaded before they existed
-    for row in store.q("SELECT id FROM recipes WHERE owner_id=?", (uid,)):
-        r = store.get_recipe(row["id"])
-        if r and r.source_platform == "gohan" and not r.thumbnail_url:
-            store.save_recipe(r.model_copy(update={"thumbnail_url": art_url(r.title)}), uid)
-    for row in RECIPES + YEAR:
-        rec = build(row)
-        if rec.title in have:
-            continue
-        store.save_recipe(rec, uid)
-        store.x("INSERT OR REPLACE INTO user_recipe(user_id, recipe_id, favorite, collections) VALUES (?,?,0,?)",
-                (uid, rec.id, json.dumps([row[8]], ensure_ascii=False)))
-        for gid in groups:
-            store.x("INSERT OR IGNORE INTO recipe_shares(recipe_id, group_id, shared_by, shared_at) VALUES (?,?,?,?)",
-                    (rec.id, gid, uid, now()))
-        added += 1
-    return added, len(RECIPES) + len(YEAR) - added
+    return seed_user(store, user["id"], packs=packs, share=share)
 
 
 # ---------------------------------------------------------------------- the rest of the year
@@ -545,3 +524,127 @@ def art_url(title: str) -> str:
         emoji, hue = "🍽️", 25
     slug = "".join(ch if ch.isalnum() else "-" for ch in t)[:40]
     return f"/art/{quote(slug)}.svg?e={quote(emoji)}&h={hue}"
+
+
+# ---------------------------------------------------------------------- Asia (simple)
+ASI = "Asiáticas"
+ASIA = [
+    ("Pad thai de camarão", "Massa de arroz salteada com camarão, ovo, amendoim e lima.",
+     "Tailandesa", "dinner", 2, 15, 10, ["asiatica", "rapida", "marisco"], ASI,
+     [("200", "g", "massa de arroz", "larga"), ("250", "g", "camarão", "descascado"), ("2", "", "ovos", None),
+      ("3", "colheres de sopa", "molho de peixe", None), ("2", "colheres de sopa", "açúcar mascavado", None),
+      ("1", "colher de sopa", "pasta de tamarindo", None), ("100", "g", "rebentos de soja", None), ("40", "g", "amendoim", "torrado e picado"),
+      ("2", "", "cebolinhos", None), ("1", "", "lima", None), ("30", "ml", "óleo", None)],
+     ["Demolha a massa em água quente durante 10 minutos e escorre.",
+      "Mistura o molho de peixe, o açúcar e o tamarindo.",
+      "Salteia o camarão no óleo 2 minutos num wok bem quente; afasta para o lado e mexe os ovos.",
+      "Junta a massa e o molho e salteia 3 minutos; envolve os rebentos e o cebolinho.",
+      "Serve com amendoim e gomos de lima."]),
+    ("Frango teriyaki com arroz", "Frango lacado em molho teriyaki caseiro, com arroz e sésamo.",
+     "Japonesa", "dinner", 4, 10, 20, ["asiatica", "rapida", "frango"], ASI,
+     [("600", "g", "coxas de frango", "desossadas"), ("80", "ml", "molho de soja", None), ("40", "ml", "mirin", None),
+      ("2", "colheres de sopa", "mel", None), ("1", "", "dente de alho", "ralado"), ("10", "g", "gengibre", "ralado"),
+      ("300", "g", "arroz", None), ("1", "colher de sopa", "sementes de sésamo", None), ("2", "", "cebolinhos", None)],
+     ["Coze o arroz.",
+      "Aloura o frango, com a pele para baixo, 6 minutos; vira e cozinha mais 4 minutos.",
+      "Junta a soja, o mirin, o mel, o alho e o gengibre e deixa reduzir 3 minutos, regando o frango até lacar.",
+      "Corta às tiras e serve sobre o arroz com sésamo e cebolinho."]),
+    ("Ramen de miso", "Ramen rápido com caldo de miso, ovo marinado e cogumelos.",
+     "Japonesa", "dinner", 2, 15, 15, ["asiatica", "sopa"], ASI,
+     [("200", "g", "massa ramen", None), ("1", "l", "caldo de galinha", None), ("2", "colheres de sopa", "pasta de miso", None),
+      ("1", "colher de sopa", "molho de soja", None), ("2", "", "ovos", None), ("100", "g", "cogumelos shiitake", None),
+      ("100", "g", "espinafres", None), ("2", "", "cebolinhos", None), ("1", "colher de chá", "óleo de sésamo", None)],
+     ["Coze os ovos 6 minutos e meio, passa por água fria e descasca.",
+      "Aquece o caldo, dissolve o miso e a soja sem deixar ferver.",
+      "Salteia os cogumelos no óleo de sésamo 3 minutos.",
+      "Coze a massa 3 minutos e divide por taças com os espinafres.",
+      "Cobre com o caldo, os cogumelos, o ovo cortado ao meio e o cebolinho."]),
+    ("Caril verde tailandês", "Caril de frango com leite de coco, beringela e manjericão.",
+     "Tailandesa", "dinner", 4, 10, 20, ["asiatica", "frango"], ASI,
+     [("500", "g", "peito de frango", "em tiras"), ("2", "colheres de sopa", "pasta de caril verde", None), ("400", "ml", "leite de coco", None),
+      ("1", "", "beringela", "em cubos"), ("1", "colher de sopa", "molho de peixe", None), ("1", "colher de chá", "açúcar", None),
+      ("1", "", "molho de manjericão", None), ("300", "g", "arroz jasmim", None), ("20", "ml", "óleo", None)],
+     ["Coze o arroz jasmim.",
+      "Frita a pasta de caril no óleo 1 minuto; junta metade do leite de coco e deixa ferver 2 minutos.",
+      "Adiciona o frango e a beringela e cozinha 5 minutos.",
+      "Junta o restante leite de coco, o molho de peixe e o açúcar e deixa 8 minutos em lume brando.",
+      "Envolve o manjericão e serve com o arroz."]),
+    ("Bibimbap", "Taça coreana de arroz com legumes salteados, carne, ovo e molho gochujang.",
+     "Coreana", "lunch", 2, 20, 15, ["asiatica"], ASI,
+     [("200", "g", "arroz", None), ("200", "g", "carne de vaca", "em tiras finas"), ("1", "", "cenoura", "em juliana"),
+      ("100", "g", "espinafres", None), ("100", "g", "rebentos de soja", None), ("2", "", "ovos", None),
+      ("2", "colheres de sopa", "gochujang", None), ("2", "colheres de sopa", "molho de soja", None), ("1", "colher de sopa", "óleo de sésamo", None)],
+     ["Coze o arroz.",
+      "Marina a carne em soja e metade do óleo de sésamo durante 10 minutos e salteia 3 minutos.",
+      "Salteia separadamente a cenoura, os espinafres e os rebentos, 2 minutos cada.",
+      "Estrela os ovos.",
+      "Monta as taças: arroz, legumes e carne lado a lado, o ovo por cima e o gochujang ao lado."]),
+]
+ART[:0] = [("pad thai", "🍜", 30), ("teriyaki", "🍗", 25), ("ramen", "🍜", 20), ("caril verde", "🍛", 90), ("bibimbap", "🍚", 10)]
+YEAR = YEAR + ASIA
+
+
+# ---------------------------------------------------------------------- starter packs
+PACKS = {
+    "festas": ("Natal e passagem de ano", "Bacalhau, polvo, peru, petiscos e doces de Natal (Portugal e Espanha)", lambda row, year: not year),
+    "dia": ("Dia a dia", "Bitoque, frango assado, bolonhesa, arroz de pato, paella…", lambda row, year: year and row[8] in (DIA, RAP)),
+    "verao": ("Verão", "Gaspacho, sardinhas, saladas", lambda row, year: year and row[8] == VER),
+    "veg": ("Vegetarianas", "Caril de grão, risotto, pizza", lambda row, year: year and row[8] == VEG),
+    "asia": ("Asiáticas", "Pad thai, teriyaki, ramen, caril verde, bibimbap", lambda row, year: year and row[8] == ASI),
+    "doces": ("Doces de todo o ano", "Pastéis de nata, baba de camelo, tarta de queso", lambda row, year: year and row[8] == DOC),
+}
+
+
+def _photo_for(title: str):
+    import json
+    import os
+    path = os.path.join(os.path.dirname(__file__), "data", "demo_photos.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            p = json.load(f).get(title)
+    except (OSError, ValueError):
+        return None
+    return p.get("image") if isinstance(p, dict) else p
+
+
+def pack_rows(packs=None):
+    for row in RECIPES:
+        if packs is None or any(PACKS[k][2](row, False) for k in packs if k in PACKS):
+            yield row
+    for row in YEAR:
+        if packs is None or any(PACKS[k][2](row, True) for k in packs if k in PACKS):
+            yield row
+
+
+def pack_info():
+    return [{"key": k, "label": v[0], "description": v[1], "count": sum(1 for _ in pack_rows([k]))} for k, v in PACKS.items()]
+
+
+def seed_user(store, uid: str, packs=None, share: bool = True) -> tuple[int, int]:
+    """Add the chosen packs (all when None) for this user; skips titles they already have."""
+    import json
+    have = {r["title"] for r in store.q("SELECT title FROM recipes WHERE owner_id=?", (uid,))}
+    groups = [r["group_id"] for r in store.q("SELECT group_id FROM members WHERE user_id=?", (uid,))] if share else []
+    # refresh the pictures of demo recipes loaded earlier (illustration -> photo when one is available)
+    for row in store.q("SELECT id FROM recipes WHERE owner_id=?", (uid,)):
+        r = store.get_recipe(row["id"])
+        if r and r.source_platform == "gohan" and (not r.thumbnail_url or r.thumbnail_url.startswith("/art/")):
+            pic = _photo_for(r.title) or art_url(r.title)
+            if pic != r.thumbnail_url:
+                store.save_recipe(r.model_copy(update={"thumbnail_url": pic}), uid)
+    added = total = 0
+    for row in pack_rows(packs):
+        total += 1
+        rec = build(row)
+        if rec.title in have:
+            continue
+        rec = rec.model_copy(update={"thumbnail_url": _photo_for(rec.title) or rec.thumbnail_url})
+        store.save_recipe(rec, uid)
+        store.x("INSERT OR REPLACE INTO user_recipe(user_id, recipe_id, favorite, collections) VALUES (?,?,0,?)",
+                (uid, rec.id, json.dumps([row[8]], ensure_ascii=False)))
+        for gid in groups:
+            store.x("INSERT OR IGNORE INTO recipe_shares(recipe_id, group_id, shared_by, shared_at) VALUES (?,?,?,?)",
+                    (rec.id, gid, uid, now()))
+        have.add(rec.title)
+        added += 1
+    return added, total - added

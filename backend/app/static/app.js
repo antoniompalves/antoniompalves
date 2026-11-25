@@ -242,6 +242,9 @@ const CATEGORIES = [
   ["bimby", "Bimby", r => isBimby(r)],
   ["festas", "Natal e Ano Novo", r => r.tags.some(t => /^(natal|consoada|passagem-de-ano|ano-novo|reveillon)$/i.test(t))],
   ["entradas", "Entradas", r => /starter|appetizer|entrada/i.test(r.meal_type || "") || r.tags.some(t => /^(entrada|petisco|tapa)s?$/i.test(t))],
+  ["rapidas", "Rápidas", r => (totalTime(r) || 999) <= 30],
+  ["asiaticas", "Asiáticas", r => /tailand|japon|corean|chines|vietnam|indian/i.test(r.cuisine || "") || r.tags.some(t => /^asi(á|a)tica$/i.test(t))],
+  ["vegetarianas", "Vegetarianas", r => r.tags.some(t => /^vegetarian[oa]s?$|^vegan[oa]?$/i.test(t))],
   ["pequeno", "Pequeno-almoço", r => /breakfast|brunch/i.test(r.meal_type || "")],
   ["pratos", "Pratos principais", r => /lunch|dinner|main/i.test(r.meal_type || "")],
   ["sobremesas", "Sobremesas", r => /dessert/i.test(r.meal_type || "") || r.tags.some(t => /sobremesa|doce|bolo/i.test(t))],
@@ -407,6 +410,7 @@ function renderLibrary() {
     const d = e.target.closest("[data-dismiss]");
     if (d) { state.pending = state.pending.filter(p => p.id !== d.dataset.dismiss); savePending(); $("#pendingList").innerHTML = pendingHTML(); }
     if (e.target.closest("[data-import]")) sheet.show();
+    if (e.target.closest("[data-starter]")) openStarterSheet();
   });
 }
 
@@ -450,6 +454,46 @@ function shelfHTML(key, title, sub, items, more) {
       ${more ? `<button class="shelf-more" data-shelf="${key}">ver todas</button>` : ""}</div>
     <div class="shelf-row">${items.map((r, i) => card(r, i)).join("")}</div></section>`;
 }
+const SHELF_CATS = ["festas", "rapidas", "pratos", "entradas", "asiaticas", "vegetarianas", "sobremesas", "bimby"];
+function categoryShelvesHTML(list) {
+  return SHELF_CATS.map(k => {
+    const c = CATEGORIES.find(x => x[0] === k); if (!c) return "";
+    const items = list.filter(c[2]);
+    if (items.length < 3) return "";
+    return shelfHTML(`cat:${k}`, c[1], `${items.length} receita${items.length === 1 ? "" : "s"}`, items.slice(0, 12), true);
+  }).join("");
+}
+
+function starterCardHTML() {
+  return `<section class="starter glass" aria-label="Receitas prontas">
+    <div class="starter-art" aria-hidden="true">🍲</div>
+    <div class="starter-text"><h3 class="shelf-title">Começa com receitas prontas</h3>
+      <p class="meta">Escolhe conjuntos de receitas para encher o teu livro. Depois apagas as que não quiseres.</p></div>
+    <button class="btn-primary" data-starter>${I.plus}Escolher receitas</button></section>`;
+}
+
+async function openStarterSheet() {
+  let info;
+  try { info = await api("/starter"); } catch (e) { return toast(e.message); }
+  const chosen = new Set(info.own_recipes < 10 ? info.packs.map(p => p.key) : []);
+  openSheet({
+    title: "Receitas prontas", submit: "Adicionar",
+    body: `<p class="meta" style="margin:0">Receitas portuguesas, espanholas e do mundo, com quantidades, passos, custo e calorias. As que já tens não são repetidas.</p>
+      <div class="packs">${info.packs.map(p => `<label class="pack glass">
+        <input type="checkbox" value="${p.key}" ${chosen.has(p.key) ? "checked" : ""}>
+        <span><b>${esc(p.label)}</b><small>${esc(p.description)}</small></span><em>${p.count}</em></label>`).join("")}</div>
+      ${groups().length ? `<label class="pack-share"><input type="checkbox" id="starterShare" checked> Partilhar com ${groups().length === 1 ? esc(groups()[0].name) : "os meus grupos"}</label>` : ""}`,
+    onSubmit: async (form, el) => {
+      const packs = [...el.querySelectorAll(".pack input:checked")].map(x => x.value);
+      if (!packs.length) { toast("Escolhe pelo menos um conjunto"); return false; }
+      const out = await api("/starter", { method: "POST", body: { packs, share: !!$("#starterShare", el)?.checked } });
+      await loadRecipes();
+      if (currentRoute() === "/") renderLibrary();
+      toast(out.added ? `${out.added} receitas adicionadas` : "Já tinhas estas receitas");
+    },
+  });
+}
+
 function shelvesHTML(list) {
   const mine = list.filter(r => r.is_owner).sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
   const voted = list.filter(r => (r.stats?.yes || 0) + (r.stats?.cooks || 0) > 0)
@@ -460,7 +504,8 @@ function shelvesHTML(list) {
     + shelfHTML("mine", "As tuas receitas", `${mine.length} guardada${mine.length === 1 ? "" : "s"} por ti`, mine.slice(0, 12), mine.length > 12 || groups().length > 0)
     + (voted.length ? shelfHTML("top", "As mais votadas", "Quem fez votou “voltava a fazer”", voted, false)
       : `<section class="shelf"><div class="shelf-head"><div><h3 class="shelf-title">As mais votadas</h3>
-          <span class="meta">Ainda sem votos. Depois de cozinhares, responde a “Voltava a fazer?” na receita.</span></div></div></section>`);
+          <span class="meta">Ainda sem votos. Depois de cozinhares, responde a “Voltava a fazer?” na receita.</span></div></div></section>`)
+    + categoryShelvesHTML(list);
 }
 
 function renderResults() {
@@ -469,11 +514,15 @@ function renderResults() {
   const el = $("#results");
   if (!el) return;
   const browsing = !state.query.trim() && !state.category && !state.collection && state.scope === "all" && state.recipes.length >= 6;
+  const fewOwn = state.recipes.filter(r => r.is_owner).length < 10;
   if (list.length) {
-    el.innerHTML = (browsing ? shelvesHTML(list) + `<div class="shelf-head all-head"><h3 class="shelf-title">Todas as receitas</h3></div>` : "")
+    el.innerHTML = (browsing && fewOwn ? starterCardHTML() : "") + (browsing ? shelvesHTML(list) + `<div class="shelf-head all-head"><h3 class="shelf-title">Todas as receitas</h3></div>` : "")
       + `<div class="grid">${list.map(card).join("")}</div>`;
     el.querySelectorAll("[data-shelf]").forEach(b => b.onclick = () => {
-      state.scope = "mine"; store.set("scope", "mine"); renderLibrary(); scrollTo({ top: 0 });
+      const k = b.dataset.shelf;
+      if (k.startsWith("cat:")) state.category = k.slice(4);
+      else { state.scope = "mine"; store.set("scope", "mine"); }
+      renderLibrary(); $("#homeHead")?.scrollIntoView({ block: "start" }); scrollBy(0, -90);
     });
   } else if (state.category === "bimby" && !state.query) {
     el.innerHTML = `<div class="empty glass"><div class="art">${BIMBY_ICON}</div><h3>Ainda não tens receitas Bimby</h3>
@@ -485,6 +534,7 @@ function renderResults() {
     el.innerHTML = `<div class="empty glass"><div class="art">${I.fork}</div><h3>Guarda a tua primeira receita</h3>
       <p>Partilha um TikTok, um Reel, um vídeo do YouTube ou um artigo de blogue e recebe uma receita organizada, com ingredientes e passos.</p>
       <button class="btn-primary" data-import>${I.plus}Importar receita</button>
+      <button class="btn-outline" data-starter style="margin-top:.6rem">Começar com receitas prontas</button>
       <p class="meta" style="margin-top:1rem;display:block">Guarda diretamente a partir da folha de partilha: <a href="#/settings">configura o Atalho</a></p></div>`;
   } else el.innerHTML = "";
   el.querySelectorAll(".card").forEach(c => {

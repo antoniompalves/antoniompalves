@@ -1949,3 +1949,21 @@ html:root .chips.cols .chip:hover, html:root[data-theme] .chips.cols .chip:hover
   .shelf-row { grid-auto-columns: minmax(12.5rem, 13.5rem); margin: 0; padding: .25rem .25rem 1.25rem; scroll-padding: 0; }
   .shelf-title { font-size: 1.75rem; }
 }
+
+
+/* Starter packs */
+.starter { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.2rem; border-radius: var(--card-r, 24px); margin: 0 0 1.75rem; flex-wrap: wrap; }
+.starter-art { font-size: 2.4rem; width: 3.6rem; height: 3.6rem; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); flex: none; }
+.starter-text { flex: 1 1 14rem; min-width: 0; }
+.starter-text .meta { margin: .25rem 0 0; display: block; }
+.starter .btn-primary { flex: none; }
+@media (max-width: 767px) { .starter .btn-primary { flex: 1 1 100%; } }
+.packs { display: flex; flex-direction: column; gap: .5rem; }
+.pack { display: flex; align-items: center; gap: .8rem; padding: .8rem .9rem; border-radius: 16px; cursor: pointer; }
+.pack input { width: 1.4rem; height: 1.4rem; flex: none; accent-color: var(--accent); }
+.pack span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.pack b { font-weight: 700; }
+.pack small { font-size: .8125rem; color: var(--ink-2); }
+.pack em { font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.pack-share { display: flex; align-items: center; gap: .6rem; font-size: .9375rem; }
+.pack-share input { width: 1.3rem; height: 1.3rem; accent-color: var(--accent); }
