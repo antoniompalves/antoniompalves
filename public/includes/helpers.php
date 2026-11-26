@@ -13,15 +13,21 @@ function cfg(?string $key = null)
 function set_lang(string $l): void { $GLOBALS['lang'] = $l; }
 function lang(): string { return $GLOBALS['lang'] ?? cfg('default_lang'); }
 
-/** Translate a UI string. Supports dot-less flat keys and sprintf args. */
-function t(string $key, ...$args): string
+function strings(): array
 {
     static $cache = [];
     $l = lang();
-    $cache[$l] ??= require ROOT . "/lang/{$l}.php";
-    $s = $cache[$l][$key] ?? $key;
+    return $cache[$l] ??= require ROOT . "/lang/{$l}.php";
+}
+
+/** Translate a UI string. Supports dot-less flat keys and sprintf args. */
+function t(string $key, ...$args): string
+{
+    $s = strings()[$key] ?? $key;
     return $args ? vsprintf($s, $args) : $s;
 }
+
+function has_t(string $key): bool { return isset(strings()[$key]); }
 
 /** Pick the current-language value from ['pt'=>..,'en'=>..] or return as-is. */
 function tr($v)
@@ -55,6 +61,7 @@ function routes(): array
         'press'   => ['pt' => 'imprensa',  'en' => 'press'],
         'blog'    => ['pt' => 'blog',      'en' => 'blog'],
         'contact' => ['pt' => 'contactos', 'en' => 'contact'],
+        'privacy' => ['pt' => 'politica-de-privacidade', 'en' => 'privacy-policy'],
     ];
 }
 
@@ -91,6 +98,7 @@ function alt_url(string $l): string
 
 function absolute(string $path): string
 {
+    if ($site = cfg('site_url')) return rtrim($site, '/') . $path;
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     return $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'eqtraining.pt') . $path;
 }

@@ -7,6 +7,7 @@
 return [
     [
         'date' => '2026-11-12', 'mins' => 5, 'tone' => 'blue', 'img' => 'hybrid-room',
+        'meta_title' => ['pt' => 'Melhores técnicos, nem sempre melhores líderes', 'en' => 'Why top experts aren’t always top leaders'],
         'slug'  => ['pt' => 'lideres-tecnicos-e-a-competencia-que-falta', 'en' => 'technical-leaders-and-the-missing-skill'],
         'cat'   => ['pt' => 'Liderança', 'en' => 'Leadership'],
         'title' => ['pt' => 'Porque é que os melhores técnicos nem sempre são os melhores líderes', 'en' => 'Why the best technical experts aren’t always the best leaders'],
@@ -21,6 +22,7 @@ return [
     ],
     [
         'date' => '2026-10-28', 'mins' => 4, 'tone' => 'coral', 'img' => 'burnout',
+        'meta_title' => ['pt' => 'Burnout na Função Pública: 3 sinais de alerta', 'en' => 'Burnout in the public sector: 3 warning signs'],
         'slug'  => ['pt' => 'burnout-na-administracao-publica', 'en' => 'burnout-in-the-public-sector'],
         'cat'   => ['pt' => 'Bem-estar', 'en' => 'Wellbeing'],
         'title' => ['pt' => 'Burnout na Administração Pública: sinais que as chefias não podem ignorar', 'en' => 'Burnout in the public sector: signs managers can’t ignore'],
@@ -35,6 +37,7 @@ return [
     ],
     [
         'date' => '2026-10-09', 'mins' => 6, 'tone' => 'navy', 'img' => 'yale',
+        'meta_title' => ['pt' => 'MSCEIT, EQ-i e ESCI: diferenças e quando usar', 'en' => 'MSCEIT, EQ-i and ESCI: differences and uses'],
         'slug'  => ['pt' => 'msceit-eqi-esci-diferencas', 'en' => 'msceit-eqi-esci-differences'],
         'cat'   => ['pt' => 'Ciência', 'en' => 'Science'],
         'title' => ['pt' => 'MSCEIT, EQ-i e ESCI: qual a diferença e quando usar cada um', 'en' => 'MSCEIT, EQ-i and ESCI: the difference and when to use each'],

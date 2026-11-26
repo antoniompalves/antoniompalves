@@ -1,7 +1,20 @@
 <?php
 /** @var array $course */
 $GLOBALS['page_title'] = tr($course['title']);
-$GLOBALS['page_desc']  = tr($course['excerpt']);
+$GLOBALS['page_desc']  = tr($course['meta_desc'] ?? $course['excerpt']);
+$site = rtrim(absolute(url('home', cfg('default_lang'))), '/');
+$GLOBALS['jsonld'][] = [
+    '@type' => 'Course',
+    'name' => tr($course['title']),
+    'description' => tr($course['meta_desc'] ?? $course['excerpt']),
+    'url' => absolute(url('courses', null, $course['slug'][lang()])),
+    'inLanguage' => ['pt-PT', 'en'],
+    'provider' => ['@id' => $site . '/#org'],
+    'instructor' => ['@id' => $site . '/#paulo'],
+    'educationalLevel' => 'Professional',
+    'about' => lang() === 'pt' ? 'Inteligência Emocional' : 'Emotional Intelligence',
+    'hasCourseInstance' => [['@type' => 'CourseInstance', 'courseMode' => ['Onsite', 'Online'], 'courseWorkload' => 'PT2H', 'instructor' => ['@id' => $site . '/#paulo']]],
+];
 $L = lang();
 ?>
 <section class="hero hero-course">

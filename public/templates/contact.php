@@ -36,7 +36,7 @@
         </label>
       </div>
       <label class="field"><span><?= e(t('form.message')) ?> *</span><textarea name="message" rows="5" required></textarea></label>
-      <label class="check"><input type="checkbox" name="consent" required><span><?= e(t('form.consent')) ?></span></label>
+      <label class="check"><input type="checkbox" name="consent" required><span><?= sprintf(e(t('form.consent')), '<a href="' . e(url('privacy')) . '" target="_blank" rel="noopener">' . e(t('footer.privacy')) . '</a>') ?></span></label>
       <button class="btn btn-primary btn-lg" type="submit"><?= e(t('form.send')) ?> <?= icon('arrow', 18) ?></button>
       <p class="form-status" role="status" aria-live="polite"></p>
     </form>

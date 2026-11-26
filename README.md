@@ -41,6 +41,21 @@ Every "Book a meeting" button opens the widget. Its question box sends an email 
 - Sister brand **Emoty Games** (children, families, schools): `config.php` → `kids_url`. It appears as a small card in "As nossas marcas" and as a footer link.
 - Sister brand **Treino Inteligência Emocional®** (B2C): `config.php` → `b2c_url` / `b2c_agenda_url`. It appears in the "As nossas marcas" section on About (`#marcas`), the band on Home and the footer. Update `b2c_agenda_url` when the new B2C site goes live.
 
+## SEO (built in)
+- **Domain:** `config.php` → `site_url` (default `https://eqtraining.pt`). It is used for canonical URLs, hreflang, `sitemap.xml`, `robots.txt` and the social/structured-data tags. Change it if the domain differs.
+- **Titles & descriptions:** each page has its own in `lang/pt.php` / `lang/en.php` (`seo.<page>.title` / `seo.<page>.desc`). Blog posts use `meta_title` in `content/posts.php`; the course uses `meta_desc` in `content/courses.php`.
+- **Generated routes:** `/sitemap.xml` (PT+EN with hreflang alternates) and `/robots.txt`.
+- **Structured data (JSON-LD):** Organization, Person (Paulo Moreira), WebSite, BreadcrumbList, Course and BlogPosting.
+- **Social previews:** `assets/img/og-pt.jpg` / `og-en.jpg` (1200×630).
+- **Icons:** favicon (svg/ico), apple-touch-icon, web manifest.
+- **Fonts:** self-hosted in `assets/fonts/`, with no Google Fonts request (faster, GDPR-friendly).
+
+### Before launch
+1. Complete the `[placeholders]` in `content/privacy.php` (legal entity name and tax number) and have the policy reviewed.
+2. Turn on SSL and the HTTPS redirect in `.htaccess`.
+3. Add the site to Google Search Console and submit `https://eqtraining.pt/sitemap.xml`.
+4. Test a page in Google's Rich Results Test and LinkedIn Post Inspector.
+
 ## Iceberg (home page scroll story)
 - The artwork is generated, not hand-drawn: `python3 tools/iceberg_gen.py out.svgfrag` builds a 3D low-poly iceberg (irregular submerged keel, crags on the tip), flat-shades it, adds depth fog, light rays, foam and particles, and writes the SVG that is inlined in `templates/home.php` (between the `<svg class="ice-svg">` tags). Change the seed or shape parameters to get a different berg.
 - Timing (which text shows when) is in `assets/js/main.js` → `STARTS` / `DIVE`; visibility per element is the `data-steps` attribute in `home.php`.

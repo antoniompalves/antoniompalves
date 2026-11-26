@@ -23,6 +23,7 @@ $logos = require ROOT . '/content/logos.php';
       <button data-f="tv" aria-pressed="false"><?= e(t('press.tv')) ?> <span><?= count(array_filter($items, fn($p) => $p['type'] === 'tv')) ?></span></button>
       <button data-f="talk" aria-pressed="false"><?= e(t('press.talk')) ?> <span><?= count(array_filter($items, fn($p) => $p['type'] === 'talk')) ?></span></button>
     </div>
+    <h2 class="sr-only"><?= e(t('press.list')) ?></h2>
     <div class="press-grid">
       <?php foreach ($items as $i => $p): ?>
         <article class="press-card reveal<?= $i === 0 ? ' is-lead' : '' ?>" data-type="<?= e($p['type']) ?>">

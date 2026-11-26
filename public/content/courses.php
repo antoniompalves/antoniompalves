@@ -15,6 +15,10 @@ return [
             'pt' => 'O programa mais completo para desenvolver as competências emocionais que determinam a qualidade da liderança, da comunicação e das decisões na sua organização. Baseado no modelo ESCI de Daniel Goleman e nas três correntes científicas da Inteligência Emocional.',
             'en' => 'The most complete programme to develop the emotional skills that shape the quality of leadership, communication and decision-making in your organisation. Based on Daniel Goleman’s ESCI model and the three scientific schools of Emotional Intelligence.',
         ],
+        'meta_desc' => [
+            'pt' => 'Programa de Inteligência Emocional para equipas e líderes, baseado no ESCI de Goleman, com diagnóstico MSCEIT/EQ-i, treino prático e follow-up.',
+            'en' => 'Emotional Intelligence programme for teams and leaders, based on Goleman’s ESCI, with MSCEIT/EQ-i assessment, hands-on training and follow-up.',
+        ],
         'excerpt'=> [
             'pt' => 'Autoconsciência, autocontrolo, consciência social e gestão de relacionamentos — com diagnóstico científico e follow-up.',
             'en' => 'Self-awareness, self-management, social awareness and relationship management — with scientific assessment and follow-up.',

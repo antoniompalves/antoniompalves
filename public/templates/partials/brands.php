@@ -55,7 +55,7 @@ $pod = array_values(array_filter(cfg('social') ?: [], fn($s) => in_array($s[0], 
         <?php endif; ?>
 
         <div class="brand-ctas">
-          <a class="btn btn-light" href="<?= e($b2c) ?>" target="_blank" rel="noopener"><?= e(t('brands.visit')) ?> <?= icon('external', 16) ?></a>
+          <a class="btn btn-light" href="<?= e($b2c) ?>" target="_blank" rel="noopener"><span class="hide-sm"><?= e(t('brands.visit')) ?></span><span class="show-sm"><?= e(t('brands.visit.short')) ?></span> <?= icon('external', 16) ?></a>
           <a class="btn btn-ghost-light" href="<?= e(cfg('b2c_agenda_url') ?: $b2c) ?>" target="_blank" rel="noopener"><?= e(t('brands.agenda')) ?></a>
         </div>
       </article>

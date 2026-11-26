@@ -35,6 +35,13 @@ if (isset($segments[0]) && $segments[0] === $cfg['default_lang']) {
 }
 set_lang($lang);
 
+// ---- sitemap.xml / robots.txt ------------------------------------------
+if (count($segments) === 1 && in_array($segments[0], ['sitemap.xml', 'robots.txt'], true)) {
+    $special = $segments[0];
+    require __DIR__ . '/includes/sitemap.php';
+    exit;
+}
+
 // ---- Contact / lead POST endpoint ----------------------------------------
 if (($segments[0] ?? '') === 'api' && ($segments[1] ?? '') === 'lead') {
     require __DIR__ . '/includes/lead.php';
@@ -77,6 +84,7 @@ switch ($page) {
     case 'services':
     case 'press':
     case 'contact':
+    case 'privacy':
         if ($params['slug'] === null) $tpl = $page;
         break;
 }

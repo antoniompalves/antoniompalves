@@ -12,10 +12,8 @@ $model = require ROOT . '/content/model.php';
       <p class="eyebrow on-dark"><?= e(t('home.eyebrow')) ?></p>
       <h1 class="display hero-title">
         <span class="hero-for"><?= e(t('hero.for')) ?></span>
-        <span class="rotator" aria-live="polite">
-          <?php foreach ($words as $i): ?>
-            <span class="rotator-word<?= $i === 1 ? ' is-active' : '' ?>" data-rot-word><?= e(t('hero.w' . $i)) ?></span>
-          <?php endforeach; ?>
+        <span class="rotator" data-words="<?= e(json_encode(array_map(fn($i) => t('hero.w' . $i), array_slice($words, 1)), JSON_UNESCAPED_UNICODE)) ?>">
+          <span class="rotator-word is-active" data-rot-word><?= e(t('hero.w1')) ?></span>
         </span>
       </h1>
       <p class="hero-lead"><?= e(t('home.lead')) ?></p>
@@ -262,7 +260,7 @@ $model = require ROOT . '/content/model.php';
 <!-- ============ RESULTS (split dark panel) ============ -->
 <section class="results">
   <figure class="results-media">
-    <img src="<?= e(asset('assets/img/photos/stage-keynote.webp')) ?>" alt="" width="960" height="640" loading="lazy">
+    <img src="<?= e(asset('assets/img/photos/stage-keynote.webp')) ?>" alt="<?= e(t('hero.caption')) ?>" width="960" height="640" loading="lazy">
     <figcaption class="quote-big">
       <blockquote>“<?= e(tr($featured['testimonial']['quote'])) ?>”</blockquote>
       <p><strong><?= e($featured['testimonial']['name']) ?></strong> · <?= e(tr($featured['testimonial']['role'])) ?></p>

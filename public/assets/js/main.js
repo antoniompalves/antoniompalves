@@ -81,6 +81,13 @@
   /* ---------- Hero rotator (torch-style tab bar) ---------- */
   const rot = $('[data-rotator]');
   if (rot) {
+    // Only the first phrase is in the HTML (clean H1); the others are decorative and added here.
+    const holder = $('[data-words]', rot);
+    if (holder) JSON.parse(holder.dataset.words).forEach((w) => {
+      const s = document.createElement('span');
+      s.className = 'rotator-word'; s.dataset.rotWord = ''; s.setAttribute('aria-hidden', 'true'); s.textContent = w;
+      holder.appendChild(s);
+    });
     const words = $$('[data-rot-word]', rot), proofs = $$('[data-rot-proof]', rot), tabs = $$('[data-rot-tab]', rot);
     const count = $('[data-rot-count]', rot), bar = $('.hero-tabs', rot);
     const MS = 5000;

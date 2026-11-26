@@ -1,5 +1,30 @@
 <?php
 return [
+    // SEO
+    'meta.ogalt' => 'EQ Training — Inteligência Emocional para organizações',
+    'seo.home.title' => 'Inteligência Emocional para Empresas e Líderes | EQ Training',
+    'seo.home.desc' => 'Formação, coaching e consultoria em Inteligência Emocional para empresas e Administração Pública. Diagnóstico MSCEIT, EQ-i e ESCI, em todo o país.',
+    'seo.services.title' => 'Coaching Executivo, Equipas e Palestras | EQ Training',
+    'seo.services.desc' => 'Coaching executivo para CEOs, aceleração de equipas de liderança, diagnóstico organizacional e palestras de Inteligência Emocional com Paulo Moreira.',
+    'seo.courses.title' => 'Programas de Inteligência Emocional | EQ Training',
+    'seo.courses.desc' => 'Programas corporativos de Inteligência Emocional, gestão de stress, conflitos e decisão: palestra, workshop, programa avançado ou acompanhamento contínuo.',
+    'seo.about.title' => 'Sobre Paulo Moreira — Inteligência Emocional | EQ Training',
+    'seo.about.desc' => 'Paulo Moreira é formador certificado em MSCEIT, EQ-i e ESCI, autor de três livros e fundador da EQ Training. Conheça a abordagem e as nossas marcas.',
+    'seo.press.title' => 'Paulo Moreira na Imprensa e Televisão | EQ Training',
+    'seo.press.desc' => 'Entrevistas de Paulo Moreira na RTP, TVI, CNN Portugal, CMTV e Porto Canal sobre Inteligência Emocional, stress, procrastinação e liderança.',
+    'seo.blog.title' => 'Blog de Inteligência Emocional e Liderança | EQ Training',
+    'seo.blog.desc' => 'Artigos sobre Inteligência Emocional, liderança, burnout e desempenho organizacional, escritos para líderes, gestores e equipas de Recursos Humanos.',
+    'seo.contact.title' => 'Contactos — Agendar Reunião | EQ Training',
+    'seo.contact.desc' => 'Fale connosco para desenhar um programa de Inteligência Emocional à medida da sua organização. Resposta em menos de um dia útil, em todo o país.',
+    'seo.privacy.title' => 'Política de Privacidade | EQ Training',
+    'seo.privacy.desc' => 'Como a EQ Training recolhe, utiliza e protege os seus dados pessoais, de acordo com o Regulamento Geral sobre a Proteção de Dados (RGPD).',
+    'seo.404.title' => 'Página não encontrada | EQ Training',
+    'privacy.k' => 'Informação legal',
+    'privacy.updated' => 'Atualizada a',
+    'press.list' => 'Participações em televisão e eventos',
+    'courses.list' => 'Todos os programas',
+    'brands.visit.short' => 'Visitar o site',
+
     // Meta / nav
     'meta.title'        => 'EQ Training — Inteligência Emocional para Organizações',
     'meta.desc'         => 'Programas de Inteligência Emocional para empresas e Administração Pública. Diagnóstico científico (MSCEIT, EQ-i, ESCI), formação prática e follow-up mensurável.',
@@ -25,7 +50,7 @@ return [
     'min_read'          => '%d min de leitura',
 
     // Home
-    'home.eyebrow'      => 'Inteligência Emocional para organizações',
+    'home.eyebrow'      => 'Formação e consultoria para organizações',
     'home.h1'           => 'Líderes que inspiram.<br>Equipas que <em>funcionam</em>.',
     'home.lead'         => 'Desenvolvemos as competências emocionais que determinam a qualidade da liderança, da comunicação e das decisões — em empresas privadas e na Administração Pública.',
     'home.trust'        => 'Diagnóstico com os três instrumentos científicos de referência mundial',
@@ -334,7 +359,7 @@ return [
     'form.interest'     => 'Programa de interesse',
     'form.interest.any' => 'Ainda não sei',
     'form.message'      => 'Mensagem',
-    'form.consent'      => 'Aceito que os meus dados sejam usados para responder a este pedido, de acordo com a Política de Privacidade.',
+    'form.consent'      => 'Aceito que os meus dados sejam usados para responder a este pedido, de acordo com a %s.',
     'form.send'         => 'Enviar pedido',
     'form.sending'      => 'A enviar…',
     'form.ok'           => 'Obrigado! Recebemos o seu pedido e entraremos em contacto em breve.',

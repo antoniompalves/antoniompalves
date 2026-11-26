@@ -13,6 +13,7 @@
 
 <section class="section">
   <div class="wrap">
+    <h2 class="sr-only"><?= e(t('courses.list')) ?></h2>
     <div class="course-grid course-grid-lg">
       <?php foreach (courses() as $c) partial('course-card', ['c' => $c]); ?>
       <a class="course-card course-card-custom reveal" href="<?= e(url('contact')) ?>#form">

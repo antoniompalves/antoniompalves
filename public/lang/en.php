@@ -1,8 +1,33 @@
 <?php
 return [
+    // SEO
+    'meta.ogalt' => 'EQ Training — Emotional Intelligence for organisations',
+    'seo.home.title' => 'Emotional Intelligence for Leaders and Teams | EQ Training',
+    'seo.home.desc' => 'Emotional Intelligence training, coaching and consulting for companies and public organisations in Portugal. MSCEIT, EQ-i and ESCI assessment.',
+    'seo.services.title' => 'Executive Coaching, Teams and Keynotes | EQ Training',
+    'seo.services.desc' => 'Executive coaching for CEOs, leadership team acceleration, organisational assessment and Emotional Intelligence keynotes with Paulo Moreira.',
+    'seo.courses.title' => 'Emotional Intelligence Programmes | EQ Training',
+    'seo.courses.desc' => 'Corporate programmes in Emotional Intelligence, stress, conflict and decision-making: keynote, workshop, advanced programme or ongoing support.',
+    'seo.about.title' => 'About Paulo Moreira — Emotional Intelligence | EQ Training',
+    'seo.about.desc' => 'Paulo Moreira is certified in MSCEIT, EQ-i and ESCI, the author of three books and founder of EQ Training. Discover our approach and our brands.',
+    'seo.press.title' => 'Paulo Moreira in the Press and on TV | EQ Training',
+    'seo.press.desc' => 'Interviews with Paulo Moreira on RTP, TVI, CNN Portugal, CMTV and Porto Canal about Emotional Intelligence, stress, procrastination and leadership.',
+    'seo.blog.title' => 'Emotional Intelligence and Leadership Blog | EQ Training',
+    'seo.blog.desc' => 'Articles on Emotional Intelligence, leadership, burnout and organisational performance, written for leaders, managers and HR teams.',
+    'seo.contact.title' => 'Contact — Book a Meeting | EQ Training',
+    'seo.contact.desc' => 'Talk to us about an Emotional Intelligence programme tailored to your organisation. We reply within one business day, anywhere in Portugal.',
+    'seo.privacy.title' => 'Privacy Policy and Data Protection | EQ Training',
+    'seo.privacy.desc' => 'How EQ Training collects, uses and protects your personal data, in accordance with the General Data Protection Regulation (GDPR).',
+    'seo.404.title' => 'Page not found | EQ Training',
+    'privacy.k' => 'Legal',
+    'privacy.updated' => 'Last updated',
+    'press.list' => 'Television and event appearances',
+    'courses.list' => 'All programmes',
+    'brands.visit.short' => 'Visit the website',
+
     // Meta / nav
     'meta.title'        => 'EQ Training — Emotional Intelligence for Organisations',
-    'meta.desc'         => 'Emotional Intelligence programmes for companies and public organisations. Scientific assessment (MSCEIT, EQ-i, ESCI), hands-on training and measurable follow-up.',
+    'meta.desc'         => 'Emotional Intelligence programmes for companies and public bodies. Scientific assessment (MSCEIT, EQ-i, ESCI), hands-on training and measurable follow-up.',
     'nav.home'          => 'Home',
     'nav.courses'       => 'Programmes',
     'nav.about'         => 'About',
@@ -25,7 +50,7 @@ return [
     'min_read'          => '%d min read',
 
     // Home
-    'home.eyebrow'      => 'Emotional Intelligence for organisations',
+    'home.eyebrow'      => 'Training and consulting for organisations',
     'home.h1'           => 'Leaders who inspire.<br>Teams that <em>work</em>.',
     'home.lead'         => 'We develop the emotional skills that shape the quality of leadership, communication and decision-making — in private companies and the public sector.',
     'home.trust'        => 'Assessment with the three world-leading scientific instruments',
@@ -334,7 +359,7 @@ return [
     'form.interest'     => 'Programme of interest',
     'form.interest.any' => 'Not sure yet',
     'form.message'      => 'Message',
-    'form.consent'      => 'I agree that my data may be used to reply to this request, in accordance with the Privacy Policy.',
+    'form.consent'      => 'I agree that my data may be used to reply to this request, in accordance with the %s.',
     'form.send'         => 'Send request',
     'form.sending'      => 'Sending…',
     'form.ok'           => 'Thank you! We’ve received your request and will be in touch shortly.',

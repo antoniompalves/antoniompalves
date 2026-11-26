@@ -1,10 +1,45 @@
 <?php
 $page   = $GLOBALS['current_page'] ?? 'home';
-$titleT = $GLOBALS['page_title'] ?? null;
-$title  = $titleT ? $titleT . ' — EQ Training' : t('meta.title');
-$desc   = $GLOBALS['page_desc'] ?? t('meta.desc');
-$nav    = ['services', 'courses', 'about', 'press', 'blog', 'contact'];
-$heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || isset($GLOBALS['current_data']['course']);
+$data   = $GLOBALS['current_data'] ?? [];
+$detail = isset($data['course']) || isset($data['post']);
+// Title & description: explicit override > per-page SEO strings > detail-page title > site default
+if (!empty($GLOBALS['page_title_full']))            $title = $GLOBALS['page_title_full'];
+elseif (!$detail && has_t("seo.$page.title"))        $title = t("seo.$page.title");
+elseif (!empty($GLOBALS['page_title']))              $title = $GLOBALS['page_title'] . ' | EQ Training';
+else                                                 $title = t('meta.title');
+if (!empty($GLOBALS['page_desc']))                   $desc = $GLOBALS['page_desc'];
+elseif (has_t("seo.$page.desc"))                     $desc = t("seo.$page.desc");
+else                                                 $desc = t('meta.desc');
+$nav      = ['services', 'courses', 'about', 'press', 'blog', 'contact'];
+$heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || isset($data['course']);
+$canon    = absolute(alt_url(lang()));
+$ogImage  = absolute(rtrim(cfg('base_url'), '/') . '/assets/img/og-' . lang() . '.jpg');
+$locale   = ['pt' => 'pt_PT', 'en' => 'en_GB'];
+
+// Structured data (@graph): organisation, founder, website, breadcrumbs + page-specific nodes
+$site   = rtrim(absolute(url('home', cfg('default_lang'))), '/');
+$social = array_column(cfg('social') ?: [], 2);
+$graph  = [
+    ['@type' => 'Organization', '@id' => $site . '/#org', 'name' => 'EQ Training', 'url' => $site . '/',
+     'logo' => ['@type' => 'ImageObject', 'url' => absolute(asset('assets/img/logo.png'))],
+     'email' => cfg('email_to'), 'telephone' => cfg('phone'),
+     'areaServed' => ['@type' => 'Country', 'name' => 'Portugal'],
+     'founder' => ['@id' => $site . '/#paulo'],
+     'brand' => [['@type' => 'Brand', 'name' => cfg('b2c_name'), 'url' => cfg('b2c_url')], ['@type' => 'Brand', 'name' => cfg('kids_name'), 'url' => cfg('kids_url')]]],
+    ['@type' => 'Person', '@id' => $site . '/#paulo', 'name' => 'Paulo Moreira', 'jobTitle' => t('about.founder.r'),
+     'image' => absolute(asset('assets/img/photos/paulo-portrait.webp')), 'worksFor' => ['@id' => $site . '/#org'], 'sameAs' => $social],
+    ['@type' => 'WebSite', '@id' => $site . '/#website', 'url' => $site . '/', 'name' => 'EQ Training',
+     'inLanguage' => ['pt-PT', 'en'], 'publisher' => ['@id' => $site . '/#org']],
+];
+if ($page !== 'home' && $page !== '404') {
+    $crumbs = [[t('nav.home'), url('home')]];
+    $crumbs[] = [$page === 'privacy' ? t('footer.privacy') : t('nav.' . $page), url($page)];
+    if (isset($data['course'])) $crumbs[] = [tr($data['course']['title']), url('courses', null, $data['course']['slug'][lang()])];
+    if (isset($data['post']))   $crumbs[] = [tr($data['post']['title']), url('blog', null, $data['post']['slug'][lang()])];
+    $graph[] = ['@type' => 'BreadcrumbList', 'itemListElement' => array_map(
+        fn($c, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'name' => $c[0], 'item' => absolute($c[1])], $crumbs, array_keys($crumbs))];
+}
+foreach ($GLOBALS['jsonld'] ?? [] as $node) $graph[] = $node;
 ?><!doctype html>
 <html lang="<?= lang() === 'pt' ? 'pt-PT' : 'en' ?>">
 <head>
@@ -12,33 +47,42 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($title) ?></title>
 <meta name="description" content="<?= e($desc) ?>">
-<link rel="canonical" href="<?= e(absolute(alt_url(lang()))) ?>">
+<?php if ($page === '404'): ?><meta name="robots" content="noindex, follow">
+<?php else: ?>
+<link rel="canonical" href="<?= e($canon) ?>">
 <?php foreach (cfg('langs') as $l): ?>
 <link rel="alternate" hreflang="<?= $l === 'pt' ? 'pt-PT' : 'en' ?>" href="<?= e(absolute(alt_url($l))) ?>">
 <?php endforeach; ?>
 <link rel="alternate" hreflang="x-default" href="<?= e(absolute(alt_url(cfg('default_lang')))) ?>">
+<?php endif; ?>
+<meta property="og:site_name" content="EQ Training">
 <meta property="og:title" content="<?= e($title) ?>">
 <meta property="og:description" content="<?= e($desc) ?>">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="<?= lang() === 'pt' ? 'pt_PT' : 'en_GB' ?>">
-<meta name="theme-color" content="#041a3a">
+<meta property="og:url" content="<?= e($canon) ?>">
+<meta property="og:type" content="<?= isset($data['post']) ? 'article' : 'website' ?>">
+<meta property="og:locale" content="<?= $locale[lang()] ?>">
+<?php foreach (cfg('langs') as $l): if ($l !== lang()): ?><meta property="og:locale:alternate" content="<?= $locale[$l] ?>">
+<?php endif; endforeach; ?>
+<meta property="og:image" content="<?= e($ogImage) ?>">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="<?= e(t('meta.ogalt')) ?>">
+<?php if (isset($data['post'])): ?><meta property="article:published_time" content="<?= e($data['post']['date']) ?>">
+<meta property="article:author" content="Paulo Moreira">
+<?php endif; ?>
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#061a3a">
 <link rel="icon" href="<?= asset('assets/img/favicon.svg') ?>" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Urbanist:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="<?= rtrim(cfg('base_url'), '/') ?>/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="<?= asset('assets/img/apple-touch-icon.png') ?>">
+<link rel="manifest" href="<?= asset('site.webmanifest') ?>">
+<link rel="preload" href="<?= asset('assets/fonts/urbanist-latin-5.woff2') ?>" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="<?= asset('assets/fonts/inter-latin-1.woff2') ?>" as="font" type="font/woff2" crossorigin>
+<?php if ($page === 'home'): ?><link rel="preload" href="<?= asset('assets/img/photos/stage-dark.webp') ?>" as="image" fetchpriority="high">
+<?php endif; ?>
+<link rel="stylesheet" href="<?= asset('assets/fonts/fonts.css') ?>">
 <link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>">
-<script type="application/ld+json"><?= json_encode([
-    '@context' => 'https://schema.org',
-    '@type' => 'Organization',
-    'name' => 'EQ Training',
-    'url' => absolute(url('home', cfg('default_lang'))),
-    'logo' => absolute(asset('assets/img/logo.png')),
-    'email' => cfg('email_to'),
-    'telephone' => cfg('phone'),
-    'areaServed' => ['@type' => 'Country', 'name' => 'Portugal'],
-    'founder' => ['@type' => 'Person', 'name' => 'Paulo Moreira', 'sameAs' => array_column(cfg('social') ?: [], 2)],
-    'sameAs' => array_column(cfg('social') ?: [], 2),
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
+<script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@graph' => $graph], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
 </head>
 <body class="page-<?= e($page) ?><?= $heroDark ? ' has-dark-hero' : '' ?>">
 <a class="skip" href="#main"><?= e(t('skip')) ?></a>
@@ -133,7 +177,7 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
   <div class="wrap footer-bottom">
     <span>© <?= date('Y') ?> EQ Training. <?= e(t('footer.rights')) ?></span>
     <span class="footer-links">
-      <a href="#"><?= e(t('footer.privacy')) ?></a>
+      <a href="<?= e(url('privacy')) ?>"><?= e(t('footer.privacy')) ?></a>
       <a href="https://www.livroreclamacoes.pt" rel="noopener" target="_blank"><?= e(t('footer.complaints')) ?></a>
     </span>
   </div>

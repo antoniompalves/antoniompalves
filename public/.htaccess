@@ -17,6 +17,7 @@ DirectoryIndex index.php
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_URI} !/$
   RewriteCond %{REQUEST_URI} !^/api/
+  RewriteCond %{REQUEST_URI} !\.[a-zA-Z0-9]{2,5}$
   RewriteRule ^(.*)$ /$1/ [L,R=301]
 
   # Everything that is not a real file goes to the front controller

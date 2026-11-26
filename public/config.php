@@ -5,6 +5,7 @@
  */
 return [
     'site_name'      => 'EQ Training',
+    'site_url'       => 'https://eqtraining.pt', // canonical domain used in canonical/hreflang/sitemap/social tags
     'base_url'       => '',                       // '' if site is at domain root; e.g. '/beta' if in a subfolder
     'default_lang'   => 'pt',
     'langs'          => ['pt', 'en'],
