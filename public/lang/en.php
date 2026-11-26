@@ -316,6 +316,7 @@ return [
     'footer.nav'        => 'Navigation',
     'footer.programmes' => 'Programmes',
     'footer.contact'    => 'Contact',
+    'footer.dgert'      => 'DGERT-certified training provider',
     'footer.rights'     => 'All rights reserved.',
     'footer.privacy'    => 'Privacy Policy',
     'footer.complaints' => 'Complaints Book',

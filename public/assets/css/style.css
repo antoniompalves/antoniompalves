@@ -626,6 +626,8 @@ a.course-card:hover { transform: translateY(-4px); }
 .footer-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.2fr; gap: 48px; padding-bottom: 72px; }
 .footer-brand img { height: 20px; width: auto; margin-bottom: 24px; }
 .footer-brand p { max-width: 300px; margin-bottom: 24px; line-height: 1.55; }
+.footer-cert { display: block; width: max-content; padding: 10px 14px; border-radius: 12px; background: #fff; margin-bottom: 24px; }
+.footer-cert img { height: 48px; width: auto; margin: 0; }
 .social { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.16); color: #fff; transition: background .25s, border-color .25s; }
 .social:hover { background: #fff; color: var(--navy-950); border-color: #fff; }
 .site-footer h3 { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 20px; }

@@ -70,6 +70,7 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
     <div class="footer-brand">
       <img src="<?= asset('assets/img/logo-white.png') ?>" alt="EQ Training" width="180" height="22">
       <p><?= e(t('footer.tag')) ?></p>
+      <div class="footer-cert"><img src="<?= asset('assets/img/dgert.png') ?>" alt="<?= e(t('footer.dgert')) ?>" width="107" height="48" loading="lazy"></div>
       <a class="social" href="<?= e(cfg('linkedin')) ?>" rel="noopener" target="_blank" aria-label="LinkedIn"><?= icon('linkedin', 22) ?></a>
     </div>
     <div>
