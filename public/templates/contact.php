@@ -59,6 +59,10 @@
           <li><?= icon('pin', 18) ?><span><?= e(cfg('address')) ?></span></li>
         </ul>
       </div>
+      <div class="card">
+        <h2 class="h-sm"><?= e(t('social.h')) ?></h2>
+        <?php partial('social', ['labels' => true]); ?>
+      </div>
     </aside>
   </div>
 </section>

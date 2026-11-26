@@ -32,7 +32,10 @@ $books = $L === 'pt'
       <p class="founder-role"><?= e(t('about.founder.r')) ?></p>
       <p><?= e(t('about.founder.p1')) ?></p>
       <p><?= e(t('about.founder.p2')) ?></p>
-      <a class="btn btn-primary" href="<?= e(booking_href()) ?>" data-open-agent><?= e(t('cta.book')) ?> <?= icon('arrow', 18) ?></a>
+      <div class="founder-actions">
+        <a class="btn btn-primary" href="<?= e(booking_href()) ?>" data-open-agent><?= e(t('cta.book')) ?> <?= icon('arrow', 18) ?></a>
+        <?php partial('social', ['cls' => 'social-list-dark']); ?>
+      </div>
     </div>
     <div class="founder-photos reveal">
       <figure class="fp fp-1">
@@ -77,7 +80,9 @@ $books = $L === 'pt'
   </div>
 </section>
 
-<section class="section section-paper">
+<?php partial('brands'); ?>
+
+<section class="section">
   <div class="wrap">
     <header class="section-head reveal">
       <p class="eyebrow"><?= e(t('about.values.k')) ?></p>

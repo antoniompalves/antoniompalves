@@ -27,6 +27,17 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Urbanist:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>">
+<script type="application/ld+json"><?= json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'Organization',
+    'name' => 'EQ Training',
+    'url' => absolute(url('home', cfg('default_lang'))),
+    'logo' => absolute(asset('assets/img/logo.png')),
+    'email' => cfg('email_to'),
+    'telephone' => cfg('phone'),
+    'founder' => ['@type' => 'Person', 'name' => 'Paulo Moreira', 'sameAs' => array_column(cfg('social') ?: [], 2)],
+    'sameAs' => array_column(cfg('social') ?: [], 2),
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
 </head>
 <body class="page-<?= e($page) ?><?= $heroDark ? ' has-dark-hero' : '' ?>">
 <a class="skip" href="#main"><?= e(t('skip')) ?></a>
@@ -70,8 +81,9 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
     <div class="footer-brand">
       <img src="<?= asset('assets/img/logo-white.png') ?>" alt="EQ Training" width="180" height="22">
       <p><?= e(t('footer.tag')) ?></p>
+      <p class="footer-k"><?= e(t('social.h')) ?></p>
+      <?php partial('social'); ?>
       <div class="footer-cert"><img src="<?= asset('assets/img/dgert.png') ?>" alt="<?= e(t('footer.dgert')) ?>" width="107" height="48" loading="lazy"></div>
-      <a class="social" href="<?= e(cfg('linkedin')) ?>" rel="noopener" target="_blank" aria-label="LinkedIn"><?= icon('linkedin', 22) ?></a>
     </div>
     <div>
       <h3><?= e(t('footer.nav')) ?></h3>
@@ -95,6 +107,11 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
         <li><?= icon('mail', 16) ?><a href="mailto:<?= e(cfg('email_to')) ?>"><?= e(cfg('email_to')) ?></a></li>
         <li><?= icon('pin', 16) ?><span><?= e(cfg('address')) ?></span></li>
       </ul>
+      <a class="footer-sister" href="<?= e(cfg('b2c_url')) ?>" target="_blank" rel="noopener">
+        <span class="footer-k"><?= e(t('footer.sister')) ?></span>
+        <img src="<?= asset('assets/img/brands/treino-ie-white.svg') ?>" alt="<?= e(cfg('b2c_name')) ?>" width="120" height="36" loading="lazy">
+        <span class="footer-sister-p"><?= e(t('footer.sister.p')) ?> <?= icon('external', 13) ?></span>
+      </a>
     </div>
   </div>
   <div class="wrap footer-bottom">

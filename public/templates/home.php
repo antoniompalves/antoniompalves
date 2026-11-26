@@ -284,6 +284,8 @@ $model = require ROOT . '/content/model.php';
   </div>
 </section>
 
+<?php partial('tie-band'); ?>
+
 <!-- ============ BLOG ============ -->
 <section class="section">
   <div class="wrap">

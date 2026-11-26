@@ -35,6 +35,9 @@ $logos = require ROOT . '/content/logos.php';
         </article>
       <?php endforeach; ?>
     </div>
+    <?php $yt = array_values(array_filter(cfg('social') ?: [], fn($s) => $s[0] === 'youtube')); if ($yt): ?>
+      <p class="press-more"><a class="btn btn-ghost" href="<?= e($yt[0][2]) ?>" target="_blank" rel="noopener"><?= icon('youtube', 18) ?><?= e(t('press.youtube')) ?> <?= icon('external', 15) ?></a></p>
+    <?php endif; ?>
   </div>
 </section>
 

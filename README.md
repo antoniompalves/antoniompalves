@@ -36,6 +36,10 @@ Upload `public/assets/video/damiana.mp4` (H.264, about 10–20 s, under 8 MB, po
 and optionally `public/assets/img/damiana-poster.jpg`. Until then the widget shows a "D" placeholder.
 Every "Book a meeting" button opens the widget. Its question box sends an email lead through `/api/lead`.
 
+## Social links & sister brand
+- Social profiles (LinkedIn, Instagram, Facebook, YouTube, Spotify, Apple Podcasts) are in `config.php` → `social`. They show in the footer, on About (founder), on Contact, and in the page's structured data (`sameAs`). The YouTube link also appears on Press.
+- Sister brand **Treino Inteligência Emocional®** (B2C): `config.php` → `b2c_url` / `b2c_agenda_url`. It appears in the "As nossas marcas" section on About (`#marcas`), the band on Home and the footer. Update `b2c_agenda_url` when the new B2C site goes live.
+
 ## Images
 Photos, client logos and TV-channel logos come from the paulojmoreira.com media library:
 - `public/assets/img/photos/`: stage, training-room, Yale, Goleman, portrait cut-out and book shots (WebP)

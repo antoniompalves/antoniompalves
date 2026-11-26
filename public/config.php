@@ -16,7 +16,22 @@ return [
     'phone_raw'      => '+351964188017',
     'whatsapp'       => '351964188017',
     'address'        => 'Porto, Portugal',
-    'linkedin'       => 'https://www.linkedin.com/',
+
+    // Paulo Moreira's social profiles (taken from treinointeligenciaemocional.com).
+    // [icon, label, url]. Remove a line to hide it; order = display order.
+    'social' => [
+        ['linkedin',  'LinkedIn',       'https://www.linkedin.com/in/paulo-moreira-45b5371b/'],
+        ['instagram', 'Instagram',      'https://www.instagram.com/paulo.jmoreira/'],
+        ['facebook',  'Facebook',       'https://www.facebook.com/paulomoreirainteligenciaemocional'],
+        ['youtube',   'YouTube',        'https://www.youtube.com/channel/UC0d9nCbO3Gw3JQuNvcRmetA'],
+        ['spotify',   'Spotify',        'https://open.spotify.com/show/4uYnKPBldfjO5wrCbm88nL'],
+        ['podcast',   'Apple Podcasts', 'https://podcasts.apple.com/pt/podcast/intelig%C3%AAncia-emocional-o-podcast/id1552673577'],
+    ],
+
+    // Sister brand for individuals (B2C)
+    'b2c_name'       => 'Treino Inteligência Emocional',
+    'b2c_url'        => 'https://treinointeligenciaemocional.com/',
+    'b2c_agenda_url' => 'https://treinointeligenciaemocional.com/agenda-2/', // update when the new B2C site goes live
 
     // Damiana — business manager / chat widget
     'agent_name'     => 'Damiana',

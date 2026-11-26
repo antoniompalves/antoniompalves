@@ -821,6 +821,99 @@ body:has(.site-header:not(.is-hidden)) .aud-tabs-wrap { top: var(--header-h); }
 .video-yt-link { position: absolute; left: 0; top: -44px; color: rgba(255,255,255,.75); font-size: 14px; font-weight: 600; }
 .video-yt-link:hover { color: #fff; }
 
+/* ==========================================================================
+   Social links
+   ========================================================================== */
+.social-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.social-list-dark .social { color: var(--ink); border-color: var(--line-2); }
+.social-list-dark .social:hover { background: var(--navy-900); border-color: var(--navy-900); color: #fff; }
+.social-list-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.social-list-labels .social { width: auto; height: auto; display: flex; justify-content: flex-start; gap: 10px; padding: 11px 14px; border-radius: 12px; border-color: var(--line); color: var(--ink); font-size: 14.5px; font-weight: 500; }
+.social-list-labels .social .ic { color: var(--ink-3); transition: color .2s; }
+.social-list-labels .social:hover { background: var(--paper); border-color: var(--line-2); color: var(--ink); }
+.social-list-labels .social:hover .ic { color: var(--blue); }
+.founder-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; margin-top: 16px; }
+.founder-copy .founder-actions .btn { margin-top: 0; }
+.footer-k { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 12px; }
+.footer-brand .footer-k { margin: 32px 0 12px; }
+.site-footer .social-list { margin-bottom: 28px; }
+.site-footer .social { width: 38px; height: 38px; }
+.footer-sister { display: grid; justify-items: start; gap: 12px; margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--line-dark); }
+.footer-sister .footer-k { margin: 0; }
+.footer-sister img { height: 36px; width: auto; margin-left: -5px; opacity: .85; transition: opacity .25s; }
+.footer-sister-p { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.footer-sister:hover img { opacity: 1; }
+.footer-sister:hover .footer-sister-p { color: #fff; }
+.press-more { margin-top: 64px; text-align: center; }
+.press-more .btn .ic:last-child { color: var(--ink-3); }
+
+/* ==========================================================================
+   Our brands (EQ Training + Treino Inteligência Emocional)
+   ========================================================================== */
+.brand-grid { display: grid; grid-template-columns: 5fr 7fr; gap: 16px; align-items: stretch; }
+.brand-card { position: relative; overflow: hidden; display: flex; flex-direction: column; padding: clamp(32px, 4vw, 52px); border-radius: var(--r-xl); }
+.brand-eq { background: #fff; }
+.brand-tie { background: var(--navy-900); color: #fff; }
+.brand-tie::before { content: ""; position: absolute; right: -25%; top: -30%; width: 75%; height: 90%; background: radial-gradient(closest-side, rgba(5,120,224,.3), transparent); pointer-events: none; }
+.brand-tie > * { position: relative; }
+.brand-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 52px; margin-bottom: 44px; }
+.brand-eq .brand-logo { height: 19px; width: auto; }
+.brand-tie .brand-logo { height: 52px; width: auto; margin-left: -7px; }
+.brand-pill { display: inline-flex; align-items: center; gap: 8px; flex: none; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-3); }
+.brand-eq .brand-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--coral); }
+.brand-tie .brand-pill { border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.72); }
+.brand-for { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 2.6vw, 36px); letter-spacing: -.025em; line-height: 1.1; margin-bottom: 14px; }
+.brand-card p { color: var(--ink-2); }
+.brand-tie p { color: rgba(255,255,255,.72); }
+.brand-tie .brand-note { margin-top: 12px; font-size: 15.5px; color: rgba(255,255,255,.58); }
+.brand-list { margin: 28px 0 32px; border-top: 1px solid var(--line); }
+.brand-list li { padding: 14px 0; border-bottom: 1px solid var(--line); font-family: var(--font-display); font-size: 20px; letter-spacing: -.015em; }
+.brand-photo { flex: 1; min-height: 180px; margin: 0 0 28px; border-radius: var(--r); overflow: hidden; }
+.brand-photo img { width: 100%; height: 100%; object-fit: cover; }
+.brand-eq .brand-list { margin-bottom: 28px; }
+.brand-path-k { margin: 36px 0 10px; font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--sky) !important; }
+.brand-path li { display: grid; grid-template-columns: 150px 1fr; gap: 16px; align-items: baseline; padding: 14px 0; border-top: 1px solid rgba(255,255,255,.12); }
+.brand-path li:last-child { border-bottom: 1px solid rgba(255,255,255,.12); }
+.bp-step { font-size: 13px; font-weight: 600; color: var(--coral); }
+.bp-items { font-family: var(--font-display); font-size: 18px; line-height: 1.35; letter-spacing: -.01em; color: #fff; }
+.brand-pod { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 28px; padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
+.brand-pod-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.08); color: var(--sky); }
+.brand-pod-name { flex: 1; min-width: 180px; font-size: 15px; font-weight: 500; }
+.brand-pod-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.brand-pod-links a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); font-size: 13.5px; font-weight: 500; color: rgba(255,255,255,.85); transition: background .2s, color .2s; }
+.brand-pod-links a:hover { background: #fff; color: var(--navy-900); }
+.brand-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+
+/* Home band */
+.tie-band { padding-top: clamp(64px, 8vw, 110px); }
+.tie-band-inner { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr auto; gap: clamp(28px, 4vw, 56px); align-items: center; padding: clamp(32px, 4vw, 48px) clamp(28px, 4vw, 56px); border-radius: var(--r-xl); background: var(--navy-900); color: #fff; }
+.tie-band-inner::before { content: ""; position: absolute; left: -10%; top: -80%; width: 50%; height: 260%; background: radial-gradient(closest-side, rgba(5,120,224,.28), transparent); pointer-events: none; }
+.tie-band-inner > * { position: relative; }
+.tie-band-logo { padding-right: clamp(28px, 4vw, 56px); border-right: 1px solid rgba(255,255,255,.12); }
+.tie-band-logo img { height: 60px; width: auto; transition: opacity .25s; }
+.tie-band-logo:hover img { opacity: .85; }
+.tie-band-copy .eyebrow { margin-bottom: 12px; }
+.tie-band-copy h2 { font-family: var(--font-display); font-weight: 300; font-size: clamp(24px, 2.2vw, 32px); letter-spacing: -.025em; line-height: 1.15; margin-bottom: 10px; }
+.tie-band-copy p:last-child { color: rgba(255,255,255,.68); font-size: 15.5px; max-width: 600px; }
+.tie-band-links { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+
+@media (max-width: 960px) {
+  .brand-grid { grid-template-columns: 1fr; }
+  .tie-band-inner { grid-template-columns: 1fr; }
+  .tie-band-logo { padding: 0 0 24px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .tie-band-links { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 16px 24px; }
+}
+@media (max-width: 640px) {
+  .brand-path li { grid-template-columns: 1fr; gap: 4px; }
+  .brand-ctas .btn { width: 100%; white-space: normal; text-align: center; line-height: 1.3; padding-top: 12px; padding-bottom: 12px; }
+  .brand-photo { min-height: 0; aspect-ratio: 16 / 10; flex: none; }
+  .brand-tie .brand-logo { margin-left: -6px; }
+  .brand-top { margin-bottom: 32px; }
+  .brand-tie .brand-logo { height: 44px; }
+  .social-list-labels { grid-template-columns: 1fr 1fr; }
+  .tie-band-logo img { height: 48px; }
+}
+
 /* ---------- Reveal on scroll ---------- */
 .reveal { opacity: 0; transform: translateY(22px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
 .reveal.is-in { opacity: 1; transform: none; }
