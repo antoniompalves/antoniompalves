@@ -36,6 +36,12 @@ Upload `public/assets/video/damiana.mp4` (H.264, about 10–20 s, under 8 MB, po
 and optionally `public/assets/img/damiana-poster.jpg`. Until then the widget shows a "D" placeholder.
 Every "Book a meeting" button opens the widget. Its question box sends an email lead through `/api/lead`.
 
-## Assets to supply
-- `public/assets/img/paulo-moreira.jpg` (4:5 portrait) for the About page
-- Damiana video and poster (see above)
+## Images
+Photos, client logos and TV-channel logos come from the paulojmoreira.com media library:
+- `public/assets/img/photos/`: stage, training-room, Yale, Goleman, portrait cut-out and book shots (WebP)
+- `public/assets/img/clients/` and `public/assets/img/media/`: monochrome logos, listed in `public/content/logos.php`
+
+To add a client logo, drop a transparent PNG into `assets/img/clients/` and add a line to `content/logos.php`.
+
+## Assets still to supply
+- The Damiana video and poster (see above)

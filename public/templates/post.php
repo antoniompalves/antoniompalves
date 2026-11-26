@@ -10,9 +10,9 @@ $others = array_values(array_filter(posts(), fn($p) => $p['slug']['pt'] !== $pos
     <p class="eyebrow"><?= e(tr($post['cat'])) ?></p>
     <h1 class="display"><?= e(tr($post['title'])) ?></h1>
     <p class="article-lead"><?= e(tr($post['excerpt'])) ?></p>
-    <div class="post-meta">Paulo Moreira · <time datetime="<?= e($post['date']) ?>"><?= e(fmt_date($post['date'])) ?></time> · <?= e(t('min_read', $post['mins'])) ?></div>
+    <div class="post-meta"><span>Paulo Moreira</span><time datetime="<?= e($post['date']) ?>"><?= e(fmt_date($post['date'])) ?></time><span><?= e(t('min_read', $post['mins'])) ?></span></div>
   </header>
-  <div class="wrap"><div class="post-cover post-cover-xl tone-<?= e($post['tone']) ?>" aria-hidden="true"></div></div>
+  <div class="wrap"><?php partial('post-cover', ['post' => $post, 'cls' => 'post-cover-xl', 'noCat' => true]); ?></div>
   <div class="prose wrap-narrow">
     <?= tr($post['body']) /* trusted, author-controlled HTML */ ?>
   </div>

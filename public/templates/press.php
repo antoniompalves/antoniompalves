@@ -1,15 +1,17 @@
 <?php
 $GLOBALS['page_title'] = t('nav.press');
 $items = require ROOT . '/content/press.php';
-$outlets = array_values(array_unique(array_map(fn($p) => $p['outlet'], $items)));
+$logos = require ROOT . '/content/logos.php';
 ?>
 <section class="page-head">
   <div class="wrap">
     <p class="eyebrow"><?= e(t('press.k')) ?></p>
     <h1 class="display"><?= e(t('press.h1')) ?></h1>
     <p class="section-lead"><?= e(t('press.lead')) ?></p>
-    <ul class="outlets" aria-label="<?= e(t('press.outlets')) ?>">
-      <?php foreach ($outlets as $o): ?><li><?= e($o) ?></li><?php endforeach; ?>
+    <ul class="seen-logos outlets" aria-label="<?= e(t('press.outlets')) ?>">
+      <?php foreach ($logos['media'] as [$f, $n, $w, $h]): ?>
+        <li><img src="<?= e(asset('assets/img/media/' . $f . '.png')) ?>" alt="<?= e($n) ?>" width="<?= $w ?>" height="<?= $h ?>"></li>
+      <?php endforeach; ?>
     </ul>
   </div>
 </section>

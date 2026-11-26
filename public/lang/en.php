@@ -141,6 +141,18 @@ return [
     'eco.4.bad'    => 'Turnover, presenteeism, leaders promoted on technical skill alone.',
     'eco.4.good'   => 'Assessment at scale, leadership criteria and impact measurement.',
 
+    // Visual refresh
+    'logos.h'           => 'Organisations Paulo Moreira has worked with',
+    'seen.h'            => 'As seen on',
+    'hero.caption'      => 'Paulo Moreira on stage',
+    'featured.photo'    => 'Paulo Moreira training a team',
+    'model.photo'       => 'Paulo Moreira with Daniel Goleman',
+    'about.photo.yale'  => 'Yale University — MSCEIT training',
+    'about.books.k'     => 'Books',
+    'about.books.h'     => 'Author of three books on emotions and behaviour.',
+    'about.books.p'     => 'Practical books with evidence-based strategies that bring Emotional Intelligence into the everyday life of people and teams.',
+    'about.values.h'    => 'How we always work.',
+
     // Hero rotator
     'hero.for'          => 'Emotional Intelligence to:',
     'hero.w1'           => 'lead under pressure',
@@ -293,6 +305,7 @@ return [
     'agent.ask.send'    => 'Send',
     'agent.ask.thanks'  => 'Thank you! I’ll get back to you by email very soon.',
     'agent.open'        => 'Talk to %s',
+    'agent.teaser'      => 'Can I help?',
     'agent.close'       => 'Close',
     'agent.unmute'      => 'Unmute',
     'agent.mute'        => 'Mute',

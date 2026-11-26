@@ -11,12 +11,15 @@ $tabs = [
 ];
 $press = array_slice(require ROOT . '/content/press.php', 0, 3);
 ?>
-<section class="hero hero-page">
-  <div class="hero-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b3"></span><span class="grain"></span></div>
-  <div class="wrap">
-    <p class="eyebrow on-dark"><?= e(t('svc.k')) ?></p>
-    <h1 class="display hero-title-sm"><?= e(t('svc.h1')) ?></h1>
-    <p class="hero-lead"><?= e(t('svc.lead')) ?></p>
+<section class="hero hero-page hero-split">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="wrap hero-split-grid">
+    <div class="hero-copy">
+      <p class="eyebrow on-dark"><?= e(t('svc.k')) ?></p>
+      <h1 class="display hero-title-sm"><?= e(t('svc.h1')) ?></h1>
+      <p class="hero-lead"><?= e(t('svc.lead')) ?></p>
+    </div>
+    <figure class="hero-split-media"><img src="<?= e(asset('assets/img/photos/stage-keynote.webp')) ?>" alt="<?= e(t('hero.caption')) ?>" width="960" height="640"></figure>
   </div>
 </section>
 

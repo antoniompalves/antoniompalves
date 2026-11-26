@@ -5,7 +5,8 @@ $GLOBALS['page_desc']  = tr($course['excerpt']);
 $L = lang();
 ?>
 <section class="hero hero-course">
-  <div class="hero-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="grain"></span></div>
+  <img class="hero-backdrop" src="<?= e(asset('assets/img/photos/training-room.webp')) ?>" alt="" width="1600" height="900">
+  <div class="hero-glow" aria-hidden="true"></div>
   <div class="wrap course-hero-grid">
     <div class="hero-copy">
       <nav class="crumbs on-dark" aria-label="Breadcrumb">
@@ -27,7 +28,7 @@ $L = lang();
     </div>
     <aside class="book-card glass">
       <div class="book-head">
-        <span class="book-avatar" aria-hidden="true"><?= e(mb_substr(cfg('agent_name'), 0, 1)) ?></span>
+        <span class="book-avatar" aria-hidden="true"><?= e(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(explode(' ', cfg('agent_fullname')), 0, 2)))) ?></span>
         <div><strong><?= e(cfg('agent_fullname')) ?></strong><span><?= e(t('agent.role')) ?></span></div>
       </div>
       <h2><?= e(t('course.sidebar.h')) ?></h2>

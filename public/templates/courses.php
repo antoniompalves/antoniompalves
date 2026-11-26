@@ -1,10 +1,13 @@
 <?php $GLOBALS['page_title'] = t('nav.courses'); ?>
-<section class="hero hero-page">
-  <div class="hero-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b3"></span><span class="grain"></span></div>
-  <div class="wrap">
-    <p class="eyebrow on-dark"><?= e(t('courses.k')) ?></p>
-    <h1 class="display hero-title-sm"><?= e(t('courses.h1')) ?></h1>
-    <p class="hero-lead"><?= e(t('courses.lead')) ?></p>
+<section class="hero hero-page hero-split">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="wrap hero-split-grid">
+    <div class="hero-copy">
+      <p class="eyebrow on-dark"><?= e(t('courses.k')) ?></p>
+      <h1 class="display hero-title-sm"><?= e(t('courses.h1')) ?></h1>
+      <p class="hero-lead"><?= e(t('courses.lead')) ?></p>
+    </div>
+    <figure class="hero-split-media"><img src="<?= e(asset('assets/img/photos/hybrid-room.webp')) ?>" alt="<?= e(t('featured.photo')) ?>" width="1600" height="901"></figure>
   </div>
 </section>
 

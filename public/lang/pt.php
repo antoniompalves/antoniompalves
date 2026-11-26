@@ -141,6 +141,18 @@ return [
     'eco.4.bad'    => 'Turnover, presentismo, líderes promovidos só pela técnica.',
     'eco.4.good'   => 'Diagnóstico em escala, critérios de liderança e medição de impacto.',
 
+    // Visual refresh
+    'logos.h'           => 'Organizações que já trabalharam com Paulo Moreira',
+    'seen.h'            => 'Visto em',
+    'hero.caption'      => 'Paulo Moreira em palco',
+    'featured.photo'    => 'Paulo Moreira a dar formação a uma equipa',
+    'model.photo'       => 'Paulo Moreira com Daniel Goleman',
+    'about.photo.yale'  => 'Universidade de Yale — formação MSCEIT',
+    'about.books.k'     => 'Livros',
+    'about.books.h'     => 'Autor de três livros sobre emoções e comportamento.',
+    'about.books.p'     => 'Livros práticos, com estratégias baseadas em evidência científica, que levam a Inteligência Emocional para o dia a dia de pessoas e equipas.',
+    'about.values.h'    => 'Como trabalhamos, sempre.',
+
     // Hero rotator (torch-style)
     'hero.for'          => 'Inteligência Emocional para:',
     'hero.w1'           => 'liderar sob pressão',
@@ -293,6 +305,7 @@ return [
     'agent.ask.send'    => 'Enviar',
     'agent.ask.thanks'  => 'Obrigada! Vou responder-lhe por email muito em breve.',
     'agent.open'        => 'Falar com a %s',
+    'agent.teaser'      => 'Posso ajudar?',
     'agent.close'       => 'Fechar',
     'agent.unmute'      => 'Ativar som',
     'agent.mute'        => 'Silenciar',

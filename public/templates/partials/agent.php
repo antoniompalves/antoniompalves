@@ -4,6 +4,7 @@ $video  = cfg('agent_video');
 $poster = cfg('agent_poster');
 $hasVideo  = asset_exists($video);
 $hasPoster = asset_exists($poster);
+$initials = implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(explode(' ', cfg('agent_fullname')), 0, 2)));
 ?>
 <div class="agent" data-agent data-state="closed">
   <!-- Expanded panel -->
@@ -16,7 +17,11 @@ $hasPoster = asset_exists($poster);
       <?php elseif ($hasPoster): ?>
         <img class="agent-video" src="<?= e(asset($poster)) ?>" alt="">
       <?php else: ?>
-        <div class="agent-video agent-placeholder" aria-hidden="true"><span><?= e(mb_substr($name, 0, 1)) ?></span></div>
+        <div class="agent-video agent-placeholder" aria-hidden="true">
+          <span class="agent-ph-avatar"><?= e($initials) ?></span>
+          <span class="agent-ph-name"><?= e(cfg('agent_fullname')) ?></span>
+          <span class="agent-ph-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
       <?php endif; ?>
       <?php if ($hasVideo): ?>
         <button class="agent-talk" type="button" data-agent-sound aria-pressed="false">
@@ -59,7 +64,7 @@ $hasPoster = asset_exists($poster);
 
   <!-- Launcher bubble -->
   <div class="agent-launcher">
-    <p class="agent-teaser" data-agent-teaser hidden><?= e(t('agent.greeting', $name)) ?> 👋</p>
+    <p class="agent-teaser" data-agent-teaser hidden><?= e(t('agent.greeting', $name)) ?> <span><?= e(t('agent.teaser')) ?></span></p>
     <button class="agent-bubble" type="button" data-agent-toggle aria-expanded="false" aria-controls="agent-panel"
             aria-label="<?= e(t('agent.open', $name)) ?>" data-label-open="<?= e(t('agent.open', $name)) ?>" data-label-close="<?= e(t('agent.close')) ?>">
       <span class="agent-face">
@@ -68,7 +73,7 @@ $hasPoster = asset_exists($poster);
         <?php elseif ($hasPoster): ?>
           <img src="<?= e(asset($poster)) ?>" alt="">
         <?php else: ?>
-          <span class="agent-initial"><?= e(mb_substr($name, 0, 1)) ?></span>
+          <span class="agent-initial"><?= e($initials) ?></span>
         <?php endif; ?>
       </span>
       <span class="agent-x"><?= icon('close', 22) ?></span>

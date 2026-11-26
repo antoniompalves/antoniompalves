@@ -11,9 +11,9 @@
   <div class="wrap">
     <?php if ($lead): ?>
       <a class="post-lead reveal" href="<?= e(url('blog', null, $lead['slug'][lang()])) ?>">
-        <div class="post-cover tone-<?= e($lead['tone']) ?>" aria-hidden="true"><span class="post-cat"><?= e(tr($lead['cat'])) ?></span></div>
+        <?php partial('post-cover', ['post' => $lead]); ?>
         <div class="post-lead-copy">
-          <div class="post-meta"><time datetime="<?= e($lead['date']) ?>"><?= e(fmt_date($lead['date'])) ?></time> · <?= e(t('min_read', $lead['mins'])) ?></div>
+          <div class="post-meta"><time datetime="<?= e($lead['date']) ?>"><?= e(fmt_date($lead['date'])) ?></time><span><?= e(t('min_read', $lead['mins'])) ?></span></div>
           <h2 class="display"><?= e(tr($lead['title'])) ?></h2>
           <p><?= e(tr($lead['excerpt'])) ?></p>
           <span class="link-arrow"><?= e(t('cta.read')) ?> <?= icon('arrow', 16) ?></span>
