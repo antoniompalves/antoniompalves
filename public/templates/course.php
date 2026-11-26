@@ -64,7 +64,7 @@ $L = lang();
             <div class="ps-meter" aria-hidden="true"><span style="--w: <?= [72, 64, 81, 90, 58][$i] ?>%"></span></div>
           </div>
         <?php endforeach; ?>
-        <p class="ps-quote"><?= e(t('ice.end')) ?></p>
+        <p class="ps-quote"><?= e(t('ice.end.plain')) ?></p>
       </div>
     </div>
   </div>

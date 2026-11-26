@@ -95,53 +95,89 @@
     schedule();
   }
 
-  /* ---------- ICEBERG pinned-scroll story ---------- */
+  /* ---------- ICEBERG pinned-scroll story ----------
+     Static without JS or with reduced motion; .is-live turns it into the pinned story.
+     Scroll map (fraction of the pinned distance): steps 0–1 above water, a text-free
+     dive, then steps 2–7 below the surface. */
   const ice = $('[data-ice]');
   let updateIce = () => {};
-  if (ice) {
+  if (ice && !reduced) {
+    ice.classList.add('is-live');
     const stage = $('.ice-stage', ice), scene = $('[data-ice-scene]', ice), svg = $('.ice-svg', ice);
-    const shows = $$('[data-show]', ice), focus = $$('[data-focus]', ice), dots = $$('[data-dot]', ice);
-    const STEPS = dots.length; // 8
-    let lastStep = -1;
+    const items = $$('[data-steps]', ice).map((el) => {
+      const [a, b] = el.dataset.steps.split('-').map(Number);
+      return [el, a, b === undefined || Number.isNaN(b) ? a : b];
+    });
+    const focus = $$('[data-focus]', ice), dots = $$('[data-dot]', ice);
+    const STARTS = [0, .11, .30, .41, .52, .63, .75, .87]; // where each step begins
+    const DIVE = [.22, .30];                                // camera dives here, no text on screen
+    const ART = { peak: 159, water: 720, cx: 900, bergW: 800, w: 1440, h: 2000 }; // SVG units (tools/iceberg_gen.py)
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const ease = (t) => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const smooth = (t) => t * t * (3 - 2 * t);
+    let L = {}, target = 0, current = 0, raf = 0, lastStep = null;
 
-    updateIce = () => {
-      const r = ice.getBoundingClientRect(), vh = innerHeight;
-      const total = r.height - vh;
-      const p = clamp(-r.top / total, 0, 1);
-      document.body.dataset.inIce = (r.top <= 0 && r.bottom >= vh) ? '1' : '0';
-      const step = Math.min(STEPS - 1, Math.floor(p * STEPS));
-
-      // Camera pan: dive below the waterline between steps 1→2, then sink slowly.
-      const svgH = svg.getBoundingClientRect().height;
-      const waterY = svgH * 0.36;
-      const dive = clamp((p - 1 / STEPS) / (1.2 / STEPS), 0, 1);
-      const sink = clamp((p - 2.2 / STEPS) / (1 - 2.2 / STEPS), 0, 1);
-      const maxPan = Math.max(0, svgH - vh);
-      const pan = Math.min(maxPan, ease(dive) * (waterY - vh * 0.2) + sink * vh * 0.35);
-      scene.style.setProperty('--pan', pan.toFixed(1));
-
-      if (step !== lastStep) {
-        lastStep = step;
-        stage.dataset.step = step;
-        shows.forEach((el) => {
-          el.classList.toggle('is-on', step >= +el.dataset.show);
-          el.classList.toggle('is-now', step === +el.dataset.show);
-        });
-        focus.forEach((el) => el.classList.toggle('is-focus', step === +el.dataset.focus));
-        dots.forEach((d, k) => d.classList.toggle('is-on', k === step));
-      }
+    // Frame the iceberg for this viewport: waterline ~74% down, peak clear of the header.
+    const layout = () => {
+      const vw = innerWidth, vh = stage.clientHeight || innerHeight, hh = header.offsetHeight;
+      const narrow = vw <= 960;
+      const water = vh * (narrow ? .72 : .74);
+      let s = (water - hh - (narrow ? 40 : 56)) / (ART.water - ART.peak);
+      if (narrow) s = Math.min(s, (vw * 1.08) / ART.bergW);
+      s = clamp(s, .4, 1.6);
+      const top = water - ART.water * s, left = vw * (narrow ? .56 : .66) - ART.cx * s;
+      Object.assign(svg.style, { width: ART.w * s + 'px', height: ART.h * s + 'px', left: left + 'px', top: top + 'px' });
+      L = { vh, dive: water - vh * .12, sink: vh * .4, maxPan: Math.max(0, top + ART.h * s - vh) };
     };
 
-    // Clicking a dot jumps to that step
-    dots.forEach((d, k) => {
-      d.style.cursor = 'pointer';
-      d.addEventListener('click', () => {
-        const total = ice.offsetHeight - innerHeight;
-        scrollTo({ top: ice.offsetTop + total * ((k + 0.5) / STEPS), behavior: reduced ? 'auto' : 'smooth' });
-      });
+    const stepAt = (p) => {
+      if (p >= DIVE[0] && p < DIVE[1]) return 'dive';
+      let k = 0;
+      STARTS.forEach((s, i) => { if (p >= s) k = i; });
+      return k;
+    };
+    const setStep = (step) => {
+      if (step === lastStep) return;
+      lastStep = step;
+      stage.dataset.step = step;
+      const n = step === 'dive' ? -1 : step;
+      items.forEach(([el, a, b]) => { el.classList.toggle('is-on', n >= a && n <= b); el.classList.toggle('is-now', n === a); });
+      focus.forEach((el) => el.classList.toggle('is-focus', n === +el.dataset.focus));
+      dots.forEach((d, k) => d.classList.toggle('is-on', k === (step === 'dive' ? 1 : n)));
+    };
+    // Camera eases towards its target so wheel scrolling feels continuous, not stepped.
+    const animate = () => {
+      current += (target - current) * .14;
+      if (Math.abs(target - current) < .3) current = target;
+      scene.style.setProperty('--pan', current.toFixed(1));
+      raf = current !== target ? requestAnimationFrame(animate) : 0;
+    };
+
+    updateIce = () => {
+      const r = ice.getBoundingClientRect(), total = r.height - L.vh;
+      const p = clamp(-r.top / total, 0, 1);
+      document.body.dataset.inIce = (r.top <= 1 && r.bottom >= L.vh - 1) ? '1' : '0';
+      const dive = smooth(clamp((p - DIVE[0]) / (DIVE[1] - DIVE[0]), 0, 1));
+      const sink = clamp((p - DIVE[1]) / (1 - DIVE[1]), 0, 1);
+      target = Math.min(L.maxPan, dive * L.dive + sink * L.sink);
+      if (!raf) raf = requestAnimationFrame(animate);
+      setStep(stepAt(p));
+    };
+
+    const scrollToStep = (k, animated) => {
+      const total = ice.offsetHeight - innerHeight;
+      const end = k === 1 ? DIVE[0] : (k < 7 ? STARTS[k + 1] : 1);
+      scrollTo({ top: ice.offsetTop + total * ((STARTS[k] + end) / 2), behavior: animated ? 'smooth' : 'instant' });
+    };
+    dots.forEach((d, k) => d.addEventListener('click', () => scrollToStep(k, true)));
+    // Keyboard: focusing a link inside a hidden step brings that step on screen.
+    ice.addEventListener('focusin', (e) => {
+      const host = e.target.closest('[data-steps]');
+      if (host && !host.classList.contains('is-on')) scrollToStep(parseInt(host.dataset.steps, 10), false);
     });
+    addEventListener('resize', () => { layout(); updateIce(); });
+
+    layout(); updateIce();
+    current = target; scene.style.setProperty('--pan', current.toFixed(1));
   }
 
   /* ---------- Problem → solution switcher (course page) ---------- */

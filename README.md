@@ -41,6 +41,11 @@ Every "Book a meeting" button opens the widget. Its question box sends an email 
 - Sister brand **Emoty Games** (children, families, schools): `config.php` → `kids_url`. It appears as a small card in "As nossas marcas" and as a footer link.
 - Sister brand **Treino Inteligência Emocional®** (B2C): `config.php` → `b2c_url` / `b2c_agenda_url`. It appears in the "As nossas marcas" section on About (`#marcas`), the band on Home and the footer. Update `b2c_agenda_url` when the new B2C site goes live.
 
+## Iceberg (home page scroll story)
+- The artwork is generated, not hand-drawn: `python3 tools/iceberg_gen.py out.svgfrag` builds a 3D low-poly iceberg (irregular submerged keel, crags on the tip), flat-shades it, adds depth fog, light rays, foam and particles, and writes the SVG that is inlined in `templates/home.php` (between the `<svg class="ice-svg">` tags). Change the seed or shape parameters to get a different berg.
+- Timing (which text shows when) is in `assets/js/main.js` → `STARTS` / `DIVE`; visibility per element is the `data-steps` attribute in `home.php`.
+- Without JavaScript, or with "reduce motion" on, the section renders as a normal static two-column block.
+
 ## Images
 Photos, client logos and TV-channel logos come from the paulojmoreira.com media library:
 - `public/assets/img/photos/`: stage, training-room, Yale, Goleman, portrait cut-out and book shots (WebP)

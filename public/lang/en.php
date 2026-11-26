@@ -239,7 +239,12 @@ return [
     'ice.fix.1'         => 'MSCEIT · EQ-i · ESCI assessment',
     'ice.fix.2'         => 'Hands-on training in real context',
     'ice.fix.3'         => 'Follow-up and re-assessment',
-    'ice.end'           => 'Emotional Intelligence isn’t a “soft touch”. It’s the skill that decides whether a leader inspires or exhausts their team.',
+    'ice.end.pre'       => 'Emotional Intelligence isn’t a *soft skill*.',
+    'ice.end'           => 'It’s what separates the leader who {inspires} from the leader who {exhausts} their team.',
+    'ice.end.plain'     => 'Emotional Intelligence isn’t a soft skill. It’s what separates the leader who inspires from the leader who exhausts their team.',
+    'ice.sees'          => 'What the organisation sees',
+    'ice.dot.6'         => 'The response',
+    'ice.dot.7'         => 'In short',
     'ice.skip'          => 'Skip animation',
     'ice.scroll'        => 'Scroll',
 
@@ -288,7 +293,7 @@ return [
     // About
     'about.k'           => 'About us',
     'about.h1'          => 'Emotional science applied to organisational life.',
-    'about.lead'        => 'EQ Training was born from a simple conviction: Emotional Intelligence isn’t a “soft touch”. It’s the skill that decides whether a leader inspires or exhausts their team.',
+    'about.lead'        => 'EQ Training was born from a simple conviction: Emotional Intelligence isn’t a soft skill — it’s what separates the leader who inspires from the leader who exhausts their team.',
     'about.founder.k'   => 'Founder',
     'about.founder.h'   => 'Paulo Moreira',
     'about.founder.r'   => 'Emotional Intelligence trainer and consultant',

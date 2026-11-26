@@ -34,6 +34,16 @@ function tr($v)
 
 function e($s): string { return htmlspecialchars((string) $s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 
+/** Escape, then turn *text* into <em> and {text} into highlight spans (1st = hl-up, 2nd = hl-down). */
+function rich(string $s): string
+{
+    $h = preg_replace('/\*(.+?)\*/u', '<em>$1</em>', e($s));
+    $i = 0;
+    return preg_replace_callback('/\{(.+?)\}/u', function ($m) use (&$i) {
+        return '<span class="' . ($i++ === 0 ? 'hl-up' : 'hl-down') . '">' . $m[1] . '</span>';
+    }, $h);
+}
+
 /** page key => localized first path segment */
 function routes(): array
 {

@@ -239,7 +239,12 @@ return [
     'ice.fix.1'         => 'Diagnóstico MSCEIT · EQ-i · ESCI',
     'ice.fix.2'         => 'Treino prático em contexto real',
     'ice.fix.3'         => 'Follow-up e reavaliação',
-    'ice.end'           => 'A Inteligência Emocional não é um «toque suave». É a competência que determina se um líder inspira ou esgota a sua equipa.',
+    'ice.end.pre'       => 'A Inteligência Emocional não é uma *soft skill*.',
+    'ice.end'           => 'É o que separa o líder que {inspira} do líder que {esgota} a sua equipa.',
+    'ice.end.plain'     => 'A Inteligência Emocional não é uma soft skill. É o que separa o líder que inspira do líder que esgota a sua equipa.',
+    'ice.sees'          => 'O que a organização vê',
+    'ice.dot.6'         => 'A resposta',
+    'ice.dot.7'         => 'Em síntese',
     'ice.skip'          => 'Saltar animação',
     'ice.scroll'        => 'Scroll',
 
@@ -288,7 +293,7 @@ return [
     // About
     'about.k'           => 'Sobre nós',
     'about.h1'          => 'Ciência emocional aplicada à vida das organizações.',
-    'about.lead'        => 'A EQ Training nasceu de uma convicção simples: a Inteligência Emocional não é um «toque suave». É a competência que determina se um líder inspira ou esgota a sua equipa.',
+    'about.lead'        => 'A EQ Training nasceu de uma convicção simples: a Inteligência Emocional não é uma soft skill — é o que separa o líder que inspira do líder que esgota a sua equipa.',
     'about.founder.k'   => 'Fundador',
     'about.founder.h'   => 'Paulo Moreira',
     'about.founder.r'   => 'Formador e consultor em Inteligência Emocional',
