@@ -197,6 +197,8 @@ function icon(string $name, int $size = 20): string
         'youtube' => '<rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z"/>',
         'spotify' => '<circle cx="12" cy="12" r="9"/><path d="M7.5 9.6c3-.9 6.4-.6 9 .9M8 12.6c2.5-.7 5.2-.4 7.3.8M8.6 15.4c2-.5 3.9-.3 5.6.6"/>',
         'podcast' => '<circle cx="12" cy="10" r="2.2"/><path d="M12 14v7M7.8 15.2a6 6 0 1 1 8.4 0M5 18a9.5 9.5 0 1 1 14 0"/>',
+        'globe'   => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/>',
+        'chevron' => '<path d="M6 9l6 6 6-6"/>',
         'external'=> '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
         'building'=> '<path d="M4 21V5l8-3v19M12 8h8v13M4 21h16M8 7v.01M8 11v.01M8 15v.01M16 12v.01M16 16v.01"/>',
         'heart'   => '<path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.5 4.5 4.5 0 0 1 19.5 10C19.5 15.4 12 20 12 20z"/>',

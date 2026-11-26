@@ -31,6 +31,20 @@
     header.classList.toggle('nav-open', open);
   });
 
+  /* ---------- Language menu: hover on desktop, tap on touch ---------- */
+  const langMenu = $('[data-lang-menu]');
+  if (langMenu) {
+    const btn = $('.lang-current', langMenu);
+    const setOpen = (on) => { langMenu.classList.toggle('is-open', on); btn.setAttribute('aria-expanded', on); };
+    btn.addEventListener('click', () => setOpen(!langMenu.classList.contains('is-open')));
+    const hover = matchMedia('(hover: hover)');
+    langMenu.addEventListener('mouseenter', () => { if (hover.matches) btn.setAttribute('aria-expanded', 'true'); });
+    langMenu.addEventListener('mouseleave', () => { if (hover.matches) setOpen(false); });
+    langMenu.addEventListener('focusout', (e) => { if (!langMenu.contains(e.relatedTarget)) setOpen(false); });
+    document.addEventListener('click', (e) => { if (!langMenu.contains(e.target)) setOpen(false); });
+    langMenu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { setOpen(false); btn.focus(); } });
+  }
+
   /* ---------- Reveal on scroll ---------- */
   const io = new IntersectionObserver((entries) => {
     entries.forEach((en) => {

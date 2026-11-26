@@ -56,14 +56,28 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
         <?php endforeach; ?>
       </ul>
       <div class="nav-mobile-extra">
+        <div class="nav-lang" role="group" aria-label="<?= e(t('nav.lang')) ?>">
+          <span class="nav-lang-k"><?= icon('globe', 16) ?><?= e(t('nav.lang')) ?></span>
+          <span class="nav-lang-opts">
+            <?php foreach (cfg('langs') as $l): ?>
+              <a href="<?= e(alt_url($l)) ?>" hreflang="<?= $l ?>" lang="<?= $l ?>"<?= $l === lang() ? ' aria-current="true"' : '' ?>><?= ['pt' => 'Português', 'en' => 'English'][$l] ?? strtoupper($l) ?></a>
+            <?php endforeach; ?>
+          </span>
+        </div>
         <a class="btn btn-primary" href="<?= e(booking_href()) ?>" data-open-agent><?= e(t('nav.cta')) ?></a>
       </div>
     </nav>
     <div class="header-actions">
-      <div class="lang-switch" role="group" aria-label="<?= e(t('nav.lang')) ?>">
-        <?php foreach (cfg('langs') as $l): ?>
-          <a href="<?= e(alt_url($l)) ?>" hreflang="<?= $l ?>" lang="<?= $l ?>"<?= $l === lang() ? ' aria-current="true"' : '' ?>><?= strtoupper($l) ?></a>
-        <?php endforeach; ?>
+<?php $langNames = ['pt' => 'Português', 'en' => 'English']; $others = array_values(array_diff(cfg('langs'), [lang()])); ?>
+      <div class="lang-menu" data-lang-menu>
+        <button class="lang-current" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="lang-pop" aria-label="<?= e(t('nav.lang')) ?>: <?= e($langNames[lang()]) ?>">
+          <?= icon('globe', 15) ?><span><?= strtoupper(lang()) ?></span><?= icon('chevron', 12) ?>
+        </button>
+        <ul class="lang-pop" id="lang-pop">
+          <?php foreach ($others as $l): ?>
+            <li><a href="<?= e(alt_url($l)) ?>" hreflang="<?= $l ?>" lang="<?= $l ?>"><strong><?= strtoupper($l) ?></strong><span><?= e($langNames[$l]) ?></span></a></li>
+          <?php endforeach; ?>
+        </ul>
       </div>
       <a class="btn btn-primary btn-sm header-cta" href="<?= e(booking_href()) ?>" data-open-agent><?= e(t('nav.cta')) ?></a>
       <button class="nav-toggle" aria-expanded="false" aria-controls="main-nav" data-nav-toggle>
