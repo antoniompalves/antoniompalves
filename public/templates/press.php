@@ -1,0 +1,53 @@
+<?php
+$GLOBALS['page_title'] = t('nav.press');
+$items = require ROOT . '/content/press.php';
+$outlets = array_values(array_unique(array_map(fn($p) => $p['outlet'], $items)));
+?>
+<section class="page-head">
+  <div class="wrap">
+    <p class="eyebrow"><?= e(t('press.k')) ?></p>
+    <h1 class="display"><?= e(t('press.h1')) ?></h1>
+    <p class="section-lead"><?= e(t('press.lead')) ?></p>
+    <ul class="outlets" aria-label="<?= e(t('press.outlets')) ?>">
+      <?php foreach ($outlets as $o): ?><li><?= e($o) ?></li><?php endforeach; ?>
+    </ul>
+  </div>
+</section>
+
+<section class="section section-flush">
+  <div class="wrap">
+    <div class="press-filter" role="group" aria-label="<?= e(t('press.filter')) ?>" data-press-filter>
+      <button class="is-active" data-f="all" aria-pressed="true"><?= e(t('press.all')) ?> <span><?= count($items) ?></span></button>
+      <button data-f="tv" aria-pressed="false"><?= e(t('press.tv')) ?> <span><?= count(array_filter($items, fn($p) => $p['type'] === 'tv')) ?></span></button>
+      <button data-f="talk" aria-pressed="false"><?= e(t('press.talk')) ?> <span><?= count(array_filter($items, fn($p) => $p['type'] === 'talk')) ?></span></button>
+    </div>
+    <div class="press-grid">
+      <?php foreach ($items as $i => $p): ?>
+        <article class="press-card reveal<?= $i === 0 ? ' is-lead' : '' ?>" data-type="<?= e($p['type']) ?>">
+          <button type="button" class="press-thumb" data-yt="<?= e($p['yt']) ?>" aria-label="<?= e(t('press.watch')) ?>: <?= e($p['outlet'] . ' — ' . tr($p['title'])) ?>">
+            <img src="<?= e(asset('assets/img/press/' . $p['img'] . '.webp')) ?>" alt="" loading="lazy" width="800" height="426">
+            <span class="play"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+          </button>
+          <div class="press-meta"><strong><?= e($p['outlet']) ?></strong> · <?= e(tr($p['show'])) ?> · <time datetime="<?= e($p['date']) ?>"><?= e(fmt_date($p['date'])) ?></time></div>
+          <h3><?= e(tr($p['title'])) ?></h3>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tint">
+  <div class="wrap press-contact">
+    <div>
+      <p class="eyebrow"><?= e(t('press.media.k')) ?></p>
+      <h2 class="display"><?= e(t('press.media.h')) ?></h2>
+      <p class="section-lead"><?= e(t('press.media.p')) ?></p>
+    </div>
+    <div class="cta-actions">
+      <a class="btn btn-primary btn-lg" href="mailto:<?= e(cfg('email_to')) ?>?subject=<?= rawurlencode(t('press.media.subject')) ?>"><?= icon('mail', 18) ?><?= e(t('press.media.cta')) ?></a>
+      <a class="btn btn-ghost btn-lg" href="tel:<?= e(cfg('phone_raw')) ?>"><?= icon('phone', 18) ?><?= e(cfg('phone')) ?></a>
+    </div>
+  </div>
+</section>
+
+<?php partial('video-modal'); ?>
