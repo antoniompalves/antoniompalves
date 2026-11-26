@@ -59,6 +59,15 @@ $pod = array_values(array_filter(cfg('social') ?: [], fn($s) => in_array($s[0], 
           <a class="btn btn-ghost-light" href="<?= e(cfg('b2c_agenda_url') ?: $b2c) ?>" target="_blank" rel="noopener"><?= e(t('brands.agenda')) ?></a>
         </div>
       </article>
+
+      <article class="brand-kids reveal">
+        <a class="brand-kids-logo" href="<?= e(cfg('kids_url')) ?>" target="_blank" rel="noopener"><img src="<?= asset('assets/img/brands/emoty-games.png') ?>" alt="<?= e(cfg('kids_name')) ?>" width="238" height="56" loading="lazy"></a>
+        <div class="brand-kids-copy">
+          <span class="brand-pill"><?= e(t('brands.kids.tag')) ?></span>
+          <p><?= e(t('brands.kids.p')) ?></p>
+        </div>
+        <a class="link-arrow" href="<?= e(cfg('kids_url')) ?>" target="_blank" rel="noopener"><?= e(t('brands.kids.visit')) ?> <?= icon('external', 15) ?></a>
+      </article>
     </div>
   </div>
 </section>

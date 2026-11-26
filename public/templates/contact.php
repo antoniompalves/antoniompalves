@@ -56,7 +56,7 @@
           <li><?= icon('phone', 18) ?><a href="tel:<?= e(cfg('phone_raw')) ?>"><?= e(cfg('phone')) ?></a></li>
           <li><?= icon('whatsapp', 18) ?><a href="https://wa.me/<?= e(cfg('whatsapp')) ?>" target="_blank" rel="noopener">WhatsApp</a></li>
           <li><?= icon('mail', 18) ?><a href="mailto:<?= e(cfg('email_to')) ?>"><?= e(cfg('email_to')) ?></a></li>
-          <li><?= icon('pin', 18) ?><span><?= e(cfg('address')) ?></span></li>
+          <li><?= icon('pin', 18) ?><span><?= e(t('contact.area')) ?></span></li>
         </ul>
       </div>
       <div class="card">

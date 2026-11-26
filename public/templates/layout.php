@@ -35,6 +35,7 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
     'logo' => absolute(asset('assets/img/logo.png')),
     'email' => cfg('email_to'),
     'telephone' => cfg('phone'),
+    'areaServed' => ['@type' => 'Country', 'name' => 'Portugal'],
     'founder' => ['@type' => 'Person', 'name' => 'Paulo Moreira', 'sameAs' => array_column(cfg('social') ?: [], 2)],
     'sameAs' => array_column(cfg('social') ?: [], 2),
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
@@ -105,13 +106,14 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || i
       <ul class="contact-list">
         <li><?= icon('phone', 16) ?><a href="tel:<?= e(cfg('phone_raw')) ?>"><?= e(cfg('phone')) ?></a></li>
         <li><?= icon('mail', 16) ?><a href="mailto:<?= e(cfg('email_to')) ?>"><?= e(cfg('email_to')) ?></a></li>
-        <li><?= icon('pin', 16) ?><span><?= e(cfg('address')) ?></span></li>
+        <li><?= icon('pin', 16) ?><span><?= e(t('contact.area')) ?></span></li>
       </ul>
       <a class="footer-sister" href="<?= e(cfg('b2c_url')) ?>" target="_blank" rel="noopener">
         <span class="footer-k"><?= e(t('footer.sister')) ?></span>
         <img src="<?= asset('assets/img/brands/treino-ie-white.svg') ?>" alt="<?= e(cfg('b2c_name')) ?>" width="120" height="36" loading="lazy">
         <span class="footer-sister-p"><?= e(t('footer.sister.p')) ?> <?= icon('external', 13) ?></span>
       </a>
+      <a class="footer-kids" href="<?= e(cfg('kids_url')) ?>" target="_blank" rel="noopener"><strong><?= e(cfg('kids_name')) ?></strong> · <?= e(t('footer.kids.p')) ?> <?= icon('external', 13) ?></a>
     </div>
   </div>
   <div class="wrap footer-bottom">

@@ -23,7 +23,7 @@ $L = lang();
       <ul class="hero-chips">
         <li><?= icon('flask', 16) ?>ESCI · MSCEIT · EQ-i</li>
         <li><?= icon('clock', 16) ?><?= $L === 'pt' ? '1h30 a 6 meses' : '1.5h to 6 months' ?></li>
-        <li><?= icon('pin', 16) ?><?= $L === 'pt' ? 'Presencial ou online' : 'On-site or online' ?></li>
+        <li><?= icon('pin', 16) ?><?= $L === 'pt' ? 'Em todo o país ou online' : 'Nationwide or online' ?></li>
       </ul>
     </div>
     <aside class="book-card glass">

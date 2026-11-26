@@ -108,8 +108,8 @@ return [
             ['icon' => 'spark',   'name' => ['pt' => 'Tema à medida', 'en' => 'Custom topic'], 'desc' => ['pt' => 'Adaptado ao tema do seu evento, convenção ou kickoff.', 'en' => 'Tailored to your event, convention or kickoff theme.']],
         ],
         'formats' => [
-            'pt' => ['Keynote de abertura ou encerramento (45–90 min)', 'Palestra interativa com exercícios (1h30–2h)', 'Palestra + workshop no mesmo dia', 'Presencial ou online, em português ou inglês'],
-            'en' => ['Opening or closing keynote (45–90 min)', 'Interactive talk with exercises (1.5–2h)', 'Keynote + workshop on the same day', 'On-site or online, in Portuguese or English'],
+            'pt' => ['Keynote de abertura ou encerramento (45–90 min)', 'Palestra interativa com exercícios (1h30–2h)', 'Palestra + workshop no mesmo dia', 'Presencial em todo o país ou online, em português ou inglês'],
+            'en' => ['Opening or closing keynote (45–90 min)', 'Interactive talk with exercises (1.5–2h)', 'Keynote + workshop on the same day', 'On-site anywhere in Portugal or online, in Portuguese or English'],
         ],
     ],
     'process' => [

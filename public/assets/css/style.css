@@ -884,6 +884,23 @@ body:has(.site-header:not(.is-hidden)) .aud-tabs-wrap { top: var(--header-h); }
 .brand-pod-links a:hover { background: #fff; color: var(--navy-900); }
 .brand-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 
+/* Third brand: Emoty Games (small mention) */
+.brand-kids { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; gap: clamp(24px, 4vw, 56px); align-items: center; padding: 26px clamp(32px, 4vw, 52px); border-radius: var(--r-xl); background: #fff; }
+.brand-kids-logo { padding-right: clamp(24px, 4vw, 56px); border-right: 1px solid var(--line); }
+.brand-kids-logo img { height: 56px; width: auto; transition: transform .35s var(--ease); }
+.brand-kids-logo:hover img { transform: rotate(-3deg) scale(1.03); }
+.brand-kids-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.brand-kids-copy p { color: var(--ink-2); font-size: 15.5px; max-width: 640px; }
+.brand-kids .link-arrow { white-space: nowrap; }
+.footer-kids { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 14px; }
+.footer-kids strong { color: rgba(255,255,255,.85); font-weight: 600; }
+.footer-kids:hover, .footer-kids:hover strong { color: #fff; }
+@media (max-width: 960px) {
+  .brand-kids { grid-template-columns: 1fr; gap: 18px; padding: 28px 32px; }
+  .brand-kids-logo { padding: 0 0 18px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .brand-kids-logo img { height: 48px; }
+}
+
 /* Home band */
 .tie-band { padding-top: clamp(64px, 8vw, 110px); }
 .tie-band-inner { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr auto; gap: clamp(28px, 4vw, 56px); align-items: center; padding: clamp(32px, 4vw, 48px) clamp(28px, 4vw, 56px); border-radius: var(--r-xl); background: var(--navy-900); color: #fff; }

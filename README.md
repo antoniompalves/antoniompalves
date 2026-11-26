@@ -38,6 +38,7 @@ Every "Book a meeting" button opens the widget. Its question box sends an email 
 
 ## Social links & sister brand
 - Social profiles (LinkedIn, Instagram, Facebook, YouTube, Spotify, Apple Podcasts) are in `config.php` → `social`. They show in the footer, on About (founder), on Contact, and in the page's structured data (`sameAs`). The YouTube link also appears on Press.
+- Sister brand **Emoty Games** (children, families, schools): `config.php` → `kids_url`. It appears as a small card in "As nossas marcas" and as a footer link.
 - Sister brand **Treino Inteligência Emocional®** (B2C): `config.php` → `b2c_url` / `b2c_agenda_url`. It appears in the "As nossas marcas" section on About (`#marcas`), the band on Home and the footer. Update `b2c_agenda_url` when the new B2C site goes live.
 
 ## Images

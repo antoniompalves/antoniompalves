@@ -15,7 +15,6 @@ return [
     'phone'          => '+351 964 188 017',
     'phone_raw'      => '+351964188017',
     'whatsapp'       => '351964188017',
-    'address'        => 'Porto, Portugal',
 
     // Paulo Moreira's social profiles (taken from treinointeligenciaemocional.com).
     // [icon, label, url]. Remove a line to hide it; order = display order.
@@ -32,6 +31,10 @@ return [
     'b2c_name'       => 'Treino Inteligência Emocional',
     'b2c_url'        => 'https://treinointeligenciaemocional.com/',
     'b2c_agenda_url' => 'https://treinointeligenciaemocional.com/agenda-2/', // update when the new B2C site goes live
+
+    // Sister brand for children, families and schools
+    'kids_name'      => 'Emoty Games',
+    'kids_url'       => 'https://emotygames.com',
 
     // Damiana — business manager / chat widget
     'agent_name'     => 'Damiana',
