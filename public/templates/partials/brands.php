@@ -44,12 +44,14 @@ $pod = array_values(array_filter(cfg('social') ?: [], fn($s) => in_array($s[0], 
 
         <?php if ($pod): ?>
           <div class="brand-pod">
-            <span class="brand-pod-ic"><?= icon('mic', 18) ?></span>
-            <span class="brand-pod-name"><?= e(t('brands.podcast')) ?></span>
-            <span class="brand-pod-links">
-              <?php foreach ($pod as [$ic, $label, $href]): ?>
-                <a href="<?= e($href) ?>" target="_blank" rel="noopener"><?= icon($ic, 16) ?><?= e($label) ?></a>
-              <?php endforeach; ?>
+            <img class="brand-pod-logo" src="<?= asset('assets/img/brands/podcast-ie.svg') ?>" alt="<?= e(t('brands.podcast')) ?>" width="775" height="619" loading="lazy">
+            <span class="brand-pod-body">
+              <span class="brand-pod-name"><?= e(t('brands.pod.listen')) ?></span>
+              <span class="brand-pod-links">
+                <?php foreach ($pod as [$ic, $label, $href]): ?>
+                  <a href="<?= e($href) ?>" target="_blank" rel="noopener"><?= icon($ic, 16) ?><?= e($label) ?></a>
+                <?php endforeach; ?>
+              </span>
             </span>
           </div>
         <?php endif; ?>

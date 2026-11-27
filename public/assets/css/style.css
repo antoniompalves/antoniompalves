@@ -1488,6 +1488,25 @@ a.course-card-app:hover .device-phone { transform: translateY(-8px); }
 /* Two dark bands in a row (e.g. sister-brand band followed by the CTA): keep them apart */
 .tie-band + .cta-band { padding-top: clamp(56px, 7vw, 96px); }
 
+
+/* Test build: menu items for pages that are switched off stay visible but don't link anywhere */
+a.is-off { cursor: default; }
+.main-nav ul a.is-off:hover::after { transform: scaleX(0); }
+.main-nav ul a.is-off:hover { color: var(--ink-2); }
+.has-dark-hero .site-header:not(.is-scrolled) .main-nav ul a.is-off:hover { color: rgba(255,255,255,.72); }
+.site-footer a.is-off:hover { color: inherit; }
+
+
+/* Mobile menu open: hide Damiana's button so it doesn't cover the menu's CTA */
+body:has(.site-header.nav-open) .agent { opacity: 0; visibility: hidden; transition: opacity .2s, visibility .2s; }
+
+
+/* Podcast logo in the Treino IE brand card */
+.brand-pod { align-items: center; gap: 18px; }
+.brand-pod-logo { width: 96px; height: auto; flex: none; }
+.brand-pod-body { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px; }
+.brand-pod-body .brand-pod-name { flex: none; min-width: 0; font-size: 14px; color: rgba(255,255,255,.72); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
   .reveal { opacity: 1; transform: none; }

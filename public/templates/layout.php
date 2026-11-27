@@ -10,7 +10,7 @@ else                                                 $title = t('meta.title');
 if (!empty($GLOBALS['page_desc']))                   $desc = $GLOBALS['page_desc'];
 elseif (has_t("seo.$page.desc"))                     $desc = t("seo.$page.desc");
 else                                                 $desc = t('meta.desc');
-$nav      = array_values(array_filter(['services', 'courses', 'about', 'press', 'blog', 'contact'], 'page_on'));
+$nav      = ['services', 'courses', 'about', 'press', 'blog', 'contact'];   // pages switched off in config show without a link
 $heroDark = in_array($page, ['home', 'courses', 'about', 'services'], true) || isset($data['course']);
 $canon    = absolute(alt_url(lang()));
 $ogImage  = absolute(rtrim(cfg('base_url'), '/') . '/assets/img/og-' . lang() . '.jpg');
@@ -99,7 +99,7 @@ foreach ($GLOBALS['jsonld'] ?? [] as $node) $graph[] = $node;
     <nav class="main-nav" id="main-nav" aria-label="Main">
       <ul>
         <?php foreach ($nav as $n): ?>
-          <li><a href="<?= e(nav_url($n)) ?>"<?= $page === $n ? ' aria-current="page"' : '' ?>><?= e(t('nav.' . $n)) ?></a></li>
+          <li><?php if (page_on($n)): ?><a href="<?= e(nav_url($n)) ?>"<?= $page === $n ? ' aria-current="page"' : '' ?>><?= e(t('nav.' . $n)) ?></a><?php else: ?><a class="is-off" aria-disabled="true"><?= e(t('nav.' . $n)) ?></a><?php endif; ?></li>
         <?php endforeach; ?>
       </ul>
       <div class="nav-mobile-extra">
@@ -151,7 +151,7 @@ foreach ($GLOBALS['jsonld'] ?? [] as $node) $graph[] = $node;
       <h3><?= e(t('footer.nav')) ?></h3>
       <ul>
         <li><a href="<?= e(url('home')) ?>"><?= e(t('nav.home')) ?></a></li>
-        <?php foreach ($nav as $n): ?><li><a href="<?= e(nav_url($n)) ?>"><?= e(t('nav.' . $n)) ?></a></li><?php endforeach; ?>
+        <?php foreach ($nav as $n): ?><li><?php if (page_on($n)): ?><a href="<?= e(nav_url($n)) ?>"><?= e(t('nav.' . $n)) ?></a><?php else: ?><a class="is-off" aria-disabled="true"><?= e(t('nav.' . $n)) ?></a><?php endif; ?></li><?php endforeach; ?>
       </ul>
     </div>
     <div>

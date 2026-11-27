@@ -157,6 +157,21 @@ function page_on(string $page): bool
     return !is_array($p) || in_array($page, $p, true);
 }
 
+/** In builds with pages switched off, turn links to those pages into plain text (used for article bodies). */
+function strip_off_links(string $html): string
+{
+    if (!is_array(cfg('pages'))) return $html;
+    $off = [];
+    foreach (routes() as $key => $slugs) {
+        if ($key !== 'home' && !page_on($key)) foreach (cfg('langs') as $l) $off[] = url($key, $l);
+    }
+    if (!$off) return $html;
+    return preg_replace_callback('#<a\s[^>]*href="([^"]*)"[^>]*>(.*?)</a>#s', function ($m) use ($off) {
+        foreach ($off as $u) if (str_starts_with($m[1], $u)) return $m[2];
+        return $m[0];
+    }, $html);
+}
+
 /** Nav link for a page. With the programmes list switched off ('courses_list' => false), "Programas" opens the first programme. */
 function nav_url(string $page): string
 {

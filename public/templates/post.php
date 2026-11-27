@@ -37,7 +37,7 @@ $showLead = !str_starts_with($plain(mb_substr(tr($post['body']), 0, 1200)), rtri
   </header>
   <div class="wrap"><?php partial('post-cover', ['post' => $post, 'cls' => 'post-cover-xl', 'noCat' => true, 'alt' => tr($post['title']), 'eager' => true, 'sizes' => '(max-width: 1280px) 100vw, 1200px']); ?></div>
   <div class="prose wrap-narrow">
-    <?= tr($post['body']) /* trusted, author-controlled HTML */ ?>
+    <?= strip_off_links(tr($post['body'])) /* trusted, author-controlled HTML */ ?>
   </div>
 </article>
 
