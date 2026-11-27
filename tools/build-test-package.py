@@ -30,7 +30,10 @@ DROP = [
     "templates/services.php", "templates/press.php",
     "templates/courses.php", "templates/programme.php", "templates/partials/ecosystem.php",
     "content/app-programme.php", "content/consulting.php", "content/press.php",
-    "assets/img/app", "assets/img/programmes", "assets/img/press",
+    "content/programmes/stress.php", "content/programmes/conflict.php",
+    "content/programmes/behaviour.php", "content/programmes/decision.php",
+    "assets/img/app", "assets/img/press",
+    "assets/img/programmes/stress.webp", "assets/img/programmes/conflitos.webp", "assets/img/programmes/comportamental.webp",
 ]
 
 CONFIG_EXTRA = f"""    'base_url'       => 'auto',                      // TEST build: detects the folder it is installed in
@@ -84,7 +87,8 @@ README = f"""EQ TRAINING — PACOTE DE TESTE
 =============================
 
 Conteúdo: página inicial, Sobre, Contactos (com o formulário), popup da Damiana (com o formulário),
-o programa "Inteligência Emocional para Equipas e Líderes", o Blog e a Política de Privacidade
+o programa "Inteligência Emocional para Equipas e Líderes" (com a estrutura de 8 secções comum
+a todos os programas e o formulário de pedido de proposta), o Blog e a Política de Privacidade
 (necessária porque o formulário tem o consentimento ligado a ela). Em português e inglês.
 Serviços e Imprensa aparecem no menu mas ainda sem link; a lista de Programas e a Formação com App
 estão desligadas. O Google não indexa esta pasta.

@@ -235,6 +235,36 @@
     }
   });
 
+  /* ---------- Programme pages: in-page menu of the 8 parts marks the part in view ---------- */
+  $$('[data-chap-nav]').forEach((nav) => {
+    const links = $$('[data-chap-link]', nav);
+    const parts = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1)))).filter(Boolean);
+    const list = $('.chap-list', nav);
+    let current = -1;
+    const mark = (n) => {
+      if (n === current) return;
+      current = n;
+      links.forEach((a, k) => { a.classList.toggle('is-active', k === n); if (k === n) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+      // keep the active item visible in the scrollable bar (phones), without moving the page
+      const a = links[n];
+      if (a && list.scrollWidth > list.clientWidth) {
+        const l = a.offsetLeft - list.offsetLeft, r = l + a.offsetWidth;
+        if (l < list.scrollLeft || r > list.scrollLeft + list.clientWidth) list.scrollTo({ left: l - 24, behavior: reduced ? 'auto' : 'smooth' });
+      }
+    };
+    const update = () => {
+      const line = innerHeight * 0.35;
+      let n = -1;
+      parts.forEach((p, k) => { if (p.getBoundingClientRect().top <= line) n = k; });
+      if (n === -1 || parts[parts.length - 1].getBoundingClientRect().bottom < 0) { links.forEach((a) => { a.classList.remove('is-active'); a.removeAttribute('aria-current'); }); current = -1; return; }
+      mark(n);
+    };
+    let ticking = false;
+    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { update(); ticking = false; }); } }, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
   /* ---------- Programme page: participant app screens ---------- */
   $$('[data-screens]').forEach((box) => {
     const tabs = $$('[data-screen-tab]', box), panels = $$('[data-screen-panel]', box), imgs = $$('[data-screen-img]', box);

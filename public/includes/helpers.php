@@ -142,6 +142,36 @@ function courses(): array
     return $c;
 }
 
+/** Page copy of a programme in the common 8-part structure (content/programmes/{id}.php). */
+function programme_data(string $id): array
+{
+    $f = ROOT . '/content/programmes/' . basename($id) . '.php';
+    return is_file($f) ? require $f : [];
+}
+
+/** Shared parts of the programme pages (anchors, customisation steps, follow-up). */
+function programme_common(): array
+{
+    static $c = null;
+    return $c ??= require ROOT . '/content/programme-common.php';
+}
+
+/** Anchors of the 8 parts of a programme page, in the current language. */
+function chapter_ids(): array
+{
+    return programme_common()['ids'][lang()] ?? programme_common()['ids']['pt'];
+}
+
+/** Section head of part $n (1–8) of a programme page: "01 · Apresentação do programa", title and optional lead. */
+function chapter_head(int $n, string $h, string $lead = '', bool $dark = false): string
+{
+    return '<header class="section-head reveal">'
+        . '<p class="eyebrow chapter-k' . ($dark ? ' on-dark' : '') . '"><span class="chapter-n">' . sprintf('%02d', $n) . '</span>' . e(t('prog.c' . $n)) . '</p>'
+        . '<h2 class="display">' . e($h) . '</h2>'
+        . ($lead !== '' ? '<p class="section-lead">' . e($lead) . '</p>' : '')
+        . '</header>';
+}
+
 /** Damiana's round avatar: her photo if uploaded (config 'agent_photo'), otherwise her initials. */
 function agent_avatar(): string
 {

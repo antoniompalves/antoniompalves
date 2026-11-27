@@ -46,7 +46,7 @@ foreach (['name', 'email'] as $k) if (preg_match('/[\n\r]/', $data[$k])) out(422
 
 $subject = match ($data['source']) {
     'agent'     => '[EQ Training] Pergunta via ' . cfg('agent_name'),
-    'programme' => '[EQ Training] Pedido de proposta: Formação com App' . ($data['org'] ? ' — ' . $data['org'] : ''),
+    'programme' => '[EQ Training] Pedido de proposta: ' . ($data['interest'] ?: 'Programa') . ($data['org'] ? ' — ' . $data['org'] : ''),
     default     => '[EQ Training] Novo pedido de contacto' . ($data['org'] ? ' — ' . $data['org'] : ''),
 };
 

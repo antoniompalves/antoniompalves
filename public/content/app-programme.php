@@ -24,7 +24,37 @@ return [
         ],
     ],
 
-    // Business challenges buyers are facing (sourced) → how the programme answers
+    // 1. Programme overview
+    'intro' => [
+        'h' => ['pt' => 'Uma formação corporativa, com prática diária e medição.', 'en' => 'Corporate training, with daily practice and measurement.'],
+        'p' => [
+            'pt' => [
+                'A Formação com App é um dos programas corporativos de Paulo Moreira: sessões práticas sobre competências concretas, presenciais ou online, como as que já dá nas empresas.',
+                'A diferença está no que acontece entre as sessões e no fim. Cada participante tem um desafio por dia numa aplicação, para levar para o trabalho o que treinou. O grupo responde ao mesmo questionário no início e no fim, e a direção vê a evolução num relatório agregado, sem dados individuais.',
+            ],
+            'en' => [
+                'Training with App is one of Paulo Moreira’s corporate programmes: hands-on sessions on specific skills, in person or online, like the ones he already runs in companies.',
+                'The difference is what happens between sessions and at the end. Each participant gets one challenge a day in an app, to take what they practised back to work. The group answers the same questionnaire at the start and the end, and management sees the progress in an aggregated report, with no individual data.',
+            ],
+        ],
+        'figures' => [
+            ['8',  ['pt' => 'sessões de treino', 'en' => 'training sessions']],
+            ['49', ['pt' => 'desafios diários, em 7 módulos', 'en' => 'daily challenges, in 7 modules']],
+            ['7',  ['pt' => 'competências trabalhadas', 'en' => 'skills developed']],
+            ['4',  ['pt' => 'dimensões de Inteligência Emocional medidas', 'en' => 'Emotional Intelligence dimensions measured']],
+        ],
+    ],
+
+    // 7. Customisation: replaces the common "needs assessment" step
+    'diagnosis' => [
+        'h' => ['pt' => 'Questionário inicial', 'en' => 'Initial questionnaire'],
+        'p' => [
+            'pt' => 'Todos os participantes respondem ao questionário inicial (cerca de 10 minutos). É o ponto de partida da turma e a base da comparação no fim.',
+            'en' => 'Every participant completes the initial questionnaire (about 10 minutes). It is the group’s starting point and the basis for the comparison at the end.',
+        ],
+    ],
+
+    // 2. Business challenges buyers are facing (sourced) → how the programme answers
     'challenges' => [
         ['tag' => ['pt' => 'Chefias', 'en' => 'Managers'],
          'h' => ['pt' => 'Chefias sobrecarregadas, que ninguém preparou para gerir pessoas', 'en' => 'Overloaded managers nobody trained to manage people'],
