@@ -24,7 +24,7 @@ $L = lang();
     <div class="hero-copy">
       <nav class="crumbs on-dark" aria-label="Breadcrumb">
         <a href="<?= e(url('home')) ?>"><?= e(t('nav.home')) ?></a><span>/</span>
-        <a href="<?= e(url('courses')) ?>"><?= e(t('nav.courses')) ?></a><span>/</span>
+        <?php if (cfg('courses_list') !== false): ?><a href="<?= e(url('courses')) ?>"><?= e(t('nav.courses')) ?></a><span>/</span><?php endif; ?>
         <span aria-current="page"><?= e(tr($course['short'])) ?></span>
       </nav>
       <h1 class="display hero-title-sm"><?= e(tr($course['title'])) ?></h1>
@@ -161,6 +161,7 @@ $L = lang();
 </section>
 
 <!-- Related -->
+<?php if (count(courses()) > 1): ?>
 <section class="section section-tint">
   <div class="wrap">
     <header class="section-head reveal"><h2 class="display"><?= e(t('course.related')) ?></h2></header>
@@ -169,5 +170,6 @@ $L = lang();
     </div>
   </div>
 </section>
+<?php endif; ?>
 
 <?php partial('cta'); ?>

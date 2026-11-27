@@ -19,7 +19,7 @@ $model = require ROOT . '/content/model.php';
       <p class="hero-lead"><?= e(t('home.lead')) ?></p>
       <div class="hero-ctas">
         <a class="btn btn-primary btn-lg" href="<?= e(booking_href()) ?>" data-open-agent><?= e(t('cta.book')) ?> <?= icon('arrow', 18) ?></a>
-        <a class="btn btn-ghost-light btn-lg" href="<?= e(url('services')) ?>"><?= e(t('nav.services')) ?></a>
+        <?php if (page_on('services')): ?><a class="btn btn-ghost-light btn-lg" href="<?= e(url('services')) ?>"><?= e(t('nav.services')) ?></a><?php endif; ?>
       </div>
     </div>
     <figure class="hero-media">
@@ -173,17 +173,17 @@ $model = require ROOT . '/content/model.php';
         <p class="eyebrow"><?= e(t('home.pillars.k')) ?></p>
         <h2 class="display"><?= e(t('home.pillars.h')) ?></h2>
       </div>
-      <a class="link-arrow" href="<?= e(url('services')) ?>"><?= e(t('nav.services')) ?> <?= icon('arrow', 16) ?></a>
+      <?php if ($svcOn = page_on('services')): ?><a class="link-arrow" href="<?= e(url('services')) ?>"><?= e(t('nav.services')) ?> <?= icon('arrow', 16) ?></a><?php endif; ?>
     </header>
-    <ol class="rows">
+    <ol class="rows<?= $svcOn ? '' : ' rows-static' ?>">
       <?php foreach ([[1, 'ceos'], [2, 'orgs'], [3, 'orgs'], [4, 'orgs'], [5, 'teams']] as [$i, $tab]): ?>
         <li class="reveal">
-          <a class="row" href="<?= e(url('services')) ?>#<?= $tab ?>">
+          <<?= $svcOn ? 'a href="' . e(url('services')) . '#' . $tab . '"' : 'div' ?> class="row">
             <span class="row-num">0<?= $i ?></span>
             <h3 class="row-title"><?= e(t("home.p$i.h")) ?></h3>
             <p class="row-desc"><?= e(t("home.p$i.p")) ?></p>
-            <span class="row-arrow"><?= icon('arrow', 20) ?></span>
-          </a>
+            <?php if ($svcOn): ?><span class="row-arrow"><?= icon('arrow', 20) ?></span><?php endif; ?>
+          </<?= $svcOn ? 'a' : 'div' ?>>
         </li>
       <?php endforeach; ?>
     </ol>
@@ -284,13 +284,14 @@ $model = require ROOT . '/content/model.php';
         <li><img src="<?= e(asset('assets/img/media/' . $f . '.png')) ?>" alt="<?= e($n) ?>" width="<?= $w ?>" height="<?= $h ?>" loading="lazy"></li>
       <?php endforeach; ?>
     </ul>
-    <a class="link-arrow" href="<?= e(url('press')) ?>"><?= e(t('nav.press')) ?> <?= icon('arrow', 16) ?></a>
+    <?php if (page_on('press')): ?><a class="link-arrow" href="<?= e(url('press')) ?>"><?= e(t('nav.press')) ?> <?= icon('arrow', 16) ?></a><?php endif; ?>
   </div>
 </section>
 
 <?php partial('tie-band'); ?>
 
 <!-- ============ BLOG ============ -->
+<?php if (page_on('blog')): ?>
 <section class="section">
   <div class="wrap">
     <header class="section-head section-head-row reveal">
@@ -305,5 +306,6 @@ $model = require ROOT . '/content/model.php';
     </div>
   </div>
 </section>
+<?php endif; ?>
 
 <?php partial('cta'); ?>

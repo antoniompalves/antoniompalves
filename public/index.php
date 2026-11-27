@@ -60,13 +60,16 @@ $params = ['slug' => $segments[1] ?? null];
 $tpl    = null;
 $data   = [];
 
+if ($page !== null && !page_on($page)) $page = null;   // switched off in config 'pages'
+if (cfg('noindex')) header('X-Robots-Tag: noindex, nofollow');
+
 switch ($page) {
     case 'home':
         if (count($segments) === 0) $tpl = 'home';
         break;
     case 'courses':
         if ($params['slug'] === null) {
-            $tpl = 'courses';
+            if (cfg('courses_list') !== false) $tpl = 'courses';
         } elseif ($course = find_course($params['slug'], $lang)) {
             $tpl = $course['template'] ?? 'course';
             $data['course'] = $course;

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 if ($special === 'robots.txt') {
     header('Content-Type: text/plain; charset=utf-8');
+    if (cfg('noindex')) { echo "User-agent: *\nDisallow: /\n"; return; }   // test/staging build
     echo "User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: " . absolute(rtrim(cfg('base_url'), '/') . '/sitemap.xml') . "\n";
     return;
 }
 
 header('Content-Type: application/xml; charset=utf-8');
+if (cfg('noindex')) { echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>' . "\n"; return; }
 $hl = ['pt' => 'pt-PT', 'en' => 'en'];
 $entries = [];   // each: [ [lang => path], lastmod|null, priority ]
 foreach (['home' => '1.0', 'services' => '0.9', 'courses' => '0.9', 'about' => '0.7', 'press' => '0.6', 'blog' => '0.6', 'contact' => '0.7', 'privacy' => '0.2'] as $p => $prio) {

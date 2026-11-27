@@ -128,7 +128,28 @@ function partial(string $name, array $data = []): void
 function courses(): array
 {
     static $c = null;
-    return $c ??= require ROOT . '/content/courses.php';
+    if ($c === null) {
+        $c = require ROOT . '/content/courses.php';
+        // Test/staging builds can limit the programmes shown (config 'course_ids')
+        if (is_array($ids = cfg('course_ids'))) $c = array_values(array_filter($c, fn($x) => in_array($x['id'], $ids, true)));
+    }
+    return $c;
+}
+
+/** Test/staging builds can switch pages off (config 'pages'); unset/null = every page on. */
+function page_on(string $page): bool
+{
+    $p = cfg('pages');
+    return !is_array($p) || in_array($page, $p, true);
+}
+
+/** Nav link for a page. With the programmes list switched off ('courses_list' => false), "Programas" opens the first programme. */
+function nav_url(string $page): string
+{
+    if ($page === 'courses' && cfg('courses_list') === false && ($c = courses()[0] ?? null)) {
+        return url('courses', null, $c['slug'][lang()]);
+    }
+    return url($page);
 }
 
 function posts(): array

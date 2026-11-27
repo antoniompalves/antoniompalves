@@ -1474,6 +1474,12 @@ a.course-card-app:hover .device-phone { transform: translateY(-8px); }
   .comp-col .comp-n { font-size: 56px; }
 }
 
+
+/* Home rows without links (test build with Services switched off) */
+.rows-static .row:hover { padding-left: 0; }
+.rows-static .row:hover .row-title { color: inherit; }
+.rows-static .row { grid-template-columns: 72px 1fr 1.15fr; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
   .reveal { opacity: 1; transform: none; }

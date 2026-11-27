@@ -57,6 +57,12 @@ Every "Book a meeting" button opens the widget. Its question box sends an email 
 3. Add the site to Google Search Console and submit `https://eqtraining.pt/sitemap.xml`.
 4. Test a page in Google's Rich Results Test and LinkedIn Post Inspector.
 
+## Test package (subfolder)
+`python3 tools/build-test-package.py [folder]` (default `teste`) builds `dist/eqtraining-<folder>.zip` with only the home page, About, Contact (with the Damiana popup and both forms), the "Inteligência Emocional" programme and the privacy policy, in PT and EN. Unzip it into `public_html/<folder>/`.
+- It sets `base_url`, `noindex`, `pages`, `courses_list` and `course_ids` in the package's `config.php`. The same keys work on the main site: leave them out to show everything.
+- Links to switched-off pages are hidden and those URLs return 404. "Programas" opens the first programme. robots.txt disallows everything and every page sends `noindex, nofollow`.
+- The package's `.htaccess` has `RewriteBase /<folder>/`. Tested under Apache 2.4 + PHP 8.3 in a subfolder.
+
 ## Iceberg (home page scroll story)
 - The artwork is generated, not hand-drawn: `python3 tools/iceberg_gen.py out.svgfrag` builds a 3D low-poly iceberg (irregular submerged keel, crags on the tip), flat-shades it, adds depth fog, light rays, foam and particles, and writes the SVG that is inlined in `templates/home.php` (between the `<svg class="ice-svg">` tags). Change the seed or shape parameters to get a different berg.
 - Timing (which text shows when) is in `assets/js/main.js` → `STARTS` / `DIVE`; visibility per element is the `data-steps` attribute in `home.php`.

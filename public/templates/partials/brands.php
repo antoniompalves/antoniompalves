@@ -23,7 +23,7 @@ $pod = array_values(array_filter(cfg('social') ?: [], fn($s) => in_array($s[0], 
           <?php for ($i = 1; $i <= 4; $i++): ?><li><?= e(t("brands.eq.l$i")) ?></li><?php endfor; ?>
         </ul>
         <figure class="brand-photo"><img src="<?= asset('assets/img/photos/hybrid-room.webp') ?>" alt="<?= e(t('featured.photo')) ?>" width="1600" height="901" loading="lazy"></figure>
-        <a class="link-arrow" href="<?= e(url('services')) ?>"><?= e(t('nav.services')) ?> <?= icon('arrow', 16) ?></a>
+        <?php if (page_on('services')): ?><a class="link-arrow" href="<?= e(url('services')) ?>"><?= e(t('nav.services')) ?> <?= icon('arrow', 16) ?></a><?php endif; ?>
       </article>
 
       <article class="brand-card brand-tie reveal">
