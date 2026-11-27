@@ -4,7 +4,6 @@ $video  = cfg('agent_video');
 $poster = cfg('agent_poster');
 $hasVideo  = asset_exists($video);
 $hasPoster = asset_exists($poster);
-$initials = implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(explode(' ', cfg('agent_fullname')), 0, 2)));
 ?>
 <div class="agent" data-agent data-state="closed">
   <!-- Expanded panel -->
@@ -18,7 +17,7 @@ $initials = implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(exp
         <img class="agent-video" src="<?= e(asset($poster)) ?>" alt="">
       <?php else: ?>
         <div class="agent-video agent-placeholder" aria-hidden="true">
-          <span class="agent-ph-avatar"><?= e($initials) ?></span>
+          <span class="agent-ph-avatar"><?= agent_avatar() ?></span>
           <span class="agent-ph-name"><?= e(cfg('agent_fullname')) ?></span>
           <span class="agent-ph-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
         </div>
@@ -73,7 +72,7 @@ $initials = implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(exp
         <?php elseif ($hasPoster): ?>
           <img src="<?= e(asset($poster)) ?>" alt="">
         <?php else: ?>
-          <span class="agent-initial"><?= e($initials) ?></span>
+          <span class="agent-initial"><?= agent_avatar() ?></span>
         <?php endif; ?>
       </span>
       <span class="agent-x"><?= icon('close', 22) ?></span>

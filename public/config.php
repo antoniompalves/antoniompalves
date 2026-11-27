@@ -42,5 +42,6 @@ return [
     'agent_fullname' => 'Damiana Fernandes',
     'agent_video'    => 'assets/video/damiana.mp4',   // upload your video here (mp4, H.264, ~10–20s, < 8MB)
     'agent_poster'   => 'assets/img/damiana-poster.jpg', // still frame shown before the video loads
+    'agent_photo'    => 'assets/img/damiana.webp',  // round thumbnail (popup button, cards) until the video is uploaded
     'booking_url'    => '',  // e.g. Calendly / Microsoft Bookings link. Empty = opens the contact form.
 ];

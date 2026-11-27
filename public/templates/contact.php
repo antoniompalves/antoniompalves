@@ -43,7 +43,7 @@
 
     <aside class="contact-side">
       <div class="card agent-card">
-        <span class="book-avatar" aria-hidden="true"><?= e(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(explode(' ', cfg('agent_fullname')), 0, 2)))) ?></span>
+        <span class="book-avatar" aria-hidden="true"><?= agent_avatar() ?></span>
         <div>
           <strong><?= e(cfg('agent_fullname')) ?></strong>
           <span><?= e(t('agent.role')) ?></span>

@@ -142,6 +142,14 @@ function courses(): array
     return $c;
 }
 
+/** Damiana's round avatar: her photo if uploaded (config 'agent_photo'), otherwise her initials. */
+function agent_avatar(): string
+{
+    $photo = cfg('agent_photo');
+    if ($photo && asset_exists($photo)) return '<img src="' . e(asset($photo)) . '" alt="" width="96" height="96">';
+    return e(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(explode(' ', (string) cfg('agent_fullname')), 0, 2))));
+}
+
 /** Test/staging builds can switch pages off (config 'pages'); unset/null = every page on. */
 function page_on(string $page): bool
 {
