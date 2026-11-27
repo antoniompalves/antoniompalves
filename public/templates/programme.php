@@ -48,7 +48,7 @@ $demo = '<p class="demo-note">' . icon('spark', 14) . e(t('programme.demo')) . '
     </div>
     <div class="app-hero-media" aria-hidden="true">
       <figure class="device-browser">
-        <span class="device-bar"><i></i><i></i><i></i><b>formacao.treinointeligenciaemocional.com</b></span>
+        <span class="device-bar"><i></i><i></i><i></i></span>
         <img src="<?= e($img('direcao')) ?>" alt="" width="2000" height="1362" fetchpriority="high">
       </figure>
       <figure class="device-phone">
@@ -241,7 +241,7 @@ $demo = '<p class="demo-note">' . icon('spark', 14) . e(t('programme.demo')) . '
       <p class="section-lead"><?= e(t('programme.dash.p')) ?></p>
     </header>
     <figure class="device-browser device-browser-lg reveal">
-      <span class="device-bar"><i></i><i></i><i></i><b>formacao.treinointeligenciaemocional.com</b></span>
+      <span class="device-bar"><i></i><i></i><i></i></span>
       <img src="<?= e($img('direcao')) ?>" alt="<?= e(t('programme.dash.alt')) ?>" width="2000" height="1362" loading="lazy">
     </figure>
     <?= $demo ?>
@@ -335,7 +335,7 @@ $demo = '<p class="demo-note">' . icon('spark', 14) . e(t('programme.demo')) . '
     </div>
     <figure class="real-shot reveal">
       <div class="device-browser">
-        <span class="device-bar"><i></i><i></i><i></i><b>formacao.treinointeligenciaemocional.com</b></span>
+        <span class="device-bar"><i></i><i></i><i></i></span>
         <img src="<?= e($img('analise-real')) ?>" alt="<?= e(t('programme.real.alt')) ?>" width="1668" height="1205" loading="lazy">
       </div>
       <figcaption><strong><?= e(t('programme.real.k')) ?></strong> <?= e(t('programme.real.cap')) ?></figcaption>
