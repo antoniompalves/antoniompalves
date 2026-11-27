@@ -92,7 +92,7 @@ function alt_url(string $l): string
     $data = $GLOBALS['current_data'] ?? [];
     if ($page === '404') return url('home', $l);
     if (isset($data['course'])) return url('courses', $l, $data['course']['slug'][$l]);
-    if (isset($data['post']))   return url('blog', $l, $data['post']['slug'][$l]);
+    if (isset($data['post']))   return isset($data['post']['slug'][$l]) ? url('blog', $l, $data['post']['slug'][$l]) : url('blog', $l);
     return url($page, $l);
 }
 
@@ -152,6 +152,41 @@ function find_post(string $slug, string $l): ?array
     foreach (posts() as $p) if (($p['slug'][$l] ?? null) === $slug) return $p;
     return null;
 }
+
+/** Languages a post is published in (those it has a slug for), in config order. */
+function post_langs(array $post): array
+{
+    return array_values(array_filter(cfg('langs'), fn($l) => !empty($post['slug'][$l])));
+}
+
+/** Language a post is shown in from the current page: the current one if it exists, else the default (PT). */
+function post_lang(array $post): string
+{
+    return !empty($post['slug'][lang()]) ? lang() : cfg('default_lang');
+}
+
+function post_url(array $post): string
+{
+    $l = post_lang($post);
+    return url('blog', $l, $post['slug'][$l]);
+}
+
+/** Cover image path. 'img' is 'blog/<slug>' or 'photos/<name>' (a bare name means photos/). */
+function post_img(array $post): string
+{
+    $img = $post['img'] ?? '';
+    return 'assets/img/' . (str_contains($img, '/') ? $img : 'photos/' . $img) . '.webp';
+}
+
+/** Blog category label in the UI language (categories are stored in PT). */
+function cat_label(array $post): string
+{
+    $pt = $post['cat']['pt'] ?? tr($post['cat']);
+    return has_t('cat.' . $pt) ? t('cat.' . $pt) : $pt;
+}
+
+/** BCP 47 tag for hreflang / lang attributes. */
+function lang_tag(string $l): string { return $l === 'pt' ? 'pt-PT' : $l; }
 
 function fmt_date(string $ymd): string
 {

@@ -17,8 +17,9 @@ foreach (['home' => '1.0', 'services' => '0.9', 'courses' => '0.9', 'about' => '
 foreach (courses() as $c) {
     if (!empty($c['detail'])) $entries[] = [array_combine(cfg('langs'), array_map(fn($l) => url('courses', $l, $c['slug'][$l]), cfg('langs'))), null, '0.9'];
 }
-foreach (posts() as $p) {
-    $entries[] = [array_combine(cfg('langs'), array_map(fn($l) => url('blog', $l, $p['slug'][$l]), cfg('langs'))), $p['date'], '0.5'];
+foreach (posts() as $p) {   // only the languages a post is published in
+    $ls = post_langs($p);
+    $entries[] = [array_combine($ls, array_map(fn($l) => url('blog', $l, $p['slug'][$l]), $ls)), $p['modified'] ?? $p['date'], '0.5'];
 }
 
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -27,7 +28,7 @@ foreach ($entries as [$paths, $mod, $prio]) {
     foreach ($paths as $l => $path) {
         echo "  <url>\n    <loc>" . e(absolute($path)) . "</loc>\n";
         foreach ($paths as $l2 => $p2) echo '    <xhtml:link rel="alternate" hreflang="' . $hl[$l2] . '" href="' . e(absolute($p2)) . "\"/>\n";
-        echo '    <xhtml:link rel="alternate" hreflang="x-default" href="' . e(absolute($paths[cfg('default_lang')])) . "\"/>\n";
+        echo '    <xhtml:link rel="alternate" hreflang="x-default" href="' . e(absolute($paths[cfg('default_lang')] ?? reset($paths))) . "\"/>\n";
         if ($mod) echo "    <lastmod>$mod</lastmod>\n";
         echo "    <priority>$prio</priority>\n  </url>\n";
     }

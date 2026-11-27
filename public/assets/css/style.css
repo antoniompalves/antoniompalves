@@ -1162,3 +1162,58 @@ body:has(.site-header:not(.is-hidden)) .aud-tabs-wrap { top: var(--header-h); }
   .reveal { opacity: 1; transform: none; }
   .marquee-track { animation: none; }
 }
+
+/* ===== Blog: filters, more, prose media ===== */
+.blog-lang-note { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 8px 14px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 14.5px; color: var(--ink-2); }
+.blog-lang-note .ic { color: var(--blue); }
+.blog-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 56px; }
+.blog-filter button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: #fff; font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; transition: background .2s, color .2s, border-color .2s; }
+.blog-filter button span { font-weight: 500; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.blog-filter button:hover { border-color: var(--ink); color: var(--ink); }
+.blog-filter button[aria-pressed="true"] { background: var(--navy-900); border-color: var(--navy-900); color: #fff; }
+.blog-filter button[aria-pressed="true"] span { color: rgba(255,255,255,.7); }
+.blog-filter[hidden], .post-lead[hidden], .post-grid > [hidden], .blog-more [hidden] { display: none !important; }
+.blog-more { display: flex; justify-content: center; margin-top: 56px; }
+.post-meta > .post-lang::before { content: none; }
+.post-lang { margin-left: 10px; padding: 1px 7px; border-radius: 6px; background: var(--ice); color: var(--navy); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; line-height: 1.6; }
+
+/* Article page: back link on its own line; body links, headings, ordered lists, media, tables */
+.article-head .link-back { display: flex; width: max-content; }
+.prose > :first-child { margin-top: 0; }
+.prose a { color: var(--blue-ui); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; transition: color .2s; }
+.prose a:hover { color: var(--navy); text-decoration-thickness: 2px; }
+.prose strong { font-weight: 600; color: var(--ink); }
+.prose h3 { font-family: var(--font-display); font-weight: 500; font-size: 24px; letter-spacing: -.015em; line-height: 1.25; margin: 40px 0 12px; }
+.prose h2 + h3 { margin-top: 24px; }
+.prose ol { margin: 0 0 26px; padding-left: 1.5em; list-style: decimal; }
+.prose ol > li { padding-left: 8px; }
+.prose ol > li::before { content: none; }
+.prose ol > li::marker { color: var(--coral); font-family: var(--font-display); font-weight: 600; }
+.prose li > ul, .prose li > ol { margin: 8px 0 0; }
+.prose blockquote p { margin: 0; }
+.prose blockquote p + p { margin-top: 12px; }
+.prose figure { margin: 40px 0; }
+.prose img { border-radius: var(--r); }
+.prose figure img { width: 100%; height: auto; }
+.prose figcaption { margin-top: 12px; font-size: 14.5px; line-height: 1.5; color: var(--ink-3); }
+.prose-table { margin: 32px 0; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); -webkit-overflow-scrolling: touch; }
+.prose table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 16px; line-height: 1.5; }
+.prose th, .prose td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.prose thead th { background: var(--paper); font-weight: 600; color: var(--ink); }
+.prose tbody tr:last-child td { border-bottom: 0; }
+.prose-video { position: relative; aspect-ratio: 16 / 9; margin: 40px 0; border-radius: var(--r); overflow: hidden; background: var(--navy-950); }
+.prose-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+@media (max-width: 960px) {
+  .blog-filter button { min-height: 44px; }
+}
+@media (max-width: 640px) {
+  .blog-filter { flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(-1 * var(--gutter)) 36px; padding: 2px var(--gutter) 6px; scrollbar-width: none; }
+  .blog-filter::-webkit-scrollbar { display: none; }
+  .blog-filter button { flex: none; }
+  .blog-more .btn { width: 100%; }
+  .prose { font-size: 17.5px; }
+  .prose h2 { font-size: 27px; margin-top: 44px; }
+  .prose h3 { font-size: 21px; margin-top: 32px; }
+  .prose blockquote { font-size: 23px; }
+}

@@ -342,6 +342,22 @@ return [
     'blog.lead'         => 'Articles on leadership, emotions and organisational performance.',
     'blog.back'         => 'Back to blog',
     'blog.more'         => 'Keep reading',
+    'blog.filter'       => 'Filter articles by topic',
+    'blog.all'          => 'All',
+    'blog.list'         => 'All articles',
+    'blog.more_btn'     => 'More articles',
+    'blog.count'        => '%d articles',
+    'blog.pt_note'      => 'Our articles are currently available in Portuguese only.',
+    'blog.lang.pt'      => 'In Portuguese',
+    'blog.lang.en'      => 'In English',
+    // Blog categories (stored in PT in content/posts.php)
+    'cat.Inteligência emocional' => 'Emotional intelligence',
+    'cat.Liderança'              => 'Leadership',
+    'cat.Equipas'                => 'Teams',
+    'cat.Comunicação'            => 'Communication',
+    'cat.Conflitos'              => 'Conflict',
+    'cat.Stress e bem-estar'     => 'Stress & wellbeing',
+    'cat.Carreira e desempenho'  => 'Career & performance',
 
     // Contact
     'contact.k'         => 'Contact',
