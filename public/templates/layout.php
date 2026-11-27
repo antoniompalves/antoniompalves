@@ -174,7 +174,10 @@ foreach ($GLOBALS['jsonld'] ?? [] as $node) $graph[] = $node;
         <img src="<?= asset('assets/img/brands/treino-ie-white.svg') ?>" alt="<?= e(cfg('b2c_name')) ?>" width="120" height="36" loading="lazy">
         <span class="footer-sister-p"><?= e(t('footer.sister.p')) ?> <?= icon('external', 13) ?></span>
       </a>
-      <a class="footer-kids" href="<?= e(cfg('kids_url')) ?>" target="_blank" rel="noopener"><strong><?= e(cfg('kids_name')) ?></strong> · <?= e(t('footer.kids.p')) ?> <?= icon('external', 13) ?></a>
+      <a class="footer-kids" href="<?= e(cfg('kids_url')) ?>" target="_blank" rel="noopener">
+        <img src="<?= asset('assets/img/brands/emoty-games.png') ?>" alt="<?= e(cfg('kids_name')) ?>" width="245" height="112" loading="lazy">
+        <span class="footer-sister-p"><?= e(t('footer.kids.p')) ?> <?= icon('external', 13) ?></span>
+      </a>
     </div>
   </div>
   <div class="wrap footer-bottom">
