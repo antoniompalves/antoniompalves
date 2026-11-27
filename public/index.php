@@ -23,6 +23,7 @@ if ($base !== '' && str_starts_with($path, $base)) {
     $path = substr($path, strlen($base));
 }
 $segments = array_values(array_filter(explode('/', trim($path, '/')), 'strlen'));
+if (($segments[0] ?? '') === 'index.php') array_shift($segments);   // /index.php or /folder/index.php = home
 $segments = array_map('rawurldecode', $segments);
 
 $lang = $cfg['default_lang'];

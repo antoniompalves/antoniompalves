@@ -6,7 +6,13 @@ const ROOT = __DIR__ . '/..';
 function cfg(?string $key = null)
 {
     static $cfg = null;
-    $cfg ??= require ROOT . '/config.php';
+    if ($cfg === null) {
+        $cfg = require ROOT . '/config.php';
+        // 'auto' = work out the folder from where index.php runs (e.g. /eqtraining), so a package works in any subfolder
+        if (($cfg['base_url'] ?? '') === 'auto') {
+            $cfg['base_url'] = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+        }
+    }
     return $key === null ? $cfg : ($cfg[$key] ?? null);
 }
 
