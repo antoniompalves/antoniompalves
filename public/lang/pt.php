@@ -342,6 +342,22 @@ return [
     'blog.lead'         => 'Artigos sobre liderança, emoções e desempenho organizacional.',
     'blog.back'         => 'Voltar ao blog',
     'blog.more'         => 'Continue a ler',
+    'blog.filter'       => 'Filtrar artigos por tema',
+    'blog.all'          => 'Todos',
+    'blog.list'         => 'Todos os artigos',
+    'blog.more_btn'     => 'Ver mais artigos',
+    'blog.count'        => '%d artigos',
+    'blog.pt_note'      => 'Os nossos artigos estão disponíveis em português.',
+    'blog.lang.pt'      => 'Em português',
+    'blog.lang.en'      => 'Em inglês',
+    // Blog categories (stored in PT in content/posts.php)
+    'cat.Inteligência emocional' => 'Inteligência emocional',
+    'cat.Liderança'              => 'Liderança',
+    'cat.Equipas'                => 'Equipas',
+    'cat.Comunicação'            => 'Comunicação',
+    'cat.Conflitos'              => 'Conflitos',
+    'cat.Stress e bem-estar'     => 'Stress e bem-estar',
+    'cat.Carreira e desempenho'  => 'Carreira e desempenho',
 
     // Contact
     'contact.k'         => 'Contactos',

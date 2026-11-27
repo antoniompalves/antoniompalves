@@ -302,6 +302,40 @@
     }));
   });
 
+  /* ---------- Blog: category filter + "more articles" (no JS = every card is shown) ---------- */
+  const blog = $('[data-blog]');
+  if (blog) {
+    const bar = $('[data-blog-filter]', blog), btns = bar ? $$('button', bar) : [];
+    const lead = $('.post-lead', blog), grid = $('[data-blog-grid]', blog), cards = $$('.post-card', grid);
+    const more = $('[data-blog-more]', blog), status = $('[data-blog-status]', blog);
+    const per = +grid.dataset.per || 12;
+    let cat = '', shown = per;
+    // The lead post is also in the grid as a hidden copy, used only while a category is selected.
+    const pool = () => cards.filter((c) => (c.hasAttribute('data-lead-dup') ? cat && c.dataset.cat === cat : !cat || c.dataset.cat === cat));
+    const render = (user) => {
+      const list = pool();
+      if (lead) lead.hidden = !!cat;
+      cards.forEach((c) => { c.hidden = true; });
+      list.forEach((c, i) => { c.hidden = i >= shown; if (user && !c.hidden) c.classList.add('is-in'); });
+      if (more) more.hidden = list.length <= shown;
+      if (user && status) status.textContent = status.dataset.tpl.replace('%d', list.length + (!cat && lead ? 1 : 0));
+      return list;
+    };
+    btns.forEach((b) => b.addEventListener('click', () => {
+      cat = b.dataset.cat; shown = per;
+      btns.forEach((x) => x.setAttribute('aria-pressed', x === b));
+      render(true);
+    }));
+    more?.addEventListener('click', () => {
+      const from = shown, total = pool().length;
+      shown = total - (shown + per) < 4 ? total : shown + per;   // no lonely last batch
+      const next = render(true)[from];
+      next?.querySelector('a')?.focus({ preventScroll: true });
+    });
+    if (bar) bar.hidden = false;
+    render(false);
+  }
+
   /* ---------- YouTube lightbox (privacy-enhanced, loads only on click) ---------- */
   const vModal = $('[data-video-modal]');
   if (vModal) {

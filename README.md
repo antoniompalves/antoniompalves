@@ -31,7 +31,7 @@ Local preview: `php -S 127.0.0.1:8080 -t public dev-router.php`
 | Services, keynote topics, process | `public/content/consulting.php` |
 | Goleman–Boyatzis model (4 domains / 12 competencies) | `public/content/model.php` |
 | Press / TV appearances (YouTube id + thumbnail) | `public/content/press.php`, `public/assets/img/press/` |
-| Blog posts (**placeholders**, replace before launch) | `public/content/posts.php` |
+| Blog posts (38 PT articles imported from treinointeligenciaemocional.com; covers in `assets/img/blog/`) | `public/content/posts.php` |
 
 ## Damiana video widget
 Upload `public/assets/video/damiana.mp4` (H.264, about 10–20 s, under 8 MB, portrait or square framing, face in the upper third)

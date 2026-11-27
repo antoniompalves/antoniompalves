@@ -15,6 +15,7 @@ $heroDark = in_array($page, ['home', 'courses', 'about', 'services', 'programme'
 $canon    = absolute(alt_url(lang()));
 $ogImage  = absolute(rtrim(cfg('base_url'), '/') . '/assets/img/og-' . lang() . '.jpg');
 $locale   = ['pt' => 'pt_PT', 'en' => 'en_GB'];
+$altLangs = isset($data['post']) ? post_langs($data['post']) : cfg('langs'); // a post only has alternates in languages it exists in
 
 // Structured data (@graph): organisation, founder, website, breadcrumbs + page-specific nodes
 $site   = rtrim(absolute(url('home', cfg('default_lang'))), '/');
@@ -50,7 +51,7 @@ foreach ($GLOBALS['jsonld'] ?? [] as $node) $graph[] = $node;
 <?php if ($page === '404'): ?><meta name="robots" content="noindex, follow">
 <?php else: ?>
 <link rel="canonical" href="<?= e($canon) ?>">
-<?php foreach (cfg('langs') as $l): ?>
+<?php foreach ($altLangs as $l): ?>
 <link rel="alternate" hreflang="<?= $l === 'pt' ? 'pt-PT' : 'en' ?>" href="<?= e(absolute(alt_url($l))) ?>">
 <?php endforeach; ?>
 <link rel="alternate" hreflang="x-default" href="<?= e(absolute(alt_url(cfg('default_lang')))) ?>">
@@ -61,7 +62,7 @@ foreach ($GLOBALS['jsonld'] ?? [] as $node) $graph[] = $node;
 <meta property="og:url" content="<?= e($canon) ?>">
 <meta property="og:type" content="<?= isset($data['post']) ? 'article' : 'website' ?>">
 <meta property="og:locale" content="<?= $locale[lang()] ?>">
-<?php foreach (cfg('langs') as $l): if ($l !== lang()): ?><meta property="og:locale:alternate" content="<?= $locale[$l] ?>">
+<?php foreach ($altLangs as $l): if ($l !== lang()): ?><meta property="og:locale:alternate" content="<?= $locale[$l] ?>">
 <?php endif; endforeach; ?>
 <meta property="og:image" content="<?= e($ogImage) ?>">
 <meta property="og:image:width" content="1200">

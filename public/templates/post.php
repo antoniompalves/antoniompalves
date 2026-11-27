@@ -11,23 +11,29 @@ $GLOBALS['jsonld'][] = [
     'datePublished' => $post['date'],
     'dateModified' => $post['modified'] ?? $post['date'],
     'inLanguage' => lang() === 'pt' ? 'pt-PT' : 'en',
-    'image' => absolute(rtrim(cfg('base_url'), '/') . '/assets/img/photos/' . $post['img'] . '.webp'),
+    'image' => absolute(rtrim(cfg('base_url'), '/') . '/' . post_img($post)),
     'author' => ['@id' => $site . '/#paulo'],
     'publisher' => ['@id' => $site . '/#org'],
     'mainEntityOfPage' => absolute(url('blog', null, $post['slug'][lang()])),
-    'articleSection' => tr($post['cat']),
+    'articleSection' => cat_label($post),
 ];
-$others = array_values(array_filter(posts(), fn($p) => $p['slug']['pt'] !== $post['slug']['pt']));
+// Related: same category first, then newest
+$cat = $post['cat']['pt'] ?? tr($post['cat']);
+$others = array_values(array_filter(posts(), fn($p) => $p['slug'] !== $post['slug']));
+usort($others, fn($a, $b) => ((($b['cat']['pt'] ?? '') === $cat) <=> (($a['cat']['pt'] ?? '') === $cat)) ?: strcmp($b['date'], $a['date']));
+// Skip the lead paragraph when the excerpt is just the opening of the body
+$plain = static fn($s) => preg_replace('/\s+/u', ' ', trim(html_entity_decode(strip_tags($s), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+$showLead = !str_starts_with($plain(mb_substr(tr($post['body']), 0, 1200)), rtrim($plain(tr($post['excerpt'])), '…'));
 ?>
 <article class="article">
   <header class="article-head wrap-narrow">
     <a class="link-back" href="<?= e(url('blog')) ?>">← <?= e(t('blog.back')) ?></a>
-    <p class="eyebrow"><?= e(tr($post['cat'])) ?></p>
+    <p class="eyebrow"><?= e(cat_label($post)) ?></p>
     <h1 class="display"><?= e(tr($post['title'])) ?></h1>
-    <p class="article-lead"><?= e(tr($post['excerpt'])) ?></p>
+    <?php if ($showLead): ?><p class="article-lead"><?= e(tr($post['excerpt'])) ?></p><?php endif; ?>
     <div class="post-meta"><span>Paulo Moreira</span><time datetime="<?= e($post['date']) ?>"><?= e(fmt_date($post['date'])) ?></time><span><?= e(t('min_read', $post['mins'])) ?></span></div>
   </header>
-  <div class="wrap"><?php partial('post-cover', ['post' => $post, 'cls' => 'post-cover-xl', 'noCat' => true, 'alt' => tr($post['title']), 'eager' => true]); ?></div>
+  <div class="wrap"><?php partial('post-cover', ['post' => $post, 'cls' => 'post-cover-xl', 'noCat' => true, 'alt' => tr($post['title']), 'eager' => true, 'sizes' => '(max-width: 1280px) 100vw, 1200px']); ?></div>
   <div class="prose wrap-narrow">
     <?= tr($post['body']) /* trusted, author-controlled HTML */ ?>
   </div>
