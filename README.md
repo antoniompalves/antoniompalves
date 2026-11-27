@@ -45,7 +45,7 @@ Every "Book a meeting" button opens the widget. Its question box sends an email 
 
 ## SEO (built in)
 - **Domain:** `config.php` → `site_url` (default `https://eqtraining.pt`). It is used for canonical URLs, hreflang, `sitemap.xml`, `robots.txt` and the social/structured-data tags. Change it if the domain differs.
-- **Titles & descriptions:** each page has its own in `lang/pt.php` / `lang/en.php` (`seo.<page>.title` / `seo.<page>.desc`). Blog posts use `meta_title` in `content/posts.php`; the course uses `meta_desc` in `content/courses.php`.
+- **Titles & descriptions:** each page has its own in `lang/pt.php` / `lang/en.php` (`seo.<page>.title` / `seo.<page>.desc`). Blog posts use the short titles in `content/post-meta.php` (by PT slug), else `meta_title`/the headline; " | EQ Training" is added only when it fits; the course uses `meta_desc` in `content/courses.php`.
 - **Generated routes:** `/sitemap.xml` (PT+EN with hreflang alternates) and `/robots.txt`.
 - **Structured data (JSON-LD):** Organization, Person (Paulo Moreira), WebSite, BreadcrumbList, Course and BlogPosting.
 - **Social previews:** `assets/img/og-pt.jpg` / `og-en.jpg` (1200×630).

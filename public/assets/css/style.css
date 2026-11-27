@@ -61,8 +61,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 ::selection { background: var(--blue); color: #fff; }
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 6px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.skip { position: absolute; left: 16px; top: -60px; z-index: 100; background: var(--white); padding: 10px 16px; border-radius: 8px; box-shadow: var(--shadow); }
-.skip:focus { top: 12px; }
+.skip { position: absolute; left: 16px; top: -60px; z-index: 100; background: var(--white); padding: 10px 16px; border-radius: 8px; }
+.skip:focus { top: 12px; box-shadow: var(--shadow); }
 .hp { position: absolute; left: -9999px; }
 .ic { flex: none; }
 

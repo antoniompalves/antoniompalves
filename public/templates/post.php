@@ -1,7 +1,9 @@
 <?php
 /** @var array $post */
 $GLOBALS['page_title'] = tr($post['title']);
-if (!empty($post['meta_title'])) $GLOBALS['page_title_full'] = tr($post['meta_title']) . ' | EQ Training';
+// <title>: short override (content/post-meta.php) > meta_title > headline; add the brand only if it still fits
+$metaTitle = (require ROOT . '/content/post-meta.php')[$post['slug']['pt']] ?? (!empty($post['meta_title']) ? tr($post['meta_title']) : tr($post['title']));
+$GLOBALS['page_title_full'] = mb_strlen($metaTitle) <= 52 ? $metaTitle . ' | EQ Training' : $metaTitle;
 $GLOBALS['page_desc']  = tr($post['excerpt']);
 $site = rtrim(absolute(url('home', cfg('default_lang'))), '/');
 $GLOBALS['jsonld'][] = [
