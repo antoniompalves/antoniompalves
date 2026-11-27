@@ -47,6 +47,7 @@ return [
     'cta.all_posts'     => 'All articles',
     'cta.talk'          => 'Talk to %s',
     'soon'              => 'Coming soon',
+    'cta.info'          => 'Ask for details',
     'min_read'          => '%d min read',
 
     // Home
@@ -429,9 +430,9 @@ return [
     'programme.problem.h'    => 'Behavioural training tends to fail in the same place: the following Monday.',
     'programme.problem.p'    => 'The topics are right. What fails is carrying them into everyday work, and the lack of data to know whether that happened.',
     'programme.problem.fix'  => 'How the programme answers',
-    'programme.obj.k'        => 'Objectives and means',
-    'programme.obj.h'        => 'What the programme develops, and how it gets there.',
-    'programme.obj.p'        => 'Each objective has dedicated sessions, daily practice between sessions and an indicator in the final report.',
+    'programme.obj.k'        => 'Programme objectives',
+    'programme.obj.h'        => 'Build seven skills. And measure whether they changed.',
+    'programme.obj.p'        => 'It is a corporate training programme like the others Paulo Moreira runs in companies, with practical sessions on concrete skills. The difference is the daily practice between sessions and the measurement at the start and the end.',
     'programme.obj.c1'       => 'Objective',
     'programme.obj.c2'       => 'Means',
     'programme.obj.c3'       => 'Where it shows in the report',
@@ -500,4 +501,12 @@ return [
     'promo.h'                => 'Training that carries on between sessions. And a report for management.',
     'promo.p'                => '8 sessions in person or online, one challenge a day in the programme app and the group’s progress measured at the start and the end, without exposing anyone.',
     'promo.cta'              => 'Explore the programme',
+    'programme.comp.a'       => 'behavioural skills',
+    'programme.comp.a.p'     => 'Worked on in the sessions and the daily challenges, and measured at the start and the end.',
+    'programme.comp.b'       => 'Emotional Intelligence dimensions',
+    'programme.comp.b.p'     => 'Measured with the WLEIS-P, a validated scale, at the start and the end of the programme.',
+    'programme.obj.table'    => 'Objective, means and where it shows in the report',
+    'programme.real.k'       => 'Real app screen.',
+    'programme.real.cap'     => 'The group analysis, as the trainer sees it: average change on each dimension and skill, using only people who answered both times. Demo group, fictitious data (app in Portuguese).',
+    'programme.real.alt'     => 'App analysis screen: table with the group’s average change from start to end, by Emotional Intelligence dimension and by skill, with the change and the share of participants who improved',
 ];

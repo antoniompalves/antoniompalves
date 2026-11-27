@@ -31,7 +31,7 @@
         <label class="field"><span><?= e(t('form.interest')) ?></span>
           <select name="interest">
             <option value=""><?= e(t('form.interest.any')) ?></option>
-            <?php foreach (courses() as $c): ?><option><?= e(tr($c['short'])) ?></option><?php endforeach; ?>
+            <?php foreach (courses() as $c): ?><option<?= ($_GET['p'] ?? '') === $c['id'] ? ' selected' : '' ?>><?= e(tr($c['short'])) ?></option><?php endforeach; ?>
           </select>
         </label>
       </div>

@@ -57,7 +57,6 @@ function routes(): array
         'home'    => ['pt' => '',          'en' => ''],
         'services'=> ['pt' => 'servicos',  'en' => 'services'],
         'courses' => ['pt' => 'cursos',    'en' => 'courses'],
-        'programme' => ['pt' => 'formacao-com-app', 'en' => 'training-with-app'],
         'about'   => ['pt' => 'sobre',     'en' => 'about'],
         'press'   => ['pt' => 'imprensa',  'en' => 'press'],
         'blog'    => ['pt' => 'blog',      'en' => 'blog'],

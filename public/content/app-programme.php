@@ -11,7 +11,7 @@
  */
 return [
     'hero' => [
-        'k'    => ['pt' => 'Programa de formação · presencial ou online', 'en' => 'Training programme · in person or online'],
+        'k'    => ['pt' => 'Programa corporativo · presencial ou online', 'en' => 'Corporate programme · in person or online'],
         'h1'   => ['pt' => 'Formação em Inteligência Emocional que se pratica todos os dias. E se mede no fim.', 'en' => 'Emotional Intelligence training that’s practised every day. And measured at the end.'],
         'lead' => [
             'pt' => '8 sessões com Paulo Moreira. Entre sessões, cada participante tem um desafio por dia na aplicação do programa. No fim, a direção recebe um relatório com a evolução do grupo, sem nunca ver respostas individuais.',
@@ -97,15 +97,15 @@ return [
         ['goal' => ['pt' => 'Líderes que se conhecem e se regulam sob pressão', 'en' => 'Leaders who know themselves and stay steady under pressure'],
          'sessions' => [1, 2, 6],
          'means' => ['pt' => 'Desafios para nomear o que sentem, fazer uma pausa antes de reagir e recuperar depois de um momento difícil.', 'en' => 'Challenges to name what they feel, pause before reacting and recover after a difficult moment.'],
-         'shows' => ['pt' => 'Avaliação das próprias emoções · Regulação das emoções · Autoconsciência', 'en' => 'Self-emotion appraisal · Regulation of emotion · Self-awareness']],
+         'shows' => ['pt' => 'Avaliação das próprias emoções · Regulação das emoções · Autoconsciência Emocional · Regulação Emocional', 'en' => 'Self-emotion appraisal · Regulation of emotion · Emotional Self-Awareness · Emotional Regulation']],
         ['goal' => ['pt' => 'Relações de trabalho com menos atrito', 'en' => 'Working relationships with less friction'],
          'sessions' => [4, 7],
          'means' => ['pt' => 'Desafios de escuta ativa, perguntas abertas e conversas difíceis preparadas com antecedência.', 'en' => 'Challenges in active listening, open questions and difficult conversations prepared in advance.'],
-         'shows' => ['pt' => 'Avaliação das emoções dos outros · Empatia · Gestão de conflitos', 'en' => 'Others’ emotion appraisal · Empathy · Conflict management']],
+         'shows' => ['pt' => 'Avaliação das emoções dos outros · Empatia · Gestão de Conflitos', 'en' => 'Others’ emotion appraisal · Empathy · Conflict Management']],
         ['goal' => ['pt' => 'Decisões mais ponderadas', 'en' => 'Better-considered decisions'],
          'sessions' => [3, 8],
          'means' => ['pt' => 'Desafios para separar factos de interpretações, testar alternativas e decidir com informação incompleta.', 'en' => 'Challenges to separate facts from interpretations, test alternatives and decide with incomplete information.'],
-         'shows' => ['pt' => 'Pensamento crítico · Tomada de decisão', 'en' => 'Critical thinking · Decision-making']],
+         'shows' => ['pt' => 'Pensamento Crítico · Tomada de Decisão', 'en' => 'Critical Thinking · Decision-Making']],
         ['goal' => ['pt' => 'Energia e foco no que importa', 'en' => 'Energy and focus on what matters'],
          'sessions' => [5],
          'means' => ['pt' => 'Desafios que ligam as tarefas difíceis ao que é importante para cada pessoa e à equipa.', 'en' => 'Challenges that connect hard tasks to what matters to each person and to the team.'],
@@ -211,13 +211,13 @@ return [
         ['pt' => 'Regulação das emoções', 'en' => 'Regulation of emotion'],
     ],
     'behaviour' => [
-        ['pt' => 'Autoconsciência', 'en' => 'Self-awareness'],
-        ['pt' => 'Pensamento crítico', 'en' => 'Critical thinking'],
+        ['pt' => 'Autoconsciência Emocional', 'en' => 'Emotional Self-Awareness'],
+        ['pt' => 'Pensamento Crítico', 'en' => 'Critical Thinking'],
         ['pt' => 'Empatia', 'en' => 'Empathy'],
-        ['pt' => 'Tomada de decisão', 'en' => 'Decision-making'],
+        ['pt' => 'Tomada de Decisão', 'en' => 'Decision-Making'],
         ['pt' => 'Motivação', 'en' => 'Motivation'],
-        ['pt' => 'Regulação emocional', 'en' => 'Emotional regulation'],
-        ['pt' => 'Gestão de conflitos', 'en' => 'Conflict management'],
+        ['pt' => 'Regulação Emocional', 'en' => 'Emotional Regulation'],
+        ['pt' => 'Gestão de Conflitos', 'en' => 'Conflict Management'],
     ],
 
     'reading' => [

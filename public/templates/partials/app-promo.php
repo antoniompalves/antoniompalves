@@ -1,5 +1,8 @@
-<?php /** Promo banner for the training-with-app programme. @var string $tag heading tag (h2|h3) */ $tag = $tag ?? 'h2'; ?>
-<a class="app-promo reveal" href="<?= e(url('programme')) ?>">
+<?php /** Promo banner for the training-with-app programme. @var string $tag heading tag (h2|h3) */
+$tag = $tag ?? 'h2';
+$app = current(array_filter(courses(), fn($c) => $c['id'] === 'app'));
+if (!$app) return; ?>
+<a class="app-promo reveal" href="<?= e(url('courses', null, $app['slug'][lang()])) ?>">
   <div class="app-promo-copy">
     <p class="eyebrow on-dark"><?= e(t('promo.k')) ?></p>
     <<?= $tag ?> class="display"><?= e(t('promo.h')) ?></<?= $tag ?>>

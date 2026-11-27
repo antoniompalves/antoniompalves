@@ -47,6 +47,7 @@ return [
     'cta.all_posts'     => 'Todos os artigos',
     'cta.talk'          => 'Falar com a %s',
     'soon'              => 'Brevemente',
+    'cta.info'          => 'Pedir informação',
     'min_read'          => '%d min de leitura',
 
     // Home
@@ -429,9 +430,9 @@ return [
     'programme.problem.h'    => 'A formação comportamental costuma falhar no mesmo sítio: na segunda-feira seguinte.',
     'programme.problem.p'    => 'Os temas são os certos. O que falha é a passagem para o dia a dia e a falta de dados para saber se aconteceu.',
     'programme.problem.fix'  => 'Como o programa responde',
-    'programme.obj.k'        => 'Objetivos e meios',
-    'programme.obj.h'        => 'O que o programa desenvolve, e como chega lá.',
-    'programme.obj.p'        => 'Cada objetivo tem sessões dedicadas, prática diária entre sessões e um indicador no relatório final.',
+    'programme.obj.k'        => 'Objetivos do programa',
+    'programme.obj.h'        => 'Trabalhar sete competências. E medir se mudaram.',
+    'programme.obj.p'        => 'É uma formação corporativa como as outras que Paulo Moreira dá nas empresas, com sessões práticas sobre competências concretas. A diferença está na prática diária entre sessões e na medição no início e no fim.',
     'programme.obj.c1'       => 'Objetivo',
     'programme.obj.c2'       => 'Meios',
     'programme.obj.c3'       => 'Onde se vê no relatório',
@@ -500,4 +501,12 @@ return [
     'promo.h'                => 'Formação que continua entre sessões. E um relatório para a direção.',
     'promo.p'                => '8 sessões presenciais ou online, um desafio por dia na aplicação do programa e a evolução do grupo medida no início e no fim, sem expor ninguém.',
     'promo.cta'              => 'Conhecer o programa',
+    'programme.comp.a'       => 'competências comportamentais',
+    'programme.comp.a.p'     => 'Trabalhadas nas sessões e nos desafios diários, e medidas no início e no fim.',
+    'programme.comp.b'       => 'dimensões de Inteligência Emocional',
+    'programme.comp.b.p'     => 'Medidas com a WLEIS-P, uma escala validada, no início e no fim do programa.',
+    'programme.obj.table'    => 'Objetivo, meios e onde se vê no relatório',
+    'programme.real.k'       => 'Ecrã real da aplicação.',
+    'programme.real.cap'     => 'A análise da turma, vista pelo formador: evolução média de cada dimensão e competência, só com quem respondeu nos dois momentos. Turma de demonstração, com dados fictícios.',
+    'programme.real.alt'     => 'Ecrã de análise da aplicação: tabela com a evolução média do grupo entre o início e o fim, por dimensão de Inteligência Emocional e por competência, com a variação e a percentagem de participantes que melhoraram',
 ];

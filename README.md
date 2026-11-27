@@ -17,15 +17,14 @@ Local preview: `php -S 127.0.0.1:8080 -t public dev-router.php`
 |---|---|
 | `/` | `/en/` |
 | `/servicos/` (tabs: `#ceos` `#teams` `#orgs` `#keynotes`) | `/en/services/` |
-| `/formacao-com-app/` (8 sessions + practice app + management report) | `/en/training-with-app/` |
-| `/cursos/`, `/cursos/inteligencia-emocional/` | `/en/courses/…/emotional-intelligence/` |
+| `/cursos/`, `/cursos/inteligencia-emocional/`, `/cursos/formacao-com-app/` (8 sessions + practice app + management report) | `/en/courses/`, `…/emotional-intelligence/`, `…/training-with-app/` |
 | `/sobre/` · `/imprensa/` · `/blog/` · `/contactos/` | `/en/about/` · `/en/press/` · `/en/blog/` · `/en/contact/` |
 
 ## Editing content
 | What | File |
 |---|---|
 | UI text and page copy | `public/lang/pt.php`, `public/lang/en.php` |
-| Courses (set `'detail' => true` to give one a page) | `public/content/courses.php` |
+| Programmes (set `'detail' => true` to give one a page; `'cover'` = card image; `'template'` = custom page template). Programmes without a page link to the contact form with the programme preselected (`/contactos/?p=<id>`) | `public/content/courses.php`, card images in `public/assets/img/programmes/` (cropped from the programme banners, text removed) |
 | "Formação com App" page copy (challenges with sources, objectives, timeline, screens, FAQ) | `public/content/app-programme.php` (UI labels in `lang/*.php` under `programme.*`) |
 | Delivery formats | `public/content/formats.php` |
 | Services, keynote topics, process | `public/content/consulting.php` |
@@ -64,7 +63,7 @@ Every "Book a meeting" button opens the widget. Its question box sends an email 
 - Without JavaScript, or with "reduce motion" on, the section renders as a normal static two-column block.
 
 ## "Formação com App" page
-- The app screens and report pages in `public/assets/img/app/` are recreations of the real app (formacao.treinointeligenciaemocional.com), built with the app's own stylesheet and **demo data**. The page labels them "Ecrãs ilustrativos, com dados de demonstração".
+- `analise-real.webp` is a real screenshot of the trainer's Análise tab (demo group, fictitious data). The other app screens and report pages in `public/assets/img/app/` are recreations of the real app (formacao.treinointeligenciaemocional.com), built with the app's own stylesheet and **demo data**. The page labels them "Ecrãs ilustrativos, com dados de demonstração".
 - To change the demo data or re-render: edit the arrays at the bottom of `tools/app-screens/index.html`, then run `node tools/app-screens/shoot.js` (Playwright + Pillow). To use real captures instead, overwrite the WebP files with the same names.
 - Only publish real results with the client's permission, aggregated (n ≥ 5) and without names, as the app itself does.
 - Figures in the "challenges" section each link to their source (OPP 2026, Gallup 2026, Gartner 2025/2026, EU-OSHA 2025, CIPD 2023, Lei 102/2009). Re-check them yearly.

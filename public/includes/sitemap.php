@@ -11,7 +11,7 @@ if ($special === 'robots.txt') {
 header('Content-Type: application/xml; charset=utf-8');
 $hl = ['pt' => 'pt-PT', 'en' => 'en'];
 $entries = [];   // each: [ [lang => path], lastmod|null, priority ]
-foreach (['home' => '1.0', 'services' => '0.9', 'courses' => '0.9', 'programme' => '0.9', 'about' => '0.7', 'press' => '0.6', 'blog' => '0.6', 'contact' => '0.7', 'privacy' => '0.2'] as $p => $prio) {
+foreach (['home' => '1.0', 'services' => '0.9', 'courses' => '0.9', 'about' => '0.7', 'press' => '0.6', 'blog' => '0.6', 'contact' => '0.7', 'privacy' => '0.2'] as $p => $prio) {
     $entries[] = [array_combine(cfg('langs'), array_map(fn($l) => url($p, $l), cfg('langs'))), null, $prio];
 }
 foreach (courses() as $c) {

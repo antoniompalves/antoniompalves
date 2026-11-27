@@ -68,7 +68,7 @@ switch ($page) {
         if ($params['slug'] === null) {
             $tpl = 'courses';
         } elseif ($course = find_course($params['slug'], $lang)) {
-            $tpl = 'course';
+            $tpl = $course['template'] ?? 'course';
             $data['course'] = $course;
         }
         break;
@@ -81,7 +81,6 @@ switch ($page) {
         }
         break;
     case 'about':
-    case 'programme':
     case 'services':
     case 'press':
     case 'contact':

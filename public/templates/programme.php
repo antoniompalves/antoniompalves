@@ -4,11 +4,14 @@ $P = require ROOT . '/content/app-programme.php';
 $L = lang();
 $site = rtrim(absolute(url('home', cfg('default_lang'))), '/');
 $img = fn(string $n) => asset('assets/img/app/' . $n . '.webp');
+/** @var array $course  this programme's entry in content/courses.php */
+$GLOBALS['page_title_full'] = t('seo.programme.title');
+$GLOBALS['page_desc'] = t('seo.programme.desc');
 $GLOBALS['jsonld'][] = [
     '@type' => 'Course',
     'name' => t('programme.name'),
     'description' => t('seo.programme.desc'),
-    'url' => absolute(url('programme')),
+    'url' => absolute(url('courses', null, $course['slug'][$L])),
     'inLanguage' => 'pt-PT',
     'provider' => ['@id' => $site . '/#org'],
     'instructor' => ['@id' => $site . '/#paulo'],
@@ -27,6 +30,11 @@ $demo = '<p class="demo-note">' . icon('spark', 14) . e(t('programme.demo')) . '
   <div class="hero-glow" aria-hidden="true"></div>
   <div class="wrap app-hero-grid">
     <div class="hero-copy">
+      <nav class="crumbs on-dark" aria-label="Breadcrumb">
+        <a href="<?= e(url('home')) ?>"><?= e(t('nav.home')) ?></a><span>/</span>
+        <a href="<?= e(url('courses')) ?>"><?= e(t('nav.courses')) ?></a><span>/</span>
+        <span aria-current="page"><?= e(tr($course['short'])) ?></span>
+      </nav>
       <p class="eyebrow on-dark"><?= e(tr($P['hero']['k'])) ?></p>
       <h1 class="display hero-title-sm"><?= e(tr($P['hero']['h1'])) ?></h1>
       <p class="hero-lead"><?= e(tr($P['hero']['lead'])) ?></p>
@@ -121,6 +129,19 @@ $demo = '<p class="demo-note">' . icon('spark', 14) . e(t('programme.demo')) . '
       <h2 class="display"><?= e(t('programme.obj.h')) ?></h2>
       <p class="section-lead"><?= e(t('programme.obj.p')) ?></p>
     </header>
+    <div class="comp">
+      <div class="comp-col reveal">
+        <p class="comp-n">7</p>
+        <div><h3><?= e(t('programme.comp.a')) ?></h3><p><?= e(t('programme.comp.a.p')) ?></p>
+        <ul class="chips"><?php foreach ($P['behaviour'] as $d): ?><li class="chip"><?= e(tr($d)) ?></li><?php endforeach; ?></ul></div>
+      </div>
+      <div class="comp-col reveal">
+        <p class="comp-n">4</p>
+        <div><h3><?= e(t('programme.comp.b')) ?></h3><p><?= e(t('programme.comp.b.p')) ?></p>
+        <ul class="chips"><?php foreach ($P['wleis'] as $d): ?><li class="chip"><?= e(tr($d)) ?></li><?php endforeach; ?></ul></div>
+      </div>
+    </div>
+    <h3 class="obj-title reveal"><?= e(t('programme.obj.table')) ?></h3>
     <div class="obj" role="table" aria-label="<?= e(t('programme.obj.k')) ?>">
       <div class="obj-row obj-head" role="row">
         <span role="columnheader"><?= e(t('programme.obj.c1')) ?></span>
@@ -312,6 +333,13 @@ $demo = '<p class="demo-note">' . icon('spark', 14) . e(t('programme.demo')) . '
         <ul class="chips"><?php foreach ($P['behaviour'] as $d): ?><li class="chip"><?= e(tr($d)) ?></li><?php endforeach; ?></ul>
       </article>
     </div>
+    <figure class="real-shot reveal">
+      <div class="device-browser">
+        <span class="device-bar"><i></i><i></i><i></i><b>formacao.treinointeligenciaemocional.com</b></span>
+        <img src="<?= e($img('analise-real')) ?>" alt="<?= e(t('programme.real.alt')) ?>" width="1668" height="1205" loading="lazy">
+      </div>
+      <figcaption><strong><?= e(t('programme.real.k')) ?></strong> <?= e(t('programme.real.cap')) ?></figcaption>
+    </figure>
     <ul class="reading">
       <?php foreach ($P['reading'] as $i => [$h, $p]): ?>
         <li class="reveal"><span class="reading-num">0<?= $i + 1 ?></span><h3><?= e(tr($h)) ?></h3><p><?= e(tr($p)) ?></p></li>
