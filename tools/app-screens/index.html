@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ecrãs de demonstração</title>
+<!-- Demo screens for the "Formação com App" page. Uses the live app stylesheet and logos.
+     Edit the data arrays in the <script> at the bottom, then run: node shoot.js -->
+<link rel="stylesheet" href="https://formacao.treinointeligenciaemocional.com/assets/css/app.css">
+<style>
+  /* Each screen is captured on its own; fixed elements are pinned inside the frame */
+  body { background: #fff; }
+  .screen { position: relative; overflow: hidden; background: var(--bg); margin: 0 0 40px; }
+  .phone { width: 390px; height: 844px; }
+  .phone .conteudo { padding: .9rem .8rem 6rem; }
+  .phone .bottomnav { position: absolute; left: 0; right: 0; bottom: 0; transform: none; max-width: none; border-radius: 0; }
+  .desk { width: 1280px; }
+  .a4wrap { background: #DDE3EC; padding: 0; width: 794px; }
+  .a4wrap .a4 { margin: 0; box-shadow: none; width: 794px; min-height: 1123px; }
+  .a4wrap.land { width: 1123px; }
+  .a4wrap.land .a4 { width: 1123px; min-height: 794px; display: flex; }
+  .ola { font-size: .9rem; color: var(--mudo); margin: .2rem 0 .7rem; }
+  .ola strong { color: var(--navy); }
+  .phone .marca-sub { display: none; }
+  .phone .marca-simbolo { height: 30px; } .phone .marca-letras { height: 26px; }
+  .phone .display { font-size: 1.45rem; }
+  .phone .prog-grelha { flex-direction: column; align-items: stretch; gap: .8rem; }
+  .phone .prog-grelha .anel { align-self: center; }
+  .phone .prog-tiles { grid-template-columns: 1fr 1fr; }
+  .phone .mod-linha { grid-template-columns: auto 1fr auto; gap: .35rem .6rem; }
+  .phone .mod-info { grid-column: 2; grid-row: 1; } .phone .mod-valor { grid-column: 3; grid-row: 1; }
+  .phone .mod-barra { grid-column: 2 / -1; grid-row: 2; } .phone .mod-badge { grid-row: 1 / span 2; align-self: center; }
+  .phone .card { padding: .95rem .9rem; }
+  .phone .card + .card { margin-top: .8rem; }
+  textarea { resize: none; line-height: 1.45; }
+  .demo-tag { position: absolute; top: 10px; right: 10px; z-index: 99; background: rgba(20,38,63,.85); color: #F5B81C; font: 700 10px/1 Inter, sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 6px; }
+  .phone .demo-tag { top: 20px; right: 64px; }
+  .desk .demo-tag { top: 30px; right: auto; left: 50%; transform: translateX(-50%); }
+  .ses-grid { display:grid; grid-template-columns: repeat(8,1fr); gap:.5rem; align-items:end; }
+  .ses-grid .adesao-barra { height: 80px; max-width: 48px; }
+  .proj-adesao .adesao-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+  .proj-adesao .adesao-barra { width: 100%; display: flex; align-items: flex-end; border-radius: 10px; overflow: hidden; margin: 0 auto; }
+  .proj-adesao .adesao-barra div { width: 100%; background: var(--gold); border-radius: 10px 10px 0 0; }
+  .ev-leg { display: flex; gap: 1rem; font-size: .78rem; color: var(--mudo); margin: .2rem 0 .4rem; }
+  .ev-leg span { display: inline-flex; align-items: center; gap: .35rem; }
+  .ev-leg i { width: 14px; height: 8px; border-radius: 4px; display: inline-block; }
+  .print-tabela td.num, .print-tabela th.num { text-align: right; white-space: nowrap; }
+  .mini-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 92px; margin: .4rem 0 .2rem; }
+  .mini-bars div { background: var(--navy-10); border-radius: 6px; height: 100%; display: flex; align-items: flex-end; overflow: hidden; }
+  .mini-bars div i { display: block; width: 100%; background: var(--gold); border-radius: 6px 6px 0 0; }
+  .mini-lab { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; font-size: .7rem; text-align: center; color: var(--mudo); }
+  .mini-lab b { display: block; color: var(--navy); font-size: .78rem; }
+</style>
+</head>
+<body>
+
+<!-- ============ 1. HOJE (participante) ============ -->
+<section class="screen phone" id="s-hoje">
+  <header class="topo"><div class="topo-in">
+    <span class="marca"><img class="marca-simbolo" src="https://formacao.treinointeligenciaemocional.com/assets/img/simbolo-ouro.svg" alt=""><img class="marca-letras" src="https://formacao.treinointeligenciaemocional.com/assets/img/marca-branco.svg" alt=""></span>
+    <nav class="topo-nav"><span class="topo-nome">Ana</span></nav>
+  </div></header>
+  <main class="conteudo com-bottomnav">
+    <p class="ola">Bom dia, <strong>Ana</strong>. Tens 1 desafio para hoje e 1 por recuperar.</p>
+    <div class="card desafio-card">
+      <div class="carr-topo">
+        <button class="carr-seta" disabled>‹</button>
+        <div class="carr-conta"><strong>Hoje</strong> · desafio 3 de 7<br>Módulo 4 · Empatia</div>
+        <button class="carr-seta">›</button>
+      </div>
+      <div class="desafio-topo"><span class="etiqueta">Desafio do dia</span><span class="pill pill-prazo">até 25 mar</span></div>
+      <h2 class="desafio-titulo">Ouvir antes de responder</h2>
+      <p class="desafio-texto">Numa conversa de hoje, antes de dares a tua opinião, resume por palavras tuas o ponto de vista da outra pessoa e pergunta se percebeste bem.</p>
+      <div class="resposta-desafio">
+        <label>O que fizeste e o que observaste?</label>
+        <textarea rows="4">Na reunião de equipa resumi a proposta do Rui antes de discordar. Ele acrescentou um ponto que eu não tinha percebido e a conversa ficou muito mais calma.</textarea>
+        <p class="campo-nota mudo">Duas ou três frases chegam. Só tu e o formador as veem.</p>
+      </div>
+      <button class="check-grande"><span class="check-circulo"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="check-txt">Marcar como cumprido</span></button>
+      <div class="carr-pontos"><span class="carr-ponto ativo"></span><span class="carr-ponto"></span></div>
+    </div>
+    <div class="card">
+      <h2>O teu progresso</h2>
+      <div class="prog-grelha">
+        <div class="anel" style="--deg: 148deg"><div class="anel-in"><strong>41%</strong><span>do programa</span></div></div>
+        <div class="prog-tiles">
+          <div class="tile"><div class="tile-valor">20<span class="mudo"> / 24</span></div><div class="tile-label">Desafios cumpridos</div></div>
+          <div class="tile"><div class="tile-valor">4<span class="mudo"> / 8</span></div><div class="tile-label">Sessões feitas</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <span class="demo-tag">Dados de demonstração</span>
+  <nav class="bottomnav" id="nav-tpl">
+    <a class="ativo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke-linecap="round"/></svg>Hoje</a>
+    <a><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>Desafios</a>
+    <a><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4" stroke-linecap="round"/></svg>Programa</a>
+    <a><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linejoin="round"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11" /></svg>Diário</a>
+    <a><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Resultados</a>
+  </nav>
+</section>
+
+<!-- ============ 2. DESAFIOS (participante) ============ -->
+<section class="screen phone" id="s-desafios">
+  <header class="topo"><div class="topo-in">
+    <span class="marca"><img class="marca-simbolo" src="https://formacao.treinointeligenciaemocional.com/assets/img/simbolo-ouro.svg" alt=""><img class="marca-letras" src="https://formacao.treinointeligenciaemocional.com/assets/img/marca-branco.svg" alt=""></span>
+    <nav class="topo-nav"><span class="topo-nome">Ana</span></nav>
+  </div></header>
+  <main class="conteudo com-bottomnav">
+    <h1 class="display">Desafios</h1>
+    <div class="card semana-card semana-ativa">
+      <div class="semana-cab">
+        <div><h2 style="margin:0">Módulo 4 · Empatia</h2><span class="mudo">18 a 26 de março</span></div>
+        <span class="semana-conta">2/7</span>
+      </div>
+      <div class="dias-grelha">
+        <button class="dia feito"><span class="dia-nome">Qua</span><span class="dia-num">18</span><span class="dia-check">✓</span></button>
+        <button class="dia perdido"><span class="dia-nome">Qui</span><span class="dia-num">19</span><span class="dia-check">○</span></button>
+        <button class="dia feito"><span class="dia-nome">Sex</span><span class="dia-num">20</span><span class="dia-check">✓</span></button>
+        <button class="dia hoje"><span class="dia-nome">Seg</span><span class="dia-num">23</span><span class="dia-check">○</span></button>
+        <button class="dia futuro" disabled><span class="dia-nome">Ter</span><span class="dia-num">24</span><span class="dia-check">·</span></button>
+        <button class="dia futuro" disabled><span class="dia-nome">Qua</span><span class="dia-num">25</span><span class="dia-check">·</span></button>
+        <button class="dia futuro" disabled><span class="dia-nome">Qui</span><span class="dia-num">26</span><span class="dia-check">·</span></button>
+      </div>
+      <div class="legenda-dias" style="margin-top:.7rem"><span><i class="pt pt-feito">✓</i>cumprido</span><span><i class="pt pt-falhado">○</i>por recuperar</span><span><i class="pt pt-futuro"></i>por abrir</span></div>
+    </div>
+    <div class="card">
+      <h2>Os teus módulos</h2>
+      <div class="modulos-lista" id="mods"></div>
+    </div>
+  </main>
+  <span class="demo-tag">Dados de demonstração</span>
+  <nav class="bottomnav" data-nav="1"></nav>
+</section>
+
+<!-- ============ 3. DIÁRIO (participante) ============ -->
+<section class="screen phone" id="s-diario">
+  <header class="topo"><div class="topo-in">
+    <span class="marca"><img class="marca-simbolo" src="https://formacao.treinointeligenciaemocional.com/assets/img/simbolo-ouro.svg" alt=""><img class="marca-letras" src="https://formacao.treinointeligenciaemocional.com/assets/img/marca-branco.svg" alt=""></span>
+    <nav class="topo-nav"><span class="topo-nome">Ana</span></nav>
+  </div></header>
+  <main class="conteudo com-bottomnav">
+    <h1 class="display">Diário</h1>
+    <p class="mudo">O registo do teu percurso. Só tu e o formador o veem.</p>
+    <p class="eyebrow-mes">Março</p>
+    <div class="card diario-item">
+      <div class="diario-cab"><span class="etiqueta">Empatia · dia 1</span><span class="diario-quando">18 mar · 18:20</span></div>
+      <div class="diario-desafio"><span>Desafio</span>Pergunta a um colega como está, e ouve a resposta até ao fim sem dar conselhos.</div>
+      <p class="diario-txt">Fiz a pergunta ao Miguel a sério, não de passagem. Contou-me que anda sobrecarregado com o fecho do mês. Não resolvi nada, mas ele agradeceu.</p>
+    </div>
+    <div class="card diario-item">
+      <div class="diario-cab"><span class="etiqueta">Pensamento crítico · dia 5</span><span class="diario-quando">13 mar · 12:05</span></div>
+      <div class="diario-desafio"><span>Desafio</span>Antes de responder a um email que te irritou, escreve duas explicações alternativas.</div>
+      <p class="diario-txt">A primeira reação foi responder logo. Escrevi as duas hipóteses e percebi que faltava informação ao cliente. A resposta saiu mais curta e mais útil.</p>
+    </div>
+  </main>
+  <span class="demo-tag">Dados de demonstração</span>
+  <nav class="bottomnav" data-nav="3"></nav>
+</section>
+
+<!-- ============ 4. RESULTADOS (participante) ============ -->
+<section class="screen phone" id="s-resultados">
+  <header class="topo"><div class="topo-in">
+    <span class="marca"><img class="marca-simbolo" src="https://formacao.treinointeligenciaemocional.com/assets/img/simbolo-ouro.svg" alt=""><img class="marca-letras" src="https://formacao.treinointeligenciaemocional.com/assets/img/marca-branco.svg" alt=""></span>
+    <nav class="topo-nav"><span class="topo-nome">Ana</span></nav>
+  </div></header>
+  <main class="conteudo com-bottomnav">
+    <h1 class="display">A tua evolução</h1>
+    <div class="nota-info" style="margin-top:0">Início e fim do programa, de 1 a 5. Não há resultados «bons» ou «maus»: o que interessa é o que mudou.</div>
+    <div class="card">
+      <h2>Como me vejo</h2>
+      <div class="ev-leg"><span><i style="background:var(--navy-claro)"></i>Início</span><span><i style="background:var(--gold)"></i>Fim</span></div>
+      <div id="ind-wleis"></div>
+    </div>
+    <div class="card">
+      <h2>O que fiz nas últimas duas semanas</h2>
+      <div id="ind-beh"></div>
+    </div>
+  </main>
+  <span class="demo-tag">Dados de demonstração</span>
+  <nav class="bottomnav" data-nav="4"></nav>
+</section>
+
+<!-- ============ 5. PAINEL DA DIREÇÃO (desktop) ============ -->
+<section class="screen desk" id="s-direcao">
+  <header class="topo"><div class="topo-in">
+    <span class="marca"><img class="marca-simbolo" src="https://formacao.treinointeligenciaemocional.com/assets/img/simbolo-ouro.svg" alt=""><img class="marca-letras" src="https://formacao.treinointeligenciaemocional.com/assets/img/marca-branco.svg" alt=""><span class="marca-sub">Formação · Paulo Moreira</span></span>
+    <nav class="topo-nav"><span class="topo-nome">Direção · Empresa Exemplo</span></nav>
+  </div></header>
+  <main class="conteudo">
+    <div class="largo">
+      <div class="admin-cab">
+        <div><h1 class="display" style="margin:0">Painel da direção</h1><p class="mudo">Turma de março a maio · resultados sempre agregados, nunca individuais</p></div>
+        <button class="btn btn-gold">Gerar relatório em PDF</button>
+      </div>
+      <div class="tiles-linha">
+        <div class="tile"><div class="tile-label">Participantes</div><div class="tile-valor">20</div><div class="tile-sub">inscritos na turma</div></div>
+        <div class="tile"><div class="tile-label">Questionário inicial</div><div class="tile-valor">19</div><div class="tile-sub">respostas</div></div>
+        <div class="tile"><div class="tile-label">Questionário final</div><div class="tile-valor">18</div><div class="tile-sub">respostas</div></div>
+        <div class="tile"><div class="tile-label">Nos dois momentos</div><div class="tile-valor">18</div><div class="tile-sub">base da comparação</div></div>
+        <div class="tile"><div class="tile-label">Assiduidade média</div><div class="tile-valor">88%</div><div class="tile-sub">8 sessões</div></div>
+        <div class="tile"><div class="tile-label">Satisfação</div><div class="tile-valor">4,7<span class="mudo" style="font-size:.85rem"> / 5</span></div><div class="tile-sub">avaliação final</div></div>
+      </div>
+      <div class="duas-colunas">
+        <div class="card">
+          <h2>Adesão aos desafios, por módulo</h2>
+          <p class="mudo" style="margin-bottom:.8rem">Percentagem de desafios cumpridos pelo grupo</p>
+          <div class="adesao-grelha" id="adesao"></div>
+          <h2 style="margin-top:1.6rem">Assiduidade por sessão</h2>
+          <p class="mudo" style="margin-bottom:.8rem">Percentagem de participantes presentes · média 88%</p>
+          <div class="ses-grid" id="sessoes"></div>
+        </div>
+        <div class="card">
+          <h2>Evolução do grupo · Como me vejo</h2>
+          <div class="ev-leg"><span><i style="background:var(--navy-claro)"></i>Média no início</span><span><i style="background:var(--gold)"></i>Média no fim</span><span>n = 18</span></div>
+          <div id="dir-wleis"></div>
+        </div>
+      </div>
+      <div class="nota-info">Nenhum resultado é mostrado com menos de cinco respostas. As respostas escritas da avaliação final aparecem sem nome e por ordem aleatória.</div>
+    </div>
+  </main>
+  <span class="demo-tag">Dados de demonstração</span>
+</section>
+
+<!-- ============ 6. RELATÓRIO DA EMPRESA (A4) ============ -->
+<section class="screen a4wrap" id="s-relatorio">
+  <div class="a4">
+    <div class="print-cab">
+      <img class="print-logo" src="https://formacao.treinointeligenciaemocional.com/assets/img/logotipo.svg" alt="">
+      <div class="print-cab-info"><h1>Relatório do programa</h1><p>Treino de Inteligência Emocional · resultados agregados da turma</p></div>
+    </div>
+    <div class="print-id">
+      <div><span>Empresa</span>Empresa Exemplo, S.A.</div>
+      <div><span>Período</span>março a maio</div>
+      <div><span>Sessões</span>8 sessões + 7 módulos</div>
+      <div><span>Participantes</span>20 inscritos · 18 com os dois momentos</div>
+    </div>
+    <div class="print-nota">Os resultados refletem a perceção que os participantes têm de si próprios. Mostram a evolução do grupo entre o início e o fim do programa; não são uma avaliação de desempenho e não permitem atribuir a mudança apenas à formação.</div>
+    <h2>1. Participação e assiduidade</h2>
+    <table class="print-tabela">
+      <tr><th>Indicador</th><th class="num">Valor</th></tr>
+      <tr><td>Questionário inicial</td><td class="num">19 de 20</td></tr>
+      <tr><td>Questionário final</td><td class="num">18 de 20</td></tr>
+      <tr><td>Assiduidade média às sessões</td><td class="num">88%</td></tr>
+      <tr><td>Satisfação global com o programa</td><td class="num">4,7 / 5</td></tr>
+    </table>
+    <h2>2. Adesão aos desafios</h2>
+    <div class="mini-bars" id="rel-bars"></div>
+    <div class="mini-lab" id="rel-lab"></div>
+    <h2>3. Evolução do grupo · Como me vejo (WLEIS-P)</h2>
+    <table class="print-tabela" id="rel-tab">
+      <tr><th>Dimensão</th><th class="num">Início</th><th class="num">Fim</th><th class="num">Variação</th><th class="num">Melhoraram</th></tr>
+    </table>
+    <h2>4. Avaliação final · comentários</h2>
+    <div class="citacoes" style="grid-template-columns:1fr 1fr">
+      <blockquote class="citacao">Os desafios diários obrigaram-me a aplicar no próprio dia. Foi isso que fez a diferença.</blockquote>
+      <blockquote class="citacao">Passei a preparar as conversas difíceis em vez de as evitar.</blockquote>
+    </div>
+    <div class="print-rodape"><strong>Treino Inteligência Emocional</strong>Formação · Paulo Moreira</div>
+  </div>
+</section>
+
+<!-- ============ 7. RELATÓRIO INDIVIDUAL (A4) ============ -->
+<section class="screen a4wrap" id="s-individual">
+  <div class="a4">
+    <div class="print-cab">
+      <img class="print-logo" src="https://formacao.treinointeligenciaemocional.com/assets/img/logotipo.svg" alt="">
+      <div class="print-cab-info"><h1>Relatório individual de evolução</h1><p>Documento pessoal · só para o participante</p></div>
+    </div>
+    <div class="print-id">
+      <div><span>Participante</span>Ana Exemplo</div>
+      <div><span>Questionário inicial</span>4 de março</div>
+      <div><span>Questionário final</span>20 de maio</div>
+    </div>
+    <div class="print-nota">Pontuações de 1 a 5, sem categorias de baixo, médio ou alto. Uma descida também pode significar um olhar mais exigente sobre ti, o que já é um sinal de maior autoconsciência.</div>
+    <h2>Como me vejo</h2>
+    <table class="print-tabela" id="ind-tab1"><tr><th>Dimensão</th><th class="num">Início</th><th class="num">Fim</th><th class="num">Variação</th></tr></table>
+    <h2>O que fiz nas últimas duas semanas</h2>
+    <table class="print-tabela" id="ind-tab2"><tr><th>Competência</th><th class="num">Início</th><th class="num">Fim</th><th class="num">Variação</th></tr></table>
+    <div class="print-rodape"><strong>Treino Inteligência Emocional</strong>Formação · Paulo Moreira</div>
+  </div>
+</section>
+
+<!-- ============ 8. CERTIFICADO (A4 paisagem) ============ -->
+<section class="screen a4wrap land" id="s-certificado">
+  <div class="a4 a4-paisagem certificado">
+    <div class="cert-moldura">
+      <img class="cert-logo" src="https://formacao.treinointeligenciaemocional.com/assets/img/logotipo.svg" alt="">
+      <div>
+        <p class="cert-pretitulo">Certificado de participação</p>
+        <p class="cert-nome">Ana Exemplo</p>
+        <p class="cert-texto">participou no programa <strong>Treino de Inteligência Emocional</strong>, com 8 sessões de treino e 7 módulos de desafios aplicados ao trabalho, realizado para a Empresa Exemplo, S.A., entre março e maio.</p>
+      </div>
+      <div class="cert-emissor"><strong>Treino Inteligência Emocional</strong><span>Formação · Paulo Moreira</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. MODO PROJEÇÃO (sessão) ============ -->
+<section class="screen desk" id="s-projecao" style="height:720px">
+  <div class="projecao" style="min-height:720px">
+    <div class="proj-topo">
+      <div class="proj-marca"><img src="https://formacao.treinointeligenciaemocional.com/assets/img/simbolo-ouro.svg" alt="" height="38"><img src="https://formacao.treinointeligenciaemocional.com/assets/img/marca-branco.svg" alt="" height="36"></div>
+      <span class="proj-turma">Sessão 6 · Regulação Emocional</span>
+    </div>
+    <div class="proj-main">
+      <h1 class="proj-titulo">O grupo até aqui</h1>
+      <div class="proj-tiles">
+        <div class="proj-tile"><strong>82<span>%</span></strong><span>dos desafios cumpridos</span></div>
+        <div class="proj-tile"><strong>5<span> / 8</span></strong><span>sessões realizadas</span></div>
+        <div class="proj-tile"><strong>574</strong><span>reflexões escritas</span></div>
+      </div>
+      <div class="proj-adesao" id="proj"></div>
+      <p class="proj-nota">Sem nomes: só o grupo.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+const MODS = ['Liderança Emocional','Autoconsciência Emocional','Pensamento Crítico','Empatia','Motivação','Regulação Emocional','Gestão de Conflitos'];
+const ADES = [86, 81, 79, 80, 74, 77, 72];
+const W = ['Avaliação das próprias emoções','Avaliação das emoções dos outros','Uso das emoções','Regulação das emoções'];
+const WD = [[3.6,4.1],[3.7,4.0],[3.5,3.9],[3.2,3.8]];
+const IMPROVED = [78, 67, 72, 83];
+const B = ['Autoconsciência','Pensamento crítico','Empatia','Tomada de decisão','Motivação','Regulação emocional','Gestão de conflitos'];
+const IW = [[3.5,4.0],[3.8,3.6],[3.3,3.9],[2.9,3.6]];
+const IB = [[3.4,4.0],[3.6,3.9],[3.8,4.3],[3.2,3.7],[3.9,4.0],[2.8,3.5],[3.0,3.6]];
+const f = v => v.toFixed(1).replace('.', ',');
+const d = (a,b) => { const x = Math.round((b-a)*10)/10; return (x > 0 ? '+' : x < 0 ? '−' : '') + f(Math.abs(x)); };
+const chip = (a,b) => { const x = b-a; return `<span class="chip ${x > 0.05 ? 'chip-sobe' : x < -0.05 ? 'chip-desce' : 'chip-neutro'}">${d(a,b)}</span>`; };
+const dupla = (names, data) => names.map((n,i) => `<div class="dupla"><div class="dupla-cab"><span>${n}</span>${chip(...data[i])}</div>
+  <div class="dupla-item"><i>Início</i><div class="barra-track"><div class="barra-fill barra-navy" style="width:${data[i][0]/5*100}%"></div></div><b>${f(data[i][0])}</b></div>
+  <div class="dupla-item"><i>Fim</i><div class="barra-track"><div class="barra-fill barra-gold" style="width:${data[i][1]/5*100}%"></div></div><b>${f(data[i][1])}</b></div></div>`).join('');
+document.getElementById('ind-wleis').innerHTML = dupla(W, IW);
+document.getElementById('dir-wleis').innerHTML = dupla(W, WD);
+document.getElementById('ind-beh').innerHTML = dupla(B.slice(0,3), IB.slice(0,3));
+document.getElementById('sessoes').innerHTML = [95,90,90,85,90,85,80,90].map((v,i) => `<div class="adesao-col terminada"><strong>${v}%</strong><div class="adesao-barra"><div style="height:${v}%"></div></div><span>S${i+1}</span></div>`).join('');
+document.querySelectorAll('.dupla-item i').forEach(i => i.style.width = '40px');
+// modules list (participant)
+const done = [7,6,5,2,null,null,null];
+document.getElementById('mods').innerHTML = MODS.map((m,i) => {
+  const st = i < 3 ? 'mod-completo' : i === 3 ? 'mod-atual' : 'mod-por-abrir';
+  const v = done[i];
+  return `<div class="mod-linha ${st}"><span class="mod-badge">${i+1}</span><span class="mod-info"><b>${m}</b><em>${i < 4 ? '7 desafios' : 'abre após a sessão ' + (i+1)}</em></span>
+    <span class="mod-barra"><span class="mod-barra-fill" style="width:${v ? v/7*100 : 0}%"></span></span><span class="mod-valor">${v ?? '–'}<i> / 7</i></span></div>`;
+}).join('');
+// adherence (direção)
+document.getElementById('adesao').innerHTML = ADES.map((v,i) => `<div class="adesao-col terminada"><strong>${v}%</strong><div class="adesao-barra"><div style="height:${v}%"></div></div><span>M${i+1}</span></div>`).join('');
+// report
+document.getElementById('rel-bars').innerHTML = ADES.map(v => `<div><i style="height:${v}%"></i></div>`).join('');
+document.getElementById('rel-lab').innerHTML = ADES.map((v,i) => `<span><b>${v}%</b>${MODS[i].split(' ')[0]}</span>`).join('');
+const t = document.getElementById('rel-tab');
+W.forEach((n,i) => t.insertAdjacentHTML('beforeend', `<tr><td>${n}</td><td class="num">${f(WD[i][0])}</td><td class="num">${f(WD[i][1])}</td><td class="num">${d(...WD[i])}</td><td class="num">${IMPROVED[i]}%</td></tr>`));
+const tot = [WD.reduce((s,x)=>s+x[0],0)/4, WD.reduce((s,x)=>s+x[1],0)/4];
+t.insertAdjacentHTML('beforeend', `<tr class="linha-total"><td>Total</td><td class="num">${f(tot[0])}</td><td class="num">${f(tot[1])}</td><td class="num">${d(...tot)}</td><td class="num">78%</td></tr>`);
+const t1 = document.getElementById('ind-tab1'), t2 = document.getElementById('ind-tab2');
+W.forEach((n,i) => t1.insertAdjacentHTML('beforeend', `<tr><td>${n}</td><td class="num">${f(IW[i][0])}</td><td class="num">${f(IW[i][1])}</td><td class="num">${d(...IW[i])}</td></tr>`));
+B.forEach((n,i) => t2.insertAdjacentHTML('beforeend', `<tr><td>${n}</td><td class="num">${f(IB[i][0])}</td><td class="num">${f(IB[i][1])}</td><td class="num">${d(...IB[i])}</td></tr>`));
+// projection
+document.getElementById('proj').innerHTML = [86,81,79,80,82].map((v,i) => `<div class="adesao-col"><strong>${v}%</strong><div class="adesao-barra"><div style="height:${v}%"></div></div><span>Módulo ${i+1}</span></div>`).join('') +
+  [0,0].map((v,i) => `<div class="adesao-col futura"><strong>–</strong><div class="adesao-barra"><div style="height:0"></div></div><span>Módulo ${i+6}</span></div>`).join('');
+// bottom nav copies
+const tpl = document.getElementById('nav-tpl').innerHTML;
+document.querySelectorAll('[data-nav]').forEach(n => { n.innerHTML = tpl; n.querySelectorAll('a').forEach((a,i) => a.classList.toggle('ativo', i === +n.dataset.nav)); });
+</script>
+</body>
+</html>

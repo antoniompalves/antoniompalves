@@ -235,6 +235,25 @@
     }
   });
 
+  /* ---------- Programme page: participant app screens ---------- */
+  $$('[data-screens]').forEach((box) => {
+    const tabs = $$('[data-screen-tab]', box), panels = $$('[data-screen-panel]', box), imgs = $$('[data-screen-img]', box);
+    const show = (n) => {
+      tabs.forEach((t, k) => { const on = k === n; t.classList.toggle('is-active', on); t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
+      panels.forEach((p, k) => { p.hidden = k !== n; });
+      imgs.forEach((im, k) => { im.hidden = k !== n; });
+    };
+    tabs.forEach((t, k) => {
+      t.addEventListener('click', () => show(k));
+      t.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        const n = (k + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        show(n); tabs[n].focus();
+      });
+    });
+  });
+
   /* ---------- Goleman model: tap a domain to focus it ---------- */
   $$('[data-model]').forEach((m) => {
     const ds = $$('[data-domain]', m);

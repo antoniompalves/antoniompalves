@@ -81,6 +81,7 @@ switch ($page) {
         }
         break;
     case 'about':
+    case 'programme':
     case 'services':
     case 'press':
     case 'contact':

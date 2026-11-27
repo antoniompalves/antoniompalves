@@ -17,6 +17,7 @@ Local preview: `php -S 127.0.0.1:8080 -t public dev-router.php`
 |---|---|
 | `/` | `/en/` |
 | `/servicos/` (tabs: `#ceos` `#teams` `#orgs` `#keynotes`) | `/en/services/` |
+| `/formacao-com-app/` (8 sessions + practice app + management report) | `/en/training-with-app/` |
 | `/cursos/`, `/cursos/inteligencia-emocional/` | `/en/courses/…/emotional-intelligence/` |
 | `/sobre/` · `/imprensa/` · `/blog/` · `/contactos/` | `/en/about/` · `/en/press/` · `/en/blog/` · `/en/contact/` |
 
@@ -25,6 +26,7 @@ Local preview: `php -S 127.0.0.1:8080 -t public dev-router.php`
 |---|---|
 | UI text and page copy | `public/lang/pt.php`, `public/lang/en.php` |
 | Courses (set `'detail' => true` to give one a page) | `public/content/courses.php` |
+| "Formação com App" page copy (challenges with sources, objectives, timeline, screens, FAQ) | `public/content/app-programme.php` (UI labels in `lang/*.php` under `programme.*`) |
 | Delivery formats | `public/content/formats.php` |
 | Services, keynote topics, process | `public/content/consulting.php` |
 | Goleman–Boyatzis model (4 domains / 12 competencies) | `public/content/model.php` |
@@ -60,6 +62,13 @@ Every "Book a meeting" button opens the widget. Its question box sends an email 
 - The artwork is generated, not hand-drawn: `python3 tools/iceberg_gen.py out.svgfrag` builds a 3D low-poly iceberg (irregular submerged keel, crags on the tip), flat-shades it, adds depth fog, light rays, foam and particles, and writes the SVG that is inlined in `templates/home.php` (between the `<svg class="ice-svg">` tags). Change the seed or shape parameters to get a different berg.
 - Timing (which text shows when) is in `assets/js/main.js` → `STARTS` / `DIVE`; visibility per element is the `data-steps` attribute in `home.php`.
 - Without JavaScript, or with "reduce motion" on, the section renders as a normal static two-column block.
+
+## "Formação com App" page
+- The app screens and report pages in `public/assets/img/app/` are recreations of the real app (formacao.treinointeligenciaemocional.com), built with the app's own stylesheet and **demo data**. The page labels them "Ecrãs ilustrativos, com dados de demonstração".
+- To change the demo data or re-render: edit the arrays at the bottom of `tools/app-screens/index.html`, then run `node tools/app-screens/shoot.js` (Playwright + Pillow). To use real captures instead, overwrite the WebP files with the same names.
+- Only publish real results with the client's permission, aggregated (n ≥ 5) and without names, as the app itself does.
+- Figures in the "challenges" section each link to their source (OPP 2026, Gallup 2026, Gartner 2025/2026, EU-OSHA 2025, CIPD 2023, Lei 102/2009). Re-check them yearly.
+- Proposal requests arrive via `/api/lead` with source `programme` (subject "Pedido de proposta: Formação com App"), including group size and format. Note: `storage/leads.csv` now has two extra columns (size, format) before the message.
 
 ## Images
 Photos, client logos and TV-channel logos come from the paulojmoreira.com media library:

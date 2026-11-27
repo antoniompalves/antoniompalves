@@ -23,31 +23,36 @@ if (count($_SESSION['lead_times']) >= 5) out(429, ['ok' => false, 'error' => 'ra
 
 $clean = fn($k, $max = 200) => trim(mb_substr(str_replace(["\r", "\0"], '', (string) ($in[$k] ?? '')), 0, $max));
 $data = [
-    'source'   => $clean('source', 20) === 'agent' ? 'agent' : 'contact',
+    'source'   => in_array($src = $clean('source', 20), ['agent', 'programme'], true) ? $src : 'contact',
     'name'     => $clean('name'),
     'email'    => $clean('email'),
     'phone'    => $clean('phone', 40),
     'org'      => $clean('org'),
     'type'     => $clean('type', 20),
     'interest' => $clean('interest'),
+    'size'     => $clean('size', 40),
+    'format'   => $clean('format', 40),
     'message'  => $clean('message', 4000),
     'lang'     => lang(),
 ];
 
+if ($data['source'] === 'programme' && $data['message'] === '') $data['message'] = '(sem mensagem)';
 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL) || $data['message'] === '' ||
-    ($data['source'] === 'contact' && $data['name'] === '')) {
+    ($data['source'] !== 'agent' && $data['name'] === '')) {
     out(422, ['ok' => false, 'error' => 'invalid']);
 }
 // Header-injection guard
 foreach (['name', 'email'] as $k) if (preg_match('/[\n\r]/', $data[$k])) out(422, ['ok' => false]);
 
-$subject = $data['source'] === 'agent'
-    ? '[EQ Training] Pergunta via ' . cfg('agent_name')
-    : '[EQ Training] Novo pedido de contacto' . ($data['org'] ? ' — ' . $data['org'] : '');
+$subject = match ($data['source']) {
+    'agent'     => '[EQ Training] Pergunta via ' . cfg('agent_name'),
+    'programme' => '[EQ Training] Pedido de proposta: Formação com App' . ($data['org'] ? ' — ' . $data['org'] : ''),
+    default     => '[EQ Training] Novo pedido de contacto' . ($data['org'] ? ' — ' . $data['org'] : ''),
+};
 
 $lines = [];
 foreach (['source' => 'Origem', 'name' => 'Nome', 'email' => 'Email', 'phone' => 'Telefone', 'org' => 'Organização',
-          'type' => 'Tipo', 'interest' => 'Programa', 'lang' => 'Idioma'] as $k => $label) {
+          'type' => 'Tipo', 'interest' => 'Programa', 'size' => 'Participantes', 'format' => 'Formato', 'lang' => 'Idioma'] as $k => $label) {
     if ($data[$k] !== '') $lines[] = str_pad($label . ':', 14) . $data[$k];
 }
 $body = implode("\n", $lines) . "\n\nMensagem:\n" . $data['message'] . "\n\n— " . date('Y-m-d H:i') . ' · ' . ($_SERVER['REMOTE_ADDR'] ?? '');

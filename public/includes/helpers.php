@@ -57,6 +57,7 @@ function routes(): array
         'home'    => ['pt' => '',          'en' => ''],
         'services'=> ['pt' => 'servicos',  'en' => 'services'],
         'courses' => ['pt' => 'cursos',    'en' => 'courses'],
+        'programme' => ['pt' => 'formacao-com-app', 'en' => 'training-with-app'],
         'about'   => ['pt' => 'sobre',     'en' => 'about'],
         'press'   => ['pt' => 'imprensa',  'en' => 'press'],
         'blog'    => ['pt' => 'blog',      'en' => 'blog'],
@@ -213,6 +214,14 @@ function icon(string $name, int $size = 20): string
         'shield'  => '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/>',
         'bolt'    => '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
         'compass' => '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+        'chart'   => '<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',
+        'monitor' => '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+        'layers'  => '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+        'lock'    => '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+        'device'  => '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+        'file'    => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+        'eye'     => '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+        'eyeoff'  => '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.9M6.5 6.6C3.8 8.3 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.4 4.5-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
     ];
     $p = $paths[$name] ?? '';
     return '<svg class="ic" width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $p . '</svg>';

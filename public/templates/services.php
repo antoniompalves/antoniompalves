@@ -110,6 +110,8 @@ $press = array_slice(require ROOT . '/content/press.php', 0, 3);
 
 <?php partial('ecosystem'); ?>
 
+<section class="section section-flush"><div class="wrap"><?php partial('app-promo'); ?></div></section>
+
 <!-- Process -->
 <section class="section section-tint">
   <div class="wrap">

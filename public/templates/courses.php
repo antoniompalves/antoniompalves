@@ -23,6 +23,7 @@
         <span class="link-arrow"><?= e(t('nav.contact')) ?> <?= icon('arrow', 16) ?></span>
       </a>
     </div>
+    <?php partial('app-promo'); ?>
   </div>
 </section>
 

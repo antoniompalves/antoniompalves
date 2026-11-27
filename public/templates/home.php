@@ -254,6 +254,7 @@ $model = require ROOT . '/content/model.php';
         <img src="<?= e(asset('assets/img/photos/training-room.webp')) ?>" alt="<?= e(t('featured.photo')) ?>" width="1600" height="900" loading="lazy">
       </div>
     </a>
+    <?php partial('app-promo'); ?>
   </div>
 </section>
 
